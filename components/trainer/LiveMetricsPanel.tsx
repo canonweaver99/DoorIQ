@@ -577,68 +577,113 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
           }}
         >
           {shouldAnimate ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
-            >
-          ) : (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
-            >
-          )}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white font-space">Sentiment Score Calculation</h3>
-              <button
-                onClick={() => setShowInfo(false)}
-                className="text-slate-400 hover:text-white transition-colors"
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
               >
-                ×
-              </button>
-            </div>
-            <div className="space-y-3 text-sm text-slate-300 font-space">
-              <div className="text-slate-400 mb-3">The Sentiment score tracks how the customer feels about the sale. It starts low and builds over time:</div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <span>Transcript Sentiment</span>
-                  <span className="font-semibold text-white">50%</span>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white font-space">Sentiment Score Calculation</h3>
+                  <button
+                    onClick={() => setShowInfo(false)}
+                    className="text-slate-400 hover:text-white transition-colors"
+                  >
+                    ×
+                  </button>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">Analysis of sentiment progression from early to recent conversation</div>
-                
-                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <span>Buying Signals</span>
-                  <span className="font-semibold text-white">25%</span>
+                <div className="space-y-3 text-sm text-slate-300 font-space">
+                  <div className="text-slate-400 mb-3">The Sentiment score tracks how the customer feels about the sale. It starts low and builds over time:</div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Transcript Sentiment</span>
+                      <span className="font-semibold text-white">50%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Analysis of sentiment progression from early to recent conversation</div>
+                    
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Buying Signals</span>
+                      <span className="font-semibold text-white">25%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Positive buying signals detected (e.g., "sounds good", "I'm interested")</div>
+                    
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Objection Resolution</span>
+                      <span className="font-semibold text-white">15%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">How well objections were handled and resolved</div>
+                    
+                    <div className="flex justify-between items-center py-1">
+                      <span>Positive Language</span>
+                      <span className="font-semibold text-white">10%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Overall positive vs negative language patterns</div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
+                    <div className="mb-2">Time Progression:</div>
+                    <div className="pl-2">• First 15s: 0-30% of base score</div>
+                    <div className="pl-2">• 15s-1min: 30-70% of base score</div>
+                    <div className="pl-2">• 1min+: 70-100% of base score</div>
+                  </div>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">Positive buying signals detected (e.g., "sounds good", "I'm interested")</div>
-                
-                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <span>Objection Resolution</span>
-                  <span className="font-semibold text-white">15%</span>
+              </motion.div>
+            ) : (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white font-space">Sentiment Score Calculation</h3>
+                  <button
+                    onClick={() => setShowInfo(false)}
+                    className="text-slate-400 hover:text-white transition-colors"
+                  >
+                    ×
+                  </button>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">How well objections were handled and resolved</div>
-                
-                <div className="flex justify-between items-center py-1">
-                  <span>Positive Language</span>
-                  <span className="font-semibold text-white">10%</span>
+                <div className="space-y-3 text-sm text-slate-300 font-space">
+                  <div className="text-slate-400 mb-3">The Sentiment score tracks how the customer feels about the sale. It starts low and builds over time:</div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Transcript Sentiment</span>
+                      <span className="font-semibold text-white">50%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Analysis of sentiment progression from early to recent conversation</div>
+                    
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Buying Signals</span>
+                      <span className="font-semibold text-white">25%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Positive buying signals detected (e.g., "sounds good", "I'm interested")</div>
+                    
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Objection Resolution</span>
+                      <span className="font-semibold text-white">15%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">How well objections were handled and resolved</div>
+                    
+                    <div className="flex justify-between items-center py-1">
+                      <span>Positive Language</span>
+                      <span className="font-semibold text-white">10%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Overall positive vs negative language patterns</div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
+                    <div className="mb-2">Time Progression:</div>
+                    <div className="pl-2">• First 15s: 0-30% of base score</div>
+                    <div className="pl-2">• 15s-1min: 30-70% of base score</div>
+                    <div className="pl-2">• 1min+: 70-100% of base score</div>
+                  </div>
                 </div>
-                <div className="text-xs text-slate-400 pl-2">Overall positive vs negative language patterns</div>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
-                <div className="mb-2">Time Progression:</div>
-                <div className="pl-2">• First 15s: 0-30% of base score</div>
-                <div className="pl-2">• 15s-1min: 30-70% of base score</div>
-                <div className="pl-2">• 1min+: 70-100% of base score</div>
-              </div>
-            </div>
-          {shouldAnimate ? </motion.div> : </div>}
+            )}
         </div>
       )}
     </CardComponent>
-  >
+  )
+}
 
 // Objection Data Structure
 interface ObjectionData {

@@ -1711,10 +1711,6 @@ function TrainerPageContent() {
         transition={{ duration: 0.3 }}
         className="min-h-screen bg-black font-sans"
       >
-    ) : (
-      <div className="min-h-screen bg-black font-sans">
-    )
-
       {/* Full Screen Session Container */}
       <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">
         
@@ -2533,7 +2529,348 @@ function TrainerPageContent() {
           transition-duration: 200ms;
         }
       `}</style>
-    {shouldAnimate ? </motion.div> : </div>}
+      </motion.div>
+    ) : (
+      <div className="min-h-screen bg-black font-sans">
+        {/* Full Screen Session Container */}
+        <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between px-3 sm:px-4 lg:px-8 py-2 sm:py-3 lg:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-xs sm:text-sm font-semibold text-white font-space truncate">
+                {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
+              </span>
+            </div>
+            {/* Mobile: Restart and End Session Buttons */}
+            {sessionActive && (
+              <div className="sm:hidden flex items-center gap-2">
+                {restartSession && (
+                  <button
+                    onClick={restartSession}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white active:scale-[0.95]"
+                    aria-label="Restart session"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span className="text-xs font-medium">Restart</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => endSession()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation active:scale-[0.95]"
+                  aria-label="End session"
+                >
+                  <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="font-medium">End</span>
+                </button>
+              </div>
+            )}
+            {/* Desktop: Timer and Controls */}
+            {sessionActive && (
+              <div className="hidden sm:flex items-center gap-3">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-mono">{formatDuration(duration)}</span>
+                </div>
+                {restartSession && (
+                  <button
+                    onClick={restartSession}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 bg-slate-700/80 hover:bg-slate-600 text-white"
+                    aria-label="Restart session"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span className="text-xs font-medium">Restart</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => endSession()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200"
+                  aria-label="End session"
+                >
+                  <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="font-medium">End Session</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Main Content Area - Desktop 2x2 Grid / Mobile Stack */}
+          <div className="flex-1 overflow-hidden relative">
+            {/* Desktop Layout - 2x2 Grid */}
+            <div className="hidden md:grid md:grid-cols-2 md:grid-rows-2 h-full gap-2 p-2">
+              {/* TOP LEFT QUADRANT - Agent Video */}
+              <div className="relative w-full h-full bg-black rounded-lg overflow-hidden border border-slate-800/50 shadow-2xl">
+                {renderAgentVideo()}
+              </div>
+
+              {/* TOP RIGHT QUADRANT - Metrics */}
+              <div className="hidden md:flex w-full h-full flex-col overflow-hidden">
+                {sessionActive && (
+                  <Suspense fallback={<div className="h-full bg-slate-800/50 rounded animate-pulse" />}>
+                    <LiveMetricsPanel 
+                      metrics={metrics} 
+                      getVoiceAnalysisData={getVoiceAnalysisData}
+                      transcript={transcript}
+                      sessionId={sessionId}
+                      sessionActive={sessionActive}
+                      agentName={selectedAgent?.name}
+                    />
+                  </Suspense>
+                )}
+              </div>
+
+              {/* BOTTOM LEFT QUADRANT - Transcript */}
+              <div className="hidden md:flex w-full h-full flex-col overflow-hidden">
+                <LiveTranscript 
+                  transcript={transcript} 
+                  agentName={selectedAgent?.name}
+                  agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                  userAvatarUrl={userAvatarUrl}
+                  sessionActive={sessionActive}
+                />
+              </div>
+
+              {/* BOTTOM RIGHT QUADRANT - Feedback Feed */}
+              <div className="w-full h-full flex flex-col overflow-hidden">
+                <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+              </div>
+            </div>
+
+            {/* Mobile Layout - Stacked */}
+            {!sessionActive ? (
+              <div className="md:hidden flex flex-col h-full overflow-y-auto custom-scrollbar">
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <div className="text-center max-w-md">
+                    <div className="mb-6">
+                      {renderAgentVideo()}
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2 font-space">
+                      Ready to Practice?
+                    </h2>
+                    <p className="text-slate-400 mb-6">
+                      Select an agent and start your training session
+                    </p>
+                    {selectedAgent && (
+                      <button
+                        onClick={() => startSession()}
+                        className="relative px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-space font-bold text-base sm:text-lg rounded-2xl sm:rounded-3xl shadow-xl shadow-purple-500/25 transition-all min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group active:scale-[0.98]"
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <span>Knock on {selectedAgent.name}'s Door</span>
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="md:hidden flex flex-col h-full overflow-hidden">
+                {/* Mobile Top Section - Agent Video */}
+                <div className="relative w-full h-48 sm:h-64 bg-black flex-shrink-0">
+                  {renderAgentVideo()}
+                </div>
+
+                {/* Mobile Bottom Section - Scrollable Metrics/Transcript/Feedback */}
+                <div 
+                  className="flex-1 overflow-y-auto bg-black will-change-scroll"
+                  style={{ 
+                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 6rem)',
+                    WebkitOverflowScrolling: 'touch',
+                    overscrollBehavior: 'none',
+                    transform: 'translateZ(0)',
+                    WebkitTransform: 'translateZ(0)'
+                  }}
+                >
+                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4">
+                    {/* Mobile Metrics Panel */}
+                    {sessionActive && (
+                      <div className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                        <Suspense fallback={<div className="h-32 bg-slate-800/50 rounded animate-pulse" />}>
+                          <LiveMetricsPanel 
+                            metrics={metrics} 
+                            getVoiceAnalysisData={getVoiceAnalysisData}
+                            transcript={transcript}
+                            sessionId={sessionId}
+                            sessionActive={sessionActive}
+                            agentName={selectedAgent?.name}
+                          />
+                        </Suspense>
+                      </div>
+                    )}
+
+                    {/* Mobile Transcript Panel */}
+                    <div className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                      <LiveTranscript 
+                        transcript={transcript} 
+                        agentName={selectedAgent?.name}
+                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                        userAvatarUrl={userAvatarUrl}
+                        sessionActive={sessionActive}
+                      />
+                    </div>
+
+                    {/* Mobile Feedback Panel */}
+                    <div className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                      <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* PIP Webcam Overlay - Bottom Right (above controls) - Mobile optimized */}
+            {sessionActive && (
+              <div className={cn(
+                "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
+                isCameraOff && "hidden"
+              )}>
+                <WebcamPIP ref={webcamPIPRef} />
+              </div>
+            )}
+            
+            {/* Reconnection Status Banner */}
+            {sessionActive && reconnectingStatus?.isReconnecting && (
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-slate-800/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-slate-600/80">
+                <div className="flex items-center gap-2 text-slate-200 text-sm font-medium">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-400 border-t-transparent" />
+                  <span>
+                    Reconnecting... (Attempt {reconnectingStatus.attempt}/{reconnectingStatus.maxAttempts})
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {/* Video Controls Overlay */}
+            {sessionActive && (
+              <VideoControls
+                duration={duration}
+                onMuteToggle={handleMuteToggle}
+                onCameraToggle={handleCameraToggle}
+                onEndSession={() => endSession()}
+                onRestartSession={restartSession}
+                isMuted={isMuted}
+                isCameraOff={isCameraOff}
+                personaName={selectedAgent?.name}
+              />
+            )}
+          </div>
+
+          {/* Mobile Bottom Navigation - Only show during active session */}
+          {sessionActive && (
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 h-[64px] flex items-center justify-around px-2 safe-area-bottom" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+              <Link
+                href="/dashboard"
+                className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+              >
+                <Home className="w-6 h-6" />
+                <span className="text-[10px] mt-0.5">Home</span>
+              </Link>
+              <Link
+                href="/trainer/select-homeowner"
+                className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+              >
+                <Mic className="w-6 h-6" />
+                <span className="text-[10px] mt-0.5">Practice</span>
+              </Link>
+              <Link
+                href="/sessions"
+                className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+              >
+                <FileText className="w-6 h-6" />
+                <span className="text-[10px] mt-0.5">Sessions</span>
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+              >
+                <Trophy className="w-6 h-6" />
+                <span className="text-[10px] mt-0.5">Leaderboard</span>
+              </Link>
+            </nav>
+          )}
+        </div>
+
+        {/* Hidden ElevenLabs Component */}
+        {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && (
+          <ElevenLabsConversation 
+            agentId={selectedAgent.eleven_agent_id} 
+            conversationToken={conversationToken} 
+            sessionId={sessionId}
+            autostart
+            onAgentEndCall={handleAgentEndCall}
+          />
+        )}
+        
+        {/* Hidden WebcamRecorder for recording functionality */}
+        {sessionActive && (
+          <div className="hidden">
+            <WebcamRecorder 
+              sessionActive={sessionActive} 
+              duration={duration}
+            />
+          </div>
+        )}
+
+        <style jsx global>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @keyframes fade-in-up {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+          }
+          .animate-fade-in-up {
+            animation: fade-in-up 0.3s ease-out;
+          }
+          @keyframes shimmer {
+            0% {
+              transform: translateX(-100%);
+            }
+            100% {
+              transform: translateX(100%);
+            }
+          }
+          .animate-shimmer {
+            animation: shimmer 1.5s ease-in-out infinite;
+          }
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 3px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 3px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+          }
+          * {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 200ms;
+          }
+        `}</style>
+      </div>
+    )
   )
 }
 
