@@ -531,8 +531,8 @@ export default function RepProfilePage({ params }: { params: Promise<{ repId: st
               </p>
               <p className="text-sm text-slate-400">Close %</p>
             </motion.div>
-            )}
           </div>
+          )}
 
           {/* Performance Chart - Always show */}
           <motion.div
