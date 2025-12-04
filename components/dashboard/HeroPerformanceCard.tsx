@@ -5,12 +5,12 @@ import { AlertCircle, XCircle, AlertTriangle, Clock, ArrowRight } from 'lucide-r
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 import type { SessionPerformance } from '@/app/dashboard/types'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface HeroPerformanceCardProps {
   userName: string
@@ -24,16 +24,7 @@ export default function HeroPerformanceCard({
   session
 }: HeroPerformanceCardProps) {
   const router = useRouter()
-  const [isMobile, setIsMobile] = useState(false)
-  
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const isMobile = useIsMobile(640)
   
   const formattedDate = format(new Date(currentDateTime), 'EEEE, MMMM d, yyyy')
   const formattedTime = format(new Date(currentDateTime), 'h:mm a')

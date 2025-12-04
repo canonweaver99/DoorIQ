@@ -172,6 +172,73 @@ video:fullscreen {
       padding: 0.75rem 1rem;
     }
   }
+
+  /* Mobile Performance Optimizations */
+  @media (max-width: 768px) {
+    /* Reduce animations on mobile for better performance */
+    * {
+      animation-duration: 0.3s !important;
+      transition-duration: 0.2s !important;
+    }
+
+    /* Disable heavy animations on mobile */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* Optimize transforms for mobile */
+    .transform-gpu {
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform;
+    }
+
+    /* Reduce blur effects on mobile */
+    .backdrop-blur-xl,
+    .backdrop-blur-lg {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Optimize scrolling */
+    * {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Reduce shadow complexity on mobile */
+    .shadow-lg,
+    .shadow-xl,
+    .shadow-2xl {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Optimize images */
+    img {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+
+    /* Reduce gradient complexity */
+    .bg-gradient-to-r,
+    .bg-gradient-to-br {
+      background-attachment: scroll;
+    }
+  }
+
+  /* Disable animations for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /* tw-animate-css imported at top */

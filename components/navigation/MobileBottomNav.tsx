@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Home, Mic, FileText, Trophy, Menu, X, Settings as SettingsIcon, LayoutDashboard, ClipboardList, BarChart2, Award } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useReducedMotion } from '@/hooks/useIsMobile'
 
 interface NavItem {
   href: string
@@ -17,16 +18,20 @@ interface NavItem {
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const prefersReducedMotion = useReducedMotion()
   const [isSignedIn, setIsSignedIn] = useState(false)
   const [sessionBadge, setSessionBadge] = useState<number | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
 
   // Check if we're in an active practice session (should hide nav)
-  const isPracticeActive = pathname === '/trainer' || 
+  const isPracticeActive = useMemo(() => 
+    pathname === '/trainer' || 
     (pathname?.startsWith('/trainer') && 
      pathname !== '/trainer/select-homeowner' && 
-     !pathname?.startsWith('/trainer/upload'))
+     !pathname?.startsWith('/trainer/upload')),
+    [pathname]
+  )
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -83,24 +88,24 @@ export function MobileBottomNav() {
     }
   }, [user])
 
-  const navItems: NavItem[] = [
+  const navItems: NavItem[] = useMemo(() => [
     { href: '/dashboard', icon: Home },
     { href: '/trainer/select-homeowner', icon: Mic },
     ...(isSignedIn ? [{ href: '/sessions', icon: FileText, badge: sessionBadge }] : []),
     ...(isSignedIn ? [{ href: '/leaderboard', icon: Trophy }] : []),
-  ]
+  ], [isSignedIn, sessionBadge])
 
   // Menu items for the hamburger menu
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { name: 'Home', href: '/home', icon: Home, show: isSignedIn },
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, show: true },
     { name: 'Practice Hub', href: '/trainer/select-homeowner', icon: Award, show: true },
     { name: 'Session History', href: '/sessions', icon: ClipboardList, show: isSignedIn },
     { name: 'Leaderboard', href: '/leaderboard', icon: BarChart2, show: isSignedIn && userData?.team_id },
     { name: 'Settings', href: '/settings', icon: SettingsIcon, show: true },
-  ].filter(item => item.show)
+  ].filter(item => item.show), [isSignedIn, userData?.team_id])
 
-  const isActive = (href: string) => {
+  const isActive = useCallback((href: string) => {
     if (href === '/dashboard') {
       return pathname === '/dashboard' || pathname === '/'
     }
@@ -108,7 +113,7 @@ export function MobileBottomNav() {
       return pathname === '/home'
     }
     return pathname?.startsWith(href)
-  }
+  }, [pathname])
 
   // Hide nav during active practice sessions or on landing page
   if (isPracticeActive || pathname === '/landing') {
@@ -209,10 +214,10 @@ export function MobileBottomNav() {
             
             {/* Drawer */}
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              initial={prefersReducedMotion ? false : { x: '100%' }}
+              animate={prefersReducedMotion ? false : { x: 0 }}
+              exit={prefersReducedMotion ? false : { x: '100%' }}
+              transition={prefersReducedMotion ? {} : { type: 'spring', damping: 25, stiffness: 200 }}
               className={cn(
                 'fixed top-0 right-0 bottom-0 z-[70]',
                 'w-[85%] max-w-sm',

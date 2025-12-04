@@ -77,7 +77,9 @@ export function FeaturesSectionWithHoverEffects({ features }: FeaturesSectionPro
   return (
     <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-0 relative z-10 pt-6 pb-6 md:pb-8 max-w-5xl mx-auto">
       {featuresToRender.map((feature, index) => (
-        <Feature key={feature.title} {...feature} index={index} totalFeatures={featuresToRender.length} />
+        <div key={feature.title} className="scale-[0.95] md:scale-100 h-full flex">
+          <Feature {...feature} index={index} totalFeatures={featuresToRender.length} />
+        </div>
       ))}
     </div>
   );
@@ -99,7 +101,7 @@ const Feature = ({
   return (
     <div
       className={cn(
-        "flex flex-col border-r-[2px] md:border-r-[2px] py-4 md:py-6 relative group/feature border-white/20",
+        "flex flex-col border-r-[2px] md:border-r-[2px] py-4 md:py-6 relative group/feature border-white/20 h-full min-h-[200px] md:min-h-0",
         (index % 2 === 0) && "border-l-[2px] md:border-l-[2px] border-white/20",
         (index < totalFeatures - 2) && "border-b-[2px] md:border-b-[2px] border-white/20",
         // Add bottom border to last 2 features on mobile

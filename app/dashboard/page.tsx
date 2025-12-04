@@ -13,9 +13,12 @@ import TabNavigation from '@/components/dashboard/TabNavigation'
 import UploadTab from '@/components/dashboard/tabs/UploadTab'
 import TeamTab from '@/components/dashboard/tabs/TeamTab'
 import type { DashboardData } from '@/app/dashboard/types'
+import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
 
 function DashboardPageContent() {
   const router = useRouter()
+  const isMobile = useIsMobile()
+  const prefersReducedMotion = useReducedMotion()
   const [activeTab, setActiveTab] = useState('overview')
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     userName: '',
@@ -24,6 +27,9 @@ function DashboardPageContent() {
     loading: true,
     error: null
   })
+
+  // Skip animations on mobile or if user prefers reduced motion
+  const shouldAnimate = !isMobile && !prefersReducedMotion
 
   useEffect(() => {
     fetchDashboardData()
@@ -71,7 +77,7 @@ function DashboardPageContent() {
   if (dashboardData.loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white relative">
-        <div className="relative z-10 pt-32 pb-16 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-12 sm:pb-14 md:pb-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             {/* Loading skeleton */}
             <div className="space-y-6 md:space-y-8 mt-12">
@@ -129,15 +135,15 @@ function DashboardPageContent() {
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            initial={shouldAnimate ? { opacity: 0, y: -20 } : false}
+            animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+            transition={shouldAnimate ? { duration: 0.6 } : {}}
             className="mb-3 text-center"
           >
-            <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
+            <h1 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
               Dashboard
             </h1>
-            <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-300 drop-shadow-md font-space">
+            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-slate-300 drop-shadow-md font-space">
               Welcome back,{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                 {dashboardData.userName}
@@ -160,13 +166,13 @@ function DashboardPageContent() {
 
           {/* Tab Content */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-8"
+            initial={shouldAnimate ? { opacity: 0 } : false}
+            animate={shouldAnimate ? { opacity: 1 } : false}
+            transition={shouldAnimate ? { duration: 0.5, delay: 0.2 } : {}}
+            className="mt-6 sm:mt-8"
           >
             {activeTab === 'overview' && (
-              <div className="space-y-6 md:space-y-8">
+              <div className="space-y-4 sm:space-y-6 md:space-y-8">
                 {/* 1. Hero Performance Card (improved) */}
                 <HeroPerformanceCard
                   userName={dashboardData.userName}

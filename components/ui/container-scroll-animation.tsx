@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 
 import { useScroll, useTransform, motion, MotionValue } from "framer-motion";
+import { useIsMobile, useReducedMotion } from "@/hooks/useIsMobile";
 
 export const ContainerScroll = ({
   titleComponent,
@@ -12,42 +13,42 @@ export const ContainerScroll = ({
   children: React.ReactNode;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile(768);
+  const prefersReducedMotion = useReducedMotion();
+  
+  // Disable scroll animations only if user prefers reduced motion (keep iPad animation on mobile)
+  const shouldAnimate = !prefersReducedMotion;
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => {
-      window.removeEventListener("resize", checkMobile);
-    };
-  }, []);
 
   const scaleDimensions = () => {
     return isMobile ? [0.7, 0.9] : [1.05, 1];
   };
 
   const scaleDims = scaleDimensions();
-  const rotate = useTransform(scrollYProgress, [0, 0.25, 1], [20, 0, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.25, 1], [scaleDims[0], scaleDims[1], scaleDims[1]]);
-  const translate = useTransform(scrollYProgress, [0, 0.25, 1], [0, -100, -100]);
+  const rotate = shouldAnimate 
+    ? useTransform(scrollYProgress, [0, 0.25, 1], [20, 0, 0])
+    : useTransform(scrollYProgress, [0, 1], [0, 0]);
+  const scale = shouldAnimate
+    ? useTransform(scrollYProgress, [0, 0.25, 1], [scaleDims[0], scaleDims[1], scaleDims[1]])
+    : useTransform(scrollYProgress, [0, 1], [1, 1]);
+  const translate = shouldAnimate
+    ? useTransform(scrollYProgress, [0, 0.25, 1], [0, -100, -100])
+    : useTransform(scrollYProgress, [0, 1], [0, 0]);
 
   return (
     <div
-      className="h-[55rem] md:h-[90rem] flex items-center justify-center relative p-2 md:p-20"
+      className={`${isMobile ? 'h-auto min-h-[40rem]' : 'h-[55rem] md:h-[90rem]'} flex items-center justify-center relative p-2 md:p-20`}
       ref={containerRef}
     >
       <div
-        className="py-8 md:py-40 md:pt-60 md:pb-80 pb-12 md:pb-80 w-full relative"
-        style={{
+        className={`${isMobile ? 'py-8' : 'py-8 md:py-40 md:pt-60 md:pb-80'} w-full relative`}
+        style={shouldAnimate ? {
           perspective: "1000px",
-        }}
+        } : {}}
       >
         <Header translate={translate} titleComponent={titleComponent} />
         <Card rotate={rotate} translate={translate} scale={scale}>

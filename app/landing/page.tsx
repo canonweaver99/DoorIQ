@@ -16,6 +16,7 @@ import { getAgentImageStyle } from "@/lib/agents/imageStyles";
 import { createClient } from "@/lib/supabase/client";
 import { COLOR_VARIANTS } from "@/components/ui/scrolling-agent-carousel";
 import { cn } from "@/lib/utils";
+import { useIsMobile, useReducedMotion } from "@/hooks/useIsMobile";
 import {
   ArrowRight,
   DollarSign,
@@ -68,33 +69,46 @@ function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffi
 
 // Navigation Component
 function Navigation() {
+  const isMobile = useIsMobile();
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
+    // Throttle scroll handler for better performance
+    let ticking = false;
+    
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-      
-      // Update active section based on scroll position
-      const sections = ["hero", "problem", "solution", "features", "stats", "testimonials", "cta"];
-      const scrollPosition = window.scrollY + 100;
-      
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const { offsetTop, offsetHeight } = element;
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            setActiveSection(section);
-            break;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 20);
+          
+          // Only update active section on desktop (less important on mobile)
+          if (!isMobile) {
+            const sections = ["hero", "problem", "solution", "features", "stats", "testimonials", "cta"];
+            const scrollPosition = window.scrollY + 100;
+            
+            for (const section of sections) {
+              const element = document.getElementById(section);
+              if (element) {
+                const { offsetTop, offsetHeight } = element;
+                if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+                  setActiveSection(section);
+                  break;
+                }
+              }
+            }
           }
-        }
+          
+          ticking = false;
+        });
+        ticking = true;
       }
     };
     
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll(); // Initial check
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isMobile]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -182,8 +196,11 @@ function Navigation() {
 
 // Hero Section
 function HeroSection() {
+  const isMobile = useIsMobile();
+  const prefersReducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
+  const shouldAnimate = !isMobile && !prefersReducedMotion;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -255,17 +272,17 @@ function HeroSection() {
   }, []);
 
   return (
-    <div id="hero" className="relative bg-black overflow-hidden pt-24 sm:pt-24 md:pt-16">
+    <div id="hero" className="relative bg-black overflow-hidden pt-8 sm:pt-16 md:pt-16">
       {/* Animated grid pattern */}
       <motion.div
-        animate={{
+        animate={shouldAnimate ? {
           opacity: [0.02, 0.04, 0.02],
-        }}
-        transition={{
+        } : { opacity: 0.03 }}
+        transition={shouldAnimate ? {
           duration: 8,
           repeat: Infinity,
           ease: "easeInOut",
-        }}
+        } : {}}
         className="absolute inset-0"
       >
         <div
@@ -279,29 +296,29 @@ function HeroSection() {
 
       {/* Animated accent glows */}
       <motion.div
-        animate={{
+        animate={shouldAnimate ? {
           x: [0, 30, 0],
           y: [0, 20, 0],
           scale: [1, 1.1, 1],
-        }}
-        transition={{
+        } : { x: 0, y: 0, scale: 1 }}
+        transition={shouldAnimate ? {
           duration: 15,
           repeat: Infinity,
           ease: "easeInOut",
-        }}
+        } : {}}
         className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
       />
       <motion.div
-        animate={{
+        animate={shouldAnimate ? {
           x: [0, -25, 0],
           y: [0, 30, 0],
           scale: [1, 1.2, 1],
-        }}
-        transition={{
+        } : { x: 0, y: 0, scale: 1 }}
+        transition={shouldAnimate ? {
           duration: 20,
           repeat: Infinity,
           ease: "easeInOut",
-        }}
+        } : {}}
         className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
       />
 
@@ -312,9 +329,9 @@ function HeroSection() {
           <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-16 sm:pt-16 md:pt-12 px-0 sm:px-4 w-full">
             {/* Badge */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
+              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+              transition={shouldAnimate ? { delay: 0.2, duration: 0.6 } : {}}
               className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
             >
               <span className="text-white/80 text-xs sm:text-sm md:text-base font-medium tracking-wider uppercase font-space">
@@ -332,8 +349,8 @@ function HeroSection() {
                 delay={0.015}
               />
               <AnimatedText
-                text="To Untrained Reps"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                text="To Undertrained Reps"
+                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
                 underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                 underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
                 underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
@@ -345,9 +362,9 @@ function HeroSection() {
 
             {/* Subheadline */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
+              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+              transition={shouldAnimate ? { delay: 0.5, duration: 0.6 } : {}}
               className="font-sans text-lg sm:text-lg md:text-lg lg:text-xl xl:text-2xl text-white/80 w-full max-w-full md:max-w-4xl text-center leading-relaxed font-light px-4"
             >
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
@@ -355,9 +372,9 @@ function HeroSection() {
 
             {/* CTA Button */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
+              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+              transition={shouldAnimate ? { delay: 0.6, duration: 0.6 } : {}}
               className="flex justify-center mt-2"
             >
               <Link
@@ -371,21 +388,21 @@ function HeroSection() {
 
             {/* See it in action label */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.65, duration: 0.6 }}
+              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+              transition={shouldAnimate ? { delay: 0.65, duration: 0.6 } : {}}
               className="text-center mt-2 sm:mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
             >
               <span className="text-white/80 text-lg sm:text-xl md:text-2xl lg:text-4xl xl:text-5xl font-medium tracking-wider uppercase font-space">
                 See it in action
               </span>
               <motion.div
-                animate={{ y: [0, 8, 0] }}
-                transition={{ 
+                animate={shouldAnimate ? { y: [0, 8, 0] } : { y: 0 }}
+                transition={shouldAnimate ? { 
                   duration: 1.5,
                   repeat: Infinity,
                   ease: "easeInOut"
-                }}
+                } : {}}
               >
                 <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white/80" />
               </motion.div>
@@ -448,14 +465,14 @@ function HeroSection() {
               <div className="flex flex-col items-center gap-2 sm:gap-3 w-full max-w-full pb-2 px-4 sm:px-0">
                 <AnimatedText
                   text="Stop Losing Deals"
-                  textClassName="font-space text-5xl xs:text-6xl sm:text-7xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-white text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full"
                   underlineClassName="hidden"
                   duration={0.04}
                   delay={0.015}
                 />
                 <AnimatedText
-                  text="To Untrained Reps"
-                  textClassName="font-space text-5xl xs:text-6xl sm:text-7xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                  text="To Undertrained Reps"
+                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
                   underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                   underlineHeight="h-[2px] sm:h-[2px]"
                   underlineOffset="-bottom-1 sm:-bottom-2"
@@ -602,7 +619,7 @@ function ProblemSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Problem
           </span>
-          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             Your Sales Team Is
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Leaking Money</span>
@@ -777,7 +794,7 @@ function SolutionSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Solution
           </span>
-          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             How DoorIQ Works
           </h2>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
@@ -810,7 +827,7 @@ function FeaturesSection() {
             Features
           </span>
           <div className="mb-4 sm:mb-6">
-            <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[1.1] px-4">
+            <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[1.1] px-4">
               Everything You Need <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">To Win</span>
             </h2>
           </div>
@@ -1015,7 +1032,7 @@ function MeetTrainerSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-2 sm:mb-3 block">
             Meet the Trainers
           </span>
-          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-3 sm:mb-4 px-4">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-3 sm:mb-4 px-4">
             Practice with
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Hyper-Realistic AI</span>
@@ -1109,7 +1126,7 @@ function StatsSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Results
           </span>
-          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] px-4">
             Real Numbers.
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Real Results.</span>
@@ -1186,7 +1203,7 @@ function TestimonialsSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm sm:text-base md:text-lg lg:text-xl uppercase tracking-[0.2em] font-space mb-4 sm:mb-5 md:mb-6 block">
             Testimonials
           </span>
-          <h2 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-8xl xl:text-9xl text-white font-light tracking-tight leading-[0.95] px-4">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-6xl lg:text-8xl xl:text-9xl text-white font-medium md:font-light tracking-tight leading-[0.95] px-4">
             What Our Users Say
           </h2>
         </motion.div>
@@ -1242,7 +1259,7 @@ function CTASection() {
           viewport={{ once: true }}
         >
           {/* Headline */}
-          <h2 className="font-space text-5xl sm:text-6xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             Ready to
             <br />
             Transform
@@ -1267,7 +1284,7 @@ function CTASection() {
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-6 sm:mt-8 flex flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 text-white/70 text-xs sm:text-sm md:text-base lg:text-lg font-light px-4">
+          <div className="mt-6 sm:mt-8 flex flex-col md:flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 text-white/70 text-xs sm:text-sm md:text-base lg:text-lg font-light px-4">
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-indigo-500" />
               No credit card required

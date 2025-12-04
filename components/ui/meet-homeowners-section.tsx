@@ -13,23 +13,12 @@ import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from '@/components/trainer/personas'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { createClient } from '@/lib/supabase/client'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 export function MeetHomeownersSection() {
   const { ref, controls } = useScrollAnimation(0.2)
   const router = useRouter()
-  const [isMobile, setIsMobile] = useState(true) // Default to true for faster initial render
-  
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640)
-    }
-    // Check immediately and on mount
-    if (typeof window !== 'undefined') {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      return () => window.removeEventListener('resize', checkMobile)
-    }
-  }, [])
+  const isMobile = useIsMobile(640)
 
   const handleAgentClick = async (agentName: AllowedAgentName) => {
     try {
