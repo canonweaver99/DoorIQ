@@ -63,8 +63,8 @@ const AnimatedText = React.forwardRef<HTMLDivElement, AnimatedTextProps>(
         y: 0,
         transition: {
           type: "spring",
-          damping: 12,
-          stiffness: 200,
+          damping: 14,
+          stiffness: 180,
         },
       },
       hidden: {
@@ -72,8 +72,8 @@ const AnimatedText = React.forwardRef<HTMLDivElement, AnimatedTextProps>(
         y: 20,
         transition: {
           type: "spring",
-          damping: 12,
-          stiffness: 200,
+          damping: 14,
+          stiffness: 180,
         },
       },
     };

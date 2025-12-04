@@ -284,6 +284,7 @@ function HeroSection() {
           ease: "easeInOut",
         } : {}}
         className="absolute inset-0"
+        style={{ willChange: 'opacity' }}
       >
         <div
           className="absolute inset-0"
@@ -307,6 +308,7 @@ function HeroSection() {
           ease: "easeInOut",
         } : {}}
         className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
+        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
       />
       <motion.div
         animate={shouldAnimate ? {
@@ -320,6 +322,7 @@ function HeroSection() {
           ease: "easeInOut",
         } : {}}
         className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
+        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
       />
 
       {/* Desktop Hero Section - Hidden on Mobile */}
@@ -613,8 +616,10 @@ function ProblemSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="text-center mb-8 sm:mb-10 md:mb-12"
+          style={{ willChange: 'transform, opacity' }}
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Problem
@@ -788,8 +793,10 @@ function SolutionSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="text-center mb-6 sm:mb-8 px-4 sm:px-0"
+          style={{ willChange: 'transform, opacity' }}
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Solution
@@ -820,8 +827,10 @@ function FeaturesSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="text-center mb-6 sm:mb-8"
+          style={{ willChange: 'transform, opacity' }}
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Features
@@ -1047,9 +1056,10 @@ function MeetTrainerSection() {
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.2, duration: 0.8 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ delay: 0.2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="relative w-full -mt-4 md:-mt-6"
+        style={{ willChange: 'transform, opacity' }}
       >
         <InlineAgentCarousel />
       </motion.div>
@@ -1058,9 +1068,10 @@ function MeetTrainerSection() {
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.4, duration: 0.8 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ delay: 0.4, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 mt-3 sm:mt-4 md:mt-6"
+        style={{ willChange: 'transform, opacity' }}
       >
         <div className="flex justify-center dark">
           <AIVoiceInput 
