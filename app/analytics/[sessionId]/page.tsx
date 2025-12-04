@@ -32,6 +32,14 @@ const ConversationFlow = dynamic(() => import('@/components/analytics/Conversati
   loading: () => <div className="h-96 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
   ssr: false
 })
+const AICoachingInsights = dynamic(() => import('@/components/analytics/AICoachingInsights').then(mod => ({ default: mod.AICoachingInsights })), {
+  loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
+  ssr: false
+})
+const ObjectionAnalysis = dynamic(() => import('@/components/analytics/ObjectionAnalysis').then(mod => ({ default: mod.default })), {
+  loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
+  ssr: false
+})
 
 interface SessionData {
   id: string
@@ -49,6 +57,7 @@ interface SessionData {
   analytics?: {
     coaching_plan?: any
     feedback?: any
+    objection_analysis?: any
     voice_analysis?: any
   }
   elevenlabs_metrics?: any
@@ -371,8 +380,8 @@ export default function AnalyticsPage() {
           }, 1000)
         }
         
-        // Load coaching if available
-        if (data.analytics?.coaching_plan || data.analytics?.feedback) {
+        // Load coaching and objection analysis if available
+        if (data.analytics?.coaching_plan || data.analytics?.feedback || data.analytics?.objection_analysis) {
           setTimeout(() => {
             setLoadingStates(prev => ({ ...prev, coaching: true }))
           }, 2000)
@@ -566,8 +575,19 @@ export default function AnalyticsPage() {
         )}
         
         
-        {/* AI Coaching Insights - ARCHIVED */}
-        {/* {(session.analytics?.coaching_plan || session.analytics?.feedback) ? (
+        {/* Objection Analysis - Shows detailed objection handling */}
+        {session.analytics?.objection_analysis ? (
+          loadingStates.coaching ? (
+            <ObjectionAnalysis
+              objectionAnalysis={session.analytics.objection_analysis}
+            />
+          ) : (
+            <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
+          )
+        ) : null}
+        
+        {/* AI Coaching Insights - Personalized feedback and coaching plan */}
+        {(session.analytics?.coaching_plan || session.analytics?.feedback) ? (
           loadingStates.coaching ? (
             <AICoachingInsights
               coachingPlan={session.analytics?.coaching_plan}
@@ -576,7 +596,7 @@ export default function AnalyticsPage() {
           ) : (
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
           )
-        ) : null} */}
+        ) : null}
       </div>
     </div>
   )
