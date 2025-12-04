@@ -192,13 +192,13 @@ export async function GET(request: Request) {
       }
       
       // Double-check user exists before proceeding (in case of race condition)
-      const { data: finalUserCheck } = await supabase
+      const { data: userExistsCheck } = await supabase
         .from('users')
         .select('id')
         .eq('id', verificationData.user.id)
         .single()
       
-      if (!finalUserCheck) {
+      if (!userExistsCheck) {
         console.log('⚠️ User not found after creation attempt. Redirecting to book demo.')
         await supabase.auth.signOut()
         return NextResponse.redirect(new URL('/book-demo', requestUrl.origin))
@@ -241,13 +241,13 @@ export async function GET(request: Request) {
       }
       
       // Final check: ensure user exists in users table before allowing access
-      const { data: finalUserCheck } = await freshSupabase
+      const { data: finalUserCheckAfterSession } = await freshSupabase
         .from('users')
         .select('id')
         .eq('id', finalSession.user.id)
         .single()
       
-      if (!finalUserCheck) {
+      if (!finalUserCheckAfterSession) {
         console.log('⚠️ User not found in database after verification. Redirecting to book demo.')
         await freshSupabase.auth.signOut()
         return NextResponse.redirect(new URL('/book-demo', requestUrl.origin))
