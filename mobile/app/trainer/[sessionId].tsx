@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  FlatList,
+  InteractionManager,
 } from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -32,7 +34,7 @@ export default function TrainingSessionScreen() {
   const [duration, setDuration] = useState(0)
   const [loading, setLoading] = useState(false)
   const durationInterval = useRef<NodeJS.Timeout | null>(null)
-  const transcriptEndRef = useRef<ScrollView>(null)
+  const transcriptEndRef = useRef<FlatList>(null)
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
   const [activeTab, setActiveTab] = useState<'transcript' | 'feedback'>('transcript')
 
@@ -66,9 +68,22 @@ export default function TrainingSessionScreen() {
       }
 
       setSelectedAgent(agent)
+      setLoading(false)
+    } catch (error: any) {
+      console.error('Error initializing session:', error)
+      alert(error.message || 'Failed to load agent')
+      setLoading(false)
+    }
+  }
+
+  const startSession = useCallback(async () => {
+    if (!selectedAgent) return
+
+    try {
+      setLoading(true)
 
       // Get conversation token
-      const tokenData = await elevenApi.getConversationToken(agentId)
+      const tokenData = await elevenApi.getConversationToken(selectedAgent.eleven_agent_id)
       if (!tokenData.conversation_token) {
         alert('Failed to get conversation token')
         setLoading(false)
@@ -78,7 +93,7 @@ export default function TrainingSessionScreen() {
       setConversationToken(tokenData.conversation_token)
 
       // Create session record
-      const sessionData = await sessionApi.create(agent.name)
+      const sessionData = await sessionApi.create(selectedAgent.name)
       if (!sessionData.id) {
         alert('Failed to create session')
         setLoading(false)
@@ -97,11 +112,11 @@ export default function TrainingSessionScreen() {
       // Deduct credit
       await sessionApi.increment()
     } catch (error: any) {
-      console.error('Error initializing session:', error)
+      console.error('Error starting session:', error)
       alert(error.message || 'Failed to start session')
       setLoading(false)
     }
-  }
+  }, [selectedAgent])
 
   const loadExistingSession = async () => {
     // For viewing past sessions - implement later
@@ -118,7 +133,10 @@ export default function TrainingSessionScreen() {
       timestamp: new Date(),
     }
 
-    setTranscript((prev) => [...prev, entry])
+    // Use InteractionManager to defer transcript updates during interactions
+    InteractionManager.runAfterInteractions(() => {
+      setTranscript((prev) => [...prev, entry])
+    })
   }, [])
 
   const endSession = useCallback(async () => {
@@ -194,12 +212,26 @@ export default function TrainingSessionScreen() {
           <View style={styles.statusIndicator}>
             <View style={[styles.statusDot, sessionActive && styles.statusDotActive]} />
             <Text style={styles.statusText}>
-              {sessionActive ? 'Live Session' : 'Session Ended'}
+              {sessionActive ? 'Live Session' : 'Ready'}
             </Text>
           </View>
-          <Text style={styles.timer}>{formatDuration(duration)}</Text>
+          {sessionActive && <Text style={styles.timer}>{formatDuration(duration)}</Text>}
         </View>
-        {sessionActive && (
+      </View>
+
+      {/* Start/End Call Buttons - Above Webcam */}
+      <View style={styles.buttonContainer}>
+        {!sessionActive ? (
+          <TouchableOpacity 
+            style={styles.startButton} 
+            onPress={startSession}
+            disabled={loading || !selectedAgent}
+          >
+            <Text style={styles.startButtonText}>
+              {loading ? 'Starting...' : selectedAgent ? `Start Session with ${selectedAgent.name}` : 'Start Session'}
+            </Text>
+          </TouchableOpacity>
+        ) : (
           <TouchableOpacity style={styles.endButton} onPress={endSession}>
             <Text style={styles.endButtonText}>End Session</Text>
           </TouchableOpacity>
@@ -266,28 +298,25 @@ export default function TrainingSessionScreen() {
 
       {/* Content Area - Transcript or Feedback */}
       {activeTab === 'transcript' ? (
-        <ScrollView
-          ref={transcriptEndRef}
-          style={styles.transcriptContainer}
-          contentContainerStyle={styles.transcriptContent}
-          onContentSizeChange={() => {
-            transcriptEndRef.current?.scrollToEnd({ animated: true })
-          }}
-        >
-          {transcript.length === 0 ? (
-            <View style={styles.emptyTranscript}>
-              <Text style={styles.emptyText}>
-                {sessionActive
-                  ? 'Waiting for conversation to begin...'
-                  : `Knock on ${selectedAgent.name}'s door to start your practice session`}
-              </Text>
-            </View>
-          ) : (
-            transcript.map((entry) => {
+        transcript.length === 0 ? (
+          <View style={styles.emptyTranscript}>
+            <Text style={styles.emptyText}>
+              {sessionActive
+                ? 'Waiting for conversation to begin...'
+                : `Knock on ${selectedAgent.name}'s door to start your practice session`}
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            ref={transcriptEndRef}
+            data={transcript}
+            keyExtractor={(item) => item.id}
+            style={styles.transcriptContainer}
+            contentContainerStyle={styles.transcriptContent}
+            renderItem={({ item: entry }) => {
               const isUser = entry.speaker === 'user'
               return (
                 <View
-                  key={entry.id}
                   style={[styles.messageBubble, isUser ? styles.userBubble : styles.agentBubble]}
                 >
                   <Text style={styles.speakerLabel}>
@@ -296,9 +325,21 @@ export default function TrainingSessionScreen() {
                   <Text style={styles.messageText}>{entry.text}</Text>
                 </View>
               )
-            })
-          )}
-        </ScrollView>
+            }}
+            onContentSizeChange={() => {
+              transcriptEndRef.current?.scrollToEnd({ animated: true })
+            }}
+            removeClippedSubviews={true}
+            initialNumToRender={10}
+            maxToRenderPerBatch={5}
+            windowSize={10}
+            getItemLayout={(data, index) => ({
+              length: 80,
+              offset: 80 * index,
+              index,
+            })}
+          />
+        )
       ) : (
         <View style={styles.feedbackContainer}>
           <LiveFeedbackFeed feedbackItems={feedbackItems} />
@@ -342,7 +383,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
   statusIndicator: {
     flexDirection: 'row',
@@ -368,15 +408,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'monospace',
   },
-  endButton: {
-    backgroundColor: '#dc2626',
-    borderRadius: 8,
-    padding: 12,
+  buttonContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+  startButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     alignItems: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  startButtonText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  endButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    shadowColor: '#FF3B30',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   endButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 17,
     fontWeight: '600',
   },
   agentContainer: {

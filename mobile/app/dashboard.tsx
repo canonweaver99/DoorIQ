@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
+  FlatList,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useAuth } from '../contexts/AuthContext'
@@ -27,7 +29,7 @@ export default function DashboardScreen() {
   })
   const [recentSessions, setRecentSessions] = useState<TrainingSession[]>([])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       if (!userProfile?.id) return
 
@@ -63,17 +65,48 @@ export default function DashboardScreen() {
       setLoading(false)
       setRefreshing(false)
     }
-  }
+  }, [userProfile?.id])
 
   useEffect(() => {
     fetchData()
-  }, [userProfile])
+  }, [fetchData])
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true)
     await refreshProfile()
     await fetchData()
-  }
+  }, [refreshProfile, fetchData])
+
+  const handleSessionPress = useCallback((sessionId: string) => {
+    router.push(`/trainer/${sessionId}`)
+  }, [router])
+
+  const renderSessionCard = useCallback(({ item: session }: { item: TrainingSession }) => {
+    return (
+      <TouchableOpacity
+        style={styles.sessionCard}
+        onPress={() => handleSessionPress(session.id)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.sessionHeader}>
+          <Text style={styles.sessionAgent}>{session.agent_name || 'Unknown Agent'}</Text>
+          {session.overall_score !== null && (
+            <View style={styles.scoreBadge}>
+              <Text style={styles.scoreText}>{session.overall_score}</Text>
+            </View>
+          )}
+        </View>
+        <Text style={styles.sessionDate}>{formatDate(session.created_at)}</Text>
+        {session.duration_seconds && (
+          <Text style={styles.sessionDuration}>
+            Duration: {Math.floor(session.duration_seconds / 60)}m {session.duration_seconds % 60}s
+          </Text>
+        )}
+      </TouchableOpacity>
+    )
+  }, [handleSessionPress])
+
+  const keyExtractor = useCallback((item: TrainingSession) => item.id, [])
 
   if (loading) {
     return (
@@ -131,28 +164,16 @@ export default function DashboardScreen() {
               </Text>
             </View>
           ) : (
-            recentSessions.map((session) => (
-              <TouchableOpacity
-                key={session.id}
-                style={styles.sessionCard}
-                onPress={() => router.push(`/trainer/${session.id}`)}
-              >
-                <View style={styles.sessionHeader}>
-                  <Text style={styles.sessionAgent}>{session.agent_name || 'Unknown Agent'}</Text>
-                  {session.overall_score !== null && (
-                    <View style={styles.scoreBadge}>
-                      <Text style={styles.scoreText}>{session.overall_score}</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.sessionDate}>{formatDate(session.created_at)}</Text>
-                {session.duration_seconds && (
-                  <Text style={styles.sessionDuration}>
-                    Duration: {Math.floor(session.duration_seconds / 60)}m {session.duration_seconds % 60}s
-                  </Text>
-                )}
-              </TouchableOpacity>
-            ))
+            <FlatList
+              data={recentSessions}
+              renderItem={renderSessionCard}
+              keyExtractor={keyExtractor}
+              scrollEnabled={false}
+              removeClippedSubviews={true}
+              initialNumToRender={5}
+              maxToRenderPerBatch={5}
+              windowSize={5}
+            />
           )}
         </View>
       </ScrollView>
@@ -178,14 +199,17 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1a1a1a',
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 34,
+    fontWeight: Platform.OS === 'ios' ? '700' : '700',
     color: '#fff',
     marginBottom: 4,
+    letterSpacing: Platform.OS === 'ios' ? -0.8 : 0,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: '#888',
+    fontSize: 17,
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.6)' : '#888',
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    letterSpacing: Platform.OS === 'ios' ? -0.2 : 0,
   },
   scrollView: {
     flex: 1,
@@ -201,42 +225,61 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Platform.OS === 'ios' 
+      ? 'rgba(255, 255, 255, 0.08)' 
+      : '#1a1a1a',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+    borderWidth: Platform.OS === 'ios' ? 0.5 : 0,
+    borderColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+    shadowColor: Platform.OS === 'ios' ? '#000' : '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0.3,
+    shadowRadius: Platform.OS === 'ios' ? 4 : 2,
+    elevation: Platform.OS === 'android' ? 2 : 0,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#a855f7',
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: Platform.OS === 'ios' ? '600' : '700',
+    color: Platform.OS === 'ios' ? '#007AFF' : '#a855f7',
+    marginBottom: 6,
+    letterSpacing: Platform.OS === 'ios' ? -0.5 : 0,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#888',
+    fontSize: 13,
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.6)' : '#888',
     textAlign: 'center',
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
   primaryButton: {
-    backgroundColor: '#a855f7',
+    backgroundColor: Platform.OS === 'ios' ? '#007AFF' : '#a855f7',
     borderRadius: 12,
     padding: 18,
     alignItems: 'center',
     marginBottom: 32,
+    shadowColor: Platform.OS === 'ios' ? '#007AFF' : '#a855f7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: Platform.OS === 'ios' ? 0.3 : 0.3,
+    shadowRadius: Platform.OS === 'ios' ? 8 : 4,
+    elevation: Platform.OS === 'android' ? 4 : 0,
   },
   primaryButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: Platform.OS === 'ios' ? '600' : '600',
+    letterSpacing: Platform.OS === 'ios' ? -0.2 : 0,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: Platform.OS === 'ios' ? '600' : '700',
     color: '#fff',
     marginBottom: 16,
+    letterSpacing: Platform.OS === 'ios' ? -0.4 : 0,
   },
   emptyState: {
     padding: 32,
@@ -254,42 +297,61 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sessionCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Platform.OS === 'ios' 
+      ? 'rgba(255, 255, 255, 0.08)' 
+      : '#1a1a1a',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    borderWidth: Platform.OS === 'ios' ? 0.5 : 0,
+    borderColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+    shadowColor: Platform.OS === 'ios' ? '#000' : '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: Platform.OS === 'ios' ? 0.05 : 0.2,
+    shadowRadius: Platform.OS === 'ios' ? 2 : 1,
+    elevation: Platform.OS === 'android' ? 1 : 0,
   },
   sessionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   sessionAgent: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: Platform.OS === 'ios' ? '600' : '600',
     color: '#fff',
     flex: 1,
+    letterSpacing: Platform.OS === 'ios' ? -0.3 : 0,
   },
   scoreBadge: {
-    backgroundColor: '#a855f7',
+    backgroundColor: Platform.OS === 'ios' 
+      ? 'rgba(0, 122, 255, 0.2)' 
+      : '#a855f7',
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 4,
+    borderWidth: Platform.OS === 'ios' ? 0.5 : 0,
+    borderColor: Platform.OS === 'ios' ? 'rgba(0, 122, 255, 0.3)' : 'transparent',
   },
   scoreText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    color: Platform.OS === 'ios' ? '#007AFF' : '#fff',
+    fontSize: 15,
+    fontWeight: Platform.OS === 'ios' ? '600' : '600',
+    letterSpacing: Platform.OS === 'ios' ? -0.2 : 0,
   },
   sessionDate: {
-    fontSize: 14,
-    color: '#888',
-    marginBottom: 4,
+    fontSize: 15,
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.6)' : '#888',
+    marginBottom: 6,
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
   sessionDuration: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.5)' : '#666',
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
 })
 

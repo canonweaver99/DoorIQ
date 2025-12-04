@@ -1,5 +1,5 @@
-import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import React, { useMemo } from 'react'
+import { View, Text, StyleSheet, Platform } from 'react-native'
 
 export interface LiveSessionMetrics {
   talkTimeRatio: number
@@ -12,7 +12,34 @@ interface LiveMetricsPanelProps {
   metrics: LiveSessionMetrics
 }
 
-function MetricCard({ 
+const colorStyles = {
+  blue: {
+    iconBg: 'rgba(0, 122, 255, 0.15)',
+    text: '#007AFF',
+    progress: '#007AFF',
+    badgeBg: 'rgba(0, 122, 255, 0.1)',
+  },
+  amber: {
+    iconBg: 'rgba(255, 149, 0, 0.15)',
+    text: '#FF9500',
+    progress: '#FF9500',
+    badgeBg: 'rgba(255, 149, 0, 0.1)',
+  },
+  emerald: {
+    iconBg: 'rgba(52, 199, 89, 0.15)',
+    text: '#34C759',
+    progress: '#34C759',
+    badgeBg: 'rgba(52, 199, 89, 0.1)',
+  },
+  purple: {
+    iconBg: 'rgba(175, 82, 222, 0.15)',
+    text: '#AF52DE',
+    progress: '#AF52DE',
+    badgeBg: 'rgba(175, 82, 222, 0.1)',
+  },
+}
+
+const MetricCard = React.memo(({ 
   icon, 
   label, 
   value, 
@@ -26,45 +53,29 @@ function MetricCard({
   color: 'blue' | 'amber' | 'emerald' | 'purple'
   badge?: string
   progress?: number
-}) {
-  const colorStyles = {
-    blue: {
-      iconBg: '#3b82f6',
-      text: '#60a5fa',
-      progress: '#3b82f6',
-    },
-    amber: {
-      iconBg: '#f59e0b',
-      text: '#fbbf24',
-      progress: '#f59e0b',
-    },
-    emerald: {
-      iconBg: '#10b981',
-      text: '#34d399',
-      progress: '#10b981',
-    },
-    purple: {
-      iconBg: '#a855f7',
-      text: '#c084fc',
-      progress: '#a855f7',
-    },
-  }
-
+}) => {
   const styles = colorStyles[color]
-
+  const isGoodBadge = badge === 'Balanced' || badge === 'Good'
+  
   return (
-    <View style={[localStyles.metricCard, { borderColor: `${styles.progress}40` }]}>
+    <View style={localStyles.metricCard}>
       <View style={localStyles.metricHeader}>
-        <View style={[localStyles.iconContainer, { backgroundColor: `${styles.iconBg}20` }]}>
-          <Text style={[localStyles.iconText, { color: styles.text }]}>{icon}</Text>
+        <View style={[localStyles.iconContainer, { backgroundColor: styles.iconBg }]}>
+          <Text style={localStyles.iconText}>{icon}</Text>
         </View>
         <View style={localStyles.metricContent}>
           <Text style={localStyles.metricLabel}>{label}</Text>
           <View style={localStyles.metricValueRow}>
             <Text style={localStyles.metricValue}>{value}</Text>
             {badge && (
-              <View style={[localStyles.badge, badge === 'Balanced' && localStyles.badgeGood]}>
-                <Text style={localStyles.badgeText}>{badge}</Text>
+              <View style={[
+                localStyles.badge, 
+                isGoodBadge && { backgroundColor: styles.badgeBg }
+              ]}>
+                <Text style={[
+                  localStyles.badgeText,
+                  isGoodBadge && { color: styles.text }
+                ]}>{badge}</Text>
               </View>
             )}
           </View>
@@ -92,12 +103,12 @@ function MetricCard({
       )}
     </View>
   )
-}
+})
 
-export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
+export const LiveMetricsPanel = React.memo(({ metrics }: LiveMetricsPanelProps) => {
   const { talkTimeRatio, wordsPerMinute, objectionCount, techniquesUsed } = metrics
 
-  const getTalkTimeStatus = () => {
+  const talkTimeStatus = useMemo(() => {
     if (talkTimeRatio >= 40 && talkTimeRatio <= 60) {
       return { badge: 'Balanced', variant: 'good' as const }
     } else if ((talkTimeRatio >= 35 && talkTimeRatio < 40) || (talkTimeRatio > 60 && talkTimeRatio <= 70)) {
@@ -107,9 +118,9 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
     } else {
       return { badge: 'Talk', variant: 'warning' as const }
     }
-  }
+  }, [talkTimeRatio])
 
-  const getWPMStatus = () => {
+  const wpmStatus = useMemo(() => {
     if (wordsPerMinute >= 140 && wordsPerMinute <= 160) {
       return { badge: 'Good', variant: 'good' as const }
     } else if (wordsPerMinute < 140) {
@@ -117,13 +128,10 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
     } else {
       return { badge: 'Fast', variant: 'warning' as const }
     }
-  }
-
-  const talkTimeStatus = getTalkTimeStatus()
-  const wpmStatus = getWPMStatus()
+  }, [wordsPerMinute])
   
   // Calculate WPM progress (0-200 scale, with 150 as target)
-  const wpmProgress = Math.min(100, (wordsPerMinute / 200) * 100)
+  const wpmProgress = useMemo(() => Math.min(100, (wordsPerMinute / 200) * 100), [wordsPerMinute])
 
   return (
     <View style={localStyles.container}>
@@ -159,101 +167,120 @@ export function LiveMetricsPanel({ metrics }: LiveMetricsPanelProps) {
       </View>
     </View>
   )
-}
+})
 
 const localStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginBottom: 12,
   },
   metricCard: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: Platform.OS === 'ios' 
+      ? 'rgba(255, 255, 255, 0.08)' 
+      : '#1e293b',
     borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
+    padding: 14,
+    borderWidth: Platform.OS === 'ios' ? 0.5 : 1,
+    borderColor: Platform.OS === 'ios' 
+      ? 'rgba(255, 255, 255, 0.1)' 
+      : '#334155',
+    shadowColor: Platform.OS === 'ios' ? '#000' : '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0.3,
+    shadowRadius: Platform.OS === 'ios' ? 4 : 2,
+    elevation: Platform.OS === 'android' ? 2 : 0,
   },
   rightMetrics: {
     flex: 1,
-    gap: 8,
+    gap: 10,
   },
   metricHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: 10,
+    marginBottom: 10,
   },
   iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconText: {
-    fontSize: 16,
+    fontSize: 18,
   },
   metricContent: {
     flex: 1,
   },
   metricLabel: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: 13,
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.6)' : '#94a3b8',
     marginBottom: 4,
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    letterSpacing: Platform.OS === 'ios' ? -0.2 : 0,
   },
   metricValueRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexWrap: 'wrap',
   },
   metricValue: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: Platform.OS === 'ios' ? '600' : '700',
     color: '#fff',
+    letterSpacing: Platform.OS === 'ios' ? -0.5 : 0,
   },
   badge: {
-    backgroundColor: '#475569',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeGood: {
-    backgroundColor: '#10b981',
+    backgroundColor: Platform.OS === 'ios' 
+      ? 'rgba(255, 255, 255, 0.15)' 
+      : '#475569',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   badgeText: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 11,
+    fontWeight: Platform.OS === 'ios' ? '600' : '600',
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.9)' : '#fff',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
   progressContainer: {
-    marginTop: 8,
+    marginTop: 10,
   },
   progressBar: {
-    height: 4,
-    backgroundColor: '#334155',
-    borderRadius: 2,
+    height: 3,
+    backgroundColor: Platform.OS === 'ios' 
+      ? 'rgba(255, 255, 255, 0.15)' 
+      : '#334155',
+    borderRadius: 1.5,
     position: 'relative',
-    marginBottom: 6,
+    marginBottom: 8,
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 1.5,
   },
   progressMarker: {
     position: 'absolute',
-    top: -6,
+    top: -5,
     width: 2,
-    height: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    height: 13,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   progressLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   progressLabel: {
-    fontSize: 9,
-    color: '#64748b',
+    fontSize: 10,
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.5)' : '#64748b',
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
 })
 

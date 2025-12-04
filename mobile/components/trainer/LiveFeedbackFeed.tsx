@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react'
-import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import React, { useEffect, useRef, useMemo, useCallback } from 'react'
+import { View, Text, ScrollView, StyleSheet, FlatList } from 'react-native'
 
 export interface FeedbackItem {
   id: string
@@ -19,8 +19,8 @@ interface LiveFeedbackFeedProps {
   feedbackItems: FeedbackItem[]
 }
 
-function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
-  const getConfig = () => {
+const FeedbackItemComponent = React.memo(({ item }: { item: FeedbackItem }) => {
+  const config = useMemo(() => {
     switch (item.type) {
       case 'objection_detected':
         return {
@@ -53,10 +53,9 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
           color: '#64748b',
         }
     }
-  }
+  }, [item.type])
 
-  const config = getConfig()
-  const formatTime = (date: Date) => {
+  const formatTime = useCallback((date: Date) => {
     const now = new Date()
     const diff = now.getTime() - date.getTime()
     const seconds = Math.floor(diff / 1000)
@@ -66,7 +65,7 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
     if (minutes < 60) return `${minutes}m ago`
     const hours = Math.floor(minutes / 60)
     return `${hours}h ago`
-  }
+  }, [])
 
   return (
     <View style={[localStyles.feedbackItem, { borderLeftColor: config.color }]}>
@@ -84,17 +83,22 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
   )
 }
 
-export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
-  const scrollViewRef = useRef<ScrollView>(null)
-  const feedEndRef = useRef<View>(null)
+export const LiveFeedbackFeed = React.memo(({ feedbackItems }: LiveFeedbackFeedProps) => {
+  const flatListRef = useRef<FlatList>(null)
 
   useEffect(() => {
-    if (scrollViewRef.current && feedEndRef.current) {
+    if (flatListRef.current && feedbackItems.length > 0) {
       setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true })
+        flatListRef.current?.scrollToEnd({ animated: true })
       }, 100)
     }
   }, [feedbackItems.length])
+
+  const renderItem = useCallback(({ item }: { item: FeedbackItem }) => (
+    <FeedbackItemComponent item={item} />
+  ), [])
+
+  const keyExtractor = useCallback((item: FeedbackItem) => item.id, [])
 
   return (
     <View style={localStyles.container}>
@@ -102,28 +106,28 @@ export function LiveFeedbackFeed({ feedbackItems }: LiveFeedbackFeedProps) {
         <View style={localStyles.statusIndicator} />
         <Text style={localStyles.headerText}>Live Feedback</Text>
       </View>
-      <ScrollView
-        ref={scrollViewRef}
-        style={localStyles.scrollView}
-        contentContainerStyle={localStyles.scrollContent}
-      >
-        {feedbackItems.length === 0 ? (
-          <View style={localStyles.emptyState}>
-            <Text style={localStyles.emptyIcon}>💡</Text>
-            <Text style={localStyles.emptyText}>Waiting for feedback...</Text>
-          </View>
-        ) : (
-          <>
-            {feedbackItems.map((item) => (
-              <FeedbackItemComponent key={item.id} item={item} />
-            ))}
-            <View ref={feedEndRef} />
-          </>
-        )}
-      </ScrollView>
+      {feedbackItems.length === 0 ? (
+        <View style={localStyles.emptyState}>
+          <Text style={localStyles.emptyIcon}>💡</Text>
+          <Text style={localStyles.emptyText}>Waiting for feedback...</Text>
+        </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={feedbackItems}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          style={localStyles.scrollView}
+          contentContainerStyle={localStyles.scrollContent}
+          removeClippedSubviews={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={10}
+        />
+      )}
     </View>
   )
-}
+})
 
 const localStyles = StyleSheet.create({
   container: {
