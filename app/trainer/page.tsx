@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { Home, Mic, FileText, Trophy, RotateCcw, PhoneOff } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 import { motion } from 'framer-motion'
+import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
 import { createClient } from '@/lib/supabase/client'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { useSessionLimit } from '@/hooks/useSubscription'
@@ -17,9 +18,14 @@ import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_SET, type AllowedAgentName } from '@/components/trainer/personas'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
 import { cn } from '@/lib/utils'
-import { LiveMetricsPanel } from '@/components/trainer/LiveMetricsPanel'
+// Lazy load components for mobile performance
+const LiveMetricsPanel = dynamicImport(() => import('@/components/trainer/LiveMetricsPanel').then(mod => ({ default: mod.LiveMetricsPanel })), { 
+  ssr: false 
+})
+const LiveTranscript = dynamicImport(() => import('@/components/trainer/LiveTranscript').then(mod => ({ default: mod.LiveTranscript })), { 
+  ssr: false 
+})
 import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
-import { LiveTranscript } from '@/components/trainer/LiveTranscript'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
 import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
@@ -102,6 +108,9 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
 
 function TrainerPageContent() {
   const router = useRouter()
+  const isMobile = useIsMobile(768)
+  const prefersReducedMotion = useReducedMotion()
+  const shouldAnimate = !isMobile && !prefersReducedMotion
   const [sessionActive, setSessionActive] = useState(false)
   const [sessionState, setSessionState] = useState<'active' | 'ending' | 'door-closing' | 'complete'>('active')
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -409,6 +418,52 @@ function TrainerPageContent() {
       signedUrlAbortRef.current?.abort()
     }
   }, [])
+
+  // Preload agent images and videos when agent is selected
+  useEffect(() => {
+    if (!selectedAgent) return
+
+    // Preload agent image
+    const agentImageUrl = resolveAgentImage(selectedAgent, false)
+    if (agentImageUrl) {
+      const link = document.createElement('link')
+      link.rel = 'preload'
+      link.as = 'image'
+      link.href = agentImageUrl
+      document.head.appendChild(link)
+    }
+
+    // Preload agent videos if agent has videos
+    if (agentHasVideos(selectedAgent.name)) {
+      const videoPaths = getAgentVideoPaths(selectedAgent.name)
+      if (videoPaths) {
+        // Preload loop video (most likely to be used first)
+        if (videoPaths.loop) {
+          const videoLink = document.createElement('link')
+          videoLink.rel = 'preload'
+          videoLink.as = 'video'
+          videoLink.href = videoPaths.loop
+          document.head.appendChild(videoLink)
+        }
+        // Preload opening video
+        if (videoPaths.opening) {
+          const openingLink = document.createElement('link')
+          openingLink.rel = 'preload'
+          openingLink.as = 'video'
+          openingLink.href = videoPaths.opening
+          document.head.appendChild(openingLink)
+        }
+        // Preload closing video
+        if (videoPaths.closing) {
+          const closingLink = document.createElement('link')
+          closingLink.rel = 'preload'
+          closingLink.as = 'video'
+          closingLink.href = videoPaths.closing
+          document.head.appendChild(closingLink)
+        }
+      }
+    }
+  }, [selectedAgent])
 
   const fetchUserAvatar = async () => {
     try {
@@ -1649,12 +1704,16 @@ function TrainerPageContent() {
   // }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="min-h-screen bg-black font-sans"
-    >
+    shouldAnimate ? (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen bg-black font-sans"
+      >
+    ) : (
+      <div className="min-h-screen bg-black font-sans">
+    )
 
       {/* Full Screen Session Container */}
       <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">
@@ -1670,26 +1729,48 @@ function TrainerPageContent() {
           {sessionActive && (
             <div className="sm:hidden flex items-center gap-2">
               {restartSession && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={restartSession}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white"
-                  aria-label="Restart session"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span className="text-xs font-medium">Restart</span>
-                </motion.button>
+                shouldAnimate ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={restartSession}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white"
+                    aria-label="Restart session"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span className="text-xs font-medium">Restart</span>
+                  </motion.button>
+                ) : (
+                  <button
+                    onClick={restartSession}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white active:scale-[0.95]"
+                    aria-label="Restart session"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span className="text-xs font-medium">Restart</span>
+                  </button>
+                )
               )}
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => endSession()}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation"
-                aria-label="End session"
-              >
-                <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="font-medium">End</span>
-              </motion.button>
+              {shouldAnimate ? (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => endSession()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation"
+                  aria-label="End session"
+                >
+                  <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="font-medium">End</span>
+                </motion.button>
+              ) : (
+                <button
+                  onClick={() => endSession()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation active:scale-[0.95]"
+                  aria-label="End session"
+                >
+                  <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="font-medium">End</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1697,7 +1778,7 @@ function TrainerPageContent() {
         {/* Mobile Layout - Split View */}
         <div className="md:hidden flex-1 flex flex-col overflow-hidden min-h-0" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           {/* Top Section - Agent Video (Prominent) */}
-          <div className="flex-shrink-0 w-full h-[45vh] min-h-[280px] max-h-[50vh] relative bg-slate-900 overflow-hidden">
+          <div className="flex-shrink-0 w-full h-[45vh] min-h-[280px] max-h-[50vh] relative bg-slate-900 overflow-hidden rounded-t-2xl sm:rounded-t-3xl border-t-2 border-x-2 border-white/10 shadow-xl">
             <div className="absolute inset-0">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -1904,16 +1985,27 @@ function TrainerPageContent() {
                   {/* Knock Button Overlay - Mobile */}
                   {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => startSession()}
-                        className="relative px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-space font-bold text-base sm:text-lg rounded-2xl sm:rounded-3xl shadow-xl shadow-purple-500/25 transition-all min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group"
-                      >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <span>Knock on {selectedAgent.name}'s Door</span>
-                        </span>
-                      </motion.button>
+                      {shouldAnimate ? (
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => startSession()}
+                          className="relative px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-space font-bold text-base sm:text-lg rounded-2xl sm:rounded-3xl shadow-xl shadow-purple-500/25 transition-all min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group"
+                        >
+                          <span className="relative z-10 flex items-center justify-center gap-2">
+                            <span>Knock on {selectedAgent.name}'s Door</span>
+                          </span>
+                        </motion.button>
+                      ) : (
+                        <button
+                          onClick={() => startSession()}
+                          className="relative px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-space font-bold text-base sm:text-lg rounded-2xl sm:rounded-3xl shadow-xl shadow-purple-500/25 transition-all min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group active:scale-[0.98]"
+                        >
+                          <span className="relative z-10 flex items-center justify-center gap-2">
+                            <span>Knock on {selectedAgent.name}'s Door</span>
+                          </span>
+                        </button>
+                      )}
                     </div>
                   )}
                   
@@ -1963,58 +2055,83 @@ function TrainerPageContent() {
             className="flex-1 overflow-y-auto bg-black will-change-scroll"
             style={{ 
               paddingBottom: 'calc(env(safe-area-inset-bottom) + 6rem)',
-              WebkitOverflowScrolling: 'touch'
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'none',
+              transform: 'translateZ(0)',
+              WebkitTransform: 'translateZ(0)'
             }}
           >
             <div className="space-y-3 sm:space-y-4 p-3 sm:p-4">
               {/* Mobile Metrics Panel */}
               {sessionActive && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm"
-                >
-                  <LiveMetricsPanel 
-                    metrics={metrics} 
-                    getVoiceAnalysisData={getVoiceAnalysisData}
-                    transcript={transcript}
-                    sessionId={sessionId}
-                    sessionActive={sessionActive}
-                    agentName={selectedAgent?.name}
-                  />
-                </motion.div>
+                shouldAnimate ? (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm"
+                  >
+                    <Suspense fallback={<div className="h-32 bg-slate-800/50 rounded animate-pulse" />}>
+                      <LiveMetricsPanel 
+                        metrics={metrics} 
+                        getVoiceAnalysisData={getVoiceAnalysisData}
+                        transcript={transcript}
+                        sessionId={sessionId}
+                        sessionActive={sessionActive}
+                        agentName={selectedAgent?.name}
+                      />
+                    </Suspense>
+                  </motion.div>
+                ) : (
+                  <div className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                    <Suspense fallback={<div className="h-32 bg-slate-800/50 rounded animate-pulse" />}>
+                      <LiveMetricsPanel 
+                        metrics={metrics} 
+                        getVoiceAnalysisData={getVoiceAnalysisData}
+                        transcript={transcript}
+                        sessionId={sessionId}
+                        sessionActive={sessionActive}
+                        agentName={selectedAgent?.name}
+                      />
+                    </Suspense>
+                  </div>
+                )
               )}
 
               {/* Mobile Transcript */}
               {sessionActive && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm"
-                >
-                  <LiveTranscript 
-                    transcript={transcript} 
-                    agentName={selectedAgent?.name}
-                    agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                    userAvatarUrl={userAvatarUrl}
-                    sessionActive={sessionActive}
-                  />
-                </motion.div>
+                shouldAnimate ? (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm"
+                  >
+                    <Suspense fallback={<div className="h-64 bg-slate-800/50 rounded animate-pulse" />}>
+                      <LiveTranscript 
+                        transcript={transcript} 
+                        agentName={selectedAgent?.name}
+                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                        userAvatarUrl={userAvatarUrl}
+                        sessionActive={sessionActive}
+                      />
+                    </Suspense>
+                  </motion.div>
+                ) : (
+                  <div className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                    <Suspense fallback={<div className="h-64 bg-slate-800/50 rounded animate-pulse" />}>
+                      <LiveTranscript 
+                        transcript={transcript} 
+                        agentName={selectedAgent?.name}
+                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                        userAvatarUrl={userAvatarUrl}
+                        sessionActive={sessionActive}
+                      />
+                    </Suspense>
+                  </div>
+                )
               )}
 
-              {/* Mobile Feedback Feed */}
-              {sessionActive && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                  className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm"
-                >
-                  <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
-                </motion.div>
-              )}
             </div>
           </div>
         </div>
@@ -2416,7 +2533,7 @@ function TrainerPageContent() {
           transition-duration: 200ms;
         }
       `}</style>
-    </motion.div>
+    {shouldAnimate ? </motion.div> : </div>}
   )
 }
 

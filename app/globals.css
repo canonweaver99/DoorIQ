@@ -177,8 +177,8 @@ video:fullscreen {
   @media (max-width: 768px) {
     /* Reduce animations on mobile for better performance */
     * {
-      animation-duration: 0.3s !important;
-      transition-duration: 0.2s !important;
+      animation-duration: 0.15s !important;
+      transition-duration: 0.15s !important;
     }
 
     /* Disable heavy animations on mobile */
@@ -189,8 +189,10 @@ video:fullscreen {
       }
     }
 
-    /* Optimize transforms for mobile */
-    .transform-gpu {
+    /* Optimize transforms for mobile - GPU acceleration */
+    .transform-gpu,
+    [style*="transform"],
+    [class*="motion"] {
       transform: translateZ(0);
       -webkit-transform: translateZ(0);
       will-change: transform;
@@ -198,9 +200,10 @@ video:fullscreen {
 
     /* Reduce blur effects on mobile */
     .backdrop-blur-xl,
-    .backdrop-blur-lg {
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+    .backdrop-blur-lg,
+    .backdrop-blur-sm {
+      backdrop-filter: blur(4px) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
     }
 
     /* Optimize scrolling */
@@ -212,7 +215,7 @@ video:fullscreen {
     .shadow-lg,
     .shadow-xl,
     .shadow-2xl {
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06) !important;
     }
 
     /* Optimize images */
@@ -225,6 +228,12 @@ video:fullscreen {
     .bg-gradient-to-r,
     .bg-gradient-to-br {
       background-attachment: scroll;
+    }
+
+    /* Add containment for isolated components */
+    [class*="rounded"],
+    [class*="border"] {
+      contain: layout style paint;
     }
   }
 

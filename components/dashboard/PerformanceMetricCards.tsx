@@ -102,9 +102,9 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Confidence</span>
-                  <span className="font-space text-white font-bold text-lg md:text-xl">{voice.confidence}%</span>
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Confidence</span>
+                  <span className="font-space text-white font-bold text-sm sm:text-base md:text-lg lg:text-xl flex-shrink-0">{voice.confidence}%</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2">
                   <div 
@@ -112,16 +112,16 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                     style={{ width: `${voice.confidence}%` }}
                   />
                 </div>
-                <p className="font-space text-white/80 text-base md:text-lg font-bold mt-2">
+                <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mt-2 break-words">
                   {voice.confidence >= 80 ? 'Excellent confidence level' : 
                    voice.confidence >= 60 ? 'Good confidence, room for improvement' : 
                    'Low confidence - focus on reducing filler words'}
                 </p>
               </div>
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Energy</span>
-                  <span className="font-space text-white font-bold text-lg md:text-xl">{voice.energy}%</span>
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Energy</span>
+                  <span className="font-space text-white font-bold text-sm sm:text-base md:text-lg lg:text-xl flex-shrink-0">{voice.energy}%</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2">
                   <div 
@@ -129,16 +129,16 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                     style={{ width: `${voice.energy}%` }}
                   />
                 </div>
-                <p className="font-space text-white/80 text-base md:text-lg font-bold mt-2">
+                <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mt-2 break-words">
                   {voice.energy >= 80 ? 'High energy, engaging delivery' : 
                    voice.energy >= 60 ? 'Moderate energy - vary your pace' : 
                    'Low energy - increase enthusiasm and volume'}
                 </p>
               </div>
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Clarity</span>
-                  <span className="font-space text-white font-bold text-lg md:text-xl">{voice.clarity}%</span>
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Clarity</span>
+                  <span className="font-space text-white font-bold text-sm sm:text-base md:text-lg lg:text-xl flex-shrink-0">{voice.clarity}%</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2">
                   <div 
@@ -146,7 +146,7 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                     style={{ width: `${voice.clarity}%` }}
                   />
                 </div>
-                <p className="font-space text-white/80 text-base md:text-lg font-bold mt-2">
+                <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mt-2 break-words">
                   {voice.clarity >= 80 ? 'Clear and articulate speech' : 
                    voice.clarity >= 60 ? 'Generally clear, watch pronunciation' : 
                    'Unclear speech - slow down and enunciate'}
@@ -157,26 +157,26 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               {/* Tips */}
               <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
-                <h4 className="font-space text-white text-base md:text-lg font-bold mb-3">Voice Quality Tips</h4>
-                <ul className="space-y-2 font-space text-base md:text-lg text-white/80 font-bold">
+                <h4 className="font-space text-white text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Voice Quality Tips</h4>
+                <ul className="space-y-2 font-space text-xs sm:text-sm md:text-base lg:text-lg text-white/80 font-bold">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Speak at 140-160 words per minute for optimal clarity</span>
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="break-words">Speak at 140-160 words per minute for optimal clarity</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Reduce filler words like "um" and "uh" to boost confidence</span>
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="break-words">Reduce filler words like "um" and "uh" to boost confidence</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Vary your pitch and volume to maintain energy</span>
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="break-words">Vary your pitch and volume to maintain energy</span>
                   </li>
                 </ul>
               </div>
               {/* Most Common Filler Words */}
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <h4 className="font-space text-white text-base md:text-lg font-bold mb-3">Most Common Filler Words</h4>
-                <div className="space-y-3 font-space text-base md:text-lg text-white/80 font-bold">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <h4 className="font-space text-white text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Most Common Filler Words</h4>
+                <div className="space-y-2 sm:space-y-3 font-space text-xs sm:text-sm md:text-base lg:text-lg text-white/80 font-bold">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-red-400"></span>
@@ -217,9 +217,9 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Talk Ratio</span>
-                  <span className="font-space text-white font-bold text-lg md:text-xl">{conversation.talkRatio}%</span>
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Talk Ratio</span>
+                  <span className="font-space text-white font-bold text-sm sm:text-base md:text-lg lg:text-xl flex-shrink-0">{conversation.talkRatio}%</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2">
                   <div 
@@ -227,7 +227,7 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                     style={{ width: `${conversation.talkRatio}%` }}
                   />
                 </div>
-                <p className="font-space text-white/80 text-base md:text-lg font-bold mt-2">
+                <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mt-2 break-words">
                   {conversation.talkRatio >= 50 && conversation.talkRatio <= 70 ? 
                    'Ideal balance - good listening' : 
                    conversation.talkRatio < 50 ? 
@@ -235,10 +235,10 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                    'Too talkative - let the customer speak more'}
                 </p>
               </div>
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Speaking Pace</span>
-                  <span className="font-space text-white font-bold text-lg md:text-xl">{conversation.pace} WPM</span>
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Speaking Pace</span>
+                  <span className="font-space text-white font-bold text-sm sm:text-base md:text-lg lg:text-xl flex-shrink-0">{conversation.pace} WPM</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2">
                   <div 
@@ -249,7 +249,7 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                     style={{ width: `${Math.min(100, (conversation.pace / 200) * 100)}%` }}
                   />
                 </div>
-                <p className="font-space text-white/80 text-base md:text-lg font-bold mt-2">
+                <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mt-2 break-words">
                   {conversation.pace >= 140 && conversation.pace <= 160 ? 
                    'Perfect pace - easy to follow' : 
                    conversation.pace > 160 ? 
@@ -260,12 +260,12 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             </div>
             {/* Warning */}
             {conversation.warning && (
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 sm:p-4">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-space text-yellow-400 text-base md:text-lg font-bold mb-1">Pace Warning</h4>
-                    <p className="font-space text-white/80 text-base md:text-lg font-bold">
+                    <h4 className="font-space text-yellow-400 text-sm sm:text-base md:text-lg font-bold mb-1">Pace Warning</h4>
+                    <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">
                       Your speaking pace of {conversation.pace} WPM is above the recommended range. 
                       Slow down to 140-160 WPM for better clarity and customer understanding.
                     </p>
@@ -274,10 +274,10 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
               </div>
             )}
             {/* Tips and Lesson Card - Side by Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <h4 className="font-space text-white text-base md:text-lg font-bold mb-3">Conversation Balance Tips</h4>
-                <ul className="space-y-2 font-space text-base md:text-lg text-white/80 font-bold">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <h4 className="font-space text-white text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Conversation Balance Tips</h4>
+                <ul className="space-y-2 font-space text-xs sm:text-sm md:text-base lg:text-lg text-white/80 font-bold">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                     <span>Aim for 50-70% talk ratio - balance speaking with listening</span>
@@ -293,15 +293,15 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                 </ul>
               </div>
               {/* Lesson Card */}
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4 flex flex-col justify-between">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-white" />
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center flex-shrink-0">
+                      <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                    <h4 className="font-space text-white text-base md:text-lg font-bold">Master Conversation</h4>
+                    <h4 className="font-space text-white text-sm sm:text-base md:text-lg font-bold break-words">Master Conversation</h4>
                   </div>
-                  <p className="font-space text-white/80 text-sm md:text-base font-bold mb-4">
+                  <p className="font-space text-white/80 text-xs sm:text-sm md:text-base font-bold mb-3 sm:mb-4 break-words">
                     Learn to balance speaking and listening, ask better questions, and improve your conversation flow.
                   </p>
                 </div>
@@ -309,10 +309,10 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => router.push('/learning?focus=conversation')}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-black font-space font-bold rounded-md text-base md:text-lg tracking-tight hover:bg-white/95 transition-all"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-white text-black font-space font-bold rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all"
                 >
                   Start Lesson
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.button>
               </div>
             </div>
@@ -325,9 +325,9 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Success Rate</span>
-                  <span className="font-space text-white font-bold text-3xl md:text-4xl">{closing.success}%</span>
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Success Rate</span>
+                  <span className="font-space text-white font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl flex-shrink-0">{closing.success}%</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-2">
                   <div 
@@ -337,16 +337,16 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                     style={{ width: `${closing.success}%` }}
                   />
                 </div>
-                <p className="font-space text-white/80 text-base md:text-lg font-bold mt-2">
+                <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mt-2 break-words">
                   {closing.success > 0 ? 
                    'Great job closing the deal!' : 
                    'No close attempted - always ask for the sale'}
                 </p>
               </div>
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Close Attempts</span>
-                  <span className="font-space text-white font-bold text-3xl md:text-4xl">{closing.attempts}</span>
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Close Attempts</span>
+                  <span className="font-space text-white font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl flex-shrink-0">{closing.attempts}</span>
                 </div>
                 <div className="mt-2">
                   {closing.status === 'MISSED' ? (
@@ -365,52 +365,52 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             </div>
             {/* Critical Warning */}
             {closing.status === 'MISSED' && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 sm:p-4">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-space text-red-400 text-base md:text-lg font-bold mb-1">Critical: No Close Attempt</h4>
-                    <p className="font-space text-white/80 text-base md:text-lg font-bold mb-3">
+                    <h4 className="font-space text-red-400 text-sm sm:text-base md:text-lg font-bold mb-1 break-words">Critical: No Close Attempt</h4>
+                    <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mb-2 sm:mb-3 break-words">
                       You didn't attempt to close the sale. Always ask for the close, even if you expect objections.
                     </p>
-                    <ul className="space-y-1 font-space text-base md:text-lg text-white/80 font-bold">
-                      <li>• Use assumptive language: "When would you like to schedule?"</li>
-                      <li>• Ask directly: "Are you ready to move forward?"</li>
-                      <li>• Create urgency: "This offer expires at the end of the week"</li>
+                    <ul className="space-y-1 font-space text-xs sm:text-sm md:text-base lg:text-lg text-white/80 font-bold">
+                      <li className="break-words">• Use assumptive language: "When would you like to schedule?"</li>
+                      <li className="break-words">• Ask directly: "Are you ready to move forward?"</li>
+                      <li className="break-words">• Create urgency: "This offer expires at the end of the week"</li>
                     </ul>
                   </div>
                 </div>
               </div>
             )}
             {/* Tips and Lesson Card - Side by Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <h4 className="font-space text-white text-base md:text-lg font-bold mb-3">Closing Techniques</h4>
-                <ul className="space-y-2 font-space text-base md:text-lg text-white/80 font-bold">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <h4 className="font-space text-white text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Closing Techniques</h4>
+                <ul className="space-y-2 font-space text-xs sm:text-sm md:text-base lg:text-lg text-white/80 font-bold">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Use assumptive language: "When would you like to schedule?"</span>
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="break-words">Use assumptive language: "When would you like to schedule?"</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Ask for the close multiple times throughout the conversation</span>
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="break-words">Ask for the close multiple times throughout the conversation</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>Address objections, then immediately ask for the close again</span>
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="break-words">Address objections, then immediately ask for the close again</span>
                   </li>
                 </ul>
               </div>
               {/* Lesson Card */}
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4 flex flex-col justify-between">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-white" />
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center flex-shrink-0">
+                      <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                    <h4 className="font-space text-white text-base md:text-lg font-bold">Master Closing</h4>
+                    <h4 className="font-space text-white text-sm sm:text-base md:text-lg font-bold break-words">Master Closing</h4>
                   </div>
-                  <p className="font-space text-white/80 text-sm md:text-base font-bold mb-4">
+                  <p className="font-space text-white/80 text-xs sm:text-sm md:text-base font-bold mb-3 sm:mb-4 break-words">
                     Learn proven closing techniques and practice with real scenarios to improve your success rate.
                   </p>
                 </div>
@@ -418,10 +418,10 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => router.push('/learning?focus=closing')}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-black font-space font-bold rounded-md text-base md:text-lg tracking-tight hover:bg-white/95 transition-all"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-white text-black font-space font-bold rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all"
                 >
                   Start Lesson
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </motion.button>
               </div>
             </div>
@@ -434,9 +434,9 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Overall Score</span>
-                  <span className="font-space text-white font-bold text-2xl md:text-3xl">{overall.score}/100</span>
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Overall Score</span>
+                  <span className="font-space text-white font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl flex-shrink-0">{overall.score}/100</span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-3">
                   <div 
@@ -448,14 +448,14 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                   />
                 </div>
               </div>
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Grade</span>
-                  <span className={`font-space text-4xl md:text-5xl font-bold ${overall.grade.color}`}>
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Grade</span>
+                  <span className={`font-space text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold ${overall.grade.color} flex-shrink-0`}>
                     {overall.grade.letter}
                   </span>
                 </div>
-                <p className="font-space text-white/80 text-base md:text-lg font-bold mt-2">
+                <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mt-2 break-words">
                   {overall.grade.letter === 'A' ? 'Excellent performance' :
                    overall.grade.letter === 'B' ? 'Good work, keep improving' :
                    overall.grade.letter === 'C' ? 'Average - focus on key areas' :
@@ -463,12 +463,12 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                    'Critical - review all fundamentals'}
                 </p>
               </div>
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-space text-white/80 text-base md:text-lg font-bold">Percentile</span>
-                  <span className="font-space text-white font-bold text-2xl md:text-3xl">{overall.percentile}</span>
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <span className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold break-words">Percentile</span>
+                  <span className="font-space text-white font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl flex-shrink-0">{overall.percentile}</span>
                 </div>
-                <p className="font-space text-white/80 text-base md:text-lg font-bold mt-2">
+                <p className="font-space text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-bold mt-2 break-words">
                   Your performance compared to other users
                 </p>
               </div>
@@ -477,42 +477,42 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               {/* Score Breakdown */}
               <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
-                <h4 className="font-space text-white text-base md:text-lg font-bold mb-4">Score Breakdown</h4>
+                <h4 className="font-space text-white text-sm sm:text-base md:text-lg font-bold mb-3 sm:mb-4">Score Breakdown</h4>
                 <div className="space-y-4 md:space-y-5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-space text-white/80 text-lg md:text-xl font-bold">Voice Quality</span>
-                    <span className="font-space text-white font-bold text-xl md:text-2xl">{voice.averageScore}%</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-space text-white/80 text-sm sm:text-base md:text-lg lg:text-xl font-bold break-words">Voice Quality</span>
+                    <span className="font-space text-white font-bold text-base sm:text-lg md:text-xl lg:text-2xl flex-shrink-0">{voice.averageScore}%</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-space text-white/80 text-lg md:text-xl font-bold">Conversation Skills</span>
-                    <span className="font-space text-white font-bold text-xl md:text-2xl">{conversation.averageScore}%</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-space text-white/80 text-sm sm:text-base md:text-lg lg:text-xl font-bold break-words">Conversation Skills</span>
+                    <span className="font-space text-white font-bold text-base sm:text-lg md:text-xl lg:text-2xl flex-shrink-0">{conversation.averageScore}%</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-space text-white/80 text-lg md:text-xl font-bold">Closing Ability</span>
-                    <span className="font-space text-white font-bold text-xl md:text-2xl">{closing.averageScore}%</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-space text-white/80 text-sm sm:text-base md:text-lg lg:text-xl font-bold break-words">Closing Ability</span>
+                    <span className="font-space text-white font-bold text-base sm:text-lg md:text-xl lg:text-2xl flex-shrink-0">{closing.averageScore}%</span>
                   </div>
                 </div>
               </div>
               {/* Improvement Areas */}
-              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-4">
-                <h4 className="font-space text-white text-base md:text-lg font-bold mb-3">Improvement Areas</h4>
-                <ul className="space-y-2 font-space text-base md:text-lg text-white/80 font-bold">
+              <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+                <h4 className="font-space text-white text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Improvement Areas</h4>
+                <ul className="space-y-2 font-space text-xs sm:text-sm md:text-base lg:text-lg text-white/80 font-bold">
                   {voice.averageScore < 80 && (
                     <li className="flex items-start gap-2">
-                      <TrendingUp className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <span>Focus on voice quality - reduce filler words and improve clarity</span>
+                      <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <span className="break-words">Focus on voice quality - reduce filler words and improve clarity</span>
                     </li>
                   )}
                   {conversation.averageScore < 80 && (
                     <li className="flex items-start gap-2">
-                      <TrendingUp className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <span>Improve conversation balance - adjust talk ratio and speaking pace</span>
+                      <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <span className="break-words">Improve conversation balance - adjust talk ratio and speaking pace</span>
                     </li>
                   )}
                   {closing.averageScore < 80 && (
                     <li className="flex items-start gap-2">
-                      <TrendingUp className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                      <span>Practice closing techniques - always ask for the sale</span>
+                      <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <span className="break-words">Practice closing techniques - always ask for the sale</span>
                     </li>
                   )}
                 </ul>

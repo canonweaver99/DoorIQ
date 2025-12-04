@@ -5,10 +5,11 @@ import { Mic, AlertTriangle, Book, TrendingUp, Info, CheckCircle2, Circle } from
 import { LiveSessionMetrics, TranscriptEntry, VoiceAnalysisData } from '@/lib/trainer/types'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import { detectObjection, assessObjectionHandling, getObjectionApproach } from '@/lib/trainer/enhancedPatternAnalyzer'
 import { useSentimentScore } from '@/hooks/useSentimentScore'
 import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
+import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
 
 interface LiveMetricsPanelProps {
   metrics: LiveSessionMetrics
@@ -354,6 +355,9 @@ interface SentimentCardProps {
 }
 
 function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
+  const isMobile = useIsMobile(768)
+  const prefersReducedMotion = useReducedMotion()
+  const shouldAnimate = !isMobile && !prefersReducedMotion
   const [isExpanded, setIsExpanded] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
   const { score, level, factors } = sentimentScore
@@ -397,11 +401,16 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
   
   const statusLabel = level === 'low' ? 'Low Sentiment' : level === 'building' ? 'Building' : 'Positive'
   
+  const CardComponent = shouldAnimate ? motion.div : 'div'
+  const cardProps = shouldAnimate ? {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.15 }
+  } : {}
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <CardComponent
+      {...cardProps}
       className={cn(
         "bg-slate-900 rounded-md sm:rounded-lg pt-[0.1rem] sm:pt-[0.35rem] px-3 sm:px-4 pb-[0.1rem] sm:pb-[0.35rem] border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col cursor-pointer relative touch-manipulation w-full active:scale-[0.99]",
         colors.border,
@@ -454,12 +463,19 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
           </div>
           
           {/* Progress fill */}
-          <motion.div
-            className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500", colors.progress)}
-            initial={{ width: 0 }}
-            animate={{ width: `${score}%` }}
-            transition={{ duration: 0.5 }}
-          />
+          {shouldAnimate ? (
+            <motion.div
+              className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-300", colors.progress)}
+              initial={{ width: 0 }}
+              animate={{ width: `${score}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          ) : (
+            <div 
+              className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-300", colors.progress)}
+              style={{ width: `${score}%` }}
+            />
+          )}
           
           {/* Zone markers */}
           <div className="absolute inset-0 flex items-center">
@@ -498,32 +514,57 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
       
       {/* Expanded breakdown */}
       {isExpanded && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="mt-2 pt-2 border-t border-slate-700/50"
-        >
-          <div className="text-xs text-white font-space font-medium mb-2">What feeds into Sentiment:</div>
-          <div className="space-y-1.5 text-xs text-white font-space">
-            <div className="flex justify-between items-center">
-              <span>Transcript Sentiment:</span>
-              <span className="font-mono">{scoreToDots(factors.transcriptSentiment)}</span>
+        shouldAnimate ? (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mt-2 pt-2 border-t border-slate-700/50"
+          >
+            <div className="text-xs text-white font-space font-medium mb-2">What feeds into Sentiment:</div>
+            <div className="space-y-1.5 text-xs text-white font-space">
+              <div className="flex justify-between items-center">
+                <span>Transcript Sentiment:</span>
+                <span className="font-mono">{scoreToDots(factors.transcriptSentiment)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Buying Signals:</span>
+                <span className="font-mono">{scoreToDots(factors.buyingSignals)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Objection Resolution:</span>
+                <span className="font-mono">{scoreToDots(factors.objectionResolution)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Positive Language:</span>
+                <span className="font-mono">{scoreToDots(factors.positiveLanguage)}</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span>Buying Signals:</span>
-              <span className="font-mono">{scoreToDots(factors.buyingSignals)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Objection Resolution:</span>
-              <span className="font-mono">{scoreToDots(factors.objectionResolution)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Positive Language:</span>
-              <span className="font-mono">{scoreToDots(factors.positiveLanguage)}</span>
+          </motion.div>
+        ) : (
+          <div className="mt-2 pt-2 border-t border-slate-700/50">
+            <div className="text-xs text-white font-space font-medium mb-2">What feeds into Sentiment:</div>
+            <div className="space-y-1.5 text-xs text-white font-space">
+              <div className="flex justify-between items-center">
+                <span>Transcript Sentiment:</span>
+                <span className="font-mono">{scoreToDots(factors.transcriptSentiment)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Buying Signals:</span>
+                <span className="font-mono">{scoreToDots(factors.buyingSignals)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Objection Resolution:</span>
+                <span className="font-mono">{scoreToDots(factors.objectionResolution)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Positive Language:</span>
+                <span className="font-mono">{scoreToDots(factors.positiveLanguage)}</span>
+              </div>
             </div>
           </div>
-        </motion.div>
+        )
       )}
       
       {/* Info Modal */}
@@ -535,13 +576,21 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
             setShowInfo(false)
           }}
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
-          >
+          {shouldAnimate ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
+            >
+          ) : (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
+            >
+          )}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white font-space">Sentiment Score Calculation</h3>
               <button
@@ -585,12 +634,11 @@ function SentimentCard({ sentimentScore, className }: SentimentCardProps) {
                 <div className="pl-2">• 1min+: 70-100% of base score</div>
               </div>
             </div>
-          </motion.div>
+          {shouldAnimate ? </motion.div> : </div>}
         </div>
       )}
-    </motion.div>
-  )
-}
+    </CardComponent>
+  >
 
 // Objection Data Structure
 interface ObjectionData {
@@ -874,14 +922,17 @@ function getStartingSentimentFromAgent(agentName: string | null | undefined): nu
   return Math.round(Math.max(5, Math.min(25, startingSentiment)))
 }
 
-export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [], sessionId, sessionActive = false, agentName }: LiveMetricsPanelProps) {
+export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [], sessionId, sessionActive = false, agentName }: LiveMetricsPanelProps) {
+  const isMobile = useIsMobile(768)
+  const prefersReducedMotion = useReducedMotion()
+  const shouldAnimate = !isMobile && !prefersReducedMotion
   const { talkTimeRatio, wordsPerMinute, objectionCount, techniquesUsed, voiceMetrics } = metrics
   
-  // Extract objections from transcript
-  const objections = extractObjectionsFromTranscript(transcript)
+  // Extract objections from transcript - memoized
+  const objections = useMemo(() => extractObjectionsFromTranscript(transcript), [transcript])
 
-  // Determine talk time status
-  const getTalkTimeStatus = () => {
+  // Determine talk time status - memoized
+  const talkTimeStatus = useMemo(() => {
     if (talkTimeRatio >= 55 && talkTimeRatio <= 65) {
       return { badge: 'Balanced', variant: 'default' as const }
     } else if ((talkTimeRatio >= 50 && talkTimeRatio < 55) || (talkTimeRatio > 65 && talkTimeRatio <= 75)) {
@@ -891,9 +942,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
     } else {
       return { badge: 'Talk Less', variant: 'destructive' as const }
     }
-  }
-
-  const talkTimeStatus = getTalkTimeStatus()
+  }, [talkTimeRatio])
 
   // Calculate session start time from transcript
   const sessionStartTime = useMemo(() => {
@@ -961,15 +1010,20 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
     }
   }
 
-  const talkTimeColors = getTalkTimeColor()
+  const talkTimeColors = useMemo(() => getTalkTimeColor(), [talkTimeRatio])
+
+  const TalkTimeCard = shouldAnimate ? motion.div : 'div'
+  const TalkTimeCardProps = shouldAnimate ? {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.15 }
+  } : {}
 
   return (
     <div className="flex flex-col gap-2 h-full w-full max-w-full overflow-hidden">
       {/* Talk Time Card - With Dynamic Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+      <TalkTimeCard
+        {...TalkTimeCardProps}
         className={cn(
           "bg-slate-900 rounded-md sm:rounded-lg pt-0.5 sm:pt-1.5 px-3 sm:px-4 pb-0.5 sm:pb-1.5 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col relative w-full",
           talkTimeColors.border
@@ -1007,12 +1061,19 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
             </div>
             
             {/* Progress fill */}
-            <motion.div
-              className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500", talkTimeColors.progress)}
-              initial={{ width: 0 }}
-              animate={{ width: `${talkTimeRatio}%` }}
-              transition={{ duration: 0.5 }}
-            />
+            {shouldAnimate ? (
+              <motion.div
+                className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500", talkTimeColors.progress)}
+                initial={{ width: 0 }}
+                animate={{ width: `${talkTimeRatio}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            ) : (
+              <div 
+                className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-300", talkTimeColors.progress)}
+                style={{ width: `${talkTimeRatio}%` }}
+              />
+            )}
             
             {/* Zone markers */}
             <div className="absolute inset-0 flex items-center">
@@ -1049,7 +1110,7 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
         {/* Percentage values - Bottom corners */}
         <div className="absolute bottom-2 sm:bottom-3 lg:bottom-4 left-2 sm:left-3 lg:left-4 right-2 sm:right-3 lg:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
         </div>
-      </motion.div>
+      </TalkTimeCard>
       
       {/* Sentiment Card */}
       <div className="w-full">
@@ -1057,6 +1118,6 @@ export function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [
       </div>
     </div>
   )
-}
+})
 
 

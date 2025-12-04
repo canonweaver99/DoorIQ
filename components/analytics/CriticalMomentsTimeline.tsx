@@ -186,56 +186,69 @@ export function CriticalMomentsTimeline({
                 {/* Content */}
                 <div className="flex-1">
                   {/* Header */}
-                  <div className="flex items-center gap-3 mb-4 flex-wrap">
-                    <Clock className="w-5 h-5 text-gray-400" />
-                    <span className="text-base font-medium text-gray-300">
-                      {formatTimestamp(moment.timestamp, sessionStartTime, durationSeconds)}
-                    </span>
-                    <span className="text-base font-semibold text-white">
-                      - {getMomentTypeLabel(moment.type)}
-                    </span>
-                    {/* Star Rating */}
-                    <div className="flex items-center gap-1 ml-auto">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                      <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm sm:text-base font-medium text-gray-300">
+                        {formatTimestamp(moment.timestamp, sessionStartTime, durationSeconds)}
+                      </span>
+                      <span className="text-sm sm:text-base font-semibold text-white">
+                        - {getMomentTypeLabel(moment.type)}
+                      </span>
+                      {isSuccess && (
+                        <span className="px-2 py-1 text-xs sm:text-sm font-semibold bg-green-500/20 text-green-400 rounded-full">
+                          Success
+                        </span>
+                      )}
+                      {isFailure && (
+                        <span className="px-2 py-1 text-xs sm:text-sm font-semibold bg-red-500/20 text-red-400 rounded-full">
+                          Critical Failure
+                        </span>
+                      )}
+                      {isMissed && (
+                        <span className="px-2 py-1 text-xs sm:text-sm font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">
+                          Missed Opportunity
+                        </span>
+                      )}
+                    </div>
+                    {/* Star Rating - Centered */}
+                    <div className="flex items-center justify-center sm:justify-start gap-1 mx-auto sm:mx-0 sm:ml-auto">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
                           className={cn(
-                            "w-4 h-4",
+                            "w-4 h-4 sm:w-4 sm:h-4",
                             star <= starRating
                               ? "fill-yellow-400 text-yellow-400"
                               : "text-gray-600"
                           )}
                         />
                       ))}
-                      <span className="text-sm text-gray-400 ml-1">({starRating}/5)</span>
+                      <span className="text-xs sm:text-sm text-gray-400 ml-1">({starRating}/5)</span>
                     </div>
-                    {isSuccess && (
-                      <span className="px-3 py-1.5 text-sm font-semibold bg-green-500/20 text-green-400 rounded-full">
-                        Success
-                      </span>
-                    )}
-                    {isFailure && (
-                      <span className="px-3 py-1.5 text-sm font-semibold bg-red-500/20 text-red-400 rounded-full">
-                        Critical Failure
-                      </span>
-                    )}
-                    {isMissed && (
-                      <span className="px-3 py-1.5 text-sm font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">
-                        Missed Opportunity
-                      </span>
-                    )}
                   </div>
                   
-                  {/* Transcript Quote */}
-                  <div className="mb-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                    <p className="text-base text-gray-200 italic mb-2">
+                  {/* Transcript Quote - Single quote only */}
+                  <div className="mb-4 p-3 sm:p-4 bg-slate-900/50 rounded-lg border border-slate-700/50">
+                    <p className="text-sm sm:text-base text-gray-200 italic mb-2">
                       "{(() => {
-                        let transcriptText = moment.transcript.length > 150 ? moment.transcript.slice(0, 150) + '...' : moment.transcript
+                        // Extract first meaningful quote (limit to ~80 chars for mobile)
+                        let transcriptText = moment.transcript
                         // Replace "homeowner:" with agent name if available (case-insensitive)
                         if (agentName) {
                           transcriptText = transcriptText.replace(/homeowner\s*:/gi, `${agentName}:`)
                         }
-                        return transcriptText
+                        // Find first quote or meaningful sentence
+                        const firstQuoteMatch = transcriptText.match(/["']([^"']{1,80})["']/)
+                        if (firstQuoteMatch) {
+                          return firstQuoteMatch[1]
+                        }
+                        // Otherwise, take first sentence or first 80 chars
+                        const firstSentence = transcriptText.split(/[.!?]/)[0]
+                        if (firstSentence && firstSentence.length <= 80) {
+                          return firstSentence.trim()
+                        }
+                        return transcriptText.slice(0, 80).trim() + (transcriptText.length > 80 ? '...' : '')
                       })()}"
                     </p>
                     {/* Success Indicator - Interest Level Change */}

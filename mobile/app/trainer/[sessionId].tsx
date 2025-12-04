@@ -271,7 +271,13 @@ export default function TrainingSessionScreen() {
       {/* Live Metrics Panel */}
       {sessionActive && transcript.length > 0 && (
         <View style={styles.metricsContainer}>
-          <LiveMetricsPanel metrics={metrics} />
+          <LiveMetricsPanel 
+            metrics={metrics} 
+            transcript={transcript}
+            sessionId={sessionId}
+            sessionActive={sessionActive}
+            agentName={selectedAgent?.name}
+          />
         </View>
       )}
 
@@ -460,6 +466,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderLeftWidth: 2,
+    borderLeftColor: 'rgba(255, 255, 255, 0.1)',
+    borderRightWidth: 2,
+    borderRightColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   metricsContainer: {
     paddingHorizontal: 16,

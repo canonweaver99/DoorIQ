@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, memo, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { TranscriptEntry } from '@/lib/trainer/types'
 import { Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
 
 interface LiveTranscriptProps {
   transcript: TranscriptEntry[]
@@ -37,6 +38,9 @@ function TranscriptMessage({
   userAvatarUrl?: string | null
   sessionStartTime: Date | null
 }) {
+  const isMobile = useIsMobile(768)
+  const prefersReducedMotion = useReducedMotion()
+  const shouldAnimate = !isMobile && !prefersReducedMotion
   const [copied, setCopied] = useState(false)
   const isUser = entry.speaker === 'user'
   
@@ -70,11 +74,16 @@ function TranscriptMessage({
     ? 'You' 
     : (agentName ? agentName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'AH')
 
+  const MessageComponent = shouldAnimate ? motion.div : 'div'
+  const messageProps = shouldAnimate ? {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.15 }
+  } : {}
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <MessageComponent
+      {...messageProps}
       className={cn(
         "flex gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg transition-all group",
         isUser 
@@ -97,6 +106,8 @@ function TranscriptMessage({
             width={36}
             height={36}
             className="w-full h-full object-cover"
+            loading="lazy"
+            sizes="36px"
             unoptimized={avatarUrl?.startsWith('http')}
           />
         ) : (
@@ -130,16 +141,16 @@ function TranscriptMessage({
           {displayText}
         </p>
       </div>
-    </motion.div>
+    </MessageComponent>
   )
 }
 
-export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvatarUrl, sessionActive = false }: LiveTranscriptProps) {
+export const LiveTranscript = memo(function LiveTranscript({ transcript, agentName, agentImageUrl, userAvatarUrl, sessionActive = false }: LiveTranscriptProps) {
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   
-  // Get session start time from first transcript entry
-  const sessionStartTime = transcript.length > 0 ? transcript[0].timestamp : null
+  // Get session start time from first transcript entry - memoized
+  const sessionStartTime = useMemo(() => transcript.length > 0 ? transcript[0].timestamp : null, [transcript])
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -168,7 +179,12 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
       <div 
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto px-2.5 sm:px-3 lg:px-4 pt-2.5 sm:pt-3 lg:pt-4 pb-1 custom-scrollbar space-y-2 sm:space-y-2.5 min-h-0 will-change-scroll"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'none',
+          transform: 'translateZ(0)',
+          WebkitTransform: 'translateZ(0)'
+        }}
       >
         {transcript.length === 0 ? (
           <div className="flex items-center justify-center h-full w-full text-slate-300 text-xs sm:text-sm font-space font-medium px-2">
@@ -176,20 +192,32 @@ export function LiveTranscript({ transcript, agentName, agentImageUrl, userAvata
           </div>
         ) : (
           <>
-            {transcript.map((entry) => (
-              <TranscriptMessage 
-                key={entry.id} 
-                entry={entry} 
-                agentName={agentName}
-                agentImageUrl={agentImageUrl}
-                userAvatarUrl={userAvatarUrl}
-                sessionStartTime={sessionStartTime}
-              />
-            ))}
+            {transcript.map((entry, index) => {
+              // Limit rendered items on mobile for better performance
+              const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+              const shouldRender = !isMobile || index >= transcript.length - 50
+              
+              return (
+                <div 
+                  key={entry.id}
+                  style={shouldRender ? {} : { contentVisibility: 'auto', containIntrinsicSize: '0 100px' }}
+                >
+                  {shouldRender && (
+                    <TranscriptMessage 
+                      entry={entry} 
+                      agentName={agentName}
+                      agentImageUrl={agentImageUrl}
+                      userAvatarUrl={userAvatarUrl}
+                      sessionStartTime={sessionStartTime}
+                    />
+                  )}
+                </div>
+              )
+            })}
             <div ref={transcriptEndRef} />
           </>
         )}
       </div>
     </div>
   )
-}
+})

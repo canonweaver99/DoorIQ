@@ -140,12 +140,12 @@ export function ElevenLabsSpeechMetrics({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.8 }}
-      className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 mb-8"
+      className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8"
     >
-      <div className="flex items-center gap-3 mb-6">
-        <Mic className="w-6 h-6 text-blue-400" />
-        <h2 className="text-3xl font-extrabold text-white font-space">Voice & Speech Analysis</h2>
-        <span className="text-sm text-white font-sans font-medium bg-blue-500/20 px-2 py-1 rounded-full">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+        <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400 flex-shrink-0" />
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white font-space">Voice & Speech Analysis</h2>
+        <span className="text-xs sm:text-sm text-white font-sans font-medium bg-blue-500/20 px-2 py-1 rounded-full self-start sm:self-auto">
           Powered by ElevenLabs
         </span>
       </div>
@@ -167,10 +167,10 @@ export function ElevenLabsSpeechMetrics({
         </div>
       )}
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 md:gap-8 mb-6 sm:mb-8">
         {/* Energy Level */}
         <div className="flex flex-col items-center">
-          <div className="mb-3">
+          <div className="mb-2 sm:mb-3 scale-75 sm:scale-90 md:scale-100">
             <ProgressRing
               value={energyLevel}
               max={100}
@@ -179,13 +179,13 @@ export function ElevenLabsSpeechMetrics({
               color={getPercentageColor(energyLevel)}
             />
           </div>
-          <div className="text-lg font-semibold text-white mb-1 font-sans">Energy Level</div>
-          <div className="text-base text-white font-sans font-medium">{getMetricLabel(energyLevel)}</div>
+          <div className="text-xs sm:text-sm md:text-lg font-semibold text-white mb-0.5 sm:mb-1 font-sans text-center px-1 break-words">Energy Level</div>
+          <div className="text-xs sm:text-sm md:text-base text-white font-sans font-medium text-center px-1">{getMetricLabel(energyLevel)}</div>
         </div>
         
         {/* Confidence */}
         <div className="flex flex-col items-center">
-          <div className="mb-3">
+          <div className="mb-2 sm:mb-3 scale-75 sm:scale-90 md:scale-100">
             <ProgressRing
               value={confidence}
               max={100}
@@ -194,15 +194,15 @@ export function ElevenLabsSpeechMetrics({
               color={getPercentageColor(confidence)}
             />
           </div>
-          <div className="text-lg font-semibold text-white mb-1 font-sans">Confidence</div>
-          <div className="text-base text-white font-sans font-medium">
+          <div className="text-xs sm:text-sm md:text-lg font-semibold text-white mb-0.5 sm:mb-1 font-sans text-center px-1 break-words">Confidence</div>
+          <div className="text-xs sm:text-sm md:text-base text-white font-sans font-medium text-center px-1">
             {confidence >= 60 ? 'Confident' : 'Sounds uncertain'}
           </div>
         </div>
         
         {/* Clarity */}
         <div className="flex flex-col items-center">
-          <div className="mb-3">
+          <div className="mb-2 sm:mb-3 scale-75 sm:scale-90 md:scale-100">
             <ProgressRing
               value={clarity}
               max={100}
@@ -211,15 +211,15 @@ export function ElevenLabsSpeechMetrics({
               color={getPercentageColor(clarity)}
             />
           </div>
-          <div className="text-lg font-semibold text-white mb-1 font-sans">Clarity</div>
-          <div className="text-base text-white font-sans font-medium">
+          <div className="text-xs sm:text-sm md:text-lg font-semibold text-white mb-0.5 sm:mb-1 font-sans text-center px-1 break-words">Clarity</div>
+          <div className="text-xs sm:text-sm md:text-base text-white font-sans font-medium text-center px-1">
             {clarity >= 80 ? 'Crystal clear' : 'Could be clearer'}
           </div>
         </div>
         
         {/* Pace Variety */}
         <div className="flex flex-col items-center">
-          <div className="mb-3">
+          <div className="mb-2 sm:mb-3 scale-75 sm:scale-90 md:scale-100">
             <ProgressRing
               value={paceVariety}
               max={100}
@@ -228,24 +228,24 @@ export function ElevenLabsSpeechMetrics({
               color={getPercentageColor(paceVariety)}
             />
           </div>
-          <div className="text-lg font-semibold text-white mb-1 font-sans">Pace Variety</div>
-          <div className="text-base text-white font-sans font-medium">
+          <div className="text-xs sm:text-sm md:text-lg font-semibold text-white mb-0.5 sm:mb-1 font-sans text-center px-1 break-words">Pace Variety</div>
+          <div className="text-xs sm:text-sm md:text-base text-white font-sans font-medium text-center px-1">
             {paceVariety >= 60 ? 'Good variety' : 'Too monotone'}
           </div>
         </div>
       </div>
       
       {/* Voice Tip */}
-      <div className="mt-6 p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-        <div className="text-xl font-bold text-blue-400 mb-3 font-space">💡 Voice Tip:</div>
-        <div className="text-lg text-white leading-relaxed font-sans font-medium">
+      <div className="mt-6 p-4 sm:p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+        <div className="text-lg sm:text-xl font-bold text-blue-400 mb-2 sm:mb-3 font-space">💡 Voice Tip:</div>
+        <div className="text-sm sm:text-base md:text-lg text-white leading-relaxed font-sans font-medium">
           {voiceAnalysis?.issues?.monotone || (paceVariety < 50 && wpm > 0)
-            ? 'Your voice lacks variety, which can make you sound less engaging. Practice varying your pace by slowing down when explaining important benefits and speeding up during transitions. Use pauses strategically after key points. Try emphasizing different words to create natural rhythm. When saying "This service protects your family," emphasize "protects" and "family".'
+            ? 'Your voice lacks variety. Practice varying your pace by slowing down for important benefits and speeding up during transitions. Use strategic pauses after key points and emphasize different words to create natural rhythm.'
             : voiceAnalysis?.issues?.lowEnergy || energyLevel < 60
-            ? 'Your energy level is lower than ideal. Before starting your pitch, take 3 deep breaths and do a quick warm up. Stand up straight with your shoulders back. Good posture increases vocal energy. Practice speaking with 20% more enthusiasm than feels natural. Smile while you talk. It changes your vocal tone.'
+            ? 'Your energy level is lower than ideal. Before starting, take 3 deep breaths and stand up straight. Good posture increases vocal energy. Practice speaking with 20% more enthusiasm and smile while you talk.'
             : fillerWordsPerMinute > 1
-            ? 'You\'re using filler words like "um" and "uh" which can undermine confidence. Practice pausing instead. A 1 to 2 second pause sounds thoughtful, not uncertain. Before speaking, take a moment to think. Record yourself and identify your most common filler words, then practice replacing them with pauses.'
-            : 'You\'re maintaining good vocal variety! Continue improving by varying your pace. Slow down for important benefits, speed up for transitions. Use strategic pauses after key points. Experiment with emphasizing different words to create natural rhythm.'}
+            ? 'You\'re using filler words like "um" and "uh" which can undermine confidence. Practice pausing instead. A 1-2 second pause sounds thoughtful, not uncertain. Record yourself to identify your most common filler words.'
+            : 'You\'re maintaining good vocal variety! Continue improving by varying your pace. Slow down for important benefits, speed up for transitions. Use strategic pauses after key points.'}
         </div>
       </div>
     </motion.div>

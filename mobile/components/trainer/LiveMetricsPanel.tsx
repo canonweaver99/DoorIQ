@@ -10,6 +10,10 @@ export interface LiveSessionMetrics {
 
 interface LiveMetricsPanelProps {
   metrics: LiveSessionMetrics
+  transcript?: any[]
+  sessionId?: string | null
+  sessionActive?: boolean
+  agentName?: string | null
 }
 
 const colorStyles = {
@@ -105,8 +109,115 @@ const MetricCard = React.memo(({
   )
 })
 
-export const LiveMetricsPanel = React.memo(({ metrics }: LiveMetricsPanelProps) => {
-  const { talkTimeRatio, wordsPerMinute, objectionCount, techniquesUsed } = metrics
+// Simplified sentiment calculation for React Native
+const calculateSentimentScore = (transcript: any[] = [], sessionDurationSeconds: number = 0): number => {
+  if (!transcript || transcript.length === 0) return 5
+  
+  // Simple sentiment calculation based on transcript length and positive keywords
+  const positiveKeywords = ['yes', 'sounds good', 'interested', 'great', 'perfect', 'okay', 'sure']
+  const negativeKeywords = ['no', 'not interested', 'expensive', 'can\'t afford', 'maybe later']
+  
+  let positiveCount = 0
+  let negativeCount = 0
+  
+  transcript.forEach((entry: any) => {
+    const text = (entry.text || '').toLowerCase()
+    positiveKeywords.forEach(keyword => {
+      if (text.includes(keyword)) positiveCount++
+    })
+    negativeKeywords.forEach(keyword => {
+      if (text.includes(keyword)) negativeCount++
+    })
+  })
+  
+  // Base score starts at 5, increases with positive signals
+  const baseScore = 5
+  const positiveScore = Math.min(40, positiveCount * 5)
+  const negativePenalty = Math.min(30, negativeCount * 5)
+  
+  // Time progression: longer sessions tend to have higher sentiment
+  const timeBonus = Math.min(25, (sessionDurationSeconds / 60) * 5)
+  
+  const score = baseScore + positiveScore - negativePenalty + timeBonus
+  return Math.max(0, Math.min(100, Math.round(score)))
+}
+
+const SentimentCard = React.memo(({ 
+  score 
+}: { 
+  score: number 
+}) => {
+  const getSentimentColor = () => {
+    if (score < 30) {
+      return {
+        iconBg: 'rgba(255, 149, 0, 0.15)',
+        text: '#FF9500',
+        progress: '#FF9500',
+        badgeBg: 'rgba(255, 149, 0, 0.1)',
+      }
+    } else if (score >= 30 && score < 60) {
+      return {
+        iconBg: 'rgba(255, 204, 0, 0.15)',
+        text: '#FFCC00',
+        progress: '#FFCC00',
+        badgeBg: 'rgba(255, 204, 0, 0.1)',
+      }
+    } else {
+      return {
+        iconBg: 'rgba(52, 199, 89, 0.15)',
+        text: '#34C759',
+        progress: '#34C759',
+        badgeBg: 'rgba(52, 199, 89, 0.1)',
+      }
+    }
+  }
+  
+  const colors = getSentimentColor()
+  const level = score < 30 ? 'Low' : score >= 30 && score < 60 ? 'Building' : 'Positive'
+  
+  return (
+    <View style={localStyles.metricCard}>
+      <View style={localStyles.metricHeader}>
+        <View style={[localStyles.iconContainer, { backgroundColor: colors.iconBg }]}>
+          <Text style={localStyles.iconText}>📈</Text>
+        </View>
+        <View style={localStyles.metricContent}>
+          <Text style={localStyles.metricLabel}>Sale Sentiment</Text>
+          <View style={localStyles.metricValueRow}>
+            <Text style={localStyles.metricValue}>{score}%</Text>
+            <View style={[
+              localStyles.badge, 
+              { backgroundColor: colors.badgeBg }
+            ]}>
+              <Text style={[
+                localStyles.badgeText,
+                { color: colors.text }
+              ]}>{level}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={localStyles.progressContainer}>
+        <View style={localStyles.progressBar}>
+          <View 
+            style={[
+              localStyles.progressFill, 
+              { width: `${score}%`, backgroundColor: colors.progress }
+            ]} 
+          />
+        </View>
+        <View style={localStyles.progressLabels}>
+          <Text style={localStyles.progressLabel}>Low</Text>
+          <Text style={localStyles.progressLabel}>Building</Text>
+          <Text style={localStyles.progressLabel}>Positive</Text>
+        </View>
+      </View>
+    </View>
+  )
+})
+
+export const LiveMetricsPanel = React.memo(({ metrics, transcript = [], sessionId, sessionActive = false, agentName }: LiveMetricsPanelProps) => {
+  const { talkTimeRatio } = metrics
 
   const talkTimeStatus = useMemo(() => {
     if (talkTimeRatio >= 40 && talkTimeRatio <= 60) {
@@ -120,18 +231,26 @@ export const LiveMetricsPanel = React.memo(({ metrics }: LiveMetricsPanelProps) 
     }
   }, [talkTimeRatio])
 
-  const wpmStatus = useMemo(() => {
-    if (wordsPerMinute >= 140 && wordsPerMinute <= 160) {
-      return { badge: 'Good', variant: 'good' as const }
-    } else if (wordsPerMinute < 140) {
-      return { badge: 'Slow', variant: 'ok' as const }
-    } else {
-      return { badge: 'Fast', variant: 'warning' as const }
+  // Calculate sentiment score
+  const sessionDurationSeconds = useMemo(() => {
+    if (!transcript || transcript.length === 0) return 0
+    try {
+      const firstTime = transcript[0]?.timestamp instanceof Date 
+        ? transcript[0].timestamp.getTime()
+        : typeof transcript[0]?.timestamp === 'string'
+          ? new Date(transcript[0].timestamp).getTime()
+          : Date.now()
+      const currentTime = Date.now()
+      return (currentTime - firstTime) / 1000
+    } catch {
+      return 0
     }
-  }, [wordsPerMinute])
+  }, [transcript])
   
-  // Calculate WPM progress (0-200 scale, with 150 as target)
-  const wpmProgress = useMemo(() => Math.min(100, (wordsPerMinute / 200) * 100), [wordsPerMinute])
+  const sentimentScore = useMemo(() => {
+    if (!sessionActive || !transcript || transcript.length === 0) return 5
+    return calculateSentimentScore(transcript, sessionDurationSeconds)
+  }, [transcript, sessionDurationSeconds, sessionActive])
 
   return (
     <View style={localStyles.container}>
@@ -143,28 +262,7 @@ export const LiveMetricsPanel = React.memo(({ metrics }: LiveMetricsPanelProps) 
         badge={talkTimeStatus.badge}
         progress={talkTimeRatio}
       />
-      <MetricCard
-        icon="🎤"
-        label="Words Per Minute"
-        value={wordsPerMinute}
-        color="purple"
-        badge={wpmStatus.badge}
-        progress={wpmProgress}
-      />
-      <View style={localStyles.rightMetrics}>
-        <MetricCard
-          icon="⚠️"
-          label="Objections"
-          value={objectionCount}
-          color="amber"
-        />
-        <MetricCard
-          icon="📚"
-          label="Techniques"
-          value={techniquesUsed.length}
-          color="emerald"
-        />
-      </View>
+      <SentimentCard score={sentimentScore} />
     </View>
   )
 })
