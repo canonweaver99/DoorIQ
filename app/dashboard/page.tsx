@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X } from 'lucide-react'
+import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog } from 'lucide-react'
 import HeroPerformanceCard from '@/components/dashboard/HeroPerformanceCard'
 import PerformanceMetricCards from '@/components/dashboard/PerformanceMetricCards'
 import CriticalAlertsSection from '@/components/dashboard/CriticalAlertsSection'
@@ -12,9 +12,11 @@ import RecommendedActions from '@/components/dashboard/RecommendedActions'
 import TabNavigation from '@/components/dashboard/TabNavigation'
 import UploadTab from '@/components/dashboard/tabs/UploadTab'
 import TeamTab from '@/components/dashboard/tabs/TeamTab'
+import ManagerPanelTab from '@/components/dashboard/tabs/ManagerPanelTab'
 import type { DashboardData } from '@/app/dashboard/types'
 import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 function DashboardPageContent() {
   const router = useRouter()
@@ -22,6 +24,8 @@ function DashboardPageContent() {
   const prefersReducedMotion = useReducedMotion()
   const [activeTab, setActiveTab] = useState('overview')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isManager, setIsManager] = useState<boolean | null>(null)
+  const [loadingRole, setLoadingRole] = useState(true)
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     userName: '',
     currentDateTime: new Date().toISOString(),
@@ -35,6 +39,7 @@ function DashboardPageContent() {
 
   useEffect(() => {
     fetchDashboardData()
+    checkUserRole()
     
     // Update time every minute
     const timeInterval = setInterval(() => {
@@ -46,6 +51,32 @@ function DashboardPageContent() {
 
     return () => clearInterval(timeInterval)
   }, [])
+
+  const checkUserRole = async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        setLoadingRole(false)
+        return
+      }
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (userData) {
+        setIsManager(userData.role === 'manager' || userData.role === 'admin')
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error)
+    } finally {
+      setLoadingRole(false)
+    }
+  }
   
   const fetchDashboardData = async () => {
     try {
@@ -80,6 +111,7 @@ function DashboardPageContent() {
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'upload', label: 'Upload Pitch', icon: Upload },
     { id: 'team', label: 'Team', icon: Users },
+    ...(isManager ? [{ id: 'manager', label: 'Manager Panel', icon: UserCog }] : []),
     { id: 'settings', label: 'Settings', icon: Settings },
   ]
 
@@ -312,6 +344,12 @@ function DashboardPageContent() {
                 />
               </div>
             )}
+
+            {activeTab === 'manager' && isManager && (
+              <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                <ManagerPanelTab />
+              </div>
+            )}
           </motion.div>
         </div>
       </div>
@@ -392,6 +430,10 @@ function DashboardPageContent() {
                   yourScore: 0
                 }}
               />
+            )}
+
+            {activeTab === 'manager' && isManager && (
+              <ManagerPanelTab />
             )}
 
           </motion.div>
