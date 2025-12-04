@@ -19,6 +19,7 @@ import {
 type AgentRow = Database['public']['Tables']['agents']['Row']
 
 interface HomeownerAgentDisplay {
+  hasClosed?: boolean
   id: string
   name: string
   agentId: string
@@ -159,7 +160,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         if (user) {
           const { data: sessionData, error: sessionError } = await supabase
             .from('live_sessions')
-            .select('*')
+            .select('agent_name, overall_score, sale_closed')
             .eq('user_id', user.id)
             .order('created_at', { descending: true })
           if (sessionError) {
@@ -202,6 +203,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             const bestScore = completedSessions.length > 0 
               ? Math.max(...completedSessions.map(s => s.overall_score || 0))
               : null
+            const hasClosed = agentSessions.some((s: any) => s.sale_closed === true)
             const avgDuration = completedSessions.length > 0
               ? Math.round(completedSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / completedSessions.length / 60)
               : null
@@ -217,6 +219,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
               ...mapAgentToDisplay(agent as AgentRow, index),
               sessionCount: agentSessions.length,
               bestScore,
+              hasClosed,
               avgDuration,
               isLocked: isLocked || isComingSoon, // Treat coming soon as locked
               isMastered
@@ -430,7 +433,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         </motion.div>
 
         {/* Mobile Agent Grid - 2 columns */}
-        <div className="grid grid-cols-2 gap-3 mb-8">
+        <div className="grid grid-cols-2 gap-4 mb-8">
           {sortedAgents.map((agent, index) => {
             const variantKey = agent.color as keyof typeof COLOR_VARIANTS
             const variantStyles = COLOR_VARIANTS[variantKey]
@@ -463,7 +466,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
               >
                 <div
                   className={cn(
-                    "h-full flex flex-col items-center p-4 relative rounded-3xl border border-white/10 bg-white/[0.03] shadow-xl",
+                    "h-full flex flex-col items-center p-5 relative rounded-3xl border border-white/10 bg-white/[0.03] shadow-xl",
                     "transition-all duration-300",
                     agent.isLocked && "opacity-50"
                   )}
@@ -474,9 +477,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     whileTap={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 0.95 } : {}}
                     disabled={agent.isLocked || agent.name === 'Tag Team Tanya & Tom'}
                     tabIndex={-1}
-                    className={cn("relative mb-3 focus:outline-none", (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') && "cursor-not-allowed")}
+                    className={cn("relative mb-4 focus:outline-none", (agent.isLocked || agent.name === 'Tag Team Tanya & Tom') && "cursor-not-allowed")}
                   >
-                    <div className="relative h-20 w-20 mx-auto">
+                    <div className="relative h-32 w-32 mx-auto">
                       {[0, 1, 2].map((i) => (
                         <motion.div
                           key={i}
@@ -555,7 +558,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                                     objectPosition: `${horizontal} ${vertical}`,
                                     transform: `scale(${scaleValue}) translateY(${translateY})`,
                                   }}
-                                  sizes="80px"
+                                  sizes="256px"
+                                  quality={95}
+                                  priority={index < 4}
                                 />
                               )
                             })()}
@@ -565,13 +570,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     </div>
                   </motion.button>
 
-                  {/* Mobile Badges */}
-                  {suggestedAgent === agent.name && !agent.isLocked && (
-                    <div className="absolute top-2 right-2 z-20 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-white/20">
-                      <span className="text-[9px] text-white font-medium">⭐</span>
-                    </div>
-                  )}
-                  
+                  {/* Coming Soon Overlay */}
                   {agent.name === 'Tag Team Tanya & Tom' && (
                     <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-white/10">
                       <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
@@ -579,37 +578,44 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </div>
                     </div>
                   )}
-                  
-                  {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
-                    <div className="absolute top-2 right-2 z-20 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-white/20">
-                      <span className="text-[9px] text-white/70">🔒</span>
-                    </div>
-                  )}
-                  
-                  {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
-                    <div className="absolute top-2 right-2 z-20 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-white/20">
-                      <span className="text-[9px] text-white/80">🏆</span>
-                    </div>
-                  )}
 
                   {/* Mobile Agent Info */}
                   <div className="text-center w-full mt-auto">
-                    <h3 className="text-sm font-medium text-white mb-1 font-space tracking-tight line-clamp-1">
+                    <h3 className="text-base font-semibold text-white mb-2 font-space tracking-tight line-clamp-1">
                       {agent.name}
                     </h3>
-                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <div className="flex items-center justify-center gap-2 mb-2">
                       <div className={cn(
-                        "w-1.5 h-1.5 rounded-full",
+                        "w-2 h-2 rounded-full",
                         agent.difficulty === 'Easy' && "bg-green-400",
                         agent.difficulty === 'Moderate' && "bg-yellow-400",
                         agent.difficulty === 'Hard' && "bg-orange-400",
                         agent.difficulty === 'Expert' && "bg-red-400",
                         !agent.difficulty && "bg-white/40"
                       )} />
-                      <span className="text-xs text-white/70 font-space font-bold">
+                      <span className="text-sm text-white/70 font-space font-bold">
                         {agent.difficulty || 'Unknown'}
                       </span>
                     </div>
+                    
+                    {/* Session Stats */}
+                    {(agent.hasClosed || agent.bestScore) && (
+                      <div className="flex items-center justify-center gap-3 mt-2 pt-2 border-t border-white/10">
+                        {agent.hasClosed && (
+                          <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/20 rounded-lg border border-green-500/30">
+                            <span className="text-xs">✅</span>
+                            <span className="text-xs text-green-400 font-space font-semibold">Closed</span>
+                          </div>
+                        )}
+                        {agent.bestScore !== null && agent.bestScore !== undefined && (
+                          <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-500/20 rounded-lg border border-purple-500/30">
+                            <span className="text-xs text-purple-400 font-space font-bold">
+                              {agent.bestScore}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -866,7 +872,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                                       objectPosition: `${horizontal} ${vertical}`,
                                       transform: `scale(${scaleValue}) translateY(${translateY})`,
                                     }}
-                                    sizes="160px"
+                                    sizes="320px"
+                                    quality={95}
+                                    priority={index < 8}
                                   />
                                 )
                               })()}
@@ -876,33 +884,12 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </div>
                     </motion.button>
 
-                    {/* Suggested Badge */}
-                    {suggestedAgent === agent.name && !agent.isLocked && (
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 sm:gap-1 border border-white/10">
-                        <span className="text-[10px] sm:text-xs text-white/90 font-medium font-space">⭐ Suggested</span>
-                      </div>
-                    )}
-                    
                     {/* Coming Soon Badge */}
                     {agent.name === 'Tag Team Tanya & Tom' && (
                       <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/10">
                         <div className="bg-white/[0.05] backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2 border border-white/10">
                           <span className="text-xs sm:text-sm text-white/80 font-medium font-space">🚧 Coming Soon</span>
                         </div>
-                      </div>
-                    )}
-                    
-                    {/* Locked Badge */}
-                    {agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' && (
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 sm:gap-1 border border-white/10">
-                        <span className="text-[10px] sm:text-xs text-white/70 font-space">🔒 Locked</span>
-                      </div>
-                    )}
-                    
-                    {/* Mastered Badge */}
-                    {agent.isMastered && !agent.isLocked && suggestedAgent !== agent.name && (
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-20 bg-white/[0.05] backdrop-blur-sm px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-white/10">
-                        <span className="text-[10px] sm:text-xs text-white/80 font-space">🏆</span>
                       </div>
                     )}
 
@@ -915,7 +902,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         {agent.subtitle}
                       </p>
                       {/* Difficulty Dot */}
-                      <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                      <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-2">
                         <div className={cn(
                           "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0",
                           agent.difficulty === 'Easy' && "bg-green-400",
@@ -928,6 +915,25 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                           {agent.difficulty || 'Unknown'}
                         </span>
                       </div>
+                      
+                      {/* Session Stats */}
+                      {(agent.hasClosed || agent.bestScore) && (
+                        <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-white/10">
+                          {agent.hasClosed && (
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/20 rounded-lg border border-green-500/30">
+                              <span className="text-[10px] sm:text-xs">✅</span>
+                              <span className="text-[10px] sm:text-xs text-green-400 font-space font-semibold">Closed</span>
+                            </div>
+                          )}
+                          {agent.bestScore !== null && agent.bestScore !== undefined && (
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/20 rounded-lg border border-purple-500/30">
+                              <span className="text-[10px] sm:text-xs text-purple-400 font-space font-bold">
+                                {agent.bestScore}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     </div>
                   </motion.div>

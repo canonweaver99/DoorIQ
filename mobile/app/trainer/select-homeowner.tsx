@@ -135,20 +135,6 @@ export default function SelectHomeownerScreen() {
                   <View style={[styles.agentImagePlaceholder, isComingSoon && styles.comingSoonImage]}>
                     <Text style={styles.agentImageText}>{avatar}</Text>
                   </View>
-                  {(isRecommended || isMostChallenging) && (
-                    <View style={styles.badgeContainer}>
-                      {isRecommended && (
-                        <View style={[styles.badge, styles.recommendedBadge]}>
-                          <Text style={styles.badgeText}>⭐</Text>
-                        </View>
-                      )}
-                      {isMostChallenging && (
-                        <View style={[styles.badge, styles.challengingBadge]}>
-                          <Text style={styles.badgeText}>🔥</Text>
-                        </View>
-                      )}
-                    </View>
-                  )}
                 </View>
                 <View style={styles.agentInfo}>
                   <View style={styles.agentHeader}>
@@ -229,36 +215,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 8,
-    lineHeight: 34,
+    marginBottom: 10,
+    lineHeight: 38,
+    textAlign: 'center',
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#888',
-    lineHeight: 20,
-    marginBottom: 16,
+    lineHeight: 22,
+    marginBottom: 20,
+    textAlign: 'center',
   },
   randomButton: {
     backgroundColor: '#a855f7',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    alignSelf: 'center',
     marginTop: 4,
+    shadowColor: '#a855f7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   randomButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 100,
   },
   emptyState: {
@@ -271,27 +264,28 @@ const styles = StyleSheet.create({
   },
   agentCard: {
     backgroundColor: '#1a1a1a',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    borderRadius: 24,
+    padding: 28,
+    marginBottom: 28,
+    flexDirection: 'column',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#2a2a2a',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
   },
   agentImageContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    overflow: 'visible',
-    marginRight: 16,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    overflow: 'hidden',
+    marginBottom: 24,
     backgroundColor: '#2a2a2a',
     position: 'relative',
+    alignSelf: 'center',
   },
   agentImagePlaceholder: {
     width: '100%',
@@ -299,111 +293,98 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#a855f7',
-    borderRadius: 45,
+    borderRadius: 90,
   },
   agentImageText: {
-    fontSize: 36,
+    fontSize: 72,
     fontWeight: '700',
     color: '#fff',
-  },
-  badgeContainer: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    flexDirection: 'row',
-    gap: 4,
-  },
-  badge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#0a0a0a',
-  },
-  recommendedBadge: {
-    backgroundColor: '#22c55e',
-  },
-  challengingBadge: {
-    backgroundColor: '#ef4444',
-  },
-  badgeText: {
-    fontSize: 12,
   },
   agentInfo: {
-    flex: 1,
-    paddingTop: 2,
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 0,
   },
   agentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    width: '100%',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   agentNameContainer: {
-    flex: 1,
-    marginRight: 8,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   agentName: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 2,
-    lineHeight: 24,
+    marginBottom: 6,
+    lineHeight: 30,
+    textAlign: 'center',
   },
   agentSubtitle: {
-    fontSize: 13,
+    fontSize: 15,
     color: '#a855f7',
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 2,
+    textAlign: 'center',
   },
   difficultyBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    alignSelf: 'center',
   },
   difficultyText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   agentDescription: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#ccc',
-    lineHeight: 20,
-    marginBottom: 12,
+    lineHeight: 22,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   traitsContainer: {
-    marginBottom: 12,
+    marginBottom: 16,
+    width: '100%',
+    alignItems: 'center',
   },
   traitTag: {
-    marginBottom: 4,
+    marginBottom: 6,
   },
   traitText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#888',
-    lineHeight: 18,
+    lineHeight: 20,
+    textAlign: 'center',
   },
   metaContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 4,
+    gap: 16,
+    marginTop: 8,
+    justifyContent: 'center',
+    width: '100%',
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   metaLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
     fontWeight: '500',
   },
   metaValue: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#a855f7',
     fontWeight: '600',
   },
