@@ -1064,9 +1064,41 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
     transition: { duration: 0.15 }
   } : {}
 
+  // Determine sentiment color based on level
+  const getSentimentColor = () => {
+    if (sentimentLevel === 'low') {
+      return {
+        progress: 'from-orange-500 to-red-500',
+        border: 'border-orange-500/60',
+        icon: 'text-orange-400',
+        bg: 'bg-orange-500/20',
+        hover: 'group-hover:bg-orange-500/30'
+      }
+    } else if (sentimentLevel === 'building') {
+      return {
+        progress: 'from-yellow-500 to-amber-500',
+        border: 'border-yellow-500/60',
+        icon: 'text-yellow-400',
+        bg: 'bg-yellow-500/20',
+        hover: 'group-hover:bg-yellow-500/30'
+      }
+    } else {
+      return {
+        progress: 'from-emerald-500 to-green-500',
+        border: 'border-emerald-500/60',
+        icon: 'text-emerald-400',
+        bg: 'bg-emerald-500/20',
+        hover: 'group-hover:bg-emerald-500/30'
+      }
+    }
+  }
+
+  const sentimentColors = useMemo(() => getSentimentColor(), [sentimentLevel])
+  const [showSentimentInfo, setShowSentimentInfo] = useState(false)
+
   return (
     <div className="flex flex-col gap-2 h-full w-full max-w-full overflow-hidden">
-      {/* Talk Time Card - With Dynamic Bar */}
+      {/* Combined Talk Time & Sentiment Card */}
       <TalkTimeCard
         {...TalkTimeCardProps}
         className={cn(
@@ -1074,93 +1106,298 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
           talkTimeColors.border
         )}
       >
-        {/* Header: Icon + Title + Percentage */}
-        <div className="flex items-start gap-2 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">
-          <div className={cn("p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0", talkTimeColors.bg, talkTimeColors.hover)}>
-            <Mic className={cn("w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5", talkTimeColors.icon)} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-              <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">Talk Time Ratio</div>
-              <div className="text-right flex-shrink-0">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white font-space leading-tight">{talkTimeRatio}%</div>
-                {talkTimeStatus.badge && (
-                  <Badge variant={talkTimeStatus.variant} className="text-[10px] sm:text-xs lg:text-sm px-1.5 sm:px-1.5 lg:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold mt-0.5">
-                    {talkTimeStatus.badge}
-                  </Badge>
-                )}
+        {/* Talk Time Section */}
+        <div className="mb-3 sm:mb-4">
+          {/* Header: Icon + Title + Percentage */}
+          <div className="flex items-start gap-2 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">
+            <div className={cn("p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0", talkTimeColors.bg, talkTimeColors.hover)}>
+              <Mic className={cn("w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5", talkTimeColors.icon)} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
+                <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">Talk Time Ratio</div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white font-space leading-tight">{talkTimeRatio}%</div>
+                  {talkTimeStatus.badge && (
+                    <Badge variant={talkTimeStatus.variant} className="text-[10px] sm:text-xs lg:text-sm px-1.5 sm:px-1.5 lg:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold mt-0.5">
+                      {talkTimeStatus.badge}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Dynamic Progress Bar - Centered */}
-        <div className="-mt-1 sm:-mt-2 pt-3 sm:pt-5 lg:pt-6 flex-shrink-0 min-h-0">
-          <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
-            {/* Background zones */}
-            <div className="absolute inset-0 flex">
-              <div className="w-[25%] bg-orange-500/20" />
-              <div className="w-[25%] bg-emerald-500/20" />
-              <div className="w-[25%] bg-emerald-500/20" />
-              <div className="flex-1 bg-blue-500/20" />
+          
+          {/* Dynamic Progress Bar */}
+          <div className="-mt-1 sm:-mt-2 pt-3 sm:pt-5 lg:pt-6 flex-shrink-0 min-h-0">
+            <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
+              {/* Background zones */}
+              <div className="absolute inset-0 flex">
+                <div className="w-[25%] bg-orange-500/20" />
+                <div className="w-[25%] bg-emerald-500/20" />
+                <div className="w-[25%] bg-emerald-500/20" />
+                <div className="flex-1 bg-blue-500/20" />
+              </div>
+              
+              {/* Progress fill */}
+              {shouldAnimate ? (
+                <motion.div
+                  className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500", talkTimeColors.progress)}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${talkTimeRatio}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              ) : (
+                <div 
+                  className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-300", talkTimeColors.progress)}
+                  style={{ width: `${talkTimeRatio}%` }}
+                />
+              )}
+              
+              {/* Zone markers */}
+              <div className="absolute inset-0 flex items-center">
+                <div className="absolute left-[25%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+                <div className="absolute left-[50%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+                <div className="absolute left-[75%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+              </div>
+              
+              {/* Current position indicator */}
+              <div 
+                className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-white rounded-full shadow-lg"
+                style={{ left: `calc(${talkTimeRatio}% - 1px)` }}
+              />
             </div>
             
-            {/* Progress fill */}
+            {/* Scale labels */}
+            <div className="flex justify-between text-[11px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 sm:mb-1 leading-tight">
+              <span>Talk More</span>
+              <span className="hidden xs:inline">Balanced</span>
+              <span className="xs:hidden">Bal.</span>
+              <span>Listen More</span>
+            </div>
+            
+            {/* Percentage markers */}
+            <div className="relative text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 leading-tight h-4">
+              <span className="absolute left-0">0%</span>
+              <span className="absolute left-[25%] -translate-x-1/2 hidden sm:inline">25%</span>
+              <span className="absolute left-[50%] -translate-x-1/2 hidden sm:inline">50%</span>
+              <span className="absolute left-[75%] -translate-x-1/2 hidden sm:inline">75%</span>
+              <span className="absolute right-0">100%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-slate-700/50 my-2 sm:my-3" />
+
+        {/* Sentiment Section */}
+        <div>
+          {/* Header: Icon + Title + Percentage */}
+          <div className="flex items-start gap-2 sm:gap-2 mb-1.5 sm:mb-2.5 flex-shrink-0">
+            <div className={cn("p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0", sentimentColors.bg, sentimentColors.hover)}>
+              <TrendingUp className={cn("w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5", sentimentColors.icon)} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">
+                    Sale Sentiment
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowSentimentInfo(!showSentimentInfo)
+                    }}
+                    className="p-1 sm:p-0.5 active:bg-slate-700/50 rounded transition-colors flex-shrink-0 touch-manipulation min-w-[28px] min-h-[28px] flex items-center justify-center"
+                    aria-label="Show sentiment calculation info"
+                  >
+                    <Info className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-slate-400 active:text-slate-200" />
+                  </button>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white font-space leading-tight">
+                    {sentimentScore}%
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] sm:text-xs lg:text-sm px-1.5 sm:px-1.5 lg:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold mt-0.5">
+                    {sentimentLevel === 'low' ? 'Low' : sentimentLevel === 'building' ? 'Building' : 'Positive'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="-mt-1 sm:-mt-2 pt-3.5 sm:pt-5.5 lg:pt-6.5 flex-shrink-0 min-h-0">
+            <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
+              {/* Background zones */}
+              <div className="absolute inset-0 flex">
+                <div className="w-[30%] bg-orange-500/20" />
+                <div className="w-[30%] bg-yellow-500/20" />
+                <div className="flex-1 bg-emerald-500/20" />
+              </div>
+              
+              {/* Progress fill */}
+              {shouldAnimate ? (
+                <motion.div
+                  className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-300", sentimentColors.progress)}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${sentimentScore}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              ) : (
+                <div 
+                  className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-300", sentimentColors.progress)}
+                  style={{ width: `${sentimentScore}%` }}
+                />
+              )}
+              
+              {/* Zone markers */}
+              <div className="absolute inset-0 flex items-center">
+                <div className="absolute left-[30%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+                <div className="absolute left-[60%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
+              </div>
+              
+              {/* Current position indicator */}
+              <div 
+                className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-white rounded-full shadow-lg"
+                style={{ left: `calc(${sentimentScore}% - 1px)` }}
+              />
+            </div>
+            
+            {/* Scale labels */}
+            <div className="flex justify-between text-[11px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 sm:mb-1 leading-tight">
+              <span>Low</span>
+              <span className="hidden xs:inline">Building</span>
+              <span className="xs:hidden">Build</span>
+              <span>Positive</span>
+            </div>
+            
+            {/* Percentage markers */}
+            <div className="relative text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium mb-1.5 sm:mb-2.5 lg:mb-3.5 leading-tight h-4">
+              <span className="absolute left-0">0%</span>
+              <span className="absolute left-[25%] -translate-x-1/2 hidden sm:inline">25%</span>
+              <span className="absolute left-[50%] -translate-x-1/2 hidden sm:inline">50%</span>
+              <span className="absolute left-[75%] -translate-x-1/2 hidden sm:inline">75%</span>
+              <span className="absolute right-0">100%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Sentiment Info Modal */}
+        {showSentimentInfo && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowSentimentInfo(false)
+            }}
+          >
             {shouldAnimate ? (
               <motion.div
-                className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-500", talkTimeColors.progress)}
-                initial={{ width: 0 }}
-                animate={{ width: `${talkTimeRatio}%` }}
-                transition={{ duration: 0.3 }}
-              />
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white font-space">Sentiment Score Calculation</h3>
+                  <button
+                    onClick={() => setShowSentimentInfo(false)}
+                    className="text-slate-400 hover:text-white transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="space-y-3 text-sm text-slate-300 font-space">
+                  <div className="text-slate-400 mb-3">The Sentiment score tracks how the customer feels about the sale. It starts low and builds over time:</div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Transcript Sentiment</span>
+                      <span className="font-semibold text-white">50%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Analysis of sentiment progression from early to recent conversation</div>
+                    
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Buying Signals</span>
+                      <span className="font-semibold text-white">25%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Positive buying signals detected (e.g., "sounds good", "I'm interested")</div>
+                    
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Objection Resolution</span>
+                      <span className="font-semibold text-white">15%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">How well objections were handled and resolved</div>
+                    
+                    <div className="flex justify-between items-center py-1">
+                      <span>Positive Language</span>
+                      <span className="font-semibold text-white">10%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Overall positive vs negative language patterns</div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
+                    <div className="mb-2">Time Progression:</div>
+                    <div className="pl-2">• First 15s: 0-30% of base score</div>
+                    <div className="pl-2">• 15s-1min: 30-70% of base score</div>
+                    <div className="pl-2">• 1min+: 70-100% of base score</div>
+                  </div>
+                </div>
+              </motion.div>
             ) : (
-              <div 
-                className={cn("absolute left-0 top-0 h-full bg-gradient-to-r rounded-full transition-all duration-300", talkTimeColors.progress)}
-                style={{ width: `${talkTimeRatio}%` }}
-              />
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-slate-900 rounded-lg border border-slate-700 shadow-xl max-w-md w-full mx-4 p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white font-space">Sentiment Score Calculation</h3>
+                  <button
+                    onClick={() => setShowSentimentInfo(false)}
+                    className="text-slate-400 hover:text-white transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="space-y-3 text-sm text-slate-300 font-space">
+                  <div className="text-slate-400 mb-3">The Sentiment score tracks how the customer feels about the sale. It starts low and builds over time:</div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Transcript Sentiment</span>
+                      <span className="font-semibold text-white">50%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Analysis of sentiment progression from early to recent conversation</div>
+                    
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Buying Signals</span>
+                      <span className="font-semibold text-white">25%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Positive buying signals detected (e.g., "sounds good", "I'm interested")</div>
+                    
+                    <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
+                      <span>Objection Resolution</span>
+                      <span className="font-semibold text-white">15%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">How well objections were handled and resolved</div>
+                    
+                    <div className="flex justify-between items-center py-1">
+                      <span>Positive Language</span>
+                      <span className="font-semibold text-white">10%</span>
+                    </div>
+                    <div className="text-xs text-slate-400 pl-2">Overall positive vs negative language patterns</div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-400">
+                    <div className="mb-2">Time Progression:</div>
+                    <div className="pl-2">• First 15s: 0-30% of base score</div>
+                    <div className="pl-2">• 15s-1min: 30-70% of base score</div>
+                    <div className="pl-2">• 1min+: 70-100% of base score</div>
+                  </div>
+                </div>
+              </div>
             )}
-            
-            {/* Zone markers */}
-            <div className="absolute inset-0 flex items-center">
-              <div className="absolute left-[25%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-              <div className="absolute left-[50%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-              <div className="absolute left-[75%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-            </div>
-            
-            {/* Current position indicator */}
-            <div 
-              className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-white rounded-full shadow-lg"
-              style={{ left: `calc(${talkTimeRatio}% - 1px)` }}
-            />
           </div>
-          
-          {/* Scale labels */}
-          <div className="flex justify-between text-[11px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 sm:mb-1 leading-tight">
-            <span>Talk More</span>
-            <span className="hidden xs:inline">Balanced</span>
-            <span className="xs:hidden">Bal.</span>
-            <span>Listen More</span>
-          </div>
-          
-          {/* Percentage markers */}
-          <div className="relative text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 leading-tight h-4">
-            <span className="absolute left-0">0%</span>
-            <span className="absolute left-[25%] -translate-x-1/2 hidden sm:inline">25%</span>
-            <span className="absolute left-[50%] -translate-x-1/2 hidden sm:inline">50%</span>
-            <span className="absolute left-[75%] -translate-x-1/2 hidden sm:inline">75%</span>
-            <span className="absolute right-0">100%</span>
-          </div>
-        </div>
-        
-        {/* Percentage values - Bottom corners */}
-        <div className="absolute bottom-2 sm:bottom-3 lg:bottom-4 left-2 sm:left-3 lg:left-4 right-2 sm:right-3 lg:right-4 flex justify-between items-center gap-1 text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium">
-        </div>
+        )}
       </TalkTimeCard>
-      
-      {/* Sentiment Card */}
-      <div className="w-full">
-        <SentimentCard sentimentScore={sentimentScoreData} />
-      </div>
     </div>
   )
 })

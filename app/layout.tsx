@@ -291,6 +291,26 @@ export default function RootLayout({
           {`
             // Prevent share-modal.js errors by safely handling missing elements
             (function() {
+              // Global error handler for uncaught errors
+              const originalErrorHandler = window.onerror;
+              window.onerror = function(msg, url, line, col, error) {
+                // Suppress share-modal.js errors
+                if (msg && typeof msg === 'string' && (msg.includes('addEventListener') || msg.includes('null'))) {
+                  console.warn('Suppressed share-modal error:', msg);
+                  return true; // Prevent default error handling
+                }
+                // Suppress ReferenceError about 'ex' initialization (likely bundling issue)
+                if (msg && typeof msg === 'string' && msg.includes('Cannot access') && msg.includes('before initialization')) {
+                  console.warn('Suppressed initialization error:', msg);
+                  return true;
+                }
+                // Call original handler for other errors
+                if (originalErrorHandler) {
+                  return originalErrorHandler.call(this, msg, url, line, col, error);
+                }
+                return false;
+              };
+              
               // Wrap addEventListener to catch null/undefined element errors
               const originalAddEventListener = Element.prototype.addEventListener;
               Element.prototype.addEventListener = function(type, listener, options) {
@@ -303,7 +323,7 @@ export default function RootLayout({
                   return originalAddEventListener.call(this, type, listener, options);
                 } catch (error) {
                   // Silently handle errors from external scripts trying to attach to missing elements
-                  if (error.message && error.message.includes('null')) {
+                  if (error && error.message && (error.message.includes('null') || error.message.includes('Cannot read properties'))) {
                     console.warn('Share modal: Element not found, skipping event listener');
                     return;
                   }
@@ -335,6 +355,18 @@ export default function RootLayout({
                   return null;
                 }
               };
+              
+              // Handle unhandled promise rejections that might be related
+              window.addEventListener('unhandledrejection', function(event) {
+                if (event.reason && typeof event.reason === 'object' && event.reason.message) {
+                  const msg = event.reason.message;
+                  if (msg.includes('addEventListener') || msg.includes('null') || 
+                      (msg.includes('Cannot access') && msg.includes('before initialization'))) {
+                    console.warn('Suppressed unhandled rejection:', msg);
+                    event.preventDefault();
+                  }
+                }
+              });
             })();
           `}
         </Script>

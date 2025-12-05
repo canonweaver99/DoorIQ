@@ -539,7 +539,7 @@ export default function LeaderboardPage() {
                     flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-space font-semibold text-sm sm:text-base
                     whitespace-nowrap transition-all duration-200
                     ${isActive
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/50'
+                      ? 'bg-white/10 text-white border-2 border-white/30'
                       : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10'
                     }
                   `}
@@ -631,13 +631,13 @@ export default function LeaderboardPage() {
                   <th className="w-[25%] px-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
                     Sales Rep
                   </th>
-                  <th className={`w-[18%] px-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space ${category === 'earnings' ? 'text-purple-400' : 'text-slate-300'}`}>
+                  <th className="w-[18%] px-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space text-slate-300">
                     Earnings
                   </th>
-                  <th className={`w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space ${category === 'sessions' ? 'text-purple-400' : 'text-slate-300'}`}>
+                  <th className="w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space text-slate-300">
                     Sessions
                   </th>
-                  <th className={`w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space ${category === 'avgScore' ? 'text-purple-400' : 'text-slate-300'}`}>
+                  <th className="w-[15.67%] pl-6 pr-6 py-6 text-left text-base font-bold uppercase tracking-wider font-space text-slate-300">
                     Avg Score
                   </th>
                   <th className="w-[15.66%] pl-6 pr-6 py-6 text-left text-base font-bold text-slate-300 uppercase tracking-wider font-space">
@@ -696,16 +696,16 @@ export default function LeaderboardPage() {
                         </div>
                       </div>
                     </td>
-                    <td className={`px-6 py-6 whitespace-nowrap ${category === 'earnings' ? 'bg-purple-500/10' : ''}`}>
-                      <div className={`text-2xl font-bold font-space ${category === 'earnings' ? 'text-purple-400' : 'text-green-400'}`}>
+                    <td className="px-6 py-6 whitespace-nowrap">
+                      <div className="text-2xl font-bold font-space text-green-400">
                         ${Math.round(user.virtual_earnings).toLocaleString()}
                       </div>
                     </td>
-                    <td className={`pl-6 pr-6 py-6 whitespace-nowrap text-left ${category === 'sessions' ? 'bg-purple-500/10' : ''}`}>
-                      <div className={`text-2xl font-bold font-space pl-5 ${category === 'sessions' ? 'text-purple-400' : 'text-slate-200'}`}>{user.sessionsCount}</div>
+                    <td className="pl-6 pr-6 py-6 whitespace-nowrap text-left">
+                      <div className="text-2xl font-bold font-space pl-5 text-slate-200">{user.sessionsCount}</div>
                     </td>
-                    <td className={`pl-6 pr-6 py-6 whitespace-nowrap text-left ${category === 'avgScore' ? 'bg-purple-500/10' : ''}`}>
-                      <div className={`text-2xl font-bold font-space pl-5 ${category === 'avgScore' ? 'text-purple-400' : 'text-slate-200'}`}>
+                    <td className="pl-6 pr-6 py-6 whitespace-nowrap text-left">
+                      <div className="text-2xl font-bold font-space pl-5 text-slate-200">
                         {user.avgScore > 0 ? `${user.avgScore}%` : '-'}
                       </div>
                     </td>

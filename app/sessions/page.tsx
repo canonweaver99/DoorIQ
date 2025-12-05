@@ -521,7 +521,7 @@ export default function SessionsPage() {
           transition={{ duration: 0.4, delay: 0.2 }}
           className="grid grid-cols-3 gap-3 mb-6"
         >
-          <div className="bg-white/[0.03] rounded-3xl p-4 shadow-xl border border-white/10 backdrop-blur-sm">
+          <div className="bg-slate-800/60 rounded-3xl p-4 shadow-xl border border-slate-700/50 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[10px] font-medium text-white/70 font-space uppercase tracking-wider">Score</h3>
               <TrendingUp className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
@@ -532,7 +532,7 @@ export default function SessionsPage() {
             </p>
           </div>
           
-          <div className="bg-white/[0.03] rounded-3xl p-4 shadow-xl border border-white/10 backdrop-blur-sm">
+          <div className="bg-slate-800/60 rounded-3xl p-4 shadow-xl border border-slate-700/50 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[10px] font-medium text-white/70 font-space uppercase tracking-wider">Earnings</h3>
               <DollarSign className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
@@ -541,7 +541,7 @@ export default function SessionsPage() {
             <p className="text-[10px] text-white/60 font-sans">Virtual cash</p>
           </div>
           
-          <div className="bg-white/[0.03] rounded-3xl p-4 shadow-xl border border-white/10 backdrop-blur-sm">
+          <div className="bg-slate-800/60 rounded-3xl p-4 shadow-xl border border-slate-700/50 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[10px] font-medium text-white/70 font-space uppercase tracking-wider">Total</h3>
               <Calendar className="w-3.5 h-3.5 text-pink-400 flex-shrink-0" />
@@ -558,7 +558,7 @@ export default function SessionsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="bg-white/[0.03] rounded-3xl p-8 text-center border border-white/10 shadow-xl backdrop-blur-sm"
+              className="bg-slate-800/60 rounded-3xl p-8 text-center border border-slate-700/50 shadow-xl backdrop-blur-sm"
             >
               <p className="text-sm text-white/80 font-sans mb-4">No sessions found for this period</p>
               <motion.button
@@ -612,7 +612,7 @@ export default function SessionsPage() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3, delay: 0.3 + (dayIndex * 0.05) + (sessionIndex * 0.03) }}
-                          className="bg-white/[0.03] rounded-3xl p-4 shadow-xl border border-white/10 backdrop-blur-sm"
+                          className="bg-slate-800/60 rounded-3xl p-4 shadow-xl border border-slate-700/50 backdrop-blur-sm"
                         >
                           {/* Mobile Session Header */}
                           <div className="flex items-start justify-between mb-3">
@@ -806,7 +806,7 @@ export default function SessionsPage() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8"
         >
-          <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
+          <div className="bg-slate-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-slate-700/50 shadow-xl hover:border-slate-600/60 hover:bg-slate-800/80 transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <h3 className="text-xs sm:text-sm font-medium text-white/70 font-space uppercase tracking-wider">Average Score</h3>
               <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 flex-shrink-0" />
@@ -817,7 +817,7 @@ export default function SessionsPage() {
             </p>
           </div>
           
-          <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
+          <div className="bg-slate-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-slate-700/50 shadow-xl hover:border-slate-600/60 hover:bg-slate-800/80 transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <h3 className="text-xs sm:text-sm font-medium text-white/70 font-space uppercase tracking-wider">Total Earnings</h3>
               <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 flex-shrink-0" />
@@ -826,7 +826,7 @@ export default function SessionsPage() {
             <p className="text-xs sm:text-sm text-white/60 font-sans">Virtual cash earned</p>
           </div>
           
-          <div className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-white shadow-xl hover:border-white/80 transition-colors">
+          <div className="bg-slate-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 border-2 border-slate-700/50 shadow-xl hover:border-slate-600/60 hover:bg-slate-800/80 transition-colors">
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <h3 className="text-xs sm:text-sm font-medium text-white/70 font-space uppercase tracking-wider">Sessions</h3>
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400 flex-shrink-0" />
@@ -843,7 +843,7 @@ export default function SessionsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="bg-white/[0.02] backdrop-blur-xl rounded-xl sm:rounded-2xl p-8 sm:p-10 md:p-12 text-center border border-white/5 shadow-xl"
+              className="bg-slate-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-8 sm:p-10 md:p-12 text-center border border-slate-700/50 shadow-xl"
             >
               <p className="text-base sm:text-lg md:text-xl text-white/80 font-sans mb-4 sm:mb-6">No sessions found for this period</p>
               <Link
@@ -900,7 +900,7 @@ export default function SessionsPage() {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.5, delay: 0.4 + (dayIndex * 0.1) + (sessionIndex * 0.05) }}
-                          className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
+                          className="group relative bg-slate-800/60 border-2 border-slate-700/50 rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 hover:border-slate-600/60 hover:bg-slate-800/80 overflow-hidden"
                         >
                           {/* Subtle purple glow at bottom for depth */}
                           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
