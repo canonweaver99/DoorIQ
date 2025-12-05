@@ -143,8 +143,6 @@ function TrainerPageContent() {
   const [strikeCauses, setStrikeCauses] = useState<Array<{type: 'filler_words' | 'poor_objection_handling', count?: number, timestamp: Date}>>([])
   const [showRestartWarning, setShowRestartWarning] = useState(false)
   const [restartCountdown, setRestartCountdown] = useState(3)
-  const [showDoorClosedPopup, setShowDoorClosedPopup] = useState(false)
-  const [doorClosedReason, setDoorClosedReason] = useState<string>('')
   const isRestartingRef = useRef(false) // Track if restart is in progress
   const fillerWordCountRef = useRef(0)
   const poorHandlingCountRef = useRef(0)
@@ -1590,20 +1588,6 @@ function TrainerPageContent() {
     // Store the reason for later use
     doorClosingReasonRef.current = reason
     
-    // Determine popup message based on reason
-    let popupMessage = 'Door Closed'
-    if (reason.includes('rejected') || reason.includes('rejection')) {
-      popupMessage = 'Close Failed'
-    } else if (reason.includes('sale_complete') || reason.includes('completed')) {
-      popupMessage = 'Sale Completed'
-    } else if (reason.includes('hostile')) {
-      popupMessage = 'Door Closed'
-    }
-    
-    // Show popup
-    setDoorClosedReason(popupMessage)
-    setShowDoorClosedPopup(true)
-    
     // Stop any playing video immediately
     if (agentVideoRef.current) {
       console.log('🎬 Stopping agent video')
@@ -1613,11 +1597,9 @@ function TrainerPageContent() {
       agentVideoRef.current.loop = false // Ensure no looping
     }
     
-    // Wait 2 seconds for popup, then proceed
+    // Capture transcript state before ending session
+    // Proceed immediately without popup delay
     setTimeout(async () => {
-      setShowDoorClosedPopup(false)
-      
-      // Capture transcript state before ending session
       const currentTranscript = transcript
       console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
         transcriptLength: currentTranscript.length,
@@ -2756,46 +2738,6 @@ function TrainerPageContent() {
                       </div>
                     )}
                     
-                    {/* Challenge Mode Toggle - Live Session */}
-                    {sessionActive && !challengeModeEnabled && (
-                      <div className="absolute bottom-20 sm:bottom-24 lg:bottom-32 left-2 sm:left-3 lg:left-6 z-30">
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          transition={{ duration: 0.2 }}
-                          className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-slate-700/50 shadow-lg scale-90"
-                        >
-                          <label htmlFor="challenge-mode-live-desktop" className="text-xs text-slate-300 cursor-pointer font-space font-medium">
-                            Challenge Mode
-                          </label>
-                          <LeverSwitch
-                            checked={challengeModeEnabled}
-                            onChange={(enabled) => {
-                              setChallengeModeEnabled(enabled)
-                              // Reset strikes when enabling challenge mode mid-session
-                              if (enabled) {
-                                setStrikes(0)
-                                fillerWordCountRef.current = 0
-                                poorHandlingCountRef.current = 0
-                                processedPoorHandlingRef.current.clear()
-                                setShowRestartWarning(false)
-                                setRestartCountdown(3)
-                                if (restartTimeoutRef.current) {
-                                  clearTimeout(restartTimeoutRef.current)
-                                  restartTimeoutRef.current = null
-                                }
-                                if (countdownIntervalRef.current) {
-                                  clearInterval(countdownIntervalRef.current)
-                                  countdownIntervalRef.current = null
-                                }
-                              }
-                            }}
-                            className="scale-75"
-                          />
-                        </motion.div>
-                      </div>
-                    )}
                     
                     {/* Challenge Mode Strike Counter - Above webcam */}
                     {sessionActive && challengeModeEnabled && (
@@ -3358,6 +3300,47 @@ function TrainerPageContent() {
                 isCameraOff && "hidden"
               )}>
                 <WebcamPIP ref={webcamPIPRef} />
+                
+                {/* Challenge Mode Toggle - Top Left Corner of Webcam */}
+                {!challengeModeEnabled && (
+                  <div className="absolute top-1 left-1 z-30">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-slate-700/50 shadow-lg scale-90"
+                    >
+                      <label htmlFor="challenge-mode-live" className="text-xs text-slate-300 cursor-pointer font-space font-medium">
+                        Challenge Mode
+                      </label>
+                      <LeverSwitch
+                        checked={challengeModeEnabled}
+                        onChange={(enabled) => {
+                          setChallengeModeEnabled(enabled)
+                          // Reset strikes when enabling challenge mode mid-session
+                          if (enabled) {
+                            setStrikes(0)
+                            fillerWordCountRef.current = 0
+                            poorHandlingCountRef.current = 0
+                            processedPoorHandlingRef.current.clear()
+                            setShowRestartWarning(false)
+                            setRestartCountdown(3)
+                            if (restartTimeoutRef.current) {
+                              clearTimeout(restartTimeoutRef.current)
+                              restartTimeoutRef.current = null
+                            }
+                            if (countdownIntervalRef.current) {
+                              clearInterval(countdownIntervalRef.current)
+                              countdownIntervalRef.current = null
+                            }
+                          }
+                        }}
+                        className="scale-75"
+                      />
+                    </motion.div>
+                  </div>
+                )}
               </div>
             )}
             
@@ -3370,47 +3353,6 @@ function TrainerPageContent() {
                     Reconnecting... (Attempt {reconnectingStatus.attempt}/{reconnectingStatus.maxAttempts})
                   </span>
                 </div>
-              </div>
-            )}
-            
-            {/* Challenge Mode Toggle - Live Session */}
-            {sessionActive && !challengeModeEnabled && (
-              <div className="absolute bottom-20 sm:bottom-24 lg:bottom-32 left-2 sm:left-3 lg:left-6 z-30">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-slate-700/50 shadow-lg scale-90"
-                >
-                  <label htmlFor="challenge-mode-live" className="text-xs text-slate-300 cursor-pointer font-space font-medium">
-                    Challenge Mode
-                  </label>
-                  <LeverSwitch
-                    checked={challengeModeEnabled}
-                    onChange={(enabled) => {
-                      setChallengeModeEnabled(enabled)
-                      // Reset strikes when enabling challenge mode mid-session
-                      if (enabled) {
-                        setStrikes(0)
-                        fillerWordCountRef.current = 0
-                        poorHandlingCountRef.current = 0
-                        processedPoorHandlingRef.current.clear()
-                        setShowRestartWarning(false)
-                        setRestartCountdown(3)
-                        if (restartTimeoutRef.current) {
-                          clearTimeout(restartTimeoutRef.current)
-                          restartTimeoutRef.current = null
-                        }
-                        if (countdownIntervalRef.current) {
-                          clearInterval(countdownIntervalRef.current)
-                          countdownIntervalRef.current = null
-                        }
-                      }
-                    }}
-                    className="scale-75"
-                  />
-                </motion.div>
               </div>
             )}
             
@@ -3463,40 +3405,6 @@ function TrainerPageContent() {
             )}
             
             {/* Door Closed Popup Modal */}
-            {showDoorClosedPopup && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                {shouldAnimate ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="bg-slate-900 border-2 border-purple-500/60 rounded-2xl p-8 max-w-md mx-4 shadow-2xl"
-                  >
-                    <div className="text-center">
-                      <div className="text-6xl mb-4">🚪</div>
-                      <h2 className="text-2xl font-bold text-white mb-2 font-space">
-                        {doorClosedReason}
-                      </h2>
-                      <p className="text-slate-300 mb-4">
-                        Session ended. Redirecting to feedback...
-                      </p>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <div className="bg-slate-900 border-2 border-purple-500/60 rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
-                    <div className="text-center">
-                      <div className="text-6xl mb-4">🚪</div>
-                      <h2 className="text-2xl font-bold text-white mb-2 font-space">
-                        {doorClosedReason}
-                      </h2>
-                      <p className="text-slate-300 mb-4">
-                        Session ended. Redirecting to feedback...
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
             
             {/* Video Controls Overlay */}
             {sessionActive && (

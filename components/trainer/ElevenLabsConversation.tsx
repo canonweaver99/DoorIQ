@@ -417,14 +417,19 @@ export default function ElevenLabsConversation({
           }
           
           // Check if we're still on the trainer page
-          if (typeof window !== 'undefined' && !window.location.pathname.includes('/trainer')) {
+          // Only check if we have a valid pathname (dev tools opening can cause temporary pathname issues)
+          if (typeof window !== 'undefined' && window.location.pathname && !window.location.pathname.includes('/trainer')) {
             console.warn('⚠️ Received message but not on trainer page - ignoring message')
-            // Stop the conversation if we're not on the trainer page
-            if (conversationRef.current) {
-              console.log('🛑 Stopping conversation - no longer on trainer page')
-              conversationRef.current.endSession().catch(() => {})
+            // Don't stop conversation immediately - might be a temporary navigation issue
+            // Only stop if we're definitely on a different page (not just pathname check failure)
+            const currentPath = window.location.pathname
+            if (currentPath && currentPath.length > 0 && !currentPath.includes('/trainer') && !currentPath.includes('/feedback') && !currentPath.includes('/loading')) {
+              if (conversationRef.current) {
+                console.log('🛑 Stopping conversation - no longer on trainer page')
+                conversationRef.current.endSession().catch(() => {})
+              }
+              return
             }
-            return
           }
           
           console.log('📨 RAW MESSAGE FROM ELEVENLABS:', JSON.stringify(msg, null, 2))
