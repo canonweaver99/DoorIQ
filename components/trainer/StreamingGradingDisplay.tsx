@@ -605,9 +605,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         }}
       >
         <div 
-          className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6"
+          className="min-h-screen bg-black flex items-start justify-center p-3 sm:p-4 lg:p-6 pt-16 sm:pt-20 lg:pt-24"
           style={{ 
-            paddingTop: 'env(safe-area-inset-top)',
+            paddingTop: `calc(env(safe-area-inset-top) + 4rem)`,
             paddingBottom: 'env(safe-area-inset-bottom)'
           }}
         >
@@ -633,9 +633,9 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       }}
     >
       <div 
-        className="min-h-screen bg-black flex items-center justify-center p-3 sm:p-4 lg:p-6"
+        className="min-h-screen bg-black flex items-start justify-center p-3 sm:p-4 lg:p-6 pt-16 sm:pt-20 lg:pt-24"
         style={{ 
-          paddingTop: 'env(safe-area-inset-top)',
+          paddingTop: `calc(env(safe-area-inset-top) + 4rem)`,
           paddingBottom: 'env(safe-area-inset-bottom)'
         }}
       >

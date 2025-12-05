@@ -40,10 +40,6 @@ const ObjectionAnalysis = dynamic(() => import('@/components/analytics/Objection
   loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
   ssr: false
 })
-const ScoreCardsGrid = dynamic(() => import('@/components/analytics/ScoreCardsGrid').then(mod => ({ default: mod.ScoreCardsGrid })), {
-  loading: () => <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />,
-  ssr: false
-})
 
 interface SessionData {
   id: string
@@ -505,22 +501,6 @@ export default function AnalyticsPage() {
             }}
           />
         )}
-        
-        {/* Score Cards Grid - Rapport, Discovery, Objection Handling, Closing */}
-        {session.rapport_score !== null || session.discovery_score !== null || session.objection_handling_score !== null || session.close_score !== null ? (
-          loadingStates.hero ? (
-            <ScoreCardsGrid
-              scores={{
-                rapport: session.rapport_score || 0,
-                discovery: session.discovery_score || 0,
-                objection_handling: session.objection_handling_score || 0,
-                closing: session.close_score || 0
-              }}
-            />
-          ) : (
-            <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />
-          )
-        ) : null}
         
         {/* ElevenLabs Speech Metrics - Right after Overall Performance - ALWAYS show */}
         {loadingStates.speech ? (

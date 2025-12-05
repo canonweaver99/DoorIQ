@@ -363,8 +363,8 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
       </div>
       
       <div className="space-y-4">
-        {/* Speaking Pace - Horizontal Card */}
-        <div className={cn("rounded-xl p-5 border-2", wpmStatus.borderColor, wpmStatus.bgColor)}>
+        {/* Speaking Pace - Horizontal Card - Fixed Blue Color */}
+        <div className="rounded-xl p-5 border-2 border-blue-500/40 bg-blue-500/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
               <div className="flex items-center gap-3">
@@ -471,7 +471,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
             : 'Words like "um" and "uh"'
           
           return (
-            <div className={cn("rounded-xl p-5 border-2", fillerStatus.borderColor, fillerStatus.bgColor)}>
+            <div className="rounded-xl p-5 border-2 border-purple-500/40 bg-purple-500/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1">
                   <div className="flex items-center gap-3">
@@ -506,17 +506,17 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
           )
         })()}
         
-        {/* Time-Talk Ratio - Horizontal Card */}
-        <div className={cn("rounded-xl p-5 border-2", balanceStatus.borderColor, balanceStatus.bgColor)}>
+        {/* Time-Talk Ratio - Horizontal Card - Fixed Indigo Color */}
+        <div className="rounded-xl p-5 border-2 border-indigo-500/40 bg-indigo-500/20">
           <div className="flex items-center justify-between gap-6">
             {/* Left Side: Icon + Title + Description */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              <MessageSquare className="w-7 h-7 text-purple-400 flex-shrink-0" />
+              <MessageSquare className="w-7 h-7 text-indigo-400 flex-shrink-0" />
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg font-semibold text-white font-space">Time-Talk Ratio</span>
                   <MetricTooltip content="Time-Talk Ratio measures the percentage of conversation time you spoke vs. the customer. Target is 60% to maintain engagement while allowing discovery.">
-                    <Info className="w-5 h-5 text-gray-400 hover:text-purple-400 transition-colors" />
+                    <Info className="w-5 h-5 text-gray-400 hover:text-indigo-400 transition-colors" />
                   </MetricTooltip>
                 </div>
                 <div className="text-base text-white font-sans font-medium">Your speaking time vs. customer</div>
