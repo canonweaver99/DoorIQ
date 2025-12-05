@@ -30,6 +30,7 @@ import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
 import { StrikeCounter } from '@/components/trainer/StrikeCounter'
 import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
+import { LeverSwitch } from '@/components/ui/lever-switch'
 
 // Dynamic imports for heavy components - only load when needed
 const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
@@ -149,6 +150,8 @@ function TrainerPageContent() {
   const poorHandlingCountRef = useRef(0)
   const processedPoorHandlingRef = useRef<Set<string>>(new Set())
   const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const restartFnRef = useRef<(() => Promise<void>) | null>(null)
 
   // Sync camera/mic state with WebcamPIP
   useEffect(() => {
@@ -196,6 +199,10 @@ function TrainerPageContent() {
       if (restartTimeoutRef.current) {
         clearTimeout(restartTimeoutRef.current)
         restartTimeoutRef.current = null
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+        countdownIntervalRef.current = null
       }
     }
   }, [sessionActive, challengeModeEnabled])
@@ -1252,20 +1259,31 @@ function TrainerPageContent() {
     }
   }, [selectedAgent, sessionActive, sessionId, transcript, duration])
 
+  // Store restart function in ref to avoid dependency issues
+  useEffect(() => {
+    restartFnRef.current = restartSession
+  }, [restartSession])
+
   // Auto-restart when strikes reach 3
   useEffect(() => {
     // Only proceed if challenge mode is enabled and strikes are at 3
     if (!challengeModeEnabled || strikes < 3) {
+      // Clean up if conditions no longer met
       if (restartTimeoutRef.current) {
         clearTimeout(restartTimeoutRef.current)
         restartTimeoutRef.current = null
       }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+        countdownIntervalRef.current = null
+      }
       setShowRestartWarning(false)
+      setRestartCountdown(3)
       isRestartingRef.current = false
       return
     }
 
-    // Prevent multiple restarts
+    // Prevent multiple restarts - if already restarting, don't start another
     if (isRestartingRef.current) {
       return
     }
@@ -1273,18 +1291,18 @@ function TrainerPageContent() {
     // Mark restart as in progress
     isRestartingRef.current = true
 
-    // Store restart function reference to ensure it's available even if component unmounts
-    const restartFn = restartSession
-
     // Show warning popup with 3 second countdown
     setShowRestartWarning(true)
     setRestartCountdown(3)
 
     // Countdown timer
-    const countdownInterval = setInterval(() => {
+    countdownIntervalRef.current = setInterval(() => {
       setRestartCountdown(prev => {
         if (prev <= 1) {
-          clearInterval(countdownInterval)
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current)
+            countdownIntervalRef.current = null
+          }
           return 0
         }
         return prev - 1
@@ -1293,7 +1311,12 @@ function TrainerPageContent() {
 
     // Execute restart after 3 seconds
     restartTimeoutRef.current = setTimeout(() => {
-      clearInterval(countdownInterval)
+      // Clear countdown interval
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+        countdownIntervalRef.current = null
+      }
+      
       setShowRestartWarning(false)
       setRestartCountdown(3)
       
@@ -1303,7 +1326,8 @@ function TrainerPageContent() {
       poorHandlingCountRef.current = 0
       processedPoorHandlingRef.current.clear()
 
-      // Execute restart
+      // Execute restart using ref to avoid stale closure
+      const restartFn = restartFnRef.current
       if (restartFn) {
         console.log('🔄 Executing auto-restart after 3 strikes countdown')
         restartFn().finally(() => {
@@ -1318,14 +1342,22 @@ function TrainerPageContent() {
       }
     }, 3000)
 
+    // Cleanup function - only runs when component unmounts or dependencies change
+    // But we check if we should actually cancel (strikes < 3 or challenge mode off)
     return () => {
-      clearInterval(countdownInterval)
-      if (restartTimeoutRef.current) {
-        clearTimeout(restartTimeoutRef.current)
-        restartTimeoutRef.current = null
+      // Only clean up if we're actually canceling (not just re-rendering)
+      if (!challengeModeEnabled || strikes < 3) {
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current)
+          countdownIntervalRef.current = null
+        }
+        if (restartTimeoutRef.current) {
+          clearTimeout(restartTimeoutRef.current)
+          restartTimeoutRef.current = null
+        }
       }
     }
-  }, [strikes, challengeModeEnabled, restartSession])
+  }, [strikes, challengeModeEnabled])
 
   const endSession = useCallback(async (endReason?: string, skipRedirect: boolean = false) => {
     // Session ending (manual end - skip video, go straight to analytics/loading)
@@ -2731,14 +2763,15 @@ function TrainerPageContent() {
                           transition={{ duration: 0.2 }}
                           className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50 shadow-lg"
                         >
-                          <input
-                            type="checkbox"
-                            id="challenge-mode-live-desktop"
+                          <label htmlFor="challenge-mode-live-desktop" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
+                            Challenge Mode
+                          </label>
+                          <LeverSwitch
                             checked={challengeModeEnabled}
-                            onChange={(e) => {
-                              setChallengeModeEnabled(e.target.checked)
+                            onChange={(enabled) => {
+                              setChallengeModeEnabled(enabled)
                               // Reset strikes when enabling challenge mode mid-session
-                              if (e.target.checked) {
+                              if (enabled) {
                                 setStrikes(0)
                                 fillerWordCountRef.current = 0
                                 poorHandlingCountRef.current = 0
@@ -2749,13 +2782,17 @@ function TrainerPageContent() {
                                   clearTimeout(restartTimeoutRef.current)
                                   restartTimeoutRef.current = null
                                 }
+                                if (countdownIntervalRef.current) {
+                                  clearInterval(countdownIntervalRef.current)
+                                  countdownIntervalRef.current = null
+                                }
+                                if (countdownIntervalRef.current) {
+                                  clearInterval(countdownIntervalRef.current)
+                                  countdownIntervalRef.current = null
+                                }
                               }
                             }}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2 cursor-pointer"
                           />
-                          <label htmlFor="challenge-mode-live-desktop" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
-                            Challenge Mode
-                          </label>
                         </motion.div>
                       </div>
                     )}
@@ -3297,14 +3334,15 @@ function TrainerPageContent() {
                   transition={{ duration: 0.2 }}
                   className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50 shadow-lg"
                 >
-                  <input
-                    type="checkbox"
-                    id="challenge-mode-live"
+                  <label htmlFor="challenge-mode-live" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
+                    Challenge Mode
+                  </label>
+                  <LeverSwitch
                     checked={challengeModeEnabled}
-                    onChange={(e) => {
-                      setChallengeModeEnabled(e.target.checked)
+                    onChange={(enabled) => {
+                      setChallengeModeEnabled(enabled)
                       // Reset strikes when enabling challenge mode mid-session
-                      if (e.target.checked) {
+                      if (enabled) {
                         setStrikes(0)
                         fillerWordCountRef.current = 0
                         poorHandlingCountRef.current = 0
@@ -3315,13 +3353,17 @@ function TrainerPageContent() {
                           clearTimeout(restartTimeoutRef.current)
                           restartTimeoutRef.current = null
                         }
+                        if (countdownIntervalRef.current) {
+                          clearInterval(countdownIntervalRef.current)
+                          countdownIntervalRef.current = null
+                        }
+                        if (countdownIntervalRef.current) {
+                          clearInterval(countdownIntervalRef.current)
+                          countdownIntervalRef.current = null
+                        }
                       }
                     }}
-                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2 cursor-pointer"
                   />
-                  <label htmlFor="challenge-mode-live" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
-                    Challenge Mode
-                  </label>
                 </motion.div>
               </div>
             )}
