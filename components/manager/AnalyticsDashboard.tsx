@@ -307,6 +307,24 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
     }
   }
 
+  // Move hooks before early returns to comply with Rules of Hooks
+  const topPerformers = useMemo(() => analytics?.repPerformance?.slice(0, 3) || [], [analytics?.repPerformance])
+  const needsAttention = useMemo(() => analytics?.repPerformance?.filter(r => r.trend < 0).slice(0, 3) || [], [analytics?.repPerformance])
+
+  const displayTeamStats = useMemo(() => teamStats || {
+    totalReps: analytics?.activeReps || 0,
+    activeNow: analytics?.activeReps || 0,
+    teamAverage: analytics?.teamAverage || 0,
+    totalEarned: analytics?.repPerformance?.reduce((sum, r) => sum + r.revenue, 0) || 0,
+    topPerformers: analytics?.repPerformance?.slice(0, 5).map(r => ({
+      id: r.id,
+      name: r.name,
+      email: '',
+      score: r.avgScore,
+      sessionCount: r.sessions,
+      earnings: r.revenue
+    })) || []
+  }, [teamStats, analytics])
 
   if (loading) {
     return (
@@ -328,24 +346,6 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
       </div>
     )
   }
-
-  const topPerformers = useMemo(() => analytics.repPerformance?.slice(0, 3) || [], [analytics.repPerformance])
-  const needsAttention = useMemo(() => analytics.repPerformance?.filter(r => r.trend < 0).slice(0, 3) || [], [analytics.repPerformance])
-
-  const displayTeamStats = useMemo(() => teamStats || {
-    totalReps: analytics?.activeReps || 0,
-    activeNow: analytics?.activeReps || 0,
-    teamAverage: analytics?.teamAverage || 0,
-    totalEarned: analytics?.repPerformance?.reduce((sum, r) => sum + r.revenue, 0) || 0,
-    topPerformers: analytics?.repPerformance?.slice(0, 5).map(r => ({
-      id: r.id,
-      name: r.name,
-      email: '',
-      score: r.avgScore,
-      sessionCount: r.sessions,
-      earnings: r.revenue
-    })) || []
-  }, [teamStats, analytics])
 
   return (
     <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>

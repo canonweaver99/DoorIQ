@@ -287,17 +287,53 @@ export default function RootLayout({
           data-rewardful="2154b7"
           strategy="lazyOnload"
         />
-        <Script id="share-modal-error-handler" strategy="afterInteractive">
+        <Script id="share-modal-error-handler" strategy="beforeInteractive">
           {`
             // Prevent share-modal.js errors by safely handling missing elements
             (function() {
+              // Wrap addEventListener to catch null/undefined element errors
               const originalAddEventListener = Element.prototype.addEventListener;
               Element.prototype.addEventListener = function(type, listener, options) {
-                if (this === null || this === undefined) {
-                  console.warn('Attempted to addEventListener on null/undefined element');
+                // Check if 'this' is a valid element
+                if (!this || this.nodeType === undefined) {
+                  console.warn('Attempted to addEventListener on invalid element:', this);
                   return;
                 }
-                return originalAddEventListener.call(this, type, listener, options);
+                try {
+                  return originalAddEventListener.call(this, type, listener, options);
+                } catch (error) {
+                  // Silently handle errors from external scripts trying to attach to missing elements
+                  if (error.message && error.message.includes('null')) {
+                    console.warn('Share modal: Element not found, skipping event listener');
+                    return;
+                  }
+                  throw error;
+                }
+              };
+              
+              // Wrap querySelector to safely handle missing elements
+              const originalQuerySelector = Document.prototype.querySelector;
+              Document.prototype.querySelector = function(selector) {
+                try {
+                  const result = originalQuerySelector.call(this, selector);
+                  return result;
+                } catch (error) {
+                  console.warn('Error in querySelector:', error);
+                  return null;
+                }
+              };
+              
+              // Also wrap Element.querySelector for completeness
+              const originalElementQuerySelector = Element.prototype.querySelector;
+              Element.prototype.querySelector = function(selector) {
+                if (!this || this.nodeType === undefined) {
+                  return null;
+                }
+                try {
+                  return originalElementQuerySelector.call(this, selector);
+                } catch (error) {
+                  return null;
+                }
               };
             })();
           `}
