@@ -782,6 +782,22 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
           )
         }
         
+        // Filler word detection
+        const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm)\b/gi
+        const fillerMatches = entry.text.match(fillerPattern)
+        if (fillerMatches && fillerMatches.length > 0) {
+          // Get unique filler words found in this entry
+          const uniqueFillers = [...new Set(fillerMatches.map(m => m.toLowerCase()))]
+          uniqueFillers.forEach(filler => {
+            addFeedbackItem(
+              'filler_word',
+              `Filler word detected: "${filler}"`,
+              'needs_improvement',
+              { fillerWord: filler }
+            )
+          })
+        }
+        
         // Building rapport - only when user asks personal questions
         const isPersonalRapportQuestion = detectPersonalRapportQuestion(entry.text)
         if (isPersonalRapportQuestion) {

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { FeedbackItem } from '@/lib/trainer/types'
-import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp, Flag } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface LiveFeedbackFeedProps {
@@ -123,6 +123,17 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         borderColor: 'border-red-500/60',
         accentColor: 'bg-red-500/50',
         bgColor: 'bg-red-900/30'
+      }
+    case 'filler_word':
+      return {
+        icon: Flag,
+        badgeVariant: 'secondary' as const,
+        badgeText: 'FILLER WORD',
+        iconBg: 'bg-orange-500/20',
+        iconColor: 'text-orange-400',
+        borderColor: 'border-orange-500/60',
+        accentColor: 'bg-orange-500/50',
+        bgColor: 'bg-orange-900/30'
       }
     default:
       return {

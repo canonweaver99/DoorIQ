@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, Mic, FileText, Trophy, RotateCcw, PhoneOff } from 'lucide-react'
+import { Home, Mic, FileText, Trophy, RotateCcw, PhoneOff, Clock } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
@@ -28,6 +28,7 @@ const LiveTranscript = dynamicImport(() => import('@/components/trainer/LiveTran
 import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
+import { StrikeCounter } from '@/components/trainer/StrikeCounter'
 import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 
 // Dynamic imports for heavy components - only load when needed
@@ -133,6 +134,16 @@ function TrainerPageContent() {
   const conversationRef = useRef<any>(null) // Ref to ElevenLabs conversation instance
   const handleCallEndRef = useRef<((reason: string) => void) | null>(null) // Ref for handleCallEnd callback
   const handleDoorClosingSequenceRef = useRef<((reason: string) => Promise<void>) | null>(null) // Ref for handleDoorClosingSequence callback
+  
+  // Challenge mode state
+  const [challengeModeEnabled, setChallengeModeEnabled] = useState(false)
+  const [strikes, setStrikes] = useState(0)
+  const [showRestartWarning, setShowRestartWarning] = useState(false)
+  const [restartCountdown, setRestartCountdown] = useState(3)
+  const fillerWordCountRef = useRef(0)
+  const poorHandlingCountRef = useRef(0)
+  const processedPoorHandlingRef = useRef<Set<string>>(new Set())
+  const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Sync camera/mic state with WebcamPIP
   useEffect(() => {
@@ -150,6 +161,39 @@ function TrainerPageContent() {
   // Real-time analysis hook
   const { feedbackItems: transcriptFeedbackItems, metrics: transcriptMetrics } = useLiveSessionAnalysis(transcript)
   
+  // Load challenge mode preference from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('challengeModeEnabled')
+      if (saved === 'true') {
+        setChallengeModeEnabled(true)
+      }
+    }
+  }, [])
+
+  // Save challenge mode preference to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('challengeModeEnabled', challengeModeEnabled.toString())
+    }
+  }, [challengeModeEnabled])
+
+  // Reset strikes when starting a new session
+  useEffect(() => {
+    if (sessionActive && challengeModeEnabled) {
+      setStrikes(0)
+      fillerWordCountRef.current = 0
+      poorHandlingCountRef.current = 0
+      processedPoorHandlingRef.current.clear()
+      setShowRestartWarning(false)
+      setRestartCountdown(3)
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current)
+        restartTimeoutRef.current = null
+      }
+    }
+  }, [sessionActive, challengeModeEnabled])
+
   // Track session start time for voice analysis
   const sessionStartTimeRef = useRef<number | null>(null)
   useEffect(() => {
@@ -282,6 +326,58 @@ function TrainerPageContent() {
     ...transcriptMetrics,
     voiceMetrics: voiceMetrics
   }
+
+  // Track filler words for challenge mode
+  useEffect(() => {
+    if (!challengeModeEnabled || !sessionActive) return
+
+    const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm)\b/gi
+    const userEntries = transcript.filter(entry => entry.speaker === 'user')
+    
+    let totalFillerWords = 0
+    userEntries.forEach(entry => {
+      const matches = entry.text.match(fillerPattern)
+      if (matches) {
+        totalFillerWords += matches.length
+      }
+    })
+
+    // If filler words exceed 3, add a strike (but only once per threshold)
+    if (totalFillerWords > 3 && fillerWordCountRef.current <= 3) {
+      fillerWordCountRef.current = totalFillerWords
+      setStrikes(prev => {
+        const newStrikes = prev + 1
+        return newStrikes
+      })
+    } else {
+      fillerWordCountRef.current = totalFillerWords
+    }
+  }, [transcript, challengeModeEnabled, sessionActive])
+
+  // Track poor objection handling for challenge mode
+  useEffect(() => {
+    if (!challengeModeEnabled || !sessionActive) return
+
+    transcriptFeedbackItems.forEach((item, index) => {
+      if (item.type === 'objection_handling' && item.metadata?.handlingQuality === 'poor') {
+        const itemKey = `${item.id || index}-${item.timestamp?.getTime() || Date.now()}`
+        
+        // Only count each poor handling once
+        if (!processedPoorHandlingRef.current.has(itemKey)) {
+          processedPoorHandlingRef.current.add(itemKey)
+          poorHandlingCountRef.current += 1
+          
+          // Each poor handling adds a strike
+          setStrikes(prev => {
+            const newStrikes = prev + 1
+            return newStrikes
+          })
+        }
+      }
+    })
+  }, [transcriptFeedbackItems, challengeModeEnabled, sessionActive])
+
+  // Auto-restart when strikes reach 3 - will be defined after restartSession
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
@@ -1140,6 +1236,57 @@ function TrainerPageContent() {
       alert(`Failed to restart session: ${error?.message || 'Unknown error'}`)
     }
   }, [selectedAgent, sessionActive, sessionId, transcript, duration, startSession])
+
+  // Auto-restart when strikes reach 3
+  useEffect(() => {
+    if (!challengeModeEnabled || !sessionActive || strikes < 3) {
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current)
+        restartTimeoutRef.current = null
+      }
+      setShowRestartWarning(false)
+      return
+    }
+
+    // Show warning and start countdown
+    setShowRestartWarning(true)
+    setRestartCountdown(3)
+
+    // Countdown timer
+    const countdownInterval = setInterval(() => {
+      setRestartCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    // Auto-restart after 3 seconds
+    restartTimeoutRef.current = setTimeout(() => {
+      clearInterval(countdownInterval)
+      setShowRestartWarning(false)
+      setRestartCountdown(3)
+      setStrikes(0)
+      fillerWordCountRef.current = 0
+      poorHandlingCountRef.current = 0
+      processedPoorHandlingRef.current.clear()
+      
+      // Call restart function
+      if (restartSession) {
+        restartSession()
+      }
+    }, 3000)
+
+    return () => {
+      clearInterval(countdownInterval)
+      if (restartTimeoutRef.current) {
+        clearTimeout(restartTimeoutRef.current)
+        restartTimeoutRef.current = null
+      }
+    }
+  }, [strikes, challengeModeEnabled, sessionActive, restartSession])
 
   const endSession = useCallback(async (endReason?: string, skipRedirect: boolean = false) => {
     // Session ending (manual end - skip video, go straight to analytics/loading)
@@ -2478,7 +2625,20 @@ function TrainerPageContent() {
                   
                   {/* Knock Button Overlay */}
                   {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10 gap-4">
+                      {/* Challenge Mode Toggle */}
+                      <div className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50">
+                        <input
+                          type="checkbox"
+                          id="challenge-mode-desktop"
+                          checked={challengeModeEnabled}
+                          onChange={(e) => setChallengeModeEnabled(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2"
+                        />
+                        <label htmlFor="challenge-mode-desktop" className="text-sm text-slate-300 cursor-pointer">
+                          Challenge Mode (3 strikes = restart)
+                        </label>
+                      </div>
                       <button
                         onClick={() => startSession()}
                         className="relative px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-space font-bold text-base sm:text-lg lg:text-xl rounded-lg sm:rounded-xl transition-all duration-300 active:scale-95 border border-slate-700/80 hover:border-slate-600 min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
@@ -2801,6 +2961,19 @@ function TrainerPageContent() {
                     <p className="text-slate-400 mb-6">
                       Select an agent and start your training session
                     </p>
+                    {/* Challenge Mode Toggle */}
+                    <div className="mb-4 flex items-center justify-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="challenge-mode"
+                        checked={challengeModeEnabled}
+                        onChange={(e) => setChallengeModeEnabled(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2"
+                      />
+                      <label htmlFor="challenge-mode" className="text-sm text-slate-300 cursor-pointer">
+                        Challenge Mode (3 strikes = restart)
+                      </label>
+                    </div>
                     {selectedAgent && (
                       <button
                         onClick={() => startSession()}
@@ -2888,6 +3061,61 @@ function TrainerPageContent() {
                     Reconnecting... (Attempt {reconnectingStatus.attempt}/{reconnectingStatus.maxAttempts})
                   </span>
                 </div>
+              </div>
+            )}
+            
+            {/* Challenge Mode Strike Counter */}
+            {sessionActive && challengeModeEnabled && (
+              <div className="absolute top-4 right-4 z-30">
+                <StrikeCounter strikes={strikes} maxStrikes={3} />
+              </div>
+            )}
+            
+            {/* Restart Warning Modal */}
+            {showRestartWarning && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                {shouldAnimate ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="bg-slate-900 border-2 border-red-500/60 rounded-2xl p-8 max-w-md mx-4 shadow-2xl"
+                  >
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">⚠️</div>
+                      <h2 className="text-2xl font-bold text-white mb-2 font-space">
+                        Challenge Failed!
+                      </h2>
+                      <p className="text-slate-300 mb-6">
+                        You've reached 3 strikes. Restarting session in...
+                      </p>
+                      <div className="text-5xl font-bold text-red-400 font-mono mb-6">
+                        {restartCountdown}
+                      </div>
+                      <p className="text-sm text-slate-400">
+                        Too many filler words or poor objection handling
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="bg-slate-900 border-2 border-red-500/60 rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">⚠️</div>
+                      <h2 className="text-2xl font-bold text-white mb-2 font-space">
+                        Challenge Failed!
+                      </h2>
+                      <p className="text-slate-300 mb-6">
+                        You've reached 3 strikes. Restarting session in...
+                      </p>
+                      <div className="text-5xl font-bold text-red-400 font-mono mb-6">
+                        {restartCountdown}
+                      </div>
+                      <p className="text-sm text-slate-400">
+                        Too many filler words or poor objection handling
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             

@@ -413,6 +413,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
           // Calculate filler words from transcript or voiceAnalysis
           let totalFillerWords = 0
           let fillerWordsPerMinute = 0
+          const foundFillerWords = new Set<string>()
           
           if (voiceAnalysis?.totalFillerWords !== undefined) {
             totalFillerWords = voiceAnalysis.totalFillerWords
@@ -426,6 +427,9 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
             totalFillerWords = userEntries.reduce((sum: number, entry: any) => {
               const text = entry.text || ''
               const matches = text.match(fillerPattern)
+              if (matches) {
+                matches.forEach((match: string) => foundFillerWords.add(match.toLowerCase()))
+              }
               return sum + (matches ? matches.length : 0)
             }, 0)
             
@@ -460,6 +464,12 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
             ? { label: 'Good', color: 'text-green-400', borderColor: 'border-green-500/40', bgColor: 'bg-green-500/20' }
             : { label: 'Needs work', color: 'text-amber-400', borderColor: 'border-amber-500/40', bgColor: 'bg-amber-500/20' }
           
+          // Create display text with quoted filler words
+          const fillerWordsArray = Array.from(foundFillerWords).slice(0, 3)
+          const fillerWordsDisplay = fillerWordsArray.length > 0
+            ? `Words like ${fillerWordsArray.map(fw => `"${fw}"`).join(', ')}`
+            : 'Words like "um" and "uh"'
+          
           return (
             <div className={cn("rounded-xl p-5 border-2", fillerStatus.borderColor, fillerStatus.bgColor)}>
               <div className="flex items-center justify-between">
@@ -473,7 +483,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
                           <Info className="w-5 h-5 text-gray-400 hover:text-purple-400 transition-colors" />
                         </MetricTooltip>
                       </div>
-                      <div className="text-base text-white font-sans font-medium">Words like 'um' and 'uh'</div>
+                      <div className="text-base text-white font-sans font-medium">{fillerWordsDisplay}</div>
                     </div>
                   </div>
                 </div>

@@ -16,6 +16,7 @@ export type FeedbackType =
   | 'momentum_shift'
   | 'question_quality'
   | 'price_handling'
+  | 'filler_word'
 
 export type FeedbackSeverity = 'good' | 'neutral' | 'needs_improvement'
 
@@ -39,6 +40,7 @@ export interface FeedbackItem {
     isResolved?: boolean
     isReObjection?: boolean
     previousObjectionIndex?: number
+    fillerWord?: string
   }
 }
 
