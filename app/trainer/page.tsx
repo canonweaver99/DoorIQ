@@ -142,6 +142,7 @@ function TrainerPageContent() {
   const [strikeCauses, setStrikeCauses] = useState<Array<{type: 'filler_words' | 'poor_objection_handling', count?: number, timestamp: Date}>>([])
   const [showRestartWarning, setShowRestartWarning] = useState(false)
   const [restartCountdown, setRestartCountdown] = useState(3)
+  const isRestartingRef = useRef(false) // Track if restart is in progress
   const fillerWordCountRef = useRef(0)
   const poorHandlingCountRef = useRef(0)
   const processedPoorHandlingRef = useRef<Set<string>>(new Set())
@@ -1195,6 +1196,7 @@ function TrainerPageContent() {
   const restartSession = useCallback(async () => {
     if (!selectedAgent?.eleven_agent_id) {
       alert('Please select an agent first')
+      isRestartingRef.current = false
       return
     }
 
@@ -1240,6 +1242,11 @@ function TrainerPageContent() {
     } catch (error: any) {
       logger.error('Error restarting session', error)
       alert(`Failed to restart session: ${error?.message || 'Unknown error'}`)
+    } finally {
+      // Reset restart flag after a brief delay to ensure cleanup completes
+      setTimeout(() => {
+        isRestartingRef.current = false
+      }, 500)
     }
   }, [selectedAgent, sessionActive, sessionId, transcript, duration])
 
@@ -1252,48 +1259,47 @@ function TrainerPageContent() {
         restartTimeoutRef.current = null
       }
       setShowRestartWarning(false)
+      isRestartingRef.current = false
       return
     }
+
+    // Prevent multiple restarts
+    if (isRestartingRef.current) {
+      return
+    }
+
+    // Mark restart as in progress
+    isRestartingRef.current = true
 
     // Store restart function reference to ensure it's available even if component unmounts
     const restartFn = restartSession
 
-    // Show warning and start countdown
+    // Show warning briefly (optional - can remove if not needed)
     setShowRestartWarning(true)
-    setRestartCountdown(3)
+    setRestartCountdown(0)
 
-    // Countdown timer
-    const countdownInterval = setInterval(() => {
-      setRestartCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval)
-          return 0
-        }
-        return prev - 1
+    // Reset strike counters immediately
+    setStrikes(0)
+    fillerWordCountRef.current = 0
+    poorHandlingCountRef.current = 0
+    processedPoorHandlingRef.current.clear()
+
+    // Execute restart immediately
+    if (restartFn) {
+      console.log('🔄 Executing instant auto-restart after 3 strikes')
+      restartFn().finally(() => {
+        // Reset restart flag after restart completes
+        setTimeout(() => {
+          isRestartingRef.current = false
+          setShowRestartWarning(false)
+        }, 1000)
       })
-    }, 1000)
-
-    // Auto-restart after 3 seconds - execute even if session becomes inactive
-    restartTimeoutRef.current = setTimeout(() => {
-      clearInterval(countdownInterval)
-      setShowRestartWarning(false)
-      setRestartCountdown(3)
-      setStrikes(0)
-      fillerWordCountRef.current = 0
-      poorHandlingCountRef.current = 0
-      processedPoorHandlingRef.current.clear()
-      
-      // Call restart function - ensure it executes
-      if (restartFn) {
-        console.log('🔄 Executing auto-restart after 3 strikes')
-        restartFn()
-      } else {
-        console.error('⚠️ Restart function not available')
-      }
-    }, 3000)
+    } else {
+      console.error('⚠️ Restart function not available')
+      isRestartingRef.current = false
+    }
 
     return () => {
-      clearInterval(countdownInterval)
       if (restartTimeoutRef.current) {
         clearTimeout(restartTimeoutRef.current)
         restartTimeoutRef.current = null
@@ -1312,6 +1318,12 @@ function TrainerPageContent() {
       endReason: endReason || 'manual',
       skipRedirect
     })
+    
+    // Prevent auto-end if restart is in progress (unless it's a manual end)
+    if (isRestartingRef.current && endReason !== 'manual' && endReason !== 'restart') {
+      console.log('⚠️ Restart in progress, ignoring auto-end')
+      return
+    }
     
     // Prevent multiple calls - but allow if we have sessionId even if sessionActive is false
     if (!sessionId) {
@@ -1508,6 +1520,12 @@ function TrainerPageContent() {
   // Shared function to handle door closing sequence and end session
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Starting door closing sequence:', reason)
+    
+    // Prevent auto-end if restart is in progress
+    if (isRestartingRef.current) {
+      console.log('⚠️ Restart in progress, ignoring door closing sequence')
+      return
+    }
     
     if (!sessionId) {
       console.log('⚠️ No sessionId, ignoring door closing sequence')
@@ -2703,9 +2721,9 @@ function TrainerPageContent() {
                       </div>
                     )}
                     
-                    {/* Challenge Mode Strike Counter - Left side of webcam */}
+                    {/* Challenge Mode Strike Counter - Top left of webcam */}
                     {sessionActive && challengeModeEnabled && (
-                      <div className="absolute bottom-20 sm:bottom-24 lg:bottom-32 left-2 sm:left-3 lg:left-6 z-30">
+                      <div className="absolute bottom-[92px] sm:bottom-[120px] lg:bottom-[190px] left-2 sm:left-3 lg:left-6 z-30">
                         <StrikeCounter strikes={strikes} maxStrikes={3} />
                       </div>
                     )}
