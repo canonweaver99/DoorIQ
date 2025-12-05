@@ -18,6 +18,9 @@ interface LiveMetricsPanelProps {
   sessionId?: string | null
   sessionActive?: boolean
   agentName?: string | null
+  strikes?: number
+  strikeCauses?: Array<{type: 'filler_words' | 'poor_objection_handling', count?: number, timestamp: Date}>
+  challengeModeEnabled?: boolean
 }
 
 interface MetricCardProps {
@@ -967,7 +970,7 @@ function getStartingSentimentFromAgent(agentName: string | null | undefined): nu
   return Math.round(Math.max(5, Math.min(25, startingSentiment)))
 }
 
-export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [], sessionId, sessionActive = false, agentName }: LiveMetricsPanelProps) {
+export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoiceAnalysisData, transcript = [], sessionId, sessionActive = false, agentName, strikes = 0, strikeCauses = [], challengeModeEnabled = false }: LiveMetricsPanelProps) {
   const isMobile = useIsMobile(768)
   const prefersReducedMotion = useReducedMotion()
   const shouldAnimate = !isMobile && !prefersReducedMotion
@@ -1398,6 +1401,133 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
           </div>
         )}
       </TalkTimeCard>
+      
+      {/* Strikes Card - Always visible */}
+      {sessionActive && (
+        (() => {
+          // Calculate summary from strikeCauses
+          const fillerWordStrikes = strikeCauses
+            .filter(cause => cause.type === 'filler_words')
+            .reduce((sum, cause) => sum + (cause.count || 1), 0)
+          const poorHandlingStrikes = strikeCauses
+            .filter(cause => cause.type === 'poor_objection_handling')
+            .length
+          
+          const StrikesCardComponent = shouldAnimate ? motion.div : 'div'
+          const strikesCardProps = shouldAnimate ? {
+            initial: { opacity: 0, y: 10 },
+            animate: { opacity: 1, y: 0 },
+            transition: { duration: 0.3 }
+          } : {}
+          
+          return (
+            <StrikesCardComponent
+              {...strikesCardProps}
+              className={cn(
+                "bg-slate-900 rounded-md sm:rounded-lg pt-0.5 sm:pt-1.5 px-3 sm:px-4 pb-0.5 sm:pb-1.5 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col relative w-full",
+                strikes === 0 ? 'border-slate-600/50' :
+                strikes === 1 ? 'border-amber-500/60' :
+                strikes === 2 ? 'border-orange-500/60' :
+                'border-red-500/60'
+              )}
+            >
+              <div className="flex items-start gap-2 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">
+                <div className={cn(
+                  "p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0",
+                  strikes === 0 ? 'bg-slate-700/50' :
+                  strikes === 1 ? 'bg-amber-500/20' :
+                  strikes === 2 ? 'bg-orange-500/20' :
+                  'bg-red-500/20'
+                )}>
+                  <AlertTriangle className={cn(
+                    "w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5",
+                    strikes === 0 ? 'text-slate-400' :
+                    strikes === 1 ? 'text-amber-400' :
+                    strikes === 2 ? 'text-orange-400' :
+                    'text-red-400'
+                  )} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-1.5 sm:gap-2">
+                    <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">
+                      Strikes
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className={cn(
+                        "text-lg sm:text-xl lg:text-2xl font-bold font-space leading-tight",
+                        strikes === 0 ? 'text-slate-300' :
+                        strikes === 1 ? 'text-amber-300' :
+                        strikes === 2 ? 'text-orange-300' :
+                        'text-red-300'
+                      )}>
+                        {strikes}/3
+                      </div>
+                      {strikes >= 3 && (
+                        <Badge variant="destructive" className="text-[10px] sm:text-xs lg:text-sm px-1.5 sm:px-1.5 lg:px-2 py-0.5 bg-red-500/20 border-red-500/60 text-red-300 font-semibold mt-0.5">
+                          Restarting...
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Cause Breakdown Summary */}
+              {strikes > 0 && (
+                <div className="mb-2 sm:mb-3 text-xs sm:text-sm text-slate-300 font-space">
+                  {fillerWordStrikes > 0 && poorHandlingStrikes > 0 && (
+                    <div className="leading-tight">
+                      {fillerWordStrikes} from filler words, {poorHandlingStrikes} from poor objection handling
+                    </div>
+                  )}
+                  {fillerWordStrikes > 0 && poorHandlingStrikes === 0 && (
+                    <div className="leading-tight">
+                      {fillerWordStrikes} from filler words
+                    </div>
+                  )}
+                  {fillerWordStrikes === 0 && poorHandlingStrikes > 0 && (
+                    <div className="leading-tight">
+                      {poorHandlingStrikes} from poor objection handling
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Progress Bar */}
+              <div className="-mt-1 sm:-mt-2 pt-3 sm:pt-5 lg:pt-6 flex-shrink-0 min-h-0">
+                <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
+                  {/* Progress fill */}
+                  {shouldAnimate ? (
+                    <motion.div
+                      className={cn(
+                        "absolute left-0 top-0 h-full rounded-full",
+                        strikes === 0 ? 'bg-slate-600' :
+                        strikes === 1 ? 'bg-amber-500' :
+                        strikes === 2 ? 'bg-orange-500' :
+                        'bg-red-500'
+                      )}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(strikes / 3) * 100}%` }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                    />
+                  ) : (
+                    <div
+                      className={cn(
+                        "absolute left-0 top-0 h-full rounded-full transition-all duration-300",
+                        strikes === 0 ? 'bg-slate-600' :
+                        strikes === 1 ? 'bg-amber-500' :
+                        strikes === 2 ? 'bg-orange-500' :
+                        'bg-red-500'
+                      )}
+                      style={{ width: `${(strikes / 3) * 100}%` }}
+                    />
+                  )}
+                </div>
+              </div>
+            </StrikesCardComponent>
+          )
+        })()
+      )}
     </div>
   )
 })

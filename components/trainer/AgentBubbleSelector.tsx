@@ -604,33 +604,6 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       </span>
                     </div>
                     
-                    {/* Challenge Mode Toggle */}
-                    <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-white/10">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const newValue = !challengeModeEnabled
-                          setChallengeModeEnabled(newValue)
-                          if (typeof window !== 'undefined') {
-                            localStorage.setItem('challengeModeEnabled', newValue.toString())
-                          }
-                        }}
-                        className={cn(
-                          "flex items-center gap-1.5 px-2 py-1 rounded-lg border transition-all",
-                          challengeModeEnabled
-                            ? "bg-purple-500/20 border-purple-500/30"
-                            : "bg-white/5 border-white/10"
-                        )}
-                      >
-                        <span className={cn(
-                          "text-xs font-space font-semibold",
-                          challengeModeEnabled ? "text-purple-400" : "text-white/60"
-                        )}>
-                          {challengeModeEnabled ? "⚡ Challenge" : "Challenge"}
-                        </span>
-                      </button>
-                    </div>
-                    
                     {/* Session Stats */}
                     {(agent.hasClosed || agent.bestScore) && (
                       <div className="flex items-center justify-center gap-3 mt-2 pt-2 border-t border-white/10">
@@ -947,33 +920,6 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         <span className="text-xs sm:text-sm md:text-base text-white/70 font-space font-bold">
                           {agent.difficulty || 'Unknown'}
                         </span>
-                      </div>
-                      
-                      {/* Challenge Mode Toggle */}
-                      <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-white/10">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const newValue = !challengeModeEnabled
-                            setChallengeModeEnabled(newValue)
-                            if (typeof window !== 'undefined') {
-                              localStorage.setItem('challengeModeEnabled', newValue.toString())
-                            }
-                          }}
-                          className={cn(
-                            "flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-all",
-                            challengeModeEnabled
-                              ? "bg-purple-500/20 border-purple-500/30"
-                              : "bg-white/5 border-white/10"
-                          )}
-                        >
-                          <span className={cn(
-                            "text-[10px] sm:text-xs font-space font-semibold",
-                            challengeModeEnabled ? "text-purple-400" : "text-white/60"
-                          )}>
-                            {challengeModeEnabled ? "⚡ Challenge" : "Challenge"}
-                          </span>
-                        </button>
                       </div>
                       
                       {/* Session Stats */}
