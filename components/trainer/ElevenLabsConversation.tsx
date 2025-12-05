@@ -12,6 +12,7 @@ type ElevenLabsConversationProps = {
   conversationToken: string
   autostart?: boolean
   sessionId?: string | null
+  sessionActive?: boolean  // Track if session is still active (prevents reconnect during ending)
   onAgentEndCall?: (reason: EndCallReason) => void  // Callback when AI ends the call
 }
 
@@ -20,6 +21,7 @@ export default function ElevenLabsConversation({
   conversationToken, 
   autostart = true, 
   sessionId = null,
+  sessionActive = true,
   onAgentEndCall
 }: ElevenLabsConversationProps) {
   const conversationRef = useRef<any>(null)
@@ -27,11 +29,16 @@ export default function ElevenLabsConversation({
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [currentToken, setCurrentToken] = useState(conversationToken)
   const sessionIdRef = useRef<string | null>(sessionId) // Track sessionId with ref for callbacks
+  const sessionActiveRef = useRef<boolean>(sessionActive) // Track sessionActive with ref for callbacks
   
-  // Update ref when sessionId changes
+  // Update refs when props change
   useEffect(() => {
     sessionIdRef.current = sessionId
   }, [sessionId])
+  
+  useEffect(() => {
+    sessionActiveRef.current = sessionActive
+  }, [sessionActive])
   
   // Audio recording only (video is handled by dual camera compositor in trainer page)
   const { isRecording: isAudioRecording, startRecording: startAudioRecording, stopRecording: stopAudioRecording } = useSessionRecording(sessionId)
@@ -322,6 +329,12 @@ export default function ElevenLabsConversation({
           // Don't reconnect if this was an intentional end (via client tool)
           if (intentionalEndRef.current) {
             console.log('🚪 Intentional end detected - skipping reconnection')
+            return
+          }
+          
+          // Don't reconnect if session is not active (session ending or ended)
+          if (!sessionActiveRef.current) {
+            console.log('⚠️ Session not active - skipping reconnection in disconnect handler')
             return
           }
           
@@ -712,6 +725,12 @@ export default function ElevenLabsConversation({
             return
           }
           
+          // Don't reconnect if session is not active (session ending or ended)
+          if (!sessionActiveRef.current) {
+            console.log('⚠️ Session not active - skipping reconnection in error handler')
+            return
+          }
+          
           // Attempt automatic reconnection if we were previously connected
           if (wasConnectedRef.current && !isReconnectingRef.current) {
             console.warn('⚠️ Connection error during active session, attempting reconnection...')
@@ -768,6 +787,19 @@ export default function ElevenLabsConversation({
   const attemptReconnect = useCallback(async () => {
     if (isReconnectingRef.current) {
       console.log('🔄 Already reconnecting, skipping duplicate attempt')
+      return
+    }
+
+    // Don't reconnect if end_call was already triggered (session is ending)
+    if (endCallTriggeredRef.current) {
+      console.log('🚪 end_call was triggered - skipping reconnection attempt (session ending)')
+      return
+    }
+
+    // Don't reconnect if session is not active (session ending or ended)
+    // Use ref to get current value (callbacks can have stale closures)
+    if (!sessionActiveRef.current) {
+      console.log('⚠️ Session not active - skipping reconnection attempt')
       return
     }
 

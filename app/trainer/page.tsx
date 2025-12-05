@@ -1584,6 +1584,9 @@ function TrainerPageContent() {
       return
     }
     
+    // Set session state to door-closing to prevent reconnections
+    setSessionState('door-closing')
+    
     // Store the reason for later use
     doorClosingReasonRef.current = reason
     
@@ -2755,15 +2758,15 @@ function TrainerPageContent() {
                     
                     {/* Challenge Mode Toggle - Live Session */}
                     {sessionActive && !challengeModeEnabled && (
-                      <div className="absolute top-4 right-4 z-30">
+                      <div className="absolute bottom-20 sm:bottom-24 lg:bottom-32 left-2 sm:left-3 lg:left-6 z-30">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9 }}
                           transition={{ duration: 0.2 }}
-                          className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50 shadow-lg"
+                          className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-slate-700/50 shadow-lg scale-90"
                         >
-                          <label htmlFor="challenge-mode-live-desktop" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
+                          <label htmlFor="challenge-mode-live-desktop" className="text-xs text-slate-300 cursor-pointer font-space font-medium">
                             Challenge Mode
                           </label>
                           <LeverSwitch
@@ -2939,6 +2942,7 @@ function TrainerPageContent() {
           agentId={selectedAgent.eleven_agent_id} 
           conversationToken={conversationToken} 
           sessionId={sessionId}
+          sessionActive={sessionActive}
           autostart
           onAgentEndCall={handleAgentEndCall}
         />
@@ -3371,15 +3375,15 @@ function TrainerPageContent() {
             
             {/* Challenge Mode Toggle - Live Session */}
             {sessionActive && !challengeModeEnabled && (
-              <div className="absolute top-4 right-4 z-30">
+              <div className="absolute bottom-20 sm:bottom-24 lg:bottom-32 left-2 sm:left-3 lg:left-6 z-30">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
-                  className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50 shadow-lg"
+                  className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-slate-700/50 shadow-lg scale-90"
                 >
-                  <label htmlFor="challenge-mode-live" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
+                  <label htmlFor="challenge-mode-live" className="text-xs text-slate-300 cursor-pointer font-space font-medium">
                     Challenge Mode
                   </label>
                   <LeverSwitch
@@ -3402,12 +3406,9 @@ function TrainerPageContent() {
                           clearInterval(countdownIntervalRef.current)
                           countdownIntervalRef.current = null
                         }
-                        if (countdownIntervalRef.current) {
-                          clearInterval(countdownIntervalRef.current)
-                          countdownIntervalRef.current = null
-                        }
                       }
                     }}
+                    className="scale-75"
                   />
                 </motion.div>
               </div>
@@ -3552,6 +3553,7 @@ function TrainerPageContent() {
             agentId={selectedAgent.eleven_agent_id} 
             conversationToken={conversationToken} 
             sessionId={sessionId}
+            sessionActive={sessionActive}
             autostart
             onAgentEndCall={handleAgentEndCall}
           />
