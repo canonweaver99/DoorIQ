@@ -180,7 +180,7 @@ export default function HomePage() {
         return '🌙 Let\'s Finish Strong'
       }
     }
-    return getTimeOfDayGreeting().text
+    return 'Let\'s Get After It'
   }
 
   const getMotivationalSubtext = () => {
