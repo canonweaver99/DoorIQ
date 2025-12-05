@@ -711,6 +711,15 @@ function TrainerPageContent() {
         // CRITICAL: Disable loop for closing video IMMEDIATELY
         video.loop = false
         
+        // Ensure video source is set correctly
+        const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+        const expectedClosingSrc = videoPaths?.closing
+        if (expectedClosingSrc && video.currentSrc !== expectedClosingSrc && video.src !== expectedClosingSrc) {
+          console.log('🎬 Video source mismatch, reloading with correct source')
+          video.src = expectedClosingSrc
+          video.load()
+        }
+        
         // Handle video ended - ensure it stops and doesn't loop
         const handleClosingEnded = () => {
           console.log('🎬 Closing video ended, stopping playback')
@@ -723,55 +732,65 @@ function TrainerPageContent() {
         video.addEventListener('ended', handleClosingEnded)
         
         // Force video to load if not already loaded
-        if (video.readyState === 0) {
+        if (video.readyState === 0 || video.readyState === 1) {
+          console.log('🎬 Video not loaded, calling load()')
           video.load()
         }
         
-        // Ensure video is loaded and ready
+        // Ensure video is loaded and ready before playing
         const handleCanPlay = () => {
           console.log('🎬 Closing video can play, starting playback')
           video.loop = false // Ensure loop is disabled
-          const playPromise = video.play()
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                console.log('✅ Closing video started playing')
-              })
-              .catch((err) => {
-                console.error('❌ Failed to play closing door animation:', err)
-                // Retry after a short delay
-                setTimeout(() => {
-                  video.loop = false
-                  video.play().catch((retryErr) => {
-                    console.error('❌ Retry failed:', retryErr)
-                  })
-                }, 500)
-              })
-          }
+          
+          // Small delay to ensure video is fully ready
+          setTimeout(() => {
+            const playPromise = video.play()
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  console.log('✅ Closing video started playing')
+                })
+                .catch((err) => {
+                  console.error('❌ Failed to play closing door animation:', err)
+                  // Retry after a short delay
+                  setTimeout(() => {
+                    video.loop = false
+                    video.play().catch((retryErr) => {
+                      console.error('❌ Retry failed:', retryErr)
+                    })
+                  }, 500)
+                })
+            }
+          }, 50) // Small delay to ensure smooth transition
+          
           video.removeEventListener('canplay', handleCanPlay)
         }
         
-        // If video is already ready, play immediately
+        // If video is already ready, play immediately (but with small delay for smooth transition)
         if (video.readyState >= 3) { // HAVE_FUTURE_DATA or higher
-          console.log('🎬 Video already ready, playing immediately')
+          console.log('🎬 Video already ready, playing after brief delay')
           video.loop = false // Ensure loop is disabled
-          const playPromise = video.play()
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                console.log('✅ Closing video started playing (immediate)')
-              })
-              .catch((err) => {
-                console.error('❌ Failed to play closing door animation (immediate):', err)
-                // Retry after a short delay
-                setTimeout(() => {
-                  video.loop = false
-                  video.play().catch((retryErr) => {
-                    console.error('❌ Retry failed:', retryErr)
-                  })
-                }, 500)
-              })
-          }
+          
+          // Small delay to ensure smooth transition from previous video
+          setTimeout(() => {
+            const playPromise = video.play()
+            if (playPromise !== undefined) {
+              playPromise
+                .then(() => {
+                  console.log('✅ Closing video started playing (immediate)')
+                })
+                .catch((err) => {
+                  console.error('❌ Failed to play closing door animation (immediate):', err)
+                  // Retry after a short delay
+                  setTimeout(() => {
+                    video.loop = false
+                    video.play().catch((retryErr) => {
+                      console.error('❌ Retry failed:', retryErr)
+                    })
+                  }, 500)
+                })
+            }
+          }, 100) // Delay to ensure smooth transition
         } else {
           console.log('🎬 Video not ready yet, waiting for canplay event')
           video.addEventListener('canplay', handleCanPlay)
@@ -1631,13 +1650,32 @@ function TrainerPageContent() {
       // Stop any playing video and switch to closing video
       if (agentVideoRef.current) {
         console.log('🎬 Stopping current video and switching to closing video')
-        agentVideoRef.current.pause()
-        agentVideoRef.current.loop = false // Ensure no looping
+        const video = agentVideoRef.current
+        
+        // Properly stop and reset the current video
+        video.pause()
+        video.loop = false
+        video.currentTime = 0
+        
+        // Wait a brief moment for the video to stop, then switch source
+        // This prevents glitches from rapid state changes
+        setTimeout(() => {
+          // Ensure video is still stopped
+          if (agentVideoRef.current) {
+            agentVideoRef.current.pause()
+            agentVideoRef.current.loop = false
+          }
+          
+          // Trigger closing video playback
+          console.log('🎬 Switching to closing video mode')
+          setShowDoorCloseAnimation(true)
+          setVideoMode('closing')
+        }, 100) // Small delay to ensure clean transition
+      } else {
+        // No video element yet, set state immediately
+        setShowDoorCloseAnimation(true)
+        setVideoMode('closing')
       }
-      
-      // Trigger closing video playback
-      setShowDoorCloseAnimation(true)
-      setVideoMode('closing')
       
     } else {
       // No closing video available, skip video and proceed immediately
@@ -1995,9 +2033,10 @@ function TrainerPageContent() {
       
       return (
         <video
-          key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
+          key={`${selectedAgent?.name}-${videoMode}-${showDoorCloseAnimation ? 'closing' : ''}-${videoSrc}`}
           ref={agentVideoRef}
           src={videoSrc}
+          preload="auto"
           className="w-full h-full object-cover"
           style={{ objectFit: 'cover', objectPosition: 'center center' }}
           autoPlay
@@ -2243,9 +2282,10 @@ function TrainerPageContent() {
                         
                         return (
                           <video
-                            key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
+                            key={`${selectedAgent?.name}-${videoMode}-${showDoorCloseAnimation ? 'closing' : ''}-${videoSrc}`}
                             ref={agentVideoRef}
                             src={videoSrc}
+                            preload="auto"
                             className="w-full h-full object-cover"
                             style={{ objectFit: 'cover', objectPosition: 'center center' }}
                             autoPlay
