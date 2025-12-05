@@ -2786,12 +2786,9 @@ function TrainerPageContent() {
                                   clearInterval(countdownIntervalRef.current)
                                   countdownIntervalRef.current = null
                                 }
-                                if (countdownIntervalRef.current) {
-                                  clearInterval(countdownIntervalRef.current)
-                                  countdownIntervalRef.current = null
-                                }
                               }
                             }}
+                            className="scale-75"
                           />
                         </motion.div>
                       </div>
@@ -2816,6 +2813,54 @@ function TrainerPageContent() {
                         isCameraOff={isCameraOff}
                         personaName={selectedAgent?.name}
                       />
+                    )}
+                    
+                    {/* Restart Warning Modal */}
+                    {showRestartWarning && (
+                      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                        {shouldAnimate ? (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="bg-slate-900 border-2 border-red-500/60 rounded-2xl p-8 max-w-md mx-4 shadow-2xl"
+                          >
+                            <div className="text-center">
+                              <div className="text-6xl mb-4">⚠️</div>
+                              <h2 className="text-2xl font-bold text-white mb-2 font-space">
+                                Challenge Failed!
+                              </h2>
+                              <p className="text-slate-300 mb-6">
+                                You've reached 3 strikes. Restarting session in...
+                              </p>
+                              <div className="text-5xl font-bold text-red-400 font-mono mb-6">
+                                {restartCountdown}
+                              </div>
+                              <p className="text-sm text-slate-400">
+                                Too many filler words or poor objection handling
+                              </p>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <div className="bg-slate-900 border-2 border-red-500/60 rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+                            <div className="text-center">
+                              <div className="text-6xl mb-4">⚠️</div>
+                              <h2 className="text-2xl font-bold text-white mb-2 font-space">
+                                Challenge Failed!
+                              </h2>
+                              <p className="text-slate-300 mb-6">
+                                You've reached 3 strikes. Restarting session in...
+                              </p>
+                              <div className="text-5xl font-bold text-red-400 font-mono mb-6">
+                                {restartCountdown}
+                              </div>
+                              <p className="text-sm text-slate-400">
+                                Too many filler words or poor objection handling
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
