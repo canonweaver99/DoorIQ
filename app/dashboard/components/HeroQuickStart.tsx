@@ -61,8 +61,12 @@ export default function HeroQuickStart({ lastSession }: HeroQuickStartProps) {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/[0.02] border border-white/10 hover:border-white/20 rounded-xl p-5 md:p-6 transition-all"
+          className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-5 md:p-6 hover:border-white/20 hover:bg-white/[0.025] transition-all duration-300 overflow-hidden"
         >
+          {/* Subtle purple glow at bottom for depth */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          <div className="relative z-10">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-4 h-4 text-white/60" />
             <span className="text-white/60 text-sm font-medium">Last Practice Session</span>
@@ -132,6 +136,7 @@ export default function HeroQuickStart({ lastSession }: HeroQuickStartProps) {
               </div>
             </div>
           )}
+          </div>
         </motion.div>
       )}
 

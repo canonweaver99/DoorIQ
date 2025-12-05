@@ -330,7 +330,7 @@ function TrainerPageContent() {
     voiceMetrics: voiceMetrics
   }
 
-  // Track filler words for challenge mode
+  // Track filler words for challenge mode - increment strike for each filler word
   useEffect(() => {
     if (!challengeModeEnabled || !sessionActive) return
 
@@ -345,15 +345,11 @@ function TrainerPageContent() {
       }
     })
 
-    // If filler words exceed 3, add a strike (but only once per threshold)
-    if (totalFillerWords > 3 && fillerWordCountRef.current <= 3) {
+    // Increment strikes based on new filler words detected
+    const newFillerWords = totalFillerWords - fillerWordCountRef.current
+    if (newFillerWords > 0) {
       fillerWordCountRef.current = totalFillerWords
-      setStrikes(prev => {
-        const newStrikes = prev + 1
-        return newStrikes
-      })
-    } else {
-      fillerWordCountRef.current = totalFillerWords
+      setStrikes(prev => Math.min(prev + newFillerWords, 3))
     }
   }, [transcript, challengeModeEnabled, sessionActive])
 
@@ -1738,6 +1734,12 @@ function TrainerPageContent() {
         timeSinceLastMessage: disconnectData?.timeSinceLastMessage,
         timeSinceLastPing: disconnectData?.timeSinceLastPing
       })
+      
+      // Trigger door closing sequence on disconnect
+      if (sessionActive && sessionId && !disconnectData?.intentional) {
+        console.log('🚪 Triggering door closing sequence from disconnect')
+        handleDoorClosingSequence('Agent disconnected')
+      }
     }
     
     const handleReconnecting = (e: CustomEvent) => {
