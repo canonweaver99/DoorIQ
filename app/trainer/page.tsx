@@ -136,8 +136,6 @@ function TrainerPageContent() {
   const conversationRef = useRef<any>(null) // Ref to ElevenLabs conversation instance
   const handleCallEndRef = useRef<((reason: string) => void) | null>(null) // Ref for handleCallEnd callback
   const handleDoorClosingSequenceRef = useRef<((reason: string) => Promise<void>) | null>(null) // Ref for handleDoorClosingSequence callback
-  const waitingForClosingVideoRef = useRef<boolean>(false) // Track if we're waiting for closing video to finish
-  const onClosingVideoCompleteRef = useRef<(() => void) | null>(null) // Callback to trigger after closing video completes
   
   // Challenge mode state
   const [challengeModeEnabled, setChallengeModeEnabled] = useState(false)
@@ -1588,139 +1586,40 @@ function TrainerPageContent() {
     }
   }, [sessionId, duration, transcript, router, sessionActive, sessionState])
 
-  // Shared function to handle door closing sequence and end session
+  // Simple door closing sequence: play video, then redirect
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Starting door closing sequence:', reason)
     
-    // Prevent auto-end if restart is in progress
-    if (isRestartingRef.current) {
-      console.log('⚠️ Restart in progress, ignoring door closing sequence')
+    if (isRestartingRef.current || !sessionId) {
       return
     }
     
-    if (!sessionId) {
-      console.log('⚠️ No sessionId, ignoring door closing sequence')
-      return
-    }
-    
-    // CRITICAL: Set sessionActive to false IMMEDIATELY to prevent reconnection
-    // This ensures ElevenLabsConversation component won't try to reconnect
+    // Stop session immediately to prevent reconnection
     setSessionActive(false)
-    
-    // Set session state to door-closing to prevent reconnections
     setSessionState('door-closing')
-    
-    // Store the reason for later use
-    doorClosingReasonRef.current = reason
     
     // Check if agent has closing video
     const hasClosingVideo = agentHasVideos(selectedAgent?.name)
     const videoPaths = hasClosingVideo ? getAgentVideoPaths(selectedAgent?.name) : null
     
     if (hasClosingVideo && videoPaths?.closing) {
-      console.log('🎬 Agent has closing video, will play before redirect:', videoPaths.closing)
-      
-      // Set up completion callback that will be called when video ends
-      waitingForClosingVideoRef.current = true
-      onClosingVideoCompleteRef.current = async () => {
-        console.log('🎬 Closing video completed, proceeding with session end and redirect')
-        waitingForClosingVideoRef.current = false
-        onClosingVideoCompleteRef.current = null
-        
-        const currentTranscript = transcript
-        console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
-          transcriptLength: currentTranscript.length,
-          sessionId,
-          reason
-        })
-        
-        try {
-          // End the session first (saves transcript and voice analysis)
-          await endSession(reason, true) // skipRedirect = true
-          
-          // After session is saved, trigger grading automatically
-          console.log('🎯 Starting automatic grading after door close...')
-          await triggerGradingAfterDoorClose(sessionId)
-          
-          // Redirect to feedback page - grading runs in background
-          window.location.href = `/trainer/feedback/${sessionId}`
-        } catch (error) {
-          console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
-          // Fallback: redirect to feedback page
-          window.location.href = `/trainer/feedback/${sessionId}`
-        }
-      }
-      
-      // Stop any playing video and switch to closing video
-      if (agentVideoRef.current) {
-        console.log('🎬 Stopping current video and switching to closing video')
-        const video = agentVideoRef.current
-        
-        // Properly stop and reset the current video
-        video.pause()
-        video.loop = false
-        video.currentTime = 0
-        
-        // Wait a brief moment for the video to stop, then switch source
-        // This prevents glitches from rapid state changes
-        setTimeout(() => {
-          // Ensure video is still stopped
-          if (agentVideoRef.current) {
-            agentVideoRef.current.pause()
-            agentVideoRef.current.loop = false
-          }
-          
-          // Trigger closing video playback
-          console.log('🎬 Switching to closing video mode')
-          setShowDoorCloseAnimation(true)
-          setVideoMode('closing')
-        }, 100) // Small delay to ensure clean transition
-      } else {
-        // No video element yet, set state immediately
-        setShowDoorCloseAnimation(true)
-        setVideoMode('closing')
-      }
-      
+      // Show closing video - it will handle redirect when it ends
+      console.log('🎬 Playing closing video:', videoPaths.closing)
+      setShowDoorCloseAnimation(true)
+      setVideoMode('closing')
     } else {
-      // No closing video available, skip video and proceed immediately
-      console.log('⚠️ Agent does not have closing video, skipping video and redirecting immediately')
-      
-      // Stop any playing video immediately
-      if (agentVideoRef.current) {
-        console.log('🎬 Stopping agent video')
-        agentVideoRef.current.pause()
-        agentVideoRef.current.src = ''
-        agentVideoRef.current.load()
-        agentVideoRef.current.loop = false // Ensure no looping
+      // No video - redirect immediately
+      console.log('⚠️ No closing video, redirecting immediately')
+      try {
+        await endSession(reason, true)
+        await triggerGradingAfterDoorClose(sessionId)
+        window.location.href = `/trainer/feedback/${sessionId}`
+      } catch (error) {
+        console.error('❌ Error:', error)
+        window.location.href = `/trainer/feedback/${sessionId}`
       }
-      
-      // Proceed immediately without video
-      setTimeout(async () => {
-        const currentTranscript = transcript
-        console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
-          transcriptLength: currentTranscript.length,
-          sessionId,
-          reason
-        })
-        
-        try {
-          // End the session first (saves transcript and voice analysis)
-          await endSession(reason, true) // skipRedirect = true
-          
-          // After session is saved, trigger grading automatically
-          console.log('🎯 Starting automatic grading after door close...')
-          await triggerGradingAfterDoorClose(sessionId)
-          
-          // Redirect to feedback page - grading runs in background
-          window.location.href = `/trainer/feedback/${sessionId}`
-        } catch (error) {
-          console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
-          // Fallback: redirect to feedback page
-          window.location.href = `/trainer/feedback/${sessionId}`
-        }
-      }, 2000)
     }
-  }, [sessionId, transcript, endSession, triggerGradingAfterDoorClose, selectedAgent])
+  }, [sessionId, endSession, triggerGradingAfterDoorClose, selectedAgent])
 
   // Direct state-based call end handler - triggers door closing sequence
   const handleCallEnd = useCallback((reason: string) => {
@@ -1927,7 +1826,13 @@ function TrainerPageContent() {
     
     const handleReconnected = (e: CustomEvent) => {
       // Don't process reconnection if session is ending or door closing
-      if (sessionState === 'door-closing' || videoMode === 'closing' || showDoorCloseAnimation || !sessionActive) {
+      if (showDoorCloseAnimation || !sessionActive) {
+        console.log('🚪 Session ending - ignoring reconnection success')
+        setReconnectingStatus(null)
+        return
+      }
+      // Type-safe checks
+      if ((sessionState as string) === 'door-closing' || (videoMode as string) === 'closing') {
         console.log('🚪 Session ending - ignoring reconnection success')
         setReconnectingStatus(null)
         return
@@ -2112,21 +2017,25 @@ function TrainerPageContent() {
               agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
             }
           }}
-          onEnded={() => {
+          onEnded={async () => {
             if (agentVideoRef.current && (videoMode === 'closing' || showDoorCloseAnimation)) {
-              console.log('🎬 Closing video ended, stopping playback')
+              console.log('🎬 Closing video ended, redirecting to grading')
               agentVideoRef.current.pause()
-              agentVideoRef.current.currentTime = agentVideoRef.current.duration
               agentVideoRef.current.loop = false
-              // Exit fullscreen
+              
+              // Exit fullscreen if active
               if (document.fullscreenElement) {
                 document.exitFullscreen().catch(() => {})
               }
               
-              // Trigger completion callback if we're waiting for closing video
-              if (waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
-                console.log('🎬 Closing video ended, triggering completion callback')
-                onClosingVideoCompleteRef.current()
+              // End session, trigger grading, and redirect
+              try {
+                await endSession(doorClosingReasonRef.current || 'User ended conversation', true)
+                await triggerGradingAfterDoorClose(sessionId!)
+                window.location.href = `/trainer/feedback/${sessionId}`
+              } catch (error) {
+                console.error('❌ Error:', error)
+                window.location.href = `/trainer/feedback/${sessionId}`
               }
             }
           }}
@@ -2138,11 +2047,18 @@ function TrainerPageContent() {
               document.exitFullscreen().catch(() => {})
             }
             
-            // If this is a closing video and we're waiting for it, skip video and proceed immediately
-            if ((videoMode === 'closing' || showDoorCloseAnimation) && waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
-              console.log('❌ Closing video failed to load, skipping video and proceeding with redirect')
-              waitingForClosingVideoRef.current = false
-              onClosingVideoCompleteRef.current()
+            // If this is a closing video, skip video and redirect immediately
+            if ((videoMode === 'closing' || showDoorCloseAnimation) && sessionId) {
+              console.log('❌ Closing video failed to load, redirecting immediately')
+              endSession(doorClosingReasonRef.current || 'User ended conversation', true)
+                .then(() => triggerGradingAfterDoorClose(sessionId))
+                .then(() => {
+                  window.location.href = `/trainer/feedback/${sessionId}`
+                })
+                .catch((error) => {
+                  console.error('❌ Error:', error)
+                  window.location.href = `/trainer/feedback/${sessionId}`
+                })
             }
           }}
           onDoubleClick={(e) => {
@@ -2372,10 +2288,17 @@ function TrainerPageContent() {
                                   document.exitFullscreen().catch(() => {})
                                 }
                                 
-                                // Trigger completion callback if we're waiting for closing video
-                                if (waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
-                                  console.log('🎬 Closing video ended, triggering completion callback')
-                                  onClosingVideoCompleteRef.current()
+                                // Redirect when closing video ends
+                                if (sessionId) {
+                                  endSession(doorClosingReasonRef.current || 'User ended conversation', true)
+                                    .then(() => triggerGradingAfterDoorClose(sessionId))
+                                    .then(() => {
+                                      window.location.href = `/trainer/feedback/${sessionId}`
+                                    })
+                                    .catch((error) => {
+                                      console.error('❌ Error:', error)
+                                      window.location.href = `/trainer/feedback/${sessionId}`
+                                    })
                                 }
                               }
                             }}
@@ -2384,13 +2307,22 @@ function TrainerPageContent() {
                               e.stopPropagation()
                               // Exit fullscreen on error
                               
-                              // If this is a closing video and we're waiting for it, skip video and proceed immediately
-                              if ((videoMode === 'closing' || showDoorCloseAnimation) && waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
-                                console.log('❌ Closing video failed to load, skipping video and proceeding with redirect')
-                                waitingForClosingVideoRef.current = false
-                                onClosingVideoCompleteRef.current()
-                              }
-                              if (document.fullscreenElement) {
+                              // If this is a closing video, redirect immediately
+                              if ((videoMode === 'closing' || showDoorCloseAnimation) && sessionId) {
+                                console.log('❌ Closing video failed to load, redirecting immediately')
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {})
+                                }
+                                endSession(doorClosingReasonRef.current || 'User ended conversation', true)
+                                  .then(() => triggerGradingAfterDoorClose(sessionId))
+                                  .then(() => {
+                                    window.location.href = `/trainer/feedback/${sessionId}`
+                                  })
+                                  .catch((error) => {
+                                    console.error('❌ Error:', error)
+                                    window.location.href = `/trainer/feedback/${sessionId}`
+                                  })
+                              } else if (document.fullscreenElement) {
                                 document.exitFullscreen().catch(() => {})
                               }
                             }}
@@ -2517,6 +2449,53 @@ function TrainerPageContent() {
                       isCameraOff && "hidden"
                     )}>
                       <WebcamPIP ref={webcamPIPRef} />
+                      
+                      {/* Challenge Mode Toggle - Top Left Corner of Webcam */}
+                      <div className="absolute top-1 left-1 z-30">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.2 }}
+                          className={cn(
+                            "flex items-center gap-1.5 backdrop-blur-sm px-2 py-1.5 rounded-lg border shadow-lg scale-90",
+                            challengeModeEnabled 
+                              ? "bg-orange-900/80 border-orange-700/50" 
+                              : "bg-slate-900/80 border-slate-700/50"
+                          )}
+                        >
+                          <label htmlFor="challenge-mode-live-mobile" className={cn(
+                            "text-xs cursor-pointer font-space font-medium",
+                            challengeModeEnabled ? "text-orange-200" : "text-slate-300"
+                          )}>
+                            Challenge Mode
+                          </label>
+                          <LeverSwitch
+                            checked={challengeModeEnabled}
+                            onChange={(enabled) => {
+                              setChallengeModeEnabled(enabled)
+                              // Reset strikes when enabling challenge mode mid-session
+                              if (enabled) {
+                                setStrikes(0)
+                                fillerWordCountRef.current = 0
+                                poorHandlingCountRef.current = 0
+                                processedPoorHandlingRef.current.clear()
+                                setShowRestartWarning(false)
+                                setRestartCountdown(3)
+                                if (restartTimeoutRef.current) {
+                                  clearTimeout(restartTimeoutRef.current)
+                                  restartTimeoutRef.current = null
+                                }
+                                if (countdownIntervalRef.current) {
+                                  clearInterval(countdownIntervalRef.current)
+                                  countdownIntervalRef.current = null
+                                }
+                              }
+                            }}
+                            className="scale-75"
+                          />
+                        </motion.div>
+                      </div>
                     </div>
                   )}
                   
@@ -2737,16 +2716,22 @@ function TrainerPageContent() {
                               onEnded={() => {
                                 if (agentVideoRef.current && (videoMode === 'closing' || showDoorCloseAnimation)) {
                                   agentVideoRef.current.pause()
-                                  agentVideoRef.current.currentTime = agentVideoRef.current.duration
                                   agentVideoRef.current.loop = false
                                   if (document.fullscreenElement) {
                                     document.exitFullscreen().catch(() => {})
                                   }
                                   
-                                  // Trigger completion callback if we're waiting for closing video
-                                  if (waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
-                                    console.log('🎬 Closing video ended, triggering completion callback')
-                                    onClosingVideoCompleteRef.current()
+                                  // Redirect when closing video ends
+                                  if (sessionId) {
+                                    endSession(doorClosingReasonRef.current || 'User ended conversation', true)
+                                      .then(() => triggerGradingAfterDoorClose(sessionId))
+                                      .then(() => {
+                                        window.location.href = `/trainer/feedback/${sessionId}`
+                                      })
+                                      .catch((error) => {
+                                        console.error('❌ Error:', error)
+                                        window.location.href = `/trainer/feedback/${sessionId}`
+                                      })
                                   }
                                 }
                               }}
@@ -2757,11 +2742,18 @@ function TrainerPageContent() {
                                   document.exitFullscreen().catch(() => {})
                                 }
                                 
-                                // If this is a closing video and we're waiting for it, skip video and proceed immediately
-                                if ((videoMode === 'closing' || showDoorCloseAnimation) && waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
-                                  console.log('❌ Closing video failed to load, skipping video and proceeding with redirect')
-                                  waitingForClosingVideoRef.current = false
-                                  onClosingVideoCompleteRef.current()
+                                // If this is a closing video, redirect immediately
+                                if ((videoMode === 'closing' || showDoorCloseAnimation) && sessionId) {
+                                  console.log('❌ Closing video failed to load, redirecting immediately')
+                                  endSession(doorClosingReasonRef.current || 'User ended conversation', true)
+                                    .then(() => triggerGradingAfterDoorClose(sessionId))
+                                    .then(() => {
+                                      window.location.href = `/trainer/feedback/${sessionId}`
+                                    })
+                                    .catch((error) => {
+                                      console.error('❌ Error:', error)
+                                      window.location.href = `/trainer/feedback/${sessionId}`
+                                    })
                                 }
                               }}
                               onDoubleClick={(e) => {
@@ -2873,6 +2865,53 @@ function TrainerPageContent() {
                         isCameraOff && "hidden"
                       )}>
                         <WebcamPIP ref={webcamPIPRef} />
+                        
+                        {/* Challenge Mode Toggle - Top Left Corner of Webcam */}
+                        <div className="absolute top-1 left-1 z-30">
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
+                            className={cn(
+                              "flex items-center gap-1.5 backdrop-blur-sm px-2 py-1.5 rounded-lg border shadow-lg scale-90",
+                              challengeModeEnabled 
+                                ? "bg-orange-900/80 border-orange-700/50" 
+                                : "bg-slate-900/80 border-slate-700/50"
+                            )}
+                          >
+                            <label htmlFor="challenge-mode-live-desktop" className={cn(
+                              "text-xs cursor-pointer font-space font-medium",
+                              challengeModeEnabled ? "text-orange-200" : "text-slate-300"
+                            )}>
+                              Challenge Mode
+                            </label>
+                            <LeverSwitch
+                              checked={challengeModeEnabled}
+                              onChange={(enabled) => {
+                                setChallengeModeEnabled(enabled)
+                                // Reset strikes when enabling challenge mode mid-session
+                                if (enabled) {
+                                  setStrikes(0)
+                                  fillerWordCountRef.current = 0
+                                  poorHandlingCountRef.current = 0
+                                  processedPoorHandlingRef.current.clear()
+                                  setShowRestartWarning(false)
+                                  setRestartCountdown(3)
+                                  if (restartTimeoutRef.current) {
+                                    clearTimeout(restartTimeoutRef.current)
+                                    restartTimeoutRef.current = null
+                                  }
+                                  if (countdownIntervalRef.current) {
+                                    clearInterval(countdownIntervalRef.current)
+                                    countdownIntervalRef.current = null
+                                  }
+                                }
+                              }}
+                              className="scale-75"
+                            />
+                          </motion.div>
+                        </div>
                       </div>
                     )}
                     
@@ -3209,6 +3248,53 @@ function TrainerPageContent() {
                         isCameraOff && "hidden"
                       )}>
                         <WebcamPIP ref={webcamPIPRef} />
+                        
+                        {/* Challenge Mode Toggle - Top Left Corner of Webcam */}
+                        <div className="absolute top-1 left-1 z-30">
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.2 }}
+                            className={cn(
+                              "flex items-center gap-1.5 backdrop-blur-sm px-2 py-1.5 rounded-lg border shadow-lg scale-90",
+                              challengeModeEnabled 
+                                ? "bg-orange-900/80 border-orange-700/50" 
+                                : "bg-slate-900/80 border-slate-700/50"
+                            )}
+                          >
+                            <label htmlFor="challenge-mode-live-desktop2" className={cn(
+                              "text-xs cursor-pointer font-space font-medium",
+                              challengeModeEnabled ? "text-orange-200" : "text-slate-300"
+                            )}>
+                              Challenge Mode
+                            </label>
+                            <LeverSwitch
+                              checked={challengeModeEnabled}
+                              onChange={(enabled) => {
+                                setChallengeModeEnabled(enabled)
+                                // Reset strikes when enabling challenge mode mid-session
+                                if (enabled) {
+                                  setStrikes(0)
+                                  fillerWordCountRef.current = 0
+                                  poorHandlingCountRef.current = 0
+                                  processedPoorHandlingRef.current.clear()
+                                  setShowRestartWarning(false)
+                                  setRestartCountdown(3)
+                                  if (restartTimeoutRef.current) {
+                                    clearTimeout(restartTimeoutRef.current)
+                                    restartTimeoutRef.current = null
+                                  }
+                                  if (countdownIntervalRef.current) {
+                                    clearInterval(countdownIntervalRef.current)
+                                    countdownIntervalRef.current = null
+                                  }
+                                }
+                              }}
+                              className="scale-75"
+                            />
+                          </motion.div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -3452,45 +3538,51 @@ function TrainerPageContent() {
                 <WebcamPIP ref={webcamPIPRef} />
                 
                 {/* Challenge Mode Toggle - Top Left Corner of Webcam */}
-                {!challengeModeEnabled && (
-                  <div className="absolute top-1 left-1 z-30">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-sm px-2 py-1.5 rounded-lg border border-slate-700/50 shadow-lg scale-90"
-                    >
-                      <label htmlFor="challenge-mode-live" className="text-xs text-slate-300 cursor-pointer font-space font-medium">
-                        Challenge Mode
-                      </label>
-                      <LeverSwitch
-                        checked={challengeModeEnabled}
-                        onChange={(enabled) => {
-                          setChallengeModeEnabled(enabled)
-                          // Reset strikes when enabling challenge mode mid-session
-                          if (enabled) {
-                            setStrikes(0)
-                            fillerWordCountRef.current = 0
-                            poorHandlingCountRef.current = 0
-                            processedPoorHandlingRef.current.clear()
-                            setShowRestartWarning(false)
-                            setRestartCountdown(3)
-                            if (restartTimeoutRef.current) {
-                              clearTimeout(restartTimeoutRef.current)
-                              restartTimeoutRef.current = null
-                            }
-                            if (countdownIntervalRef.current) {
-                              clearInterval(countdownIntervalRef.current)
-                              countdownIntervalRef.current = null
-                            }
+                <div className="absolute top-1 left-1 z-30">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn(
+                      "flex items-center gap-1.5 backdrop-blur-sm px-2 py-1.5 rounded-lg border shadow-lg scale-90",
+                      challengeModeEnabled 
+                        ? "bg-orange-900/80 border-orange-700/50" 
+                        : "bg-slate-900/80 border-slate-700/50"
+                    )}
+                  >
+                    <label htmlFor="challenge-mode-live" className={cn(
+                      "text-xs cursor-pointer font-space font-medium",
+                      challengeModeEnabled ? "text-orange-200" : "text-slate-300"
+                    )}>
+                      Challenge Mode
+                    </label>
+                    <LeverSwitch
+                      checked={challengeModeEnabled}
+                      onChange={(enabled) => {
+                        setChallengeModeEnabled(enabled)
+                        // Reset strikes when enabling challenge mode mid-session
+                        if (enabled) {
+                          setStrikes(0)
+                          fillerWordCountRef.current = 0
+                          poorHandlingCountRef.current = 0
+                          processedPoorHandlingRef.current.clear()
+                          setShowRestartWarning(false)
+                          setRestartCountdown(3)
+                          if (restartTimeoutRef.current) {
+                            clearTimeout(restartTimeoutRef.current)
+                            restartTimeoutRef.current = null
                           }
-                        }}
-                        className="scale-75"
-                      />
-                    </motion.div>
-                  </div>
-                )}
+                          if (countdownIntervalRef.current) {
+                            clearInterval(countdownIntervalRef.current)
+                            countdownIntervalRef.current = null
+                          }
+                        }
+                      }}
+                      className="scale-75"
+                    />
+                  </motion.div>
+                </div>
               </div>
             )}
             
