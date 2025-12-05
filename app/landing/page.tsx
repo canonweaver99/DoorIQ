@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 import { COLOR_VARIANTS } from "@/components/ui/scrolling-agent-carousel";
 import { cn } from "@/lib/utils";
 import { useIsMobile, useReducedMotion } from "@/hooks/useIsMobile";
+import { BeamsBackground } from "@/components/ui/beams-background";
 import {
   ArrowRight,
   DollarSign,
@@ -1549,7 +1550,7 @@ function LandingFooter() {
 export default function LandingPage() {
   return (
     <main className="bg-black min-h-screen text-white relative">
-      <AnimatedBackground />
+      <BeamsBackground intensity="medium" />
       <Navigation />
       <HeroSection />
       <MeetTrainerSection />

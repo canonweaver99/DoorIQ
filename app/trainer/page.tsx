@@ -1245,7 +1245,8 @@ function TrainerPageContent() {
 
   // Auto-restart when strikes reach 3
   useEffect(() => {
-    if (!challengeModeEnabled || !sessionActive || strikes < 3) {
+    // Only proceed if challenge mode is enabled and strikes are at 3
+    if (!challengeModeEnabled || strikes < 3) {
       if (restartTimeoutRef.current) {
         clearTimeout(restartTimeoutRef.current)
         restartTimeoutRef.current = null
@@ -1253,6 +1254,9 @@ function TrainerPageContent() {
       setShowRestartWarning(false)
       return
     }
+
+    // Store restart function reference to ensure it's available even if component unmounts
+    const restartFn = restartSession
 
     // Show warning and start countdown
     setShowRestartWarning(true)
@@ -1269,7 +1273,7 @@ function TrainerPageContent() {
       })
     }, 1000)
 
-    // Auto-restart after 3 seconds
+    // Auto-restart after 3 seconds - execute even if session becomes inactive
     restartTimeoutRef.current = setTimeout(() => {
       clearInterval(countdownInterval)
       setShowRestartWarning(false)
@@ -1279,9 +1283,12 @@ function TrainerPageContent() {
       poorHandlingCountRef.current = 0
       processedPoorHandlingRef.current.clear()
       
-      // Call restart function
-      if (restartSession) {
-        restartSession()
+      // Call restart function - ensure it executes
+      if (restartFn) {
+        console.log('🔄 Executing auto-restart after 3 strikes')
+        restartFn()
+      } else {
+        console.error('⚠️ Restart function not available')
       }
     }, 3000)
 
@@ -1292,7 +1299,7 @@ function TrainerPageContent() {
         restartTimeoutRef.current = null
       }
     }
-  }, [strikes, challengeModeEnabled, sessionActive, restartSession])
+  }, [strikes, challengeModeEnabled, restartSession])
 
   const endSession = useCallback(async (endReason?: string, skipRedirect: boolean = false) => {
     // Session ending (manual end - skip video, go straight to analytics/loading)
@@ -2696,9 +2703,9 @@ function TrainerPageContent() {
                       </div>
                     )}
                     
-                    {/* Challenge Mode Strike Counter */}
+                    {/* Challenge Mode Strike Counter - Left side of webcam */}
                     {sessionActive && challengeModeEnabled && (
-                      <div className="absolute top-4 right-4 z-30">
+                      <div className="absolute bottom-20 sm:bottom-24 lg:bottom-32 left-2 sm:left-3 lg:left-6 z-30">
                         <StrikeCounter strikes={strikes} maxStrikes={3} />
                       </div>
                     )}
