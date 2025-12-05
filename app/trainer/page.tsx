@@ -136,6 +136,8 @@ function TrainerPageContent() {
   const conversationRef = useRef<any>(null) // Ref to ElevenLabs conversation instance
   const handleCallEndRef = useRef<((reason: string) => void) | null>(null) // Ref for handleCallEnd callback
   const handleDoorClosingSequenceRef = useRef<((reason: string) => Promise<void>) | null>(null) // Ref for handleDoorClosingSequence callback
+  const waitingForClosingVideoRef = useRef<boolean>(false) // Track if we're waiting for closing video to finish
+  const onClosingVideoCompleteRef = useRef<(() => void) | null>(null) // Callback to trigger after closing video completes
   
   // Challenge mode state
   const [challengeModeEnabled, setChallengeModeEnabled] = useState(false)
@@ -1588,42 +1590,95 @@ function TrainerPageContent() {
     // Store the reason for later use
     doorClosingReasonRef.current = reason
     
-    // Stop any playing video immediately
-    if (agentVideoRef.current) {
-      console.log('🎬 Stopping agent video')
-      agentVideoRef.current.pause()
-      agentVideoRef.current.src = ''
-      agentVideoRef.current.load()
-      agentVideoRef.current.loop = false // Ensure no looping
-    }
+    // Check if agent has closing video
+    const hasClosingVideo = agentHasVideos(selectedAgent?.name)
+    const videoPaths = hasClosingVideo ? getAgentVideoPaths(selectedAgent?.name) : null
     
-    // Capture transcript state before ending session
-    // Proceed immediately without popup delay
-    setTimeout(async () => {
-      const currentTranscript = transcript
-      console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
-        transcriptLength: currentTranscript.length,
-        sessionId,
-        reason
-      })
+    if (hasClosingVideo && videoPaths?.closing) {
+      console.log('🎬 Agent has closing video, will play before redirect:', videoPaths.closing)
       
-      try {
-        // End the session first (saves transcript and voice analysis)
-        await endSession(reason, true) // skipRedirect = true
+      // Set up completion callback that will be called when video ends
+      waitingForClosingVideoRef.current = true
+      onClosingVideoCompleteRef.current = async () => {
+        console.log('🎬 Closing video completed, proceeding with session end and redirect')
+        waitingForClosingVideoRef.current = false
+        onClosingVideoCompleteRef.current = null
         
-        // After session is saved, trigger grading automatically
-        console.log('🎯 Starting automatic grading after door close...')
-        await triggerGradingAfterDoorClose(sessionId)
+        const currentTranscript = transcript
+        console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
+          transcriptLength: currentTranscript.length,
+          sessionId,
+          reason
+        })
         
-        // Redirect to feedback page - grading runs in background
-        window.location.href = `/trainer/feedback/${sessionId}`
-      } catch (error) {
-        console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
-        // Fallback: redirect to feedback page
-        window.location.href = `/trainer/feedback/${sessionId}`
+        try {
+          // End the session first (saves transcript and voice analysis)
+          await endSession(reason, true) // skipRedirect = true
+          
+          // After session is saved, trigger grading automatically
+          console.log('🎯 Starting automatic grading after door close...')
+          await triggerGradingAfterDoorClose(sessionId)
+          
+          // Redirect to feedback page - grading runs in background
+          window.location.href = `/trainer/feedback/${sessionId}`
+        } catch (error) {
+          console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
+          // Fallback: redirect to feedback page
+          window.location.href = `/trainer/feedback/${sessionId}`
+        }
       }
-    }, 2000)
-  }, [sessionId, transcript, endSession, triggerGradingAfterDoorClose])
+      
+      // Stop any playing video and switch to closing video
+      if (agentVideoRef.current) {
+        console.log('🎬 Stopping current video and switching to closing video')
+        agentVideoRef.current.pause()
+        agentVideoRef.current.loop = false // Ensure no looping
+      }
+      
+      // Trigger closing video playback
+      setShowDoorCloseAnimation(true)
+      setVideoMode('closing')
+      
+    } else {
+      // No closing video available, skip video and proceed immediately
+      console.log('⚠️ Agent does not have closing video, skipping video and redirecting immediately')
+      
+      // Stop any playing video immediately
+      if (agentVideoRef.current) {
+        console.log('🎬 Stopping agent video')
+        agentVideoRef.current.pause()
+        agentVideoRef.current.src = ''
+        agentVideoRef.current.load()
+        agentVideoRef.current.loop = false // Ensure no looping
+      }
+      
+      // Proceed immediately without video
+      setTimeout(async () => {
+        const currentTranscript = transcript
+        console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
+          transcriptLength: currentTranscript.length,
+          sessionId,
+          reason
+        })
+        
+        try {
+          // End the session first (saves transcript and voice analysis)
+          await endSession(reason, true) // skipRedirect = true
+          
+          // After session is saved, trigger grading automatically
+          console.log('🎯 Starting automatic grading after door close...')
+          await triggerGradingAfterDoorClose(sessionId)
+          
+          // Redirect to feedback page - grading runs in background
+          window.location.href = `/trainer/feedback/${sessionId}`
+        } catch (error) {
+          console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
+          // Fallback: redirect to feedback page
+          window.location.href = `/trainer/feedback/${sessionId}`
+        }
+      }, 2000)
+    }
+  }, [sessionId, transcript, endSession, triggerGradingAfterDoorClose, selectedAgent])
 
   // Direct state-based call end handler - triggers door closing sequence
   const handleCallEnd = useCallback((reason: string) => {
@@ -2012,6 +2067,12 @@ function TrainerPageContent() {
               if (document.fullscreenElement) {
                 document.exitFullscreen().catch(() => {})
               }
+              
+              // Trigger completion callback if we're waiting for closing video
+              if (waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
+                console.log('🎬 Closing video ended, triggering completion callback')
+                onClosingVideoCompleteRef.current()
+              }
             }
           }}
           onError={(e) => {
@@ -2020,6 +2081,13 @@ function TrainerPageContent() {
             // Exit fullscreen on error
             if (document.fullscreenElement) {
               document.exitFullscreen().catch(() => {})
+            }
+            
+            // If this is a closing video and we're waiting for it, skip video and proceed immediately
+            if ((videoMode === 'closing' || showDoorCloseAnimation) && waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
+              console.log('❌ Closing video failed to load, skipping video and proceeding with redirect')
+              waitingForClosingVideoRef.current = false
+              onClosingVideoCompleteRef.current()
             }
           }}
           onDoubleClick={(e) => {
@@ -2117,7 +2185,7 @@ function TrainerPageContent() {
               {shouldAnimate ? (
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => endSession()}
+                  onClick={() => handleDoorClosingSequence('User ended session')}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation"
                   aria-label="End session"
                 >
@@ -2126,7 +2194,7 @@ function TrainerPageContent() {
                 </motion.button>
               ) : (
                 <button
-                  onClick={() => endSession()}
+                  onClick={() => handleDoorClosingSequence('User ended session')}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation active:scale-[0.95]"
                   aria-label="End session"
                 >
@@ -2247,12 +2315,25 @@ function TrainerPageContent() {
                                 if (document.fullscreenElement) {
                                   document.exitFullscreen().catch(() => {})
                                 }
+                                
+                                // Trigger completion callback if we're waiting for closing video
+                                if (waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
+                                  console.log('🎬 Closing video ended, triggering completion callback')
+                                  onClosingVideoCompleteRef.current()
+                                }
                               }
                             }}
                             onError={(e) => {
                               console.error('❌ Video failed to load:', videoSrcRaw, 'Encoded:', videoSrc)
                               e.stopPropagation()
                               // Exit fullscreen on error
+                              
+                              // If this is a closing video and we're waiting for it, skip video and proceed immediately
+                              if ((videoMode === 'closing' || showDoorCloseAnimation) && waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
+                                console.log('❌ Closing video failed to load, skipping video and proceeding with redirect')
+                                waitingForClosingVideoRef.current = false
+                                onClosingVideoCompleteRef.current()
+                              }
                               if (document.fullscreenElement) {
                                 document.exitFullscreen().catch(() => {})
                               }
@@ -2401,7 +2482,7 @@ function TrainerPageContent() {
                       duration={duration}
                       onMuteToggle={handleMuteToggle}
                       onCameraToggle={handleCameraToggle}
-                      onEndSession={() => endSession()}
+                      onEndSession={() => handleDoorClosingSequence('User ended session')}
                       onRestartSession={restartSession}
                       isMuted={isMuted}
                       isCameraOff={isCameraOff}
@@ -2605,6 +2686,12 @@ function TrainerPageContent() {
                                   if (document.fullscreenElement) {
                                     document.exitFullscreen().catch(() => {})
                                   }
+                                  
+                                  // Trigger completion callback if we're waiting for closing video
+                                  if (waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
+                                    console.log('🎬 Closing video ended, triggering completion callback')
+                                    onClosingVideoCompleteRef.current()
+                                  }
                                 }
                               }}
                               onError={(e) => {
@@ -2612,6 +2699,13 @@ function TrainerPageContent() {
                                 e.stopPropagation()
                                 if (document.fullscreenElement) {
                                   document.exitFullscreen().catch(() => {})
+                                }
+                                
+                                // If this is a closing video and we're waiting for it, skip video and proceed immediately
+                                if ((videoMode === 'closing' || showDoorCloseAnimation) && waitingForClosingVideoRef.current && onClosingVideoCompleteRef.current) {
+                                  console.log('❌ Closing video failed to load, skipping video and proceeding with redirect')
+                                  waitingForClosingVideoRef.current = false
+                                  onClosingVideoCompleteRef.current()
                                 }
                               }}
                               onDoubleClick={(e) => {
@@ -2752,7 +2846,7 @@ function TrainerPageContent() {
                         duration={duration}
                         onMuteToggle={handleMuteToggle}
                         onCameraToggle={handleCameraToggle}
-                        onEndSession={() => endSession()}
+                        onEndSession={() => handleDoorClosingSequence('User ended session')}
                         onRestartSession={restartSession}
                         isMuted={isMuted}
                         isCameraOff={isCameraOff}
@@ -2986,7 +3080,7 @@ function TrainerPageContent() {
                   </button>
                 )}
                 <button
-                  onClick={() => endSession()}
+                  onClick={() => handleDoorClosingSequence('User ended session')}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation active:scale-[0.95]"
                   aria-label="End session"
                 >
@@ -3013,7 +3107,7 @@ function TrainerPageContent() {
                   </button>
                 )}
                 <button
-                  onClick={() => endSession()}
+                  onClick={() => handleDoorClosingSequence('User ended session')}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200"
                   aria-label="End session"
                 >
