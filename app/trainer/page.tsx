@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, Mic, FileText, Trophy, RotateCcw, PhoneOff, Clock } from 'lucide-react'
+import { Home, Mic, FileText, Trophy, RotateCcw, PhoneOff, Clock, Video } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
@@ -28,6 +28,7 @@ const LiveTranscript = dynamicImport(() => import('@/components/trainer/LiveTran
 import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
+import { StrikeCounter } from '@/components/trainer/StrikeCounter'
 import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 
 // Dynamic imports for heavy components - only load when needed
@@ -1871,10 +1872,6 @@ function TrainerPageContent() {
     }
   }
 
-  //     />
-  //   )
-  // }
-
   const renderAgentVideo = () => {
     const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
     
@@ -2461,10 +2458,306 @@ function TrainerPageContent() {
           </div>
         </div>
 
-        {/* Desktop Layout - Sidebar + Main Content */}
-        <div className="hidden md:flex flex-1 overflow-hidden min-h-0 gap-2 p-2 sm:p-3 lg:p-8 pt-4 sm:pt-5 lg:pt-10">
-          {/* Left Sidebar - Metrics */}
-          <div className="w-80 flex-shrink-0 flex flex-col overflow-hidden">
+        {/* Desktop Layout - 2x2 Grid (4 Quadrants) */}
+        <div className="hidden md:grid flex-1 grid-cols-2 grid-rows-2 overflow-hidden min-h-0 gap-2 p-2 sm:p-3 lg:p-8 pt-4 sm:pt-5 lg:pt-10">
+          {/* TOP LEFT QUADRANT - Agent Video */}
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            {/* Webcam - Full height of quadrant */}
+            <div className="relative bg-slate-900 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[35vh] sm:h-[40vh] lg:h-full flex-shrink-0">
+              <div className="absolute inset-0 rounded-lg overflow-hidden">
+                {loading ? (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
+                    <div className="text-white text-center pointer-events-none">
+                      <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-white mx-auto mb-4"></div>
+                      <p className="text-sm">Connecting...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full h-full overflow-hidden">
+                    {/* Video container - Same as mobile */}
+                    <div className="relative w-full h-full">
+                      {(() => {
+                        const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
+                        
+                        if (shouldUseVideo) {
+                          const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                          if (!videoPaths) return null
+                          
+                          const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
+                            ? videoPaths.closing
+                            : videoMode === 'opening' && videoPaths.opening
+                            ? videoPaths.opening
+                            : videoMode === 'loop'
+                            ? videoPaths.loop
+                            : videoPaths.closing
+                          
+                          const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
+                            ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                            : videoSrcRaw
+                          
+                          return (
+                            <video
+                              key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
+                              ref={agentVideoRef}
+                              src={videoSrc}
+                              className="w-full h-full object-cover"
+                              style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                              autoPlay
+                              muted
+                              loop={false}
+                              playsInline
+                              // @ts-ignore
+                              webkit-playsinline="true"
+                              // @ts-ignore
+                              x-webkit-airplay="deny"
+                              disablePictureInPicture
+                              controls={false}
+                              controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+                              onLoadedData={() => {
+                                if (agentVideoRef.current) {
+                                  agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+                                  if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                    document.exitFullscreen().catch(() => {})
+                                  }
+                                  agentVideoRef.current.play().catch((err) => {
+                                    console.warn('Video autoplay failed:', err)
+                                  })
+                                }
+                              }}
+                              onCanPlay={() => {
+                                if (agentVideoRef.current) {
+                                  agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+                                  if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                    document.exitFullscreen().catch(() => {})
+                                  }
+                                  if (showDoorCloseAnimation || videoMode === 'closing') {
+                                    agentVideoRef.current.loop = false
+                                    agentVideoRef.current.play().catch((err) => {
+                                      console.warn('Video force play failed:', err)
+                                    })
+                                  }
+                                }
+                              }}
+                              onPlay={() => {
+                                if (agentVideoRef.current) {
+                                  if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                    document.exitFullscreen().catch(() => {
+                                      if ((document as any).webkitExitFullscreen) {
+                                        (document as any).webkitExitFullscreen().catch(() => {})
+                                      }
+                                    })
+                                  }
+                                  agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+                                }
+                              }}
+                              onEnded={() => {
+                                if (agentVideoRef.current && (videoMode === 'closing' || showDoorCloseAnimation)) {
+                                  agentVideoRef.current.pause()
+                                  agentVideoRef.current.currentTime = agentVideoRef.current.duration
+                                  agentVideoRef.current.loop = false
+                                  if (document.fullscreenElement) {
+                                    document.exitFullscreen().catch(() => {})
+                                  }
+                                }
+                              }}
+                              onError={(e) => {
+                                console.error('❌ Video failed to load:', videoSrcRaw)
+                                e.stopPropagation()
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {})
+                                }
+                              }}
+                              onDoubleClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {
+                                    if ((document as any).webkitExitFullscreen) {
+                                      (document as any).webkitExitFullscreen().catch(() => {})
+                                    }
+                                  })
+                                }
+                              }}
+                              onContextMenu={(e) => {
+                                e.preventDefault()
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {})
+                                }
+                              }}
+                            />
+                          )
+                        }
+                        
+                        const src = resolveAgentImage(selectedAgent, sessionActive)
+                        const imageSrc = src && (src.includes(' ') || src.includes('&'))
+                          ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                          : src
+                        
+                        return imageSrc ? (
+                          <Image
+                            src={imageSrc}
+                            alt={selectedAgent?.name || 'Agent'}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="object-cover"
+                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                            priority
+                            unoptimized={src?.includes(' ') || src?.includes('&')}
+                            onError={(e) => {
+                              console.error('❌ Image failed to load:', src)
+                              e.stopPropagation()
+                            }}
+                            placeholder="blur"
+                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                          />
+                        ) : null
+                      })()}
+                      
+                      {/* Session progress bar */}
+                      {sessionActive && (
+                        <div className="hidden sm:block absolute bottom-0 left-0 right-0 h-1 bg-slate-900/80 z-10">
+                          <div 
+                            className="h-full bg-slate-600 transition-all duration-1000"
+                            style={{ width: `${Math.min((duration / 600) * 100, 100)}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Door Opening Video Overlay */}
+                    {showDoorOpeningVideo && (() => {
+                      const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                      const videoPathRaw = videoPaths?.opening || '/DIY DAVE OPENIG DOOR.mp4'
+                      const videoPath = videoPathRaw.includes(' ') || videoPathRaw.includes('&')
+                        ? videoPathRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                        : videoPathRaw
+                      
+                      return (
+                        <div className="absolute inset-0 z-50 bg-black">
+                          <video
+                            ref={doorOpeningVideoRef}
+                            src={videoPath}
+                            className="w-full h-full object-cover"
+                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                            autoPlay
+                            muted
+                            playsInline
+                            onError={(e) => {
+                              console.error('❌ Door opening video failed to load:', videoPathRaw)
+                              setShowDoorOpeningVideo(false)
+                            }}
+                          />
+                        </div>
+                      )
+                    })()}
+                    
+                    {/* Knock Button Overlay */}
+                    {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10 gap-4">
+                        <button
+                          onClick={() => startSession()}
+                          className="relative px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-space font-bold text-base sm:text-lg lg:text-xl rounded-lg sm:rounded-xl transition-all duration-300 active:scale-95 border border-slate-700/80 hover:border-slate-600 min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
+                        >
+                          <span className="relative z-10 flex items-center gap-2">
+                            <span className="hidden sm:inline">
+                              Knock on <span className="text-white">{selectedAgent.name}'s</span> Door
+                            </span>
+                            <span className="sm:hidden text-sm">Knock</span>
+                          </span>
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* PIP Webcam Overlay */}
+                    {sessionActive && (
+                      <div className={cn(
+                        "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
+                        isCameraOff && "hidden"
+                      )}>
+                        <WebcamPIP ref={webcamPIPRef} />
+                      </div>
+                    )}
+                    
+                    {/* Reconnection Status Banner */}
+                    {sessionActive && reconnectingStatus?.isReconnecting && (
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-slate-800/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-slate-600/80">
+                        <div className="flex items-center gap-2 text-slate-200 text-sm font-medium">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-400 border-t-transparent" />
+                          <span>
+                            Reconnecting... (Attempt {reconnectingStatus.attempt}/{reconnectingStatus.maxAttempts})
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Challenge Mode Toggle - Live Session */}
+                    {sessionActive && !challengeModeEnabled && (
+                      <div className="absolute top-4 right-4 z-30">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50 shadow-lg"
+                        >
+                          <input
+                            type="checkbox"
+                            id="challenge-mode-live-desktop"
+                            checked={challengeModeEnabled}
+                            onChange={(e) => {
+                              setChallengeModeEnabled(e.target.checked)
+                              // Reset strikes when enabling challenge mode mid-session
+                              if (e.target.checked) {
+                                setStrikes(0)
+                                fillerWordCountRef.current = 0
+                                poorHandlingCountRef.current = 0
+                                processedPoorHandlingRef.current.clear()
+                                setShowRestartWarning(false)
+                                setRestartCountdown(3)
+                                if (restartTimeoutRef.current) {
+                                  clearTimeout(restartTimeoutRef.current)
+                                  restartTimeoutRef.current = null
+                                }
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2 cursor-pointer"
+                          />
+                          <label htmlFor="challenge-mode-live-desktop" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
+                            Challenge Mode
+                          </label>
+                        </motion.div>
+                      </div>
+                    )}
+                    
+                    {/* Challenge Mode Strike Counter */}
+                    {sessionActive && challengeModeEnabled && (
+                      <div className="absolute top-4 right-4 z-30">
+                        <StrikeCounter strikes={strikes} maxStrikes={3} />
+                      </div>
+                    )}
+                    
+                    {/* Video Controls Overlay */}
+                    {sessionActive && (
+                      <VideoControls
+                        duration={duration}
+                        onMuteToggle={handleMuteToggle}
+                        onCameraToggle={handleCameraToggle}
+                        onEndSession={() => endSession()}
+                        onRestartSession={restartSession}
+                        isMuted={isMuted}
+                        isCameraOff={isCameraOff}
+                        personaName={selectedAgent?.name}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* TOP RIGHT QUADRANT - Metrics Panel */}
+          <div className="hidden md:flex w-full h-full flex-col overflow-hidden">
             <div className="h-full flex flex-col overflow-hidden">
               <LiveMetricsPanel 
                 metrics={metrics} 
@@ -2473,325 +2766,26 @@ function TrainerPageContent() {
                 sessionId={sessionId}
                 sessionActive={sessionActive}
                 agentName={selectedAgent?.name}
-                strikes={strikes}
-                strikeCauses={strikeCauses}
-                challengeModeEnabled={challengeModeEnabled}
               />
             </div>
           </div>
 
-          {/* Main Content Area - Video + Transcript/Feedback */}
-          <div className="flex-1 flex flex-col gap-2 overflow-hidden min-h-0">
-            {/* Top - Agent Video */}
-            <div className="w-full flex-1 flex flex-col overflow-hidden min-h-0">
-              {/* Webcam - Full height */}
-              <div className="relative bg-slate-900 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-full flex-shrink-0">
-                <div className="absolute inset-0 rounded-lg overflow-hidden">
-              {loading ? (
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
-                  <div className="text-white text-center pointer-events-none">
-                    <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-white mx-auto mb-4"></div>
-                    <p className="text-sm">Connecting...</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative w-full h-full overflow-hidden">
-                  {/* Video container - Same as mobile */}
-                  <div className="relative w-full h-full">
-                    {(() => {
-                      const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
-                      
-                      if (shouldUseVideo) {
-                        const videoPaths = getAgentVideoPaths(selectedAgent?.name)
-                        if (!videoPaths) return null
-                        
-                        const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
-                          ? videoPaths.closing
-                          : videoMode === 'opening' && videoPaths.opening
-                          ? videoPaths.opening
-                          : videoMode === 'loop'
-                          ? videoPaths.loop
-                          : videoPaths.closing
-                        
-                        const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
-                          ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                          : videoSrcRaw
-                        
-                        return (
-                          <video
-                            key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
-                            ref={agentVideoRef}
-                            src={videoSrc}
-                            className="w-full h-full object-cover"
-                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
-                            autoPlay
-                            muted
-                            loop={false}
-                            playsInline
-                            // @ts-ignore
-                            webkit-playsinline="true"
-                            // @ts-ignore
-                            x-webkit-airplay="deny"
-                            disablePictureInPicture
-                            controls={false}
-                            controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
-                            onLoadedData={() => {
-                              if (agentVideoRef.current) {
-                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
-                                if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
-                                  document.exitFullscreen().catch(() => {})
-                                }
-                                agentVideoRef.current.play().catch((err) => {
-                                  console.warn('Video autoplay failed:', err)
-                                })
-                              }
-                            }}
-                            onCanPlay={() => {
-                              if (agentVideoRef.current) {
-                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
-                                if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
-                                  document.exitFullscreen().catch(() => {})
-                                }
-                                if (showDoorCloseAnimation || videoMode === 'closing') {
-                                  agentVideoRef.current.loop = false
-                                  agentVideoRef.current.play().catch((err) => {
-                                    console.warn('Video force play failed:', err)
-                                  })
-                                }
-                              }
-                            }}
-                            onPlay={() => {
-                              if (agentVideoRef.current) {
-                                if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
-                                  document.exitFullscreen().catch(() => {
-                                    if ((document as any).webkitExitFullscreen) {
-                                      (document as any).webkitExitFullscreen().catch(() => {})
-                                    }
-                                  })
-                                }
-                                agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
-                              }
-                            }}
-                            onEnded={() => {
-                              if (agentVideoRef.current && (videoMode === 'closing' || showDoorCloseAnimation)) {
-                                agentVideoRef.current.pause()
-                                agentVideoRef.current.currentTime = agentVideoRef.current.duration
-                                agentVideoRef.current.loop = false
-                                if (document.fullscreenElement) {
-                                  document.exitFullscreen().catch(() => {})
-                                }
-                              }
-                            }}
-                            onError={(e) => {
-                              console.error('❌ Video failed to load:', videoSrcRaw)
-                              e.stopPropagation()
-                              if (document.fullscreenElement) {
-                                document.exitFullscreen().catch(() => {})
-                              }
-                            }}
-                            onDoubleClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              if (document.fullscreenElement) {
-                                document.exitFullscreen().catch(() => {
-                                  if ((document as any).webkitExitFullscreen) {
-                                    (document as any).webkitExitFullscreen().catch(() => {})
-                                  }
-                                })
-                              }
-                            }}
-                            onContextMenu={(e) => {
-                              e.preventDefault()
-                              if (document.fullscreenElement) {
-                                document.exitFullscreen().catch(() => {})
-                              }
-                            }}
-                          />
-                        )
-                      }
-                      
-                      const src = resolveAgentImage(selectedAgent, sessionActive)
-                      const imageSrc = src && (src.includes(' ') || src.includes('&'))
-                        ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                        : src
-                      
-                      return imageSrc ? (
-                        <Image
-                          src={imageSrc}
-                          alt={selectedAgent?.name || 'Agent'}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 50vw"
-                          className="object-cover"
-                          style={{ objectFit: 'cover', objectPosition: 'center center' }}
-                          priority
-                          unoptimized={src?.includes(' ') || src?.includes('&')}
-                          onError={(e) => {
-                            console.error('❌ Image failed to load:', src)
-                            e.stopPropagation()
-                          }}
-                          placeholder="blur"
-                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                        />
-                      ) : null
-                    })()}
-                    
-                    {/* Session progress bar */}
-                    {sessionActive && (
-                      <div className="hidden sm:block absolute bottom-0 left-0 right-0 h-1 bg-slate-900/80 z-10">
-                        <div 
-                          className="h-full bg-slate-600 transition-all duration-1000"
-                          style={{ width: `${Math.min((duration / 600) * 100, 100)}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Door Opening Video Overlay */}
-                  {showDoorOpeningVideo && (() => {
-                    const videoPaths = getAgentVideoPaths(selectedAgent?.name)
-                    const videoPathRaw = videoPaths?.opening || '/DIY DAVE OPENIG DOOR.mp4'
-                    const videoPath = videoPathRaw.includes(' ') || videoPathRaw.includes('&')
-                      ? videoPathRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
-                      : videoPathRaw
-                    
-                    return (
-                      <div className="absolute inset-0 z-50 bg-black">
-                        <video
-                          ref={doorOpeningVideoRef}
-                          src={videoPath}
-                          className="w-full h-full object-cover"
-                          style={{ objectFit: 'cover', objectPosition: 'center center' }}
-                          autoPlay
-                          muted
-                          playsInline
-                          onError={(e) => {
-                            console.error('❌ Door opening video failed to load:', videoPathRaw)
-                            setShowDoorOpeningVideo(false)
-                          }}
-                        />
-                      </div>
-                    )
-                  })()}
-                  
-                  {/* Knock Button Overlay */}
-                  {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10 gap-4">
-                      <button
-                        onClick={() => startSession()}
-                        className="relative px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-space font-bold text-base sm:text-lg lg:text-xl rounded-lg sm:rounded-xl transition-all duration-300 active:scale-95 border border-slate-700/80 hover:border-slate-600 min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
-                      >
-                        <span className="relative z-10 flex items-center gap-2">
-                          <span className="hidden sm:inline">
-                            Knock on <span className="text-white">{selectedAgent.name}'s</span> Door
-                          </span>
-                          <span className="sm:hidden text-sm">Knock</span>
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-500" />
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* PIP Webcam Overlay */}
-                  {sessionActive && (
-                    <div className={cn(
-                      "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
-                      isCameraOff && "hidden"
-                    )}>
-                      <WebcamPIP ref={webcamPIPRef} />
-                    </div>
-                  )}
-                  
-                  {/* Reconnection Status Banner */}
-                  {sessionActive && reconnectingStatus?.isReconnecting && (
-                    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-slate-800/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-slate-600/80">
-                      <div className="flex items-center gap-2 text-slate-200 text-sm font-medium">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-400 border-t-transparent" />
-                        <span>
-                          Reconnecting... (Attempt {reconnectingStatus.attempt}/{reconnectingStatus.maxAttempts})
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Challenge Mode Toggle - Live Session */}
-                  {sessionActive && !challengeModeEnabled && (
-                    <div className="absolute top-4 right-4 z-30">
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50 shadow-lg"
-                      >
-                        <input
-                          type="checkbox"
-                          id="challenge-mode-live-desktop"
-                          checked={challengeModeEnabled}
-                          onChange={(e) => {
-                            setChallengeModeEnabled(e.target.checked)
-                            // Reset strikes when enabling challenge mode mid-session
-                            if (e.target.checked) {
-                              setStrikes(0)
-                              fillerWordCountRef.current = 0
-                              poorHandlingCountRef.current = 0
-                              processedPoorHandlingRef.current.clear()
-                              setShowRestartWarning(false)
-                              setRestartCountdown(3)
-                              if (restartTimeoutRef.current) {
-                                clearTimeout(restartTimeoutRef.current)
-                                restartTimeoutRef.current = null
-                              }
-                            }
-                          }}
-                          className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2 cursor-pointer"
-                        />
-                        <label htmlFor="challenge-mode-live-desktop" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
-                          Challenge Mode
-                        </label>
-                      </motion.div>
-                    </div>
-                  )}
-                  
-                  {/* Video Controls Overlay */}
-                  {sessionActive && (
-                    <VideoControls
-                      duration={duration}
-                      onMuteToggle={handleMuteToggle}
-                      onCameraToggle={handleCameraToggle}
-                      onEndSession={() => endSession()}
-                      onRestartSession={restartSession}
-                      isMuted={isMuted}
-                      isCameraOff={isCameraOff}
-                      personaName={selectedAgent?.name}
-                    />
-                  )}
-                </div>
-              )}
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom - Transcript and Feedback Split */}
-            <div className="grid grid-cols-2 gap-2 h-1/2 min-h-0 flex-shrink-0 mt-2">
-              {/* Left - Transcript */}
-              <div className="flex flex-col overflow-hidden">
-                <LiveTranscript 
-                  transcript={transcript} 
-                  agentName={selectedAgent?.name}
-                  agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                  userAvatarUrl={userAvatarUrl}
-                  sessionActive={sessionActive}
-                />
-              </div>
-
-              {/* Right - Feedback Feed */}
-              <div className="flex flex-col overflow-hidden">
-                <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
-              </div>
+          {/* BOTTOM LEFT QUADRANT - Transcript */}
+          <div className="hidden md:flex w-full h-full flex-col overflow-hidden">
+            <LiveTranscript 
+              transcript={transcript} 
+              agentName={selectedAgent?.name}
+              agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+              userAvatarUrl={userAvatarUrl}
+              sessionActive={sessionActive}
+            />
           </div>
+
+          {/* BOTTOM RIGHT QUADRANT - Feedback Feed */}
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
           </div>
         </div>
-      </div>
 
       {/* Mobile Bottom Navigation - Only show during active session */}
       {sessionActive && (
@@ -2847,6 +2841,7 @@ function TrainerPageContent() {
           />
         </div>
       )}
+      </div>
 
       <style jsx global>{`
         @keyframes fadeIn {
@@ -2998,6 +2993,16 @@ function TrainerPageContent() {
                   {/* Top - Agent Video */}
                   <div className="relative w-full flex-1 bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl min-h-0">
                     {renderAgentVideo()}
+                    
+                    {/* PIP Webcam Overlay */}
+                    {sessionActive && (
+                      <div className={cn(
+                        "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
+                        isCameraOff && "hidden"
+                      )}>
+                        <WebcamPIP ref={webcamPIPRef} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Bottom - Transcript and Feedback Split */}
