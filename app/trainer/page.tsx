@@ -142,6 +142,8 @@ function TrainerPageContent() {
   const [strikeCauses, setStrikeCauses] = useState<Array<{type: 'filler_words' | 'poor_objection_handling', count?: number, timestamp: Date}>>([])
   const [showRestartWarning, setShowRestartWarning] = useState(false)
   const [restartCountdown, setRestartCountdown] = useState(3)
+  const [showDoorClosedPopup, setShowDoorClosedPopup] = useState(false)
+  const [doorClosedReason, setDoorClosedReason] = useState<string>('')
   const isRestartingRef = useRef(false) // Track if restart is in progress
   const fillerWordCountRef = useRef(0)
   const poorHandlingCountRef = useRef(0)
@@ -1553,6 +1555,20 @@ function TrainerPageContent() {
     // Store the reason for later use
     doorClosingReasonRef.current = reason
     
+    // Determine popup message based on reason
+    let popupMessage = 'Door Closed'
+    if (reason.includes('rejected') || reason.includes('rejection')) {
+      popupMessage = 'Close Failed'
+    } else if (reason.includes('sale_complete') || reason.includes('completed')) {
+      popupMessage = 'Sale Completed'
+    } else if (reason.includes('hostile')) {
+      popupMessage = 'Door Closed'
+    }
+    
+    // Show popup
+    setDoorClosedReason(popupMessage)
+    setShowDoorClosedPopup(true)
+    
     // Stop any playing video immediately
     if (agentVideoRef.current) {
       console.log('🎬 Stopping agent video')
@@ -1562,29 +1578,34 @@ function TrainerPageContent() {
       agentVideoRef.current.loop = false // Ensure no looping
     }
     
-    // Capture transcript state before ending session
-    const currentTranscript = transcript
-    console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
-      transcriptLength: currentTranscript.length,
-      sessionId,
-      reason
-    })
-    
-    try {
-      // End the session first (saves transcript and voice analysis)
-      await endSession(reason, true) // skipRedirect = true
+    // Wait 2 seconds for popup, then proceed
+    setTimeout(async () => {
+      setShowDoorClosedPopup(false)
       
-      // After session is saved, trigger grading automatically
-      console.log('🎯 Starting automatic grading after door close...')
-      await triggerGradingAfterDoorClose(sessionId)
+      // Capture transcript state before ending session
+      const currentTranscript = transcript
+      console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
+        transcriptLength: currentTranscript.length,
+        sessionId,
+        reason
+      })
       
-      // Redirect to loading page - it will wait for grading to complete
-      window.location.href = `/trainer/loading/${sessionId}`
-    } catch (error) {
-      console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
-      // Fallback: redirect to loading page which will trigger grading
-      window.location.href = `/trainer/loading/${sessionId}`
-    }
+      try {
+        // End the session first (saves transcript and voice analysis)
+        await endSession(reason, true) // skipRedirect = true
+        
+        // After session is saved, trigger grading automatically
+        console.log('🎯 Starting automatic grading after door close...')
+        await triggerGradingAfterDoorClose(sessionId)
+        
+        // Redirect to feedback page - grading runs in background
+        window.location.href = `/trainer/feedback/${sessionId}`
+      } catch (error) {
+        console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
+        // Fallback: redirect to feedback page
+        window.location.href = `/trainer/feedback/${sessionId}`
+      }
+    }, 2000)
   }, [sessionId, transcript, endSession, triggerGradingAfterDoorClose])
 
   // Direct state-based call end handler - triggers door closing sequence
@@ -3346,6 +3367,42 @@ function TrainerPageContent() {
                       </div>
                       <p className="text-sm text-slate-400">
                         Too many filler words or poor objection handling
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Door Closed Popup Modal */}
+            {showDoorClosedPopup && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                {shouldAnimate ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="bg-slate-900 border-2 border-purple-500/60 rounded-2xl p-8 max-w-md mx-4 shadow-2xl"
+                  >
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">🚪</div>
+                      <h2 className="text-2xl font-bold text-white mb-2 font-space">
+                        {doorClosedReason}
+                      </h2>
+                      <p className="text-slate-300 mb-4">
+                        Session ended. Redirecting to feedback...
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="bg-slate-900 border-2 border-purple-500/60 rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">🚪</div>
+                      <h2 className="text-2xl font-bold text-white mb-2 font-space">
+                        {doorClosedReason}
+                      </h2>
+                      <p className="text-slate-300 mb-4">
+                        Session ended. Redirecting to feedback...
                       </p>
                     </div>
                   </div>

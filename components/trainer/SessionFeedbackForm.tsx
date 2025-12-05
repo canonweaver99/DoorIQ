@@ -28,44 +28,42 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validation
-    if (!rating) {
-      setError('Please provide a rating')
-      return
-    }
-    if (!improvementArea) {
-      setError('Please select an improvement area for the AI agent')
-      return
-    }
-    // Feedback text is optional, no validation needed
-
+    // All fields are now optional - no validation required
     setIsSubmitting(true)
     setError(null)
 
     try {
-      const response = await fetch('/api/session/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          rating,
-          improvementArea,
-          feedbackText: feedbackText.trim() || null
+      // Only submit if there's at least one field filled
+      if (rating || improvementArea || feedbackText.trim()) {
+        const response = await fetch('/api/session/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            rating: rating || null,
+            improvementArea: improvementArea || null,
+            feedbackText: feedbackText.trim() || null
+          })
         })
-      })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Failed to submit feedback')
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Failed to submit feedback')
+        }
       }
 
-      // Success - proceed to analytics page
+      // Success - proceed to analytics page (even if skipped)
       onFeedbackComplete()
     } catch (err: any) {
       console.error('Error submitting feedback:', err)
       setError(err.message || 'Failed to submit feedback. Please try again.')
       setIsSubmitting(false)
     }
+  }
+
+  const handleSkip = () => {
+    // Skip feedback and go directly to analytics
+    onFeedbackComplete()
   }
 
   return (
@@ -180,24 +178,34 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
             </motion.div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting || !rating || !improvementArea}
-            className="w-full px-5 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg active:from-purple-600 active:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space text-sm sm:text-base min-h-[48px] sm:min-h-[52px] touch-manipulation active:scale-[0.98]"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Submitting...</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-5 h-5" />
-                <span>Continue to Results</span>
-              </>
-            )}
-          </button>
+          {/* Submit and Skip Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={handleSkip}
+              disabled={isSubmitting}
+              className="flex-1 px-5 sm:px-6 py-3.5 sm:py-4 bg-slate-800 border border-slate-600 text-slate-300 font-semibold rounded-lg hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space text-sm sm:text-base min-h-[48px] sm:min-h-[52px] touch-manipulation active:scale-[0.98]"
+            >
+              Skip Feedback
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 px-5 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg active:from-purple-600 active:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-space text-sm sm:text-base min-h-[48px] sm:min-h-[52px] touch-manipulation active:scale-[0.98]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>Submit & Continue</span>
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </motion.div>

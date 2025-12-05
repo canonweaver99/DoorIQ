@@ -4,9 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { ChevronDown } from 'lucide-react'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
+import { LeverSwitch } from '@/components/ui/lever-switch'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import {
@@ -139,6 +147,35 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     }
     return false
   })
+  const [showFlameEffect, setShowFlameEffect] = useState(false)
+
+  const handleChallengeModeToggle = (enabled: boolean) => {
+    const wasEnabled = challengeModeEnabled
+    setChallengeModeEnabled(enabled)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('challengeModeEnabled', enabled.toString())
+    }
+    // Trigger full-screen flame effect when turning ON
+    if (!wasEnabled && enabled) {
+      setShowFlameEffect(true)
+    }
+  }
+
+  // Auto-hide flame effect after 2.5 seconds, or cancel if challenge mode is turned off
+  useEffect(() => {
+    if (showFlameEffect) {
+      // Cancel immediately if challenge mode is turned off
+      if (!challengeModeEnabled) {
+        setShowFlameEffect(false)
+        return
+      }
+      
+      const timer = setTimeout(() => {
+        setShowFlameEffect(false)
+      }, 2500)
+      return () => clearTimeout(timer)
+    }
+  }, [showFlameEffect, challengeModeEnabled])
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -360,6 +397,108 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center">
       <AnimatedGrid />
       
+      {/* Full-screen flame effect overlay */}
+      {showFlameEffect && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-50 pointer-events-none"
+        >
+          {/* Animated background gradient */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-b from-orange-500/10 via-red-500/15 to-yellow-400/10"
+            animate={{
+              opacity: [0.3, 0.5, 0.3, 0],
+            }}
+            transition={{
+              duration: 2.5,
+              times: [0, 0.1, 0.75, 1],
+              ease: "easeInOut"
+            }}
+          />
+          
+          {/* Central pulsing flame text */}
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center z-10"
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: [0, 1, 1, 0],
+            }}
+            transition={{
+              duration: 2.5,
+              times: [0, 0.1, 0.85, 1],
+              ease: "easeInOut"
+            }}
+          >
+            <div className="text-center relative">
+              {/* Text shadow/outline for better readability */}
+              <div className="absolute inset-0 text-3xl sm:text-4xl md:text-5xl font-bold font-space opacity-30 blur-md">
+                <div className="text-black">CHALLENGE MODE ACTIVATED!</div>
+              </div>
+              <motion.div
+                className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl mb-4 relative z-10"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{
+                  scale: 1,
+                  opacity: [0, 1, 1, 0],
+                  rotate: [0, 2, -2, 0],
+                }}
+                transition={{
+                  scale: {
+                    duration: 0.3,
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 10
+                  },
+                  opacity: {
+                    duration: 2.5,
+                    times: [0, 0.1, 0.85, 1]
+                  },
+                  rotate: {
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }
+                }}
+              >
+                🔥
+              </motion.div>
+              <motion.h2
+                className="text-3xl sm:text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-400 to-yellow-400 font-space relative z-10 drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]"
+                initial={{ opacity: 0, scale: 0.5, y: -50 }}
+                animate={{ 
+                  opacity: [0, 1, 1, 0], 
+                  scale: 1,
+                  y: 0
+                }}
+                transition={{ 
+                  opacity: {
+                    duration: 2.5,
+                    times: [0, 0.1, 0.85, 1]
+                  },
+                  scale: {
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 15,
+                    delay: 0
+                  },
+                  y: {
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 15,
+                    delay: 0
+                  }
+                }}
+              >
+                CHALLENGE MODE ACTIVATED!
+              </motion.h2>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+      
       {/* Animated gradient orbs matching landing page */}
       <motion.div
         animate={{
@@ -398,31 +537,135 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           className="text-center mb-6 pt-4"
         >
           <h1 className="font-space text-3xl tracking-tight text-white font-bold leading-tight mb-2">
-            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Challenge</span>
+            Let's Get <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Knockin'</span>
           </h1>
           <p className="text-sm text-white/70 font-space">
             Select a homeowner to begin
           </p>
         </motion.div>
 
-        {/* Mobile Filter Bar - Simplified */}
+        {/* Challenge Mode Toggle - Mobile */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          className="mb-6 w-full"
+        >
+          <div className={cn(
+            "relative bg-slate-900/60 backdrop-blur-sm border rounded-2xl p-4 overflow-hidden transition-all duration-300",
+            challengeModeEnabled 
+              ? "border-orange-500/50 shadow-lg shadow-orange-500/20" 
+              : "border-white/10"
+          )}>
+            {/* Fire effect overlay when enabled */}
+            {challengeModeEnabled && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                {/* Animated fire gradient */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-red-500/10 to-yellow-400/10"
+                  animate={{
+                    backgroundPosition: ['0% 0%', '100% 100%'],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "linear"
+                  }}
+                />
+              </motion.div>
+            )}
+            <div className="relative z-10 flex items-center justify-between mb-3">
+              <div className="flex-1">
+                <h3 className={cn(
+                  "text-lg font-bold font-space mb-1 transition-colors duration-300",
+                  challengeModeEnabled ? "text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-400 to-yellow-400" : "text-white"
+                )}>
+                  Challenge Mode
+                </h3>
+                <p className="text-sm text-white/70 font-space leading-relaxed">
+                  Get 3 strikes and the session restarts. Tracks filler words and poor objection handling.
+                </p>
+              </div>
+              <LeverSwitch
+                checked={challengeModeEnabled}
+                onChange={handleChallengeModeToggle}
+                className="flex-shrink-0"
+              />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Mobile Filter Dropdown */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
           className="mb-4 flex items-center justify-center gap-2"
         >
-          <button
-            onClick={() => setFilter('all')}
-            className={cn(
-              "px-4 py-2 rounded-2xl text-sm font-medium transition-all font-space",
-              filter === 'all'
-                ? "bg-white/10 text-white shadow-lg"
-                : "bg-white/[0.05] text-white/70 border border-white/10"
-            )}
-          >
-            All
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "px-4 py-2 rounded-2xl text-sm font-medium transition-all font-space flex items-center gap-2 bg-slate-900/60 backdrop-blur-sm text-white/70 border border-white/10 min-w-[120px] justify-between"
+                )}
+              >
+                <span>
+                  {filter === 'all' && 'All'}
+                  {filter === 'difficulty' && 'By Difficulty'}
+                  {filter === 'unplayed' && 'Unplayed First'}
+                  {filter === 'struggles' && 'Your Struggles'}
+                </span>
+                <ChevronDown className="w-4 h-4 opacity-50" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="start" 
+              className="bg-slate-900 border-white/10 text-white min-w-[140px]"
+            >
+              <DropdownMenuItem
+                onClick={() => setFilter('all')}
+                className={cn(
+                  "cursor-pointer focus:bg-white/10 focus:text-white",
+                  filter === 'all' && "bg-white/10 text-white"
+                )}
+              >
+                All
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setFilter('difficulty')}
+                className={cn(
+                  "cursor-pointer focus:bg-white/10 focus:text-white",
+                  filter === 'difficulty' && "bg-white/10 text-white"
+                )}
+              >
+                By Difficulty
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setFilter('unplayed')}
+                className={cn(
+                  "cursor-pointer focus:bg-white/10 focus:text-white",
+                  filter === 'unplayed' && "bg-white/10 text-white"
+                )}
+              >
+                Unplayed First
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setFilter('struggles')}
+                className={cn(
+                  "cursor-pointer focus:bg-white/10 focus:text-white",
+                  filter === 'struggles' && "bg-white/10 text-white"
+                )}
+              >
+                Your Struggles
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <motion.button
             type="button"
             onClick={handleRandomAgent}
@@ -430,8 +673,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             whileHover={loading || agents.length === 0 ? {} : { scale: 1.02 }}
             whileTap={loading || agents.length === 0 ? {} : { scale: 0.98 }}
             className={cn(
-              "px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-2xl text-sm shadow-xl",
-              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+              "px-4 py-2 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-2xl text-sm shadow-md shadow-purple-500/15",
+              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
             )}
           >
             🎲 Random
@@ -637,23 +880,87 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-6 flex flex-col items-center gap-2 md:gap-3"
+          className="mb-6 text-center"
         >
-          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white text-center font-bold leading-[1.3] uppercase">
-            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Challenge</span>
+          <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.3] uppercase">
+            Let's Get <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Knockin'</span>
           </h1>
-          <p className="text-lg md:text-xl font-bold text-slate-300 drop-shadow-md font-space max-w-3xl">
+          <p className="text-lg md:text-xl font-bold text-slate-300 drop-shadow-md font-space max-w-3xl mx-auto mt-2">
             Select a homeowner to begin your training session
           </p>
         </motion.div>
 
-        {/* Difficulty Key/Legend */}
+        {/* Challenge Mode, Difficulty, and Filter Row */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="group relative mb-6 flex flex-wrap items-center justify-center gap-3 px-4 py-2 bg-white/[0.02] border-2 border-white/5 rounded-lg transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden max-w-xl mx-auto"
+          className="mb-6 flex flex-col lg:flex-row items-stretch lg:items-center gap-4"
         >
+          {/* Challenge Mode Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="lg:flex-shrink-0 lg:max-w-xs"
+          >
+            <div className={cn(
+              "relative bg-slate-900/60 backdrop-blur-sm border rounded-xl p-3 lg:p-4 overflow-hidden transition-all duration-300",
+              challengeModeEnabled 
+                ? "border-orange-500/50 shadow-lg shadow-orange-500/20" 
+                : "border-white/10"
+            )}>
+              {/* Fire effect overlay when enabled */}
+              {challengeModeEnabled && (
+                <motion.div
+                  className="absolute inset-0 pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  {/* Animated fire gradient */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-red-500/10 to-yellow-400/10"
+                    animate={{
+                      backgroundPosition: ['0% 0%', '100% 100%'],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatType: "reverse",
+                      ease: "linear"
+                    }}
+                  />
+                </motion.div>
+              )}
+              <div className="relative z-10 flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className={cn(
+                    "text-sm lg:text-base font-bold font-space mb-0.5 transition-colors duration-300",
+                    challengeModeEnabled ? "text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-400 to-yellow-400" : "text-white"
+                  )}>
+                    Challenge Mode
+                  </h3>
+                  <p className="text-sm lg:text-base text-white/70 font-space leading-tight font-semibold hidden lg:block">
+                    3 strikes = restart
+                  </p>
+                </div>
+                <LeverSwitch
+                  checked={challengeModeEnabled}
+                  onChange={handleChallengeModeToggle}
+                  className="flex-shrink-0"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Difficulty Key/Legend */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="group relative flex flex-wrap items-center justify-center gap-3 px-4 py-2 bg-slate-900/60 backdrop-blur-sm border border-white/10 rounded-lg transition-all duration-300 hover:border-white/20 hover:bg-slate-900/70 overflow-hidden lg:flex-1"
+          >
           {/* Subtle purple glow at bottom for depth */}
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <div className="relative z-10 flex flex-wrap items-center justify-center gap-4">
@@ -677,75 +984,90 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
               </div>
             </div>
           </div>
-        </motion.div>
+          </motion.div>
 
-        {/* Filter Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mb-6 flex flex-wrap items-center justify-center gap-3"
-        >
-          <button
-            onClick={() => setFilter('all')}
-            className={cn(
-              "px-5 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space",
-              filter === 'all'
-                ? "bg-white/10 text-white border border-white/20"
-                : "bg-white/[0.02] text-white/80 border border-white/5 hover:bg-white/[0.05] hover:border-white/10 hover:text-white"
-            )}
+          {/* Filter Dropdown */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex items-center gap-3 lg:flex-shrink-0"
           >
-            All
-          </button>
-          <button
-            onClick={() => setFilter('difficulty')}
-            className={cn(
-              "px-5 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
-              filter === 'difficulty'
-                ? "bg-white/10 text-white border border-white/20"
-                : "bg-white/[0.02] text-white/80 border border-white/5 hover:bg-white/[0.05] hover:border-white/10 hover:text-white"
-            )}
-          >
-            By Difficulty
-          </button>
-          <button
-            onClick={() => setFilter('unplayed')}
-            className={cn(
-              "px-5 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
-              filter === 'unplayed'
-                ? "bg-white/10 text-white border border-white/20"
-                : "bg-white/[0.02] text-white/80 border border-white/5 hover:bg-white/[0.05] hover:border-white/10 hover:text-white"
-            )}
-          >
-            Unplayed First
-          </button>
-          <button
-            onClick={() => setFilter('struggles')}
-            className={cn(
-              "px-5 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space hidden sm:inline-flex",
-              filter === 'struggles'
-                ? "bg-white/10 text-white border border-white/20"
-                : "bg-white/[0.02] text-white/80 border border-white/5 hover:bg-white/[0.05] hover:border-white/10 hover:text-white"
-            )}
-          >
-            Your Struggles
-          </button>
-          <div className="w-px h-6 bg-white/10 hidden sm:block" />
-          <motion.button
-            type="button"
-            onClick={handleRandomAgent}
-            disabled={loading || agents.length === 0}
-            whileHover={loading || agents.length === 0 ? {} : { scale: 1.02 }}
-            whileTap={loading || agents.length === 0 ? {} : { scale: 0.98 }}
-            className={cn(
-              "px-6 py-2.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight transition-all font-space",
-              loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/95'
-            )}
-          >
-            <span className="flex items-center gap-2">
-              🎲 Surprise Me
-            </span>
-          </motion.button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "px-4 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space flex items-center gap-2 bg-slate-900/60 backdrop-blur-sm text-white/80 border border-white/10 hover:bg-slate-900/70 hover:border-white/20 hover:text-white min-w-[140px] justify-between"
+                  )}
+                >
+                  <span>
+                    {filter === 'all' && 'All'}
+                    {filter === 'difficulty' && 'By Difficulty'}
+                    {filter === 'unplayed' && 'Unplayed First'}
+                    {filter === 'struggles' && 'Your Struggles'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="start" 
+                className="bg-slate-900 border-white/10 text-white min-w-[140px]"
+              >
+                <DropdownMenuItem
+                  onClick={() => setFilter('all')}
+                  className={cn(
+                    "cursor-pointer focus:bg-white/10 focus:text-white",
+                    filter === 'all' && "bg-white/10 text-white"
+                  )}
+                >
+                  All
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setFilter('difficulty')}
+                  className={cn(
+                    "cursor-pointer focus:bg-white/10 focus:text-white",
+                    filter === 'difficulty' && "bg-white/10 text-white"
+                  )}
+                >
+                  By Difficulty
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setFilter('unplayed')}
+                  className={cn(
+                    "cursor-pointer focus:bg-white/10 focus:text-white",
+                    filter === 'unplayed' && "bg-white/10 text-white"
+                  )}
+                >
+                  Unplayed First
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setFilter('struggles')}
+                  className={cn(
+                    "cursor-pointer focus:bg-white/10 focus:text-white",
+                    filter === 'struggles' && "bg-white/10 text-white"
+                  )}
+                >
+                  Your Struggles
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <motion.button
+              type="button"
+              onClick={handleRandomAgent}
+              disabled={loading || agents.length === 0}
+              whileHover={loading || agents.length === 0 ? {} : { scale: 1.02 }}
+              whileTap={loading || agents.length === 0 ? {} : { scale: 0.98 }}
+              className={cn(
+                "px-6 py-2.5 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-md text-sm sm:text-base tracking-tight transition-all font-space shadow-md shadow-purple-500/15",
+                loading || agents.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
+              )}
+            >
+              <span className="flex items-center gap-2">
+                🎲 Surprise Me
+              </span>
+            </motion.button>
+          </motion.div>
         </motion.div>
 
         {/* Agent Bubbles Grid - 2 columns on mobile, grid on desktop */}
