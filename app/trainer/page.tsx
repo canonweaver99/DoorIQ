@@ -37,7 +37,6 @@ const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>
 })
 const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
-const DoorClosingVideo = dynamicImport(() => import('@/components/trainer/DoorClosingVideo'), { ssr: false })
 
 interface Agent {
   id: string
@@ -123,7 +122,6 @@ function TrainerPageContent() {
   const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
   const [showDoorCloseAnimation, setShowDoorCloseAnimation] = useState(false) // Direct state trigger for door closing animation
-  const [showDoorClosingVideo, setShowDoorClosingVideo] = useState(false) // State to show DoorClosingVideo component
   const doorClosingReasonRef = useRef<string>('User ended conversation') // Store reason for door closing
   const loopVideoStartTimeRef = useRef<number>(0) // Track when loop video started playing
   const loopVideoDurationRef = useRef<number>(0) // Track loop video duration
@@ -1092,7 +1090,6 @@ function TrainerPageContent() {
       setSessionId(newId)
       setSessionActive(true)
       setSessionState('active')
-      setShowDoorClosingVideo(false) // Reset door closing video state for new session
       // Session started
       // Start with opening animation if available (Jerry), otherwise start with loop
       if (agentHasVideos(selectedAgent?.name)) {
@@ -1163,12 +1160,6 @@ function TrainerPageContent() {
     }
   }
 
-  // Handle door closing video completion - will be defined after endSession and triggerGradingAfterDoorClose
-  // Placeholder - will be redefined later
-  let handleDoorVideoComplete: () => void | Promise<void> = () => {
-    console.log('⚠️ handleDoorVideoComplete called before initialization')
-  }
-
   // Trigger grading after ensuring transcript is saved
   const triggerGradingAfterDoorClose = useCallback(async (sessionId: string) => {
     console.log('🎯 Triggering automatic grading for session:', sessionId)
@@ -1212,9 +1203,12 @@ function TrainerPageContent() {
       if (sessionActive && sessionId) {
         // Clear session state without redirecting
         setSessionActive(false)
+        setSessionState('active') // Reset session state
         setConversationToken(null)
         setTranscript([])
         setDuration(0)
+        setShowDoorOpeningVideo(false) // Reset door opening video so door needs to be knocked again
+        setLoading(false) // Ensure loading is false so knock button appears
         
         if (durationInterval.current) {
           clearInterval(durationInterval.current)
@@ -1238,16 +1232,16 @@ function TrainerPageContent() {
         }
       }
 
-      // Wait a moment for cleanup
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      // Start new session
-      await startSession()
+      // Reset sessionId so a new one will be created when knocking
+      setSessionId(null)
+      
+      // Don't automatically start new session - user needs to knock again
+      // The knock button will appear and user can click it to start a new session
     } catch (error: any) {
       logger.error('Error restarting session', error)
       alert(`Failed to restart session: ${error?.message || 'Unknown error'}`)
     }
-  }, [selectedAgent, sessionActive, sessionId, transcript, duration, startSession])
+  }, [selectedAgent, sessionActive, sessionId, transcript, duration])
 
   // Auto-restart when strikes reach 3
   useEffect(() => {
@@ -1508,9 +1502,8 @@ function TrainerPageContent() {
   const handleDoorClosingSequence = useCallback(async (reason: string = 'User ended conversation') => {
     console.log('🚪 Starting door closing sequence:', reason)
     
-    // Prevent multiple triggers
-    if (showDoorClosingVideo) {
-      console.log('⚠️ Door closing video already showing, ignoring duplicate trigger')
+    if (!sessionId) {
+      console.log('⚠️ No sessionId, ignoring door closing sequence')
       return
     }
     
@@ -1519,38 +1512,16 @@ function TrainerPageContent() {
     
     // Stop any playing video immediately
     if (agentVideoRef.current) {
-      console.log('🎬 Stopping agent video before showing door closing video')
+      console.log('🎬 Stopping agent video')
       agentVideoRef.current.pause()
       agentVideoRef.current.src = ''
       agentVideoRef.current.load()
       agentVideoRef.current.loop = false // Ensure no looping
     }
     
-    // Show the door closing video component
-    console.log('🎬 Showing door closing video for agent:', selectedAgent?.name)
-    setShowDoorClosingVideo(true)
-    setSessionState('door-closing')
-  }, [showDoorClosingVideo, selectedAgent])
-  
-  // Define handleDoorVideoComplete after endSession and triggerGradingAfterDoorClose are available
-  handleDoorVideoComplete = useCallback(async () => {
-    console.log('🎬 Door closing video completed')
-    
-    // Hide the door closing video component
-    setShowDoorClosingVideo(false)
-    setSessionState('complete')
-    
-    if (!sessionId) {
-      router.push('/trainer')
-      return
-    }
-    
-    // Get the reason that was stored when door closing sequence started
-    const reason = doorClosingReasonRef.current || 'Conversation ended'
-    
     // Capture transcript state before ending session
     const currentTranscript = transcript
-    console.log('🔚 Door closing video complete, preparing to end session and start grading...', {
+    console.log('🔚 Door closing sequence, preparing to end session and start grading...', {
       transcriptLength: currentTranscript.length,
       sessionId,
       reason
@@ -1561,17 +1532,17 @@ function TrainerPageContent() {
       await endSession(reason, true) // skipRedirect = true
       
       // After session is saved, trigger grading automatically
-      console.log('🎯 Starting automatic grading after door close video...')
+      console.log('🎯 Starting automatic grading after door close...')
       await triggerGradingAfterDoorClose(sessionId)
       
       // Redirect to loading page - it will wait for grading to complete
       window.location.href = `/trainer/loading/${sessionId}`
     } catch (error) {
-      console.error('❌ Error in endSession or grading from handleDoorVideoComplete:', error)
+      console.error('❌ Error in endSession or grading from handleDoorClosingSequence:', error)
       // Fallback: redirect to loading page which will trigger grading
       window.location.href = `/trainer/loading/${sessionId}`
     }
-  }, [sessionId, router, transcript, endSession, triggerGradingAfterDoorClose])
+  }, [sessionId, transcript, endSession, triggerGradingAfterDoorClose])
 
   // Direct state-based call end handler - triggers door closing sequence
   const handleCallEnd = useCallback((reason: string) => {
@@ -1756,11 +1727,6 @@ function TrainerPageContent() {
     
     const handleReconnecting = (e: CustomEvent) => {
       // Don't reconnect if door closing sequence is active
-      if (showDoorClosingVideo) {
-        console.log('🚪 Door closing sequence active - preventing reconnection')
-        return
-      }
-      // Check door closing state
       // @ts-ignore - TypeScript type narrowing issue, but runtime values are correct
       if (sessionState === 'door-closing' || videoMode === 'closing') {
         console.log('🚪 Door closing sequence active - preventing reconnection')
@@ -3412,16 +3378,6 @@ function TrainerPageContent() {
               duration={duration}
             />
           </div>
-        )}
-        
-        {/* Door Closing Video Component - shows when disconnect is detected */}
-        {showDoorClosingVideo && sessionId && selectedAgent && (
-          <DoorClosingVideo
-            agentId={selectedAgent.eleven_agent_id}
-            agentName={selectedAgent.name}
-            onComplete={handleDoorVideoComplete}
-            getAgentVideoPaths={getAgentVideoPaths}
-          />
         )}
 
         <style jsx global>{`
