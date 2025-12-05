@@ -1274,32 +1274,50 @@ function TrainerPageContent() {
     // Store restart function reference to ensure it's available even if component unmounts
     const restartFn = restartSession
 
-    // Show warning briefly (optional - can remove if not needed)
+    // Show warning popup with 3 second countdown
     setShowRestartWarning(true)
-    setRestartCountdown(0)
+    setRestartCountdown(3)
 
-    // Reset strike counters immediately
-    setStrikes(0)
-    fillerWordCountRef.current = 0
-    poorHandlingCountRef.current = 0
-    processedPoorHandlingRef.current.clear()
-
-    // Execute restart immediately
-    if (restartFn) {
-      console.log('🔄 Executing instant auto-restart after 3 strikes')
-      restartFn().finally(() => {
-        // Reset restart flag after restart completes
-        setTimeout(() => {
-          isRestartingRef.current = false
-          setShowRestartWarning(false)
-        }, 1000)
+    // Countdown timer
+    const countdownInterval = setInterval(() => {
+      setRestartCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval)
+          return 0
+        }
+        return prev - 1
       })
-    } else {
-      console.error('⚠️ Restart function not available')
-      isRestartingRef.current = false
-    }
+    }, 1000)
+
+    // Execute restart after 3 seconds
+    restartTimeoutRef.current = setTimeout(() => {
+      clearInterval(countdownInterval)
+      setShowRestartWarning(false)
+      setRestartCountdown(3)
+      
+      // Reset strike counters
+      setStrikes(0)
+      fillerWordCountRef.current = 0
+      poorHandlingCountRef.current = 0
+      processedPoorHandlingRef.current.clear()
+
+      // Execute restart
+      if (restartFn) {
+        console.log('🔄 Executing auto-restart after 3 strikes countdown')
+        restartFn().finally(() => {
+          // Reset restart flag after restart completes
+          setTimeout(() => {
+            isRestartingRef.current = false
+          }, 500)
+        })
+      } else {
+        console.error('⚠️ Restart function not available')
+        isRestartingRef.current = false
+      }
+    }, 3000)
 
     return () => {
+      clearInterval(countdownInterval)
       if (restartTimeoutRef.current) {
         clearTimeout(restartTimeoutRef.current)
         restartTimeoutRef.current = null
@@ -2721,9 +2739,9 @@ function TrainerPageContent() {
                       </div>
                     )}
                     
-                    {/* Challenge Mode Strike Counter - Top left of webcam */}
+                    {/* Challenge Mode Strike Counter - Above webcam */}
                     {sessionActive && challengeModeEnabled && (
-                      <div className="absolute bottom-[92px] sm:bottom-[120px] lg:bottom-[190px] left-2 sm:left-3 lg:left-6 z-30">
+                      <div className="absolute bottom-[calc(92px+60px)] sm:bottom-[calc(120px+60px)] lg:bottom-[calc(190px+60px)] left-2 sm:left-3 lg:left-6 z-30">
                         <StrikeCounter strikes={strikes} maxStrikes={3} />
                       </div>
                     )}
