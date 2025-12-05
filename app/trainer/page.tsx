@@ -1603,6 +1603,10 @@ function TrainerPageContent() {
       return
     }
     
+    // CRITICAL: Set sessionActive to false IMMEDIATELY to prevent reconnection
+    // This ensures ElevenLabsConversation component won't try to reconnect
+    setSessionActive(false)
+    
     // Set session state to door-closing to prevent reconnections
     setSessionState('door-closing')
     
@@ -1900,10 +1904,15 @@ function TrainerPageContent() {
     }
     
     const handleReconnecting = (e: CustomEvent) => {
-      // Don't reconnect if door closing sequence is active
+      // Don't reconnect if door closing sequence is active or session is ending
       // @ts-ignore - TypeScript type narrowing issue, but runtime values are correct
-      if (sessionState === 'door-closing' || videoMode === 'closing') {
-        console.log('🚪 Door closing sequence active - preventing reconnection')
+      if (sessionState === 'door-closing' || videoMode === 'closing' || showDoorCloseAnimation || !sessionActive) {
+        console.log('🚪 Door closing sequence active or session ending - preventing reconnection', {
+          sessionState,
+          videoMode,
+          showDoorCloseAnimation,
+          sessionActive
+        })
         return
       }
       
@@ -1917,6 +1926,13 @@ function TrainerPageContent() {
     }
     
     const handleReconnected = (e: CustomEvent) => {
+      // Don't process reconnection if session is ending or door closing
+      if (sessionState === 'door-closing' || videoMode === 'closing' || showDoorCloseAnimation || !sessionActive) {
+        console.log('🚪 Session ending - ignoring reconnection success')
+        setReconnectingStatus(null)
+        return
+      }
+      
       const reconnectData = e?.detail
       console.log('✅ Reconnection successful:', reconnectData)
       setReconnectingStatus(null)
