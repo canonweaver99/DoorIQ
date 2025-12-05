@@ -8,12 +8,33 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { IOSSegmentedControl } from '@/components/ui/ios-segmented-control'
 import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import { useHaptic } from '@/hooks/useHaptic'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
-// Lazy load tab components for better performance
-const RepManagement = lazy(() => import('@/components/manager/RepManagement'))
-const KnowledgeBase = lazy(() => import('@/components/manager/KnowledgeBase'))
-const AnalyticsDashboard = lazy(() => import('@/components/manager/AnalyticsDashboard'))
-const TrainingVideos = lazy(() => import('@/components/manager/TrainingVideos'))
+// Lazy load tab components for better performance with error handling
+const RepManagement = lazy(() => 
+  import('@/components/manager/RepManagement').catch(err => {
+    console.error('Failed to load RepManagement:', err)
+    return { default: () => <div className="p-8 text-center text-red-400">Failed to load Rep Management</div> }
+  })
+)
+const KnowledgeBase = lazy(() => 
+  import('@/components/manager/KnowledgeBase').catch(err => {
+    console.error('Failed to load KnowledgeBase:', err)
+    return { default: () => <div className="p-8 text-center text-red-400">Failed to load Knowledge Base</div> }
+  })
+)
+const AnalyticsDashboard = lazy(() => 
+  import('@/components/manager/AnalyticsDashboard').catch(err => {
+    console.error('Failed to load AnalyticsDashboard:', err)
+    return { default: () => <div className="p-8 text-center text-red-400">Failed to load Analytics Dashboard</div> }
+  })
+)
+const TrainingVideos = lazy(() => 
+  import('@/components/manager/TrainingVideos').catch(err => {
+    console.error('Failed to load TrainingVideos:', err)
+    return { default: () => <div className="p-8 text-center text-red-400">Failed to load Training Videos</div> }
+  })
+)
 
 type Tab = 'reps' | 'knowledge' | 'analytics' | 'settings' | 'videos'
 
@@ -78,15 +99,95 @@ function ManagerPageContent() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'reps':
-        return <RepManagement />
+        return (
+          <ErrorBoundary
+            fallback={
+              <div className="p-8 text-center">
+                <p className="text-red-400 mb-4">Failed to load Rep Management</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors"
+                >
+                  Reload Page
+                </button>
+              </div>
+            }
+          >
+            <RepManagement />
+          </ErrorBoundary>
+        )
       case 'knowledge':
-        return <KnowledgeBase />
+        return (
+          <ErrorBoundary
+            fallback={
+              <div className="p-8 text-center">
+                <p className="text-red-400 mb-4">Failed to load Knowledge Base</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors"
+                >
+                  Reload Page
+                </button>
+              </div>
+            }
+          >
+            <KnowledgeBase />
+          </ErrorBoundary>
+        )
       case 'analytics':
-        return <AnalyticsDashboard timePeriod={timePeriod} />
+        return (
+          <ErrorBoundary
+            fallback={
+              <div className="p-8 text-center">
+                <p className="text-red-400 mb-4">Failed to load Analytics Dashboard</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors"
+                >
+                  Reload Page
+                </button>
+              </div>
+            }
+          >
+            <AnalyticsDashboard timePeriod={timePeriod} />
+          </ErrorBoundary>
+        )
       case 'videos':
-        return <TrainingVideos />
+        return (
+          <ErrorBoundary
+            fallback={
+              <div className="p-8 text-center">
+                <p className="text-red-400 mb-4">Failed to load Training Videos</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors"
+                >
+                  Reload Page
+                </button>
+              </div>
+            }
+          >
+            <TrainingVideos />
+          </ErrorBoundary>
+        )
       default:
-        return <AnalyticsDashboard timePeriod={timePeriod} />
+        return (
+          <ErrorBoundary
+            fallback={
+              <div className="p-8 text-center">
+                <p className="text-red-400 mb-4">Failed to load Analytics Dashboard</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-xl text-purple-300 font-medium transition-colors"
+                >
+                  Reload Page
+                </button>
+              </div>
+            }
+          >
+            <AnalyticsDashboard timePeriod={timePeriod} />
+          </ErrorBoundary>
+        )
     }
   }
 
