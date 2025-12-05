@@ -745,10 +745,10 @@ export default function SessionsPage() {
                               <ArrowRight className="w-4 h-4" />
                             </motion.button>
                             <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileHover={{ scale: 1.01 }}
+                              whileTap={{ scale: 0.99 }}
                               onClick={() => router.push('/trainer')}
-                              className="w-full bg-white/10 border border-white/20 text-white font-bold rounded-2xl text-sm tracking-tight hover:bg-white/20 transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space min-h-[44px]"
+                              className="w-full bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-2xl text-sm tracking-tight transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space min-h-[44px] shadow-md shadow-purple-500/15"
                             >
                               <span>Practice Again</span>
                               <ArrowRight className="w-4 h-4" />
@@ -1037,10 +1037,10 @@ export default function SessionsPage() {
                                 <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:translate-x-0.5 transition-transform flex-shrink-0" />
                               </motion.button>
                               <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
                                 onClick={() => router.push('/trainer')}
-                                className="group/btn flex-1 bg-white text-black font-bold rounded-md text-xs sm:text-sm md:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 sm:px-4 font-space"
+                                className="group/btn flex-1 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-md text-xs sm:text-sm md:text-base tracking-tight transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 sm:px-4 font-space shadow-md shadow-purple-500/15"
                               >
                                 <span className="truncate">Practice Again</span>
                                 <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:translate-x-0.5 transition-transform flex-shrink-0" />

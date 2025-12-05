@@ -16,7 +16,7 @@ function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; s
   ]
 
   return (
-    <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
+    <div className="grid grid-cols-3 gap-4 sm:gap-6 md:gap-8">
       {stats.map((stat, index) => {
         const Icon = stat.icon
         return (
@@ -25,13 +25,13 @@ function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; s
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1 }}
-            className={`bg-white/[0.02] border-2 border-white/5 rounded-lg p-2.5 sm:p-4 md:p-5 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] ${stat.bgColor} ${stat.borderColor}`}
+            className={`bg-white/[0.06] border-2 border-white/12 rounded-lg p-4 sm:p-6 md:p-8 transition-all duration-300 hover:border-white/30 hover:bg-white/[0.08] shadow-lg shadow-black/20 ${stat.bgColor} ${stat.borderColor}`}
           >
-            <div className="flex items-center gap-1.5 sm:gap-2.5 mb-2 sm:mb-2.5">
-              <div className={`${stat.color} p-1 sm:p-1.5 rounded-lg bg-white/[0.05] flex-shrink-0`}>
-                <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className={`${stat.color} p-1.5 sm:p-2 rounded-lg bg-white/[0.08] flex-shrink-0`}>
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
               </div>
-              <span className="font-space text-white/60 text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider leading-tight">{stat.label}</span>
+              <span className="font-space text-white/75 text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider leading-tight">{stat.label}</span>
             </div>
             <div className="flex items-baseline gap-2 mt-1">
               <span className={`font-space text-white text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-none ${stat.color}`}>{stat.value}</span>
@@ -52,7 +52,7 @@ function MobileQuickStatsCard({ streak, sessionsToday, avgScore }: { streak: num
   ]
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-3 gap-4">
       {stats.map((stat, index) => {
         const Icon = stat.icon
         return (
@@ -61,14 +61,14 @@ function MobileQuickStatsCard({ streak, sessionsToday, avgScore }: { streak: num
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 + index * 0.1, type: 'spring', stiffness: 200 }}
-            className={`${stat.bgColor} rounded-3xl p-4 shadow-xl border border-white/5`}
+            className={`${stat.bgColor} rounded-3xl p-5 shadow-xl border border-white/12`}
           >
             <div className="flex flex-col items-center justify-center">
-              <div className={`${stat.color} mb-2`}>
+              <div className={`${stat.color} mb-2.5`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <span className={`font-space ${stat.color} text-2xl font-bold mb-1`}>{stat.value}</span>
-              <span className="font-space text-white/60 text-xs font-medium uppercase tracking-wider">{stat.label}</span>
+              <span className={`font-space ${stat.color} text-2xl font-bold mb-1.5`}>{stat.value}</span>
+              <span className="font-space text-white/75 text-xs font-medium uppercase tracking-wider">{stat.label}</span>
             </div>
           </motion.div>
         )
@@ -214,15 +214,15 @@ export default function HomePage() {
               <div className="h-4 bg-white/10 rounded w-64 mx-auto" />
             </div>
             <div className="px-2">
-              <div className="h-20 bg-white/5 rounded-3xl animate-pulse" />
+              <div className="h-20 bg-white/[0.06] rounded-3xl animate-pulse border border-white/12" />
             </div>
             <div className="px-2">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white/5 rounded-3xl p-4 animate-pulse">
-                    <div className="h-5 bg-white/10 rounded w-full mb-2" />
-                    <div className="h-6 bg-white/10 rounded w-3/4 mx-auto mb-1" />
-                    <div className="h-3 bg-white/10 rounded w-1/2 mx-auto" />
+                  <div key={i} className="bg-white/[0.06] rounded-3xl p-5 animate-pulse border border-white/12">
+                    <div className="h-5 bg-white/15 rounded w-full mb-2" />
+                    <div className="h-6 bg-white/15 rounded w-3/4 mx-auto mb-1" />
+                    <div className="h-3 bg-white/15 rounded w-1/2 mx-auto" />
                   </div>
                 ))}
               </div>
@@ -234,20 +234,20 @@ export default function HomePage() {
         <div className="hidden md:block relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="space-y-4 sm:space-y-6 md:space-y-8 mt-8 sm:mt-12">
-              <div className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 animate-pulse">
-                <div className="h-6 sm:h-8 bg-white/10 rounded w-1/2 sm:w-1/3 mb-3 sm:mb-4" />
-                <div className="h-3 sm:h-4 bg-white/10 rounded w-1/3 sm:w-1/4 mb-6 sm:mb-8" />
-                <div className="h-12 sm:h-16 bg-white/10 rounded w-full sm:w-1/2 mb-4 sm:mb-6" />
-                <div className="h-8 sm:h-10 bg-white/10 rounded w-full" />
+              <div className="bg-white/[0.06] border-2 border-white/12 rounded-lg p-6 sm:p-8 md:p-10 animate-pulse shadow-lg shadow-black/20">
+                <div className="h-6 sm:h-8 bg-white/15 rounded w-1/2 sm:w-1/3 mb-3 sm:mb-4" />
+                <div className="h-3 sm:h-4 bg-white/15 rounded w-1/3 sm:w-1/4 mb-6 sm:mb-8" />
+                <div className="h-12 sm:h-16 bg-white/15 rounded w-full sm:w-1/2 mb-4 sm:mb-6" />
+                <div className="h-8 sm:h-10 bg-white/15 rounded w-full" />
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
+              <div className="grid grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 sm:p-6 animate-pulse"
+                    className="bg-white/[0.06] border-2 border-white/12 rounded-lg p-4 sm:p-6 md:p-8 animate-pulse shadow-lg shadow-black/20"
                   >
-                    <div className="h-5 sm:h-6 bg-white/10 rounded w-1/2 mb-3 sm:mb-4" />
-                    <div className="h-8 sm:h-12 bg-white/10 rounded w-3/4 mb-3 sm:mb-4" />
+                    <div className="h-5 sm:h-6 bg-white/15 rounded w-1/2 mb-3 sm:mb-4" />
+                    <div className="h-8 sm:h-12 bg-white/15 rounded w-3/4 mb-3 sm:mb-4" />
                   </div>
                 ))}
               </div>
@@ -262,25 +262,44 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white relative">
       {/* Mobile Layout - iOS-native styling */}
       <div className="md:hidden relative z-0 pt-6 pb-24 px-4">
-        <div className="max-w-full mx-auto space-y-6">
-          {/* Mobile Greeting Section */}
+        <div className="max-w-full mx-auto space-y-6 sm:space-y-8">
+          {/* Mobile Greeting Section - Header Style */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="text-center pt-4"
+            className="pt-4 space-y-3"
           >
-            <p className="font-space text-xl font-medium text-white/80 mb-1">
-              {greeting}
-            </p>
-            <h1 className="font-space text-3xl font-bold text-white mb-2">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-                {getDisplayName()}
-              </span>
-            </h1>
-            <p className="font-space text-sm text-white/60 px-4">
+            {/* Header Row: Greeting as Main Title */}
+            <div className="flex flex-col gap-2 mb-3">
+              <motion.h1
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="font-space text-3xl sm:text-4xl font-bold text-white"
+              >
+                {greeting},{' '}
+                <span className="relative inline-block">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 font-bold">
+                    {getDisplayName()}
+                  </span>
+                  <motion.span
+                    className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400"
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
+                  />
+                </span>
+              </motion.h1>
+            </div>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="font-space text-sm text-white/80 leading-relaxed"
+            >
               {getMotivationalSubtext()}
-            </p>
+            </motion.p>
           </motion.div>
 
           {/* Mobile Start Practice Button - Prominent */}
@@ -294,7 +313,7 @@ export default function HomePage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleStartPractice}
-              className="w-full group/btn flex items-center justify-center gap-3 px-6 py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-3xl shadow-xl shadow-purple-500/25 transition-all"
+              className="w-full group/btn flex items-center justify-center gap-3 px-6 py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-3xl shadow-xl shadow-purple-500/30 transition-all hover:shadow-2xl hover:shadow-purple-500/40"
             >
               <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm">
                 <Play className="w-6 h-6 fill-white" />
@@ -309,11 +328,13 @@ export default function HomePage() {
 
           {/* Mobile Quick Stats */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="px-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="px-2 relative"
           >
+            {/* Subtle divider */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
             <MobileQuickStatsCard 
               streak={stats.streak} 
               sessionsToday={stats.sessionsToday} 
@@ -333,37 +354,65 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Desktop Layout - Unchanged */}
-      <div className="hidden md:block relative z-0 pt-24 sm:pt-24 md:pt-28 lg:pt-32 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6 lg:px-8">
+      {/* Desktop Layout - Redesigned */}
+      <div className="hidden md:block relative z-0 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-8 sm:pb-12 md:pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header Section - Matching Dashboard Style */}
+          {/* Header Section - Header Style Layout */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="mb-3 text-center"
+            className="mb-8 sm:mb-10 md:mb-12"
           >
-            <h1 className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight text-white font-bold leading-[1.1] uppercase mb-1">
-              Home
-            </h1>
-            <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-300 drop-shadow-md font-space">
-              {greeting},{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-                {getDisplayName()}
-              </span>
-            </p>
-            <p className="font-space text-white/70 text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
+            {/* Header Row: Greeting as Main Title */}
+            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 mb-4 sm:mb-5 md:mb-6">
+              {/* Greeting as Main Title */}
+              <motion.h1
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="font-space text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.1]"
+              >
+                <span className="relative inline-block">
+                  <span className="text-slate-200">{greeting},</span>{' '}
+                  <span className="relative inline-block">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                      {getDisplayName()}
+                    </span>
+                    {/* Animated underline */}
+                    <motion.span
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ delay: 0.6, duration: 0.6 }}
+                    />
+                  </span>
+                  {/* Subtle gradient overlay */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-transparent to-pink-500/20 blur-3xl -z-10"></span>
+                </span>
+              </motion.h1>
+            </div>
+
+            {/* Motivational subtext */}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="font-space text-white/85 text-sm sm:text-base md:text-lg lg:text-xl font-medium max-w-3xl leading-relaxed"
+            >
               {getMotivationalSubtext()}
-            </p>
+            </motion.p>
           </motion.div>
 
           {/* Quick Stats Cards */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-6 sm:mb-8"
+            transition={{ duration: 0.5, delay: 0.7 }}
+            className="mb-8 sm:mb-10 md:mb-12 relative"
           >
+            {/* Subtle divider */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6"></div>
             <QuickStatsCard 
               streak={stats.streak} 
               sessionsToday={stats.sessionsToday} 
@@ -375,8 +424,11 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.9 }}
+            className="relative"
           >
+            {/* Subtle divider before content */}
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6"></div>
             <HomepageContent />
           </motion.div>
         </div>

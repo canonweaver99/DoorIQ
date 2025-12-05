@@ -12,7 +12,7 @@ export function ConditionalFooter() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 pb-10">
+    <div className="px-4 sm:px-6 lg:px-8 pb-10 bg-[#0a0a0a]">
       <Footer />
     </div>
   );

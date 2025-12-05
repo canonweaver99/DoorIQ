@@ -278,12 +278,12 @@ function ReadyToPracticeCard() {
           </p>
         </div>
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
           onClick={handleStartPractice}
-          className="group/btn flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white text-black font-bold rounded-md text-xs sm:text-sm md:text-base lg:text-lg tracking-tight hover:bg-white/95 transition-all font-space whitespace-nowrap w-full sm:w-auto"
+          className="group/btn flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-lg text-xs sm:text-sm md:text-base lg:text-lg tracking-tight transition-all font-space whitespace-nowrap w-full sm:w-auto shadow-md shadow-purple-500/15"
         >
-          <Play className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+          <Play className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 fill-white" />
           <span className="truncate">Start Practice Session</span>
           <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover/btn:translate-x-0.5 transition-transform flex-shrink-0" />
         </motion.button>

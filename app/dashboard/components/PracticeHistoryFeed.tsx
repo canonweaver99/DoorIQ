@@ -320,7 +320,7 @@ export default function PracticeHistoryFeed({ initialSessions = [] }: PracticeHi
                   </Link>
                   <button
                     onClick={() => handlePracticeAgain(personaName)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-md text-white/80 hover:text-white text-xs font-medium transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white rounded-md text-xs font-medium transition-all shadow-md shadow-purple-500/15 hover:opacity-90"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Practice Again

@@ -859,10 +859,10 @@ export default function LeaderboardPage() {
                 </p>
               </div>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => router.push('/trainer')}
-                className="group flex-shrink-0 flex items-center gap-2 bg-white text-black font-bold rounded-lg px-6 py-3 md:px-8 md:py-4 hover:bg-white/95 transition-all font-space text-sm md:text-base shadow-lg"
+                className="group flex-shrink-0 flex items-center gap-2 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-lg px-6 py-3 md:px-8 md:py-4 transition-all font-space text-sm md:text-base shadow-md shadow-purple-500/15"
               >
                 Start Practice Session
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

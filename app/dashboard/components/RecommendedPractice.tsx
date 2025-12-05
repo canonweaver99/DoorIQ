@@ -249,7 +249,7 @@ export default function RecommendedPractice() {
 
   if (loading) {
     return (
-      <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4 animate-pulse">
+      <div className="bg-white/[0.06] border border-white/12 rounded-lg p-4 animate-pulse">
         <div className="h-4 bg-white/10 rounded w-3/4 mb-2" />
         <div className="h-3 bg-white/10 rounded w-1/2" />
       </div>
@@ -280,7 +280,7 @@ export default function RecommendedPractice() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
-      className="relative bg-white/[0.02] border-2 border-white/5 hover:border-white/30 hover:bg-white/[0.03] rounded-lg p-4 sm:p-6 md:p-8 transition-all shadow-lg shadow-white/10 overflow-hidden"
+      className="relative bg-white/[0.06] border-2 border-white/12 hover:border-white/30 hover:bg-white/[0.08] rounded-lg p-4 sm:p-6 md:p-8 transition-all shadow-xl shadow-black/20 overflow-hidden"
     >
       <div className="flex items-center gap-2 mb-4 sm:mb-4">
         <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
@@ -369,18 +369,18 @@ export default function RecommendedPractice() {
         {/* Content */}
         <div className="flex-1 flex flex-col w-full md:max-w-[60%]">
           <div className="mb-3 sm:mb-4 flex-1 min-h-[60%] flex flex-col justify-end text-center md:text-left">
-            <p className="text-white/90 text-sm sm:text-base md:text-lg lg:text-xl font-medium mb-2 sm:mb-3 italic leading-relaxed">
+            <p className="text-white/95 text-sm sm:text-base md:text-lg lg:text-xl font-medium mb-2 sm:mb-3 italic leading-relaxed">
               "{homeownerQuote}"
             </p>
-            <p className="text-white/70 text-sm sm:text-base md:text-lg font-medium">
+            <p className="text-white/80 text-sm sm:text-base md:text-lg font-medium">
               — {personaName}
             </p>
           </div>
 
           {/* Tip */}
-          <div className="flex items-start gap-2 bg-white/[0.05] rounded-lg p-2.5 sm:p-3 md:p-4 border border-white/10 mb-3 sm:mb-4">
+          <div className="flex items-start gap-2.5 sm:gap-3 bg-white/[0.08] rounded-lg p-3 sm:p-4 md:p-5 border border-white/15 mb-3 sm:mb-4">
             <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-purple-400 flex-shrink-0 mt-0.5" />
-            <p className="text-white/80 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
+            <p className="text-white/85 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
               <span className="font-medium">Tip:</span> {tip}
             </p>
           </div>
@@ -407,11 +407,11 @@ export default function RecommendedPractice() {
                 </div>
               ))}
             </div>
-            <span className="text-white/80 text-xs sm:text-sm md:text-base lg:text-lg font-medium">
+            <span className="text-white/85 text-xs sm:text-sm md:text-base lg:text-lg font-medium">
               {personaMeta?.bubble?.difficulty || 'Moderate'}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 text-white/70 text-xs sm:text-sm md:text-base lg:text-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-white/75 text-xs sm:text-sm md:text-base lg:text-lg">
             <Clock className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
             <span>{estimatedTime}</span>
           </div>
@@ -424,7 +424,7 @@ export default function RecommendedPractice() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleStartPractice}
-          className="relative flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-black hover:bg-white/90 font-bold rounded-lg transition-all overflow-hidden group text-sm sm:text-base"
+          className="relative flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-black hover:bg-white/95 font-bold rounded-lg transition-all overflow-hidden group text-sm sm:text-base shadow-lg shadow-white/10"
         >
           <motion.div
             animate={{
@@ -489,7 +489,7 @@ export default function RecommendedPractice() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="mt-6 pt-6 border-t border-white/10"
+            className="mt-6 pt-6 border-t border-white/15"
           >
             <div className="flex items-center gap-2 mb-2 sm:mb-3">
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />

@@ -97,10 +97,10 @@ export default function PerformanceDashboard({
           {/* Unlock CTA */}
           <div className="relative z-20 mt-6">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => router.push('/trainer')}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 font-bold rounded-lg transition-all"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-lg transition-all shadow-md shadow-purple-500/15"
             >
               Start Practice Now →
             </motion.button>

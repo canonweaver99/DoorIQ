@@ -322,10 +322,10 @@ export default function RecentSessionsPreview() {
                     <Eye className="w-5 h-5" />
                   </motion.button>
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                     onClick={() => router.push('/trainer')}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-space font-bold rounded-md text-base md:text-lg tracking-tight hover:bg-white/95 transition-all"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-space font-bold rounded-md text-base md:text-lg tracking-tight transition-all shadow-md shadow-purple-500/15"
                   >
                     Practice Again
                     <RotateCcw className="w-5 h-5" />

@@ -127,10 +127,10 @@ export default function NextMilestone() {
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
             onClick={() => router.push('/trainer')}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-black hover:bg-white/90 font-semibold rounded-lg transition-all"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-semibold rounded-lg transition-all shadow-md shadow-purple-500/15"
           >
             Start Practice Now →
             <ArrowRight className="w-4 h-4" />

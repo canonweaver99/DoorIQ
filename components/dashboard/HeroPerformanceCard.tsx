@@ -203,10 +203,10 @@ export default function HeroPerformanceCard({
             <ArrowRight className="w-3 h-3 sm:w-5 sm:h-5 group-hover/btn:translate-x-0.5 transition-transform" />
           </motion.button>
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
             onClick={() => router.push('/trainer')}
-            className="group/btn flex-1 bg-white text-black font-bold rounded-md text-xs sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2.5 md:py-3 px-3 sm:px-5 md:px-6 font-space"
+            className="group/btn flex-1 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-md text-xs sm:text-base md:text-lg tracking-tight transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2.5 md:py-3 px-3 sm:px-5 md:px-6 font-space shadow-md shadow-purple-500/15"
           >
             Practice Again
             <ArrowRight className="w-3 h-3 sm:w-5 sm:h-5 group-hover/btn:translate-x-0.5 transition-transform" />
