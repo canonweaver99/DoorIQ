@@ -2628,19 +2628,6 @@ function TrainerPageContent() {
                   {/* Knock Button Overlay */}
                   {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10 gap-4">
-                      {/* Challenge Mode Toggle */}
-                      <div className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50">
-                        <input
-                          type="checkbox"
-                          id="challenge-mode-desktop"
-                          checked={challengeModeEnabled}
-                          onChange={(e) => setChallengeModeEnabled(e.target.checked)}
-                          className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2"
-                        />
-                        <label htmlFor="challenge-mode-desktop" className="text-sm text-slate-300 cursor-pointer">
-                          Challenge Mode (3 strikes = restart)
-                        </label>
-                      </div>
                       <button
                         onClick={() => startSession()}
                         className="relative px-6 sm:px-8 lg:px-10 py-4 sm:py-5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-space font-bold text-base sm:text-lg lg:text-xl rounded-lg sm:rounded-xl transition-all duration-300 active:scale-95 border border-slate-700/80 hover:border-slate-600 min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
@@ -2678,6 +2665,52 @@ function TrainerPageContent() {
                     </div>
                   )}
                   
+                  {/* Challenge Mode Toggle - Live Session */}
+                  {sessionActive && !challengeModeEnabled && (
+                    <div className="absolute top-4 right-4 z-30">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50 shadow-lg"
+                      >
+                        <input
+                          type="checkbox"
+                          id="challenge-mode-live-desktop"
+                          checked={challengeModeEnabled}
+                          onChange={(e) => {
+                            setChallengeModeEnabled(e.target.checked)
+                            // Reset strikes when enabling challenge mode mid-session
+                            if (e.target.checked) {
+                              setStrikes(0)
+                              fillerWordCountRef.current = 0
+                              poorHandlingCountRef.current = 0
+                              processedPoorHandlingRef.current.clear()
+                              setShowRestartWarning(false)
+                              setRestartCountdown(3)
+                              if (restartTimeoutRef.current) {
+                                clearTimeout(restartTimeoutRef.current)
+                                restartTimeoutRef.current = null
+                              }
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2 cursor-pointer"
+                        />
+                        <label htmlFor="challenge-mode-live-desktop" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
+                          Challenge Mode
+                        </label>
+                      </motion.div>
+                    </div>
+                  )}
+                  
+                  {/* Challenge Mode Strike Counter */}
+                  {sessionActive && challengeModeEnabled && (
+                    <div className="absolute top-4 right-4 z-30">
+                      <StrikeCounter strikes={strikes} maxStrikes={3} />
+                    </div>
+                  )}
+                  
                   {/* Video Controls Overlay */}
                   {sessionActive && (
                     <VideoControls
@@ -2698,7 +2731,7 @@ function TrainerPageContent() {
           </div>
 
           {/* TOP RIGHT QUADRANT - Metrics Panel */}
-          <div className="hidden md:flex w-full h-full flex flex-col overflow-hidden">
+          <div className="hidden md:flex w-full h-full flex-col overflow-hidden">
             <div className="h-full flex flex-col overflow-hidden">
               <LiveMetricsPanel 
                 metrics={metrics} 
@@ -2963,19 +2996,6 @@ function TrainerPageContent() {
                     <p className="text-slate-400 mb-6">
                       Select an agent and start your training session
                     </p>
-                    {/* Challenge Mode Toggle */}
-                    <div className="mb-4 flex items-center justify-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="challenge-mode"
-                        checked={challengeModeEnabled}
-                        onChange={(e) => setChallengeModeEnabled(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2"
-                      />
-                      <label htmlFor="challenge-mode" className="text-sm text-slate-300 cursor-pointer">
-                        Challenge Mode (3 strikes = restart)
-                      </label>
-                    </div>
                     {selectedAgent && (
                       <button
                         onClick={() => startSession()}
@@ -3063,6 +3083,45 @@ function TrainerPageContent() {
                     Reconnecting... (Attempt {reconnectingStatus.attempt}/{reconnectingStatus.maxAttempts})
                   </span>
                 </div>
+              </div>
+            )}
+            
+            {/* Challenge Mode Toggle - Live Session */}
+            {sessionActive && !challengeModeEnabled && (
+              <div className="absolute top-4 right-4 z-30">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-700/50 shadow-lg"
+                >
+                  <input
+                    type="checkbox"
+                    id="challenge-mode-live"
+                    checked={challengeModeEnabled}
+                    onChange={(e) => {
+                      setChallengeModeEnabled(e.target.checked)
+                      // Reset strikes when enabling challenge mode mid-session
+                      if (e.target.checked) {
+                        setStrikes(0)
+                        fillerWordCountRef.current = 0
+                        poorHandlingCountRef.current = 0
+                        processedPoorHandlingRef.current.clear()
+                        setShowRestartWarning(false)
+                        setRestartCountdown(3)
+                        if (restartTimeoutRef.current) {
+                          clearTimeout(restartTimeoutRef.current)
+                          restartTimeoutRef.current = null
+                        }
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500 focus:ring-2 cursor-pointer"
+                  />
+                  <label htmlFor="challenge-mode-live" className="text-sm text-slate-300 cursor-pointer font-space font-medium">
+                    Challenge Mode
+                  </label>
+                </motion.div>
               </div>
             )}
             
