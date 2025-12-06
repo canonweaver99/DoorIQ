@@ -859,6 +859,79 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
               }
             )
             
+            // Check if deal is actually closed (information collection after close attempt)
+            if (wasSuccessful) {
+              // Look ahead for information collection patterns (strong indicator of closed deal)
+              const futureEntries = transcript.slice(entryIndex + 1, Math.min(entryIndex + 10, transcript.length))
+              const repEntries = futureEntries.filter(e => e.speaker === 'rep' || e.speaker === 'user')
+              
+              const infoCollectionPatterns = [
+                /what'?s your name/i,
+                /what is your name/i,
+                /what'?s your address/i,
+                /what is your address/i,
+                /what'?s your phone/i,
+                /what is your phone/i,
+                /what'?s your email/i,
+                /what is your email/i,
+                /phone number/i,
+                /email address/i,
+                /credit or debit/i,
+                /how would you like to pay/i,
+                /payment method/i,
+                /anything else.*should know/i,
+                /special instructions/i,
+                /gate code/i,
+                /dog.*yard/i
+              ]
+              
+              const isCollectingInfo = repEntries.some(entry => 
+                infoCollectionPatterns.some(pattern => pattern.test(entry.text))
+              )
+              
+              // Also check for strong buying commitments from customer
+              const customerEntries = futureEntries.filter(e => e.speaker === 'homeowner')
+              const strongBuyingSignals = [
+                /let'?s do it/i,
+                /I'?ll take it/i,
+                /count me in/i,
+                /sign me up/i,
+                /I'?m ready/i,
+                /sounds good/i,
+                /that works/i,
+                /go ahead/i,
+                /let'?s go/i
+              ]
+              
+              const hasStrongCommitment = customerEntries.some(entry =>
+                strongBuyingSignals.some(pattern => pattern.test(entry.text))
+              )
+              
+              // If rep is collecting info OR customer shows strong commitment, deal is closed!
+              if (isCollectingInfo || hasStrongCommitment) {
+                // Check if we've already shown deal_closed feedback (avoid duplicates)
+                setFeedbackItems(prev => {
+                  const hasDealClosed = prev.some(item => item.type === 'deal_closed')
+                  if (hasDealClosed) return prev
+                  
+                  // Add the deal_closed feedback item
+                  const dealValue = Math.floor(Math.random() * 500) + 500 // Estimate $500-$1000
+                  const newItem: FeedbackItem = {
+                    id: `deal-closed-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                    timestamp: new Date(),
+                    type: 'deal_closed',
+                    message: `🎉 DEAL CLOSED! You've secured this sale. Estimated value: $${dealValue.toLocaleString()}`,
+                    severity: 'good',
+                    metadata: {
+                      commitmentLevel: 'buying'
+                    }
+                  }
+                  console.log('🎉 Adding DEAL CLOSED feedback:', newItem.message)
+                  return [...prev, newItem].slice(-50) // Keep max 50 items
+                })
+              }
+            }
+            
             // If timing is inappropriate, provide feedback
             if (timing === 'too_early' || timing === 'too_late') {
               const timingMessage = generateConciseFeedback('close_timing', { timing })

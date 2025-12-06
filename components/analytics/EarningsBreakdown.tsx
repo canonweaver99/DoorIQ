@@ -52,7 +52,7 @@ export default function EarningsBreakdown({
           </svg>
           <div>
             <p className="text-lg font-semibold">No Sale Closed</p>
-            <p className="text-sm">Complete a sale to earn commission</p>
+            <p className="text-sm">Complete a sale to earn the full deal value</p>
           </div>
         </div>
       </div>
@@ -182,18 +182,18 @@ export default function EarningsBreakdown({
           <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
-          Commission Breakdown
+          Earnings Breakdown
         </h3>
         
         <div className="space-y-3">
-          {/* Base Commission */}
+          {/* Deal Value (Full Amount) */}
           {earningsData.commission_earned !== undefined && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">Base Commission</span>
-                {earningsData.commission_rate && (
+                <span className="text-sm text-gray-400">Deal Value</span>
+                {earningsData.commission_rate && earningsData.commission_rate >= 1.0 && (
                   <span className="text-xs text-gray-500">
-                    ({(earningsData.commission_rate * 100).toFixed(0)}% of ${(earningsData.closed_amount || 0).toFixed(2)})
+                    (Full deal amount)
                   </span>
                 )}
               </div>

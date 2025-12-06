@@ -17,6 +17,7 @@ export type FeedbackType =
   | 'question_quality'
   | 'price_handling'
   | 'filler_word'
+  | 'deal_closed'
 
 export type FeedbackSeverity = 'good' | 'neutral' | 'needs_improvement'
 

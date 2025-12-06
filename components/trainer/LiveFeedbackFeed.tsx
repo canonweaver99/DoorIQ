@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { FeedbackItem } from '@/lib/trainer/types'
-import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp, Flag } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp, Flag, Trophy, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface LiveFeedbackFeedProps {
@@ -135,6 +135,17 @@ const getFeedbackConfig = (item: FeedbackItem) => {
         accentColor: 'bg-orange-500/50',
         bgColor: 'bg-orange-900/30'
       }
+    case 'deal_closed':
+      return {
+        icon: Trophy,
+        badgeVariant: 'default' as const,
+        badgeText: 'DEAL CLOSED',
+        iconBg: 'bg-gradient-to-br from-yellow-400/30 to-amber-500/30',
+        iconColor: 'text-yellow-300',
+        borderColor: 'border-yellow-400/80',
+        accentColor: 'bg-gradient-to-b from-yellow-400 to-amber-500',
+        bgColor: 'bg-gradient-to-br from-yellow-900/40 via-amber-900/30 to-yellow-800/40'
+      }
     default:
       return {
         icon: AlertCircle,
@@ -165,32 +176,49 @@ function FeedbackItemComponent({ item }: { item: FeedbackItem }) {
     return `${hours}hr ago`
   }
 
+  const isDealClosed = item.type === 'deal_closed'
+  
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
       className={cn(
         "relative rounded-lg p-2.5 sm:p-3 transition-all group",
         "w-full min-h-[64px] sm:min-h-[70px] flex-shrink-0",
         config.bgColor,
         "border-[2px] shadow-[0_4px_12px_rgba(0,0,0,0.4)]",
-        config.borderColor
+        config.borderColor,
+        isDealClosed && "shadow-[0_8px_24px_rgba(251,191,36,0.3)] border-yellow-400/90"
       )}
     >
+      {/* Golden sparkle effect for deal closed */}
+      {isDealClosed && (
+        <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+          <div className="absolute top-1 right-1 w-2 h-2 bg-yellow-300 rounded-full animate-pulse opacity-80" />
+          <div className="absolute top-3 right-4 w-1.5 h-1.5 bg-amber-300 rounded-full animate-pulse opacity-60" style={{ animationDelay: '0.3s' }} />
+          <div className="absolute bottom-2 right-2 w-1 h-1 bg-yellow-400 rounded-full animate-pulse opacity-70" style={{ animationDelay: '0.6s' }} />
+        </div>
+      )}
+      
       {/* Accent line */}
       <div className={cn(
         "absolute left-0 top-0 bottom-0 w-1.5 rounded-l-lg",
-        config.accentColor
+        config.accentColor,
+        isDealClosed && "shadow-[0_0_8px_rgba(251,191,36,0.6)]"
       )} />
       
       <div className="flex items-start gap-2 sm:gap-2.5 ml-1">
         {/* Icon */}
         <div className={cn(
-          "p-1.5 sm:p-2 rounded-md flex-shrink-0",
-          config.iconBg
+          "p-1.5 sm:p-2 rounded-md flex-shrink-0 relative",
+          config.iconBg,
+          isDealClosed && "bg-gradient-to-br from-yellow-400/30 to-amber-500/30"
         )}>
-          <Icon className={cn("w-4 h-4 sm:w-4 sm:h-4", config.iconColor)} />
+          <Icon className={cn("w-4 h-4 sm:w-4 sm:h-4", config.iconColor, isDealClosed && "drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]")} />
+          {isDealClosed && (
+            <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-yellow-300 animate-pulse" />
+          )}
         </div>
         
         {/* Content */}

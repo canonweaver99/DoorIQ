@@ -126,20 +126,71 @@ SCORING RULES (0-100):
 - If sale_closed=true AND objections handled well: overall should be 90+
 - If sale_closed=true: closing score should be 90+
 
-SALE DETECTION (CRITICAL):
-✅ sale_closed=true if ANY of these occur:
-1. STRONG BUYING SIGNALS: "sounds good", "that works", "I'm interested", "let's do it", "I'll take it", "count me in", "I'm ready", "when can you start", "what's next", "how do I sign up", "that makes sense", "I like that", "we need that", "definitely need", agreement after price discussion
-2. HARD COMMITMENTS: Payment agreement, contract signing, "let's get started", "I'm ready to sign", explicit "yes" to service
-3. APPOINTMENT SCHEDULING WITH SPECIFIC TIME/DATE: "I'm coming back", "I'll come back", "coming back tomorrow", "coming back at [time]", "see you tomorrow", "see you at [time]", specific time commitments after service discussion = SALE
+SALE DETECTION (CRITICAL - BE THOROUGH):
+✅ sale_closed=true if ANY of these occur (customer must show clear commitment):
 
-❌ NOT a sale: "I'll think about it" without commitment, vague "sometime" or "later" without specific time, "maybe" without follow-up
-- return_appointment=true ONLY if scheduled follow-up but NO specific time/date commitment AND no sale commitment
+1. STRONG BUYING SIGNALS & AGREEMENTS:
+   - "sounds good", "that works", "I'm interested", "let's do it", "I'll take it", "count me in", "I'm ready"
+   - "when can you start", "what's next", "how do I sign up", "that makes sense", "I like that", "we need that", "definitely need"
+   - "yes" or "okay" after price discussion or service explanation
+   - "go ahead", "let's go", "sure", "alright", "fine", "okay" in response to service offer
+   - Agreement phrases: "I agree", "that's fine", "works for me", "I'm good with that"
 
-EARNINGS CALCULATION (if sale_closed=true):
-- Extract deal value from conversation (price mentioned, contract length)
-- Commission: 30% of total_contract_value
-- Bonuses: quick_close=$25 (<15min), upsell=$50, retention=$30 (annual+), same_day_start=$20, referral_secured=$25, perfect_pitch=$50 (score>=90)
-- total_earned = commission + bonuses
+2. HARD COMMITMENTS & PAYMENT:
+   - Payment agreement or discussion: "how do I pay", "what's the payment", "credit or debit", "payment method"
+   - Contract signing language: "let's get started", "I'm ready to sign", "sign me up", "I'll sign"
+   - Explicit "yes" to service after price discussion
+   - Customer providing personal information for service (name, address, phone, email) AFTER agreeing to service
+   - Asking about installation/scheduling details AFTER agreeing: "when can you install", "what time", "how long does it take"
+
+3. INFORMATION COLLECTION (STRONG CLOSE INDICATOR):
+   - Rep asking for customer's name, address, phone, email AFTER discussing service/price
+   - Rep asking "what's your name", "what's your address", "what's your phone number", "what's your email"
+   - Rep asking "anything else I should know", "special instructions", "gate code", "dog in yard"
+   - Rep asking about payment method: "credit or debit", "how would you like to pay"
+   - Customer providing contact info or payment info = SALE CLOSED
+
+4. APPOINTMENT SCHEDULING WITH SPECIFIC COMMITMENT:
+   - "I'm coming back", "I'll come back", "coming back tomorrow", "coming back at [time]"
+   - "see you tomorrow", "see you at [time]", specific time commitments after service discussion
+   - Rep scheduling specific installation/service time = SALE
+
+5. ASSUMPTIVE LANGUAGE ACCEPTED:
+   - Rep uses assumptive language ("when we install", "after we get started") and customer agrees or doesn't object
+   - Customer asks follow-up questions about service details AFTER agreeing = SALE
+
+❌ NOT a sale (be careful not to confuse these):
+- "I'll think about it" without commitment
+- Vague "sometime" or "later" without specific time
+- "maybe" without follow-up commitment
+- "I need to talk to my spouse/partner" without agreement
+- Customer ends conversation without agreement
+- Rep collects info BEFORE customer agrees = NOT a sale
+
+IMPORTANT: If rep collects customer information (name, address, phone, payment) AFTER customer shows interest/agreement, this is a CLOSED SALE.
+
+EARNINGS CALCULATION (MANDATORY if sale_closed=true):
+- virtual_earnings MUST be > 0 if sale_closed=true
+- Extract deal value from conversation:
+  * Look for prices mentioned: "$99/month", "$1200/year", "$299 initial + $89/month", etc.
+  * If monthly price given: total_contract_value = monthly_price × 12 (or contract_length if specified)
+  * If annual price given: total_contract_value = annual_price × years
+  * If one-time price: total_contract_value = that amount
+  * Default if no price found: use $1000 as base (standard door-to-door service)
+- FULL DEAL VALUE: virtual_earnings = total_contract_value (the FULL deal amount, NOT a commission percentage)
+- Bonuses (add to full deal value):
+  * quick_close: $25 if duration < 15 minutes AND sale closed
+  * upsell: $50 if premium package or add-ons mentioned
+  * retention: $30 if annual or multi-year contract (not just monthly)
+  * same_day_start: $20 if customer agreed to start today/tomorrow
+  * referral_secured: $25 if rep got referral/neighbor recommendation
+  * perfect_pitch: $50 if overall_score >= 90
+- total_earned = total_contract_value + sum of all applicable bonuses
+- virtual_earnings = total_earned (must match earnings_data.total_earned)
+- earnings_data.commission_rate should be 1.0 (100%) since full value is earned
+- earnings_data.commission_earned = total_contract_value (full value)
+
+CRITICAL: If sale_closed=true, virtual_earnings MUST be calculated and > 0. Never set sale_closed=true with virtual_earnings=0. The user earns the FULL deal value, not a percentage.
 
 Return JSON:
 {
@@ -150,7 +201,7 @@ Return JSON:
   "sale_closed": bool,
   "return_appointment": bool,
   "virtual_earnings": number,
-  "earnings_data": {"base_amount": n, "closed_amount": n, "commission_rate": 0.30, "commission_earned": n, "bonus_modifiers": {"quick_close": n, "upsell": n, "retention": n, "same_day_start": n, "referral_secured": n, "perfect_pitch": n}, "total_earned": n},
+  "earnings_data": {"base_amount": n, "closed_amount": n, "commission_rate": 1.0, "commission_earned": n, "bonus_modifiers": {"quick_close": n, "upsell": n, "retention": n, "same_day_start": n, "referral_secured": n, "perfect_pitch": n}, "total_earned": n},
   "deal_details": {"product_sold": "s", "service_type": "s", "base_price": n, "monthly_value": n, "contract_length": n, "total_contract_value": n, "payment_method": "s", "add_ons": [], "start_date": "s"},
   "coachingPlan": {"immediateFixes": [{"issue": "i", "practiceScenario": "s"}], "rolePlayScenarios": [{"scenario": "s", "focus": "f"}]},
   "feedback": {"strengths": ["s1 with specific quote"], "improvements": ["i1"], "specific_tips": ["t1"]},
@@ -183,17 +234,65 @@ Return JSON:
       rolePlayScenarios: []
     }
     
+    // CRITICAL VALIDATION: Ensure earnings are calculated if sale is closed
+    let saleClosed = parsed.sale_closed || false
+    let virtualEarnings = parsed.virtual_earnings || 0
+    let earningsData = parsed.earnings_data || {}
+    let dealDetails = parsed.deal_details || {}
+    
+    // If sale is closed but earnings are missing or zero, calculate them
+    if (saleClosed && (virtualEarnings === 0 || !earningsData.total_earned)) {
+      logger.warn('Sale closed but earnings not calculated, computing now', {
+        virtualEarnings,
+        hasEarningsData: !!earningsData.total_earned
+      })
+      
+      // Calculate from deal_details if available - FULL DEAL VALUE (not commission)
+      const totalContractValue = dealDetails?.total_contract_value || dealDetails?.base_price || 1000
+      
+      // Calculate bonuses
+      const bonuses = earningsData?.bonus_modifiers || {}
+      const totalBonuses = Object.values(bonuses).reduce((sum: number, val: any) => sum + (Number(val) || 0), 0)
+      
+      // Full deal value + bonuses
+      const totalEarned = totalContractValue + totalBonuses
+      
+      // Update earnings data - commission_rate is 1.0 (100%) since full value is earned
+      earningsData = {
+        base_amount: dealDetails?.base_price || totalContractValue,
+        closed_amount: totalContractValue,
+        commission_rate: 1.0, // Full value earned, not a percentage
+        commission_earned: totalContractValue, // Full deal value
+        bonus_modifiers: bonuses,
+        total_earned: totalEarned
+      }
+      
+      virtualEarnings = totalEarned
+      
+      logger.info('Calculated earnings for closed sale (full deal value)', {
+        totalContractValue,
+        totalBonuses,
+        totalEarned: virtualEarnings
+      })
+    }
+    
+    // If sale is NOT closed, ensure earnings are zero
+    if (!saleClosed) {
+      virtualEarnings = 0
+      earningsData = {}
+    }
+    
     // Return structured response matching old format
     return {
       overallAssessment: parsed.overallAssessment || '',
       topStrengths: parsed.topStrengths || [],
       topImprovements: parsed.topImprovements || [],
       finalScores: parsed.finalScores || {},
-      saleClosed: parsed.sale_closed || false,
+      saleClosed,
       returnAppointment: parsed.return_appointment || false,
-      virtualEarnings: parsed.virtual_earnings || 0,
-      earningsData: parsed.earnings_data || {},
-      dealDetails: parsed.deal_details || {},
+      virtualEarnings,
+      earningsData,
+      dealDetails,
       coachingPlan,
       feedback: parsed.feedback || {
         strengths: parsed.topStrengths || [],
@@ -379,9 +478,41 @@ export async function POST(req: NextRequest) {
     // Build update object step by step to avoid issues
     const saleClosed = deepAnalysis.saleClosed || false
     const returnAppointment = deepAnalysis.returnAppointment || false
-    const virtualEarnings = saleClosed ? (deepAnalysis.virtualEarnings || 0) : 0
-    const earningsData = deepAnalysis.earningsData || {}
+    let virtualEarnings = saleClosed ? (deepAnalysis.virtualEarnings || 0) : 0
+    let earningsData = deepAnalysis.earningsData || {}
     const dealDetails = deepAnalysis.dealDetails || {}
+    
+    // Final safety check: If sale is closed, earnings MUST be > 0
+    if (saleClosed && virtualEarnings === 0) {
+      logger.warn('Sale closed but virtual_earnings is 0, calculating minimum earnings', { sessionId })
+      // Calculate minimum earnings - FULL DEAL VALUE
+      const totalContractValue = dealDetails?.total_contract_value || dealDetails?.base_price || 1000
+      virtualEarnings = totalContractValue // Full deal value, minimum $1000
+      
+      // Ensure earnings_data is populated
+      if (!earningsData.total_earned) {
+        earningsData = {
+          base_amount: dealDetails?.base_price || totalContractValue,
+          closed_amount: totalContractValue,
+          commission_rate: 1.0, // Full value earned
+          commission_earned: totalContractValue, // Full deal value
+          bonus_modifiers: {},
+          total_earned: totalContractValue
+        }
+      }
+      
+      logger.info('Applied minimum earnings for closed sale (full deal value)', {
+        sessionId,
+        virtualEarnings,
+        totalContractValue
+      })
+    }
+    
+    // Ensure sale_closed is false if earnings are 0
+    if (virtualEarnings === 0 && saleClosed) {
+      logger.warn('Earnings are 0 but sale_closed is true, correcting sale_closed to false', { sessionId })
+      // Don't override saleClosed here - trust the AI's judgment, but log it
+    }
     
     const updateData: any = {
       overall_score: finalScores.overall,
@@ -430,18 +561,28 @@ export async function POST(req: NextRequest) {
     
     updateData.analytics = newAnalytics
     
+    // NOTE: The database trigger update_user_virtual_earnings_from_live_sessions_trigger
+    // will automatically update the user's total virtual_earnings when:
+    // 1. virtual_earnings > 0
+    // 2. ended_at IS NOT NULL
+    // If ended_at is not set yet, the trigger will fire when it's set later by endSession()
+    
     logger.info('Updating session with deep analysis', {
       sessionId,
       updateKeys: Object.keys(updateData),
       analyticsKeys: Object.keys(newAnalytics),
-      hasVoiceAnalysis: !!newAnalytics.voice_analysis
+      hasVoiceAnalysis: !!newAnalytics.voice_analysis,
+      saleClosed,
+      virtualEarnings,
+      hasEarningsData: !!earningsData.total_earned,
+      earningsBreakdown: earningsData
     })
     
     const { data: updatedSession, error: updateError } = await supabase
       .from('live_sessions')
       .update(updateData)
       .eq('id', sessionId)
-      .select('id, grading_status, overall_score, analytics')
+      .select('id, grading_status, overall_score, analytics, virtual_earnings, sale_closed, ended_at')
       .single()
     
     if (updateError) {
@@ -476,7 +617,11 @@ export async function POST(req: NextRequest) {
       updatedStatus: updatedSession.grading_status,
       updatedScore: updatedSession.overall_score,
       hasDeepAnalysis: !!updatedSession.analytics?.deep_analysis,
-      hasCoachingPlan: !!updatedSession.analytics?.coaching_plan
+      hasCoachingPlan: !!updatedSession.analytics?.coaching_plan,
+      saleClosed: updatedSession.sale_closed,
+      virtualEarnings: updatedSession.virtual_earnings,
+      endedAt: updatedSession.ended_at,
+      earningsWillUpdateUser: updatedSession.virtual_earnings > 0 && !!updatedSession.ended_at
     })
     
     const timeElapsed = Date.now() - startTime

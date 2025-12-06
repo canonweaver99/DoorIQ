@@ -384,7 +384,7 @@ export default function ScoresViewV2({
                       <span className="text-white font-medium font-sans">${dealDetails?.total_contract_value || dealDetails?.base_price || 0}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400 font-sans">Commission (30%)</span>
+                      <span className="text-slate-400 font-sans">Deal Value</span>
                       <span className="text-emerald-400 font-medium font-sans">${earningsData?.commission_earned?.toFixed(2) || '0.00'}</span>
                     </div>
                     {bonusModifierValues.length > 0 && bonusModifierValues.some((value) => value > 0) && (
