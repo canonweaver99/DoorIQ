@@ -35,6 +35,13 @@ const nextConfig: NextConfig = {
     // Enable partial prerendering for better performance
     ppr: false, // Can enable when stable
   },
+  // Compiler optimizations
+  compiler: {
+    // Remove console.log in production (reduces bundle size)
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
   // Output configuration
   output: 'standalone', // Optimize for production deployments
 };

@@ -5,12 +5,41 @@ import { motion, useInView, useAnimation } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ContainerScroll } from "@/components/ui/container-scroll-animation";
-import { Timeline } from "@/components/ui/timeline";
-import { FeaturesSectionWithHoverEffects } from "@/components/ui/feature-section-with-hover-effects";
-import { TestimonialsColumn, testimonialsData } from "@/components/ui/testimonials-columns-1";
-import { AnimatedText } from "@/components/ui/animated-text";
-import { AIVoiceInput } from "@/components/ui/ai-voice-input";
+// Code split heavy components to reduce initial bundle size
+import dynamic from 'next/dynamic';
+
+const ContainerScroll = dynamic(() => import("@/components/ui/container-scroll-animation").then(mod => ({ default: mod.ContainerScroll })), {
+  loading: () => <div className="h-[600px] bg-slate-900" />, // Prevent layout shift
+  ssr: false, // These are animation-heavy, can skip SSR
+});
+
+const Timeline = dynamic(() => import("@/components/ui/timeline").then(mod => ({ default: mod.Timeline })), {
+  loading: () => <div className="h-[400px] bg-slate-900" />,
+  ssr: false,
+});
+
+const FeaturesSectionWithHoverEffects = dynamic(() => import("@/components/ui/feature-section-with-hover-effects").then(mod => ({ default: mod.FeaturesSectionWithHoverEffects })), {
+  loading: () => <div className="h-[800px] bg-slate-900" />,
+  ssr: false,
+});
+
+const TestimonialsColumn = dynamic(() => import("@/components/ui/testimonials-columns-1").then(mod => ({ default: mod.TestimonialsColumn })), {
+  loading: () => <div className="h-[600px] bg-slate-900" />,
+  ssr: false,
+});
+
+// Import testimonialsData separately (lightweight)
+import { testimonialsData } from "@/components/ui/testimonials-columns-1";
+
+const AnimatedText = dynamic(() => import("@/components/ui/animated-text").then(mod => ({ default: mod.AnimatedText })), {
+  loading: () => <span className="inline-block" />, // Minimal placeholder
+  ssr: false,
+});
+
+const AIVoiceInput = dynamic(() => import("@/components/ui/ai-voice-input").then(mod => ({ default: mod.AIVoiceInput })), {
+  loading: () => <div className="h-[200px] bg-slate-900 rounded-lg" />,
+  ssr: false,
+});
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 import { getAgentImageStyle } from "@/lib/agents/imageStyles";
 import { createClient } from "@/lib/supabase/client";
@@ -988,18 +1017,23 @@ const InlineAgentCarousel = React.memo(() => {
                           transform: combinedTransform,
                         };
                         // Use regular img tag for images with spaces (Next.js Image doesn't handle them well)
+                        // CRITICAL: Add explicit dimensions to prevent CLS (Cumulative Layout Shift)
                         const hasSpaces = agent.src.includes(' ') || agent.src.includes('&');
                         if (hasSpaces) {
                           return (
                             <img
                               src={agent.src}
                               alt={agent.name}
+                              width={160}
+                              height={160}
                               style={{
                                 ...finalStyle,
                                 width: '100%',
                                 height: '100%',
                                 objectFit: 'cover',
                               }}
+                              loading={index < 6 ? 'eager' : 'lazy'}
+                              decoding="async"
                               onError={(e) => {
                                 console.error('❌ Hero carousel image failed to load:', agent.src);
                                 e.stopPropagation();
@@ -1451,6 +1485,10 @@ function LandingFooter() {
                 width={1280}
                 height={214}
                 className="h-6 sm:h-7 md:h-8 w-auto"
+                priority={false}
+                loading="lazy"
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
               />
             </Link>
             <p className="text-white/70 text-sm font-light leading-relaxed">

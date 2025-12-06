@@ -28,11 +28,13 @@ const inter = Inter({
   adjustFontFallback: true,
 });
 
+// Optimize font loading - only preload critical fonts, others load on demand
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: 'swap',
-  preload: false, // Not critical, can load later
+  preload: false,
+  fallback: ['monospace'], // Better fallback
 });
 
 const playfairDisplay = Playfair_Display({
@@ -41,6 +43,7 @@ const playfairDisplay = Playfair_Display({
   weight: ["400", "500", "600", "700", "800", "900"],
   display: 'swap',
   preload: false,
+  fallback: ['serif'],
 });
 
 const spaceGrotesk = Space_Grotesk({
@@ -49,6 +52,7 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["300", "400", "500", "600", "700"],
   display: 'swap',
   preload: false,
+  fallback: ['sans-serif'],
 });
 
 const poppins = Poppins({
@@ -57,6 +61,7 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700", "800"],
   display: 'swap',
   preload: false,
+  fallback: ['sans-serif'],
 });
 
 const bebasNeue = Bebas_Neue({
@@ -65,6 +70,7 @@ const bebasNeue = Bebas_Neue({
   weight: ["400"],
   display: 'swap',
   preload: false,
+  fallback: ['sans-serif'],
 });
 
 export const metadata: Metadata = {
@@ -287,88 +293,9 @@ export default function RootLayout({
           data-rewardful="2154b7"
           strategy="lazyOnload"
         />
-        <Script id="share-modal-error-handler" strategy="beforeInteractive">
-          {`
-            // Prevent share-modal.js errors by safely handling missing elements
-            (function() {
-              // Global error handler for uncaught errors
-              const originalErrorHandler = window.onerror;
-              window.onerror = function(msg, url, line, col, error) {
-                // Suppress share-modal.js errors
-                if (msg && typeof msg === 'string' && (msg.includes('addEventListener') || msg.includes('null'))) {
-                  console.warn('Suppressed share-modal error:', msg);
-                  return true; // Prevent default error handling
-                }
-                // Suppress ReferenceError about 'ex' initialization (likely bundling issue)
-                if (msg && typeof msg === 'string' && msg.includes('Cannot access') && msg.includes('before initialization')) {
-                  console.warn('Suppressed initialization error:', msg);
-                  return true;
-                }
-                // Call original handler for other errors
-                if (originalErrorHandler) {
-                  return originalErrorHandler.call(this, msg, url, line, col, error);
-                }
-                return false;
-              };
-              
-              // Wrap addEventListener to catch null/undefined element errors
-              const originalAddEventListener = Element.prototype.addEventListener;
-              Element.prototype.addEventListener = function(type, listener, options) {
-                // Check if 'this' is a valid element
-                if (!this || this.nodeType === undefined) {
-                  console.warn('Attempted to addEventListener on invalid element:', this);
-                  return;
-                }
-                try {
-                  return originalAddEventListener.call(this, type, listener, options);
-                } catch (error) {
-                  // Silently handle errors from external scripts trying to attach to missing elements
-                  if (error && error.message && (error.message.includes('null') || error.message.includes('Cannot read properties'))) {
-                    console.warn('Share modal: Element not found, skipping event listener');
-                    return;
-                  }
-                  throw error;
-                }
-              };
-              
-              // Wrap querySelector to safely handle missing elements
-              const originalQuerySelector = Document.prototype.querySelector;
-              Document.prototype.querySelector = function(selector) {
-                try {
-                  const result = originalQuerySelector.call(this, selector);
-                  return result;
-                } catch (error) {
-                  console.warn('Error in querySelector:', error);
-                  return null;
-                }
-              };
-              
-              // Also wrap Element.querySelector for completeness
-              const originalElementQuerySelector = Element.prototype.querySelector;
-              Element.prototype.querySelector = function(selector) {
-                if (!this || this.nodeType === undefined) {
-                  return null;
-                }
-                try {
-                  return originalElementQuerySelector.call(this, selector);
-                } catch (error) {
-                  return null;
-                }
-              };
-              
-              // Handle unhandled promise rejections that might be related
-              window.addEventListener('unhandledrejection', function(event) {
-                if (event.reason && typeof event.reason === 'object' && event.reason.message) {
-                  const msg = event.reason.message;
-                  if (msg.includes('addEventListener') || msg.includes('null') || 
-                      (msg.includes('Cannot access') && msg.includes('before initialization'))) {
-                    console.warn('Suppressed unhandled rejection:', msg);
-                    event.preventDefault();
-                  }
-                }
-              });
-            })();
-          `}
+        {/* Optimized error handler - moved to lazy load to reduce initial bundle */}
+        <Script id="share-modal-error-handler" strategy="lazyOnload">
+          {`(function(){const o=window.onerror;window.onerror=function(m,u,l,c,e){if(typeof m==='string'&&(m.includes('addEventListener')||m.includes('null')||(m.includes('Cannot access')&&m.includes('before initialization')))){return true}return o?o.call(this,m,u,l,c,e):false};const a=Element.prototype.addEventListener;Element.prototype.addEventListener=function(t,l,o){if(!this||this.nodeType===undefined)return;try{return a.call(this,t,l,o)}catch(e){if(e&&e.message&&(e.message.includes('null')||e.message.includes('Cannot read properties')))return;throw e}};const q=Document.prototype.querySelector;Document.prototype.querySelector=function(s){try{return q.call(this,s)}catch(e){return null}};const eq=Element.prototype.querySelector;Element.prototype.querySelector=function(s){if(!this||this.nodeType===undefined)return null;try{return eq.call(this,s)}catch(e){return null}};window.addEventListener('unhandledrejection',function(e){if(e.reason&&typeof e.reason==='object'&&e.reason.message){const m=e.reason.message;if(m.includes('addEventListener')||m.includes('null')||(m.includes('Cannot access')&&m.includes('before initialization'))){e.preventDefault()}}})})();`}
         </Script>
         <ThemeProvider>
           <ToastProvider>
