@@ -2600,7 +2600,7 @@ function TrainerPageContent() {
             {/* Webcam - Full height of quadrant */}
             <div className="relative bg-slate-900 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[35vh] sm:h-[40vh] lg:h-full flex-shrink-0">
               {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
-              {sessionActive && (
+              {sessionActive && !challengeModeEnabled && (
                 <div className="absolute top-1.5 left-1.5 z-30">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -3216,7 +3216,7 @@ function TrainerPageContent() {
                     {renderAgentVideo()}
                     
                     {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
-                    {sessionActive && (
+                    {sessionActive && !challengeModeEnabled && (
                       <div className="absolute top-2 left-2 z-30">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
@@ -3322,7 +3322,7 @@ function TrainerPageContent() {
                     {renderAgentVideo()}
                     
                     {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
-                    {sessionActive && (
+                    {sessionActive && !challengeModeEnabled && (
                       <div className="absolute top-3 left-3 z-30">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
@@ -3552,7 +3552,7 @@ function TrainerPageContent() {
                   {renderAgentVideo()}
                   
                   {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
-                  {sessionActive && (
+                  {sessionActive && !challengeModeEnabled && (
                     <div className="absolute top-1.5 left-1.5 z-30">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
