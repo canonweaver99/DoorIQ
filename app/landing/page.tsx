@@ -363,7 +363,7 @@ function HeroSection() {
             <motion.div
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.2, duration: 0.6 } : {}}
+              transition={shouldAnimate ? { delay: 0.18, duration: 0.54 } : {}}
               className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
             >
               <span className="text-white/80 text-xs sm:text-sm md:text-base font-medium tracking-wider uppercase font-space">
@@ -377,8 +377,8 @@ function HeroSection() {
                 text="Stop Losing Deals"
                 textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
                 underlineClassName="hidden"
-                duration={0.04}
-                delay={0.015}
+                duration={0.036}
+                delay={0.014}
               />
               <AnimatedText
                 text="To Undertrained Reps"
@@ -388,7 +388,7 @@ function HeroSection() {
                 underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
                 animationType="fade"
                 underlineFirst={true}
-                startDelay={1.3}
+                startDelay={1.17}
               />
             </div>
 
@@ -396,7 +396,7 @@ function HeroSection() {
             <motion.p
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.5, duration: 0.6 } : {}}
+              transition={shouldAnimate ? { delay: 0.45, duration: 0.54 } : {}}
               className="font-sans text-lg sm:text-lg md:text-lg lg:text-xl xl:text-2xl text-white/80 w-full max-w-full md:max-w-4xl text-center leading-relaxed font-light px-4"
             >
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
@@ -406,7 +406,7 @@ function HeroSection() {
             <motion.div
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.6, duration: 0.6 } : {}}
+              transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
               className="flex justify-center mt-2"
             >
               <Link
@@ -422,7 +422,7 @@ function HeroSection() {
             <motion.div
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.65, duration: 0.6 } : {}}
+              transition={shouldAnimate ? { delay: 0.585, duration: 0.54 } : {}}
               className="text-center mt-2 sm:mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
             >
               <span className="text-white/80 text-lg sm:text-xl md:text-2xl lg:text-4xl xl:text-5xl font-medium tracking-wider uppercase font-space">
@@ -485,7 +485,7 @@ function HeroSection() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
+                transition={{ delay: 0.18, duration: 0.54 }}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
               >
                 <span className="text-white/80 text-xs sm:text-sm font-medium tracking-wider uppercase font-space">
@@ -499,8 +499,8 @@ function HeroSection() {
                   text="Stop Losing Deals"
                   textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-white text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full"
                   underlineClassName="hidden"
-                  duration={0.04}
-                  delay={0.015}
+                  duration={0.036}
+                  delay={0.014}
                 />
                 <AnimatedText
                   text="To Undertrained Reps"
@@ -510,7 +510,7 @@ function HeroSection() {
                   underlineOffset="-bottom-1 sm:-bottom-2"
                   animationType="fade"
                   underlineFirst={true}
-                  startDelay={1.3}
+                  startDelay={1.17}
                 />
               </div>
 
@@ -518,7 +518,7 @@ function HeroSection() {
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
+                transition={{ delay: 0.45, duration: 0.54 }}
                 className="font-sans text-xl sm:text-2xl text-white/80 w-full max-w-full text-center leading-relaxed font-light px-4"
               >
                 Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
@@ -528,7 +528,7 @@ function HeroSection() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.6 }}
+                transition={{ delay: 0.54, duration: 0.54 }}
                 className="flex justify-center mt-2"
               >
                 <Link
