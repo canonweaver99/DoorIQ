@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, Mic, FileText, Trophy, RotateCcw, PhoneOff, Clock, Video } from 'lucide-react'
+import { Home, Mic, FileText, Trophy, RotateCcw, PhoneOff, Clock, Video, VideoOff } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
@@ -2134,72 +2134,56 @@ function TrainerPageContent() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="min-h-screen bg-black font-sans"
+        className="min-h-screen bg-black font-sans w-full"
       >
       {/* Full Screen Session Container */}
-      <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">
+      <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden" style={{ width: '100vw', maxWidth: '100vw' }}>
         
         {/* Header */}
-        <div className="flex items-center justify-between px-3 sm:px-4 lg:px-8 py-2 sm:py-3 lg:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98">
+        <div className="flex items-center justify-between px-2 sm:px-4 lg:px-8 py-2 sm:py-3 lg:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98 w-full">
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-xs sm:text-sm font-semibold text-white font-space truncate">
               {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
             </span>
           </div>
-          {/* Mobile: Restart and End Session Buttons */}
-          {sessionActive && (
-            <div className="sm:hidden flex items-center gap-2">
-              {restartSession && (
-                shouldAnimate ? (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={restartSession}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white"
-                    aria-label="Restart session"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span className="text-xs font-medium">Restart</span>
-                  </motion.button>
-                ) : (
+            {/* Mobile: Restart and End Session Buttons - iOS Optimized */}
+            {sessionActive && (
+              <div className="sm:hidden flex items-center gap-3">
+                {restartSession && (
                   <button
                     onClick={restartSession}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 touch-manipulation bg-slate-700/80 hover:bg-slate-600 text-white active:scale-[0.95]"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl transition-all bg-slate-700/90 text-white min-h-[44px] touch-manipulation active:scale-[0.96]"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
                     aria-label="Restart session"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    <span className="text-xs font-medium">Restart</span>
+                    <span className="text-sm font-semibold">Restart</span>
                   </button>
-                )
-              )}
-              {shouldAnimate ? (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleDoorClosingSequence('User ended session')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation"
-                  aria-label="End session"
-                >
-                  <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="font-medium">End</span>
-                </motion.button>
-              ) : (
+                )}
                 <button
                   onClick={() => handleDoorClosingSequence('User ended session')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation active:scale-[0.95]"
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl min-h-[44px] touch-manipulation active:scale-[0.96] transition-transform"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
                   aria-label="End session"
                 >
-                  <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="font-medium">End</span>
+                  <PhoneOff className="w-4 h-4 flex-shrink-0" />
+                  <span>End</span>
                 </button>
-              )}
-            </div>
-          )}
+              </div>
+            )}
         </div>
 
-        {/* Mobile Layout - Split View */}
-        <div className="md:hidden flex-1 flex flex-col overflow-hidden min-h-0" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          {/* Top Section - Agent Video (Prominent) */}
-          <div className="flex-shrink-0 w-full h-[45vh] min-h-[280px] max-h-[50vh] relative bg-slate-900 overflow-hidden rounded-t-2xl sm:rounded-t-3xl border-t-2 border-x-2 border-white/10 shadow-xl">
+        {/* Mobile Layout - iOS Optimized */}
+        <div 
+          className="md:hidden flex-1 flex flex-col overflow-hidden min-h-0" 
+          style={{ 
+            paddingTop: 'env(safe-area-inset-top)',
+            WebkitOverflowScrolling: 'touch',
+            WebkitTransform: 'translateZ(0)',
+          }}
+        >
+          {/* Top Section - Agent Video (Simplified for iOS) */}
+          <div className="flex-shrink-0 w-full h-[50vh] min-h-[300px] relative bg-black overflow-hidden">
             <div className="absolute inset-0">
               {loading ? (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
@@ -2236,16 +2220,21 @@ function TrainerPageContent() {
                             key={`${selectedAgent?.name}-${videoMode}-${showDoorCloseAnimation ? 'closing' : ''}-${videoSrc}`}
                             ref={agentVideoRef}
                             src={videoSrc}
-                            preload="auto"
+                            preload="metadata"
                             className="w-full h-full object-cover"
-                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                            style={{ 
+                              objectFit: 'cover', 
+                              objectPosition: 'center center',
+                              WebkitTransform: 'translateZ(0)',
+                              transform: 'translateZ(0)',
+                            }}
                             autoPlay
                             muted
                             loop={false}
                             playsInline
-                            // @ts-ignore - webkit-playsinline is needed for older iOS Safari
+                            // @ts-ignore - iOS Safari optimizations
                             webkit-playsinline="true"
-                            // @ts-ignore - x-webkit-airplay prevents AirPlay fullscreen
+                            // @ts-ignore - Prevent AirPlay fullscreen
                             x-webkit-airplay="deny"
                             disablePictureInPicture
                             controls={false}
@@ -2433,38 +2422,29 @@ function TrainerPageContent() {
                     )
                   })()}
                   
-                  {/* Knock Button Overlay - Mobile */}
+                  {/* Knock Button Overlay - iOS Optimized */}
                   {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && !showDoorCloseAnimation && sessionState !== 'door-closing' && videoMode !== 'closing' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
-                      {shouldAnimate ? (
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => startSession()}
-                          className="relative px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-space font-bold text-base sm:text-lg rounded-2xl sm:rounded-3xl shadow-xl shadow-purple-500/25 transition-all min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group"
-                        >
-                          <span className="relative z-10 flex items-center justify-center gap-2">
-                            <span>Knock on {selectedAgent.name}'s Door</span>
-                          </span>
-                        </motion.button>
-                      ) : (
-                        <button
-                          onClick={() => startSession()}
-                          className="relative px-6 sm:px-8 py-4 sm:py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-space font-bold text-base sm:text-lg rounded-2xl sm:rounded-3xl shadow-xl shadow-purple-500/25 transition-all min-h-[48px] sm:min-h-[56px] touch-manipulation z-20 overflow-hidden group active:scale-[0.98]"
-                        >
-                          <span className="relative z-10 flex items-center justify-center gap-2">
-                            <span>Knock on {selectedAgent.name}'s Door</span>
-                          </span>
-                        </button>
-                      )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-10">
+                      <button
+                        onClick={() => startSession()}
+                        className="relative px-8 py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold text-lg rounded-2xl shadow-xl shadow-purple-500/30 min-h-[52px] min-w-[200px] touch-manipulation active:scale-[0.96] transition-transform"
+                        style={{
+                          WebkitTapHighlightColor: 'transparent',
+                          touchAction: 'manipulation',
+                        }}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          <Mic className="w-5 h-5" />
+                          <span>Start Session</span>
+                        </span>
+                      </button>
                     </div>
                   )}
                   
-                  {/* PIP Webcam Overlay - Bottom Right (above controls) - Mobile optimized */}
-                  {/* Keep component rendered for ref access, but hide when camera is off */}
+                  {/* PIP Webcam Overlay - iOS Optimized Size */}
                   {sessionActive && (
                     <div className={cn(
-                      "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
+                      "absolute bottom-24 right-3 z-20 w-28 h-21 shadow-2xl rounded-lg overflow-hidden",
                       isCameraOff && "hidden"
                     )}>
                       <WebcamPIP ref={webcamPIPRef} />
@@ -2501,92 +2481,50 @@ function TrainerPageContent() {
             </div>
           </div>
 
-          {/* Mobile Bottom Section - Scrollable Metrics/Transcript/Feedback */}
+          {/* Mobile Bottom Section - Simplified iOS Scrollable Content */}
           <div 
-            className="flex-1 overflow-y-auto bg-black will-change-scroll"
+            className="flex-1 overflow-y-auto bg-black"
             style={{ 
-              paddingBottom: 'calc(env(safe-area-inset-bottom) + 6rem)',
+              paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
               WebkitOverflowScrolling: 'touch',
               overscrollBehavior: 'none',
+              WebkitTransform: 'translateZ(0)',
               transform: 'translateZ(0)',
-              WebkitTransform: 'translateZ(0)'
             }}
           >
-            <div className="space-y-3 sm:space-y-4 p-3 sm:p-4">
-              {/* Mobile Metrics Panel */}
+            <div className="space-y-4 p-4">
+              {/* Mobile Metrics Panel - Simplified */}
               {sessionActive && (
-                shouldAnimate ? (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm"
-                  >
-                    <Suspense fallback={<div className="h-32 bg-slate-800/50 rounded animate-pulse" />}>
-                      <LiveMetricsPanel 
-                        metrics={metrics} 
-                        getVoiceAnalysisData={getVoiceAnalysisData}
-                        transcript={transcript}
-                        sessionId={sessionId}
-                        sessionActive={sessionActive}
-                        agentName={selectedAgent?.name}
-                        strikes={strikes}
-                        strikeCauses={strikeCauses}
-                        challengeModeEnabled={challengeModeEnabled}
-                      />
-                    </Suspense>
-                  </motion.div>
-                ) : (
-                  <div className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                    <Suspense fallback={<div className="h-32 bg-slate-800/50 rounded animate-pulse" />}>
-                      <LiveMetricsPanel 
-                        metrics={metrics} 
-                        getVoiceAnalysisData={getVoiceAnalysisData}
-                        transcript={transcript}
-                        sessionId={sessionId}
-                        sessionActive={sessionActive}
-                        agentName={selectedAgent?.name}
-                        strikes={strikes}
-                        strikeCauses={strikeCauses}
-                        challengeModeEnabled={challengeModeEnabled}
-                      />
-                    </Suspense>
-                  </div>
-                )
+                <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
+                  <Suspense fallback={<div className="h-24 bg-slate-800/50 rounded animate-pulse" />}>
+                    <LiveMetricsPanel 
+                      metrics={metrics} 
+                      getVoiceAnalysisData={getVoiceAnalysisData}
+                      transcript={transcript}
+                      sessionId={sessionId}
+                      sessionActive={sessionActive}
+                      agentName={selectedAgent?.name}
+                      strikes={strikes}
+                      strikeCauses={strikeCauses}
+                      challengeModeEnabled={challengeModeEnabled}
+                    />
+                  </Suspense>
+                </div>
               )}
 
-              {/* Mobile Transcript */}
+              {/* Mobile Transcript - Simplified */}
               {sessionActive && (
-                shouldAnimate ? (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm"
-                  >
-                    <Suspense fallback={<div className="h-64 bg-slate-800/50 rounded animate-pulse" />}>
-                      <LiveTranscript 
-                        transcript={transcript} 
-                        agentName={selectedAgent?.name}
-                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                        userAvatarUrl={userAvatarUrl}
-                        sessionActive={sessionActive}
-                      />
-                    </Suspense>
-                  </motion.div>
-                ) : (
-                  <div className="bg-white/[0.03] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                    <Suspense fallback={<div className="h-64 bg-slate-800/50 rounded animate-pulse" />}>
-                      <LiveTranscript 
-                        transcript={transcript} 
-                        agentName={selectedAgent?.name}
-                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                        userAvatarUrl={userAvatarUrl}
-                        sessionActive={sessionActive}
-                      />
-                    </Suspense>
-                  </div>
-                )
+                <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
+                  <Suspense fallback={<div className="h-48 bg-slate-800/50 rounded animate-pulse" />}>
+                    <LiveTranscript 
+                      transcript={transcript} 
+                      agentName={selectedAgent?.name}
+                      agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                      userAvatarUrl={userAvatarUrl}
+                      sessionActive={sessionActive}
+                    />
+                  </Suspense>
+                </div>
               )}
 
             </div>
@@ -3007,36 +2945,46 @@ function TrainerPageContent() {
           </div>
         </div>
 
-      {/* Mobile Bottom Navigation - Only show during active session */}
+      {/* Mobile Bottom Navigation - iOS Optimized */}
       {sessionActive && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 h-[64px] flex items-center justify-around px-2 safe-area-bottom" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+        <nav 
+          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800/50 h-[68px] flex items-center justify-around px-2"
+          style={{ 
+            paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          }}
+        >
           <Link
             href="/dashboard"
-            className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+            className="flex flex-col items-center justify-center min-w-[56px] min-h-[56px] text-gray-400 active:text-purple-400 transition-colors touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <Home className="w-6 h-6" />
-            <span className="text-[10px] mt-0.5">Home</span>
+            <span className="text-[11px] mt-1 font-medium">Home</span>
           </Link>
           <Link
             href="/trainer/select-homeowner"
-            className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+            className="flex flex-col items-center justify-center min-w-[56px] min-h-[56px] text-gray-400 active:text-purple-400 transition-colors touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <Mic className="w-6 h-6" />
-            <span className="text-[10px] mt-0.5">Practice</span>
+            <span className="text-[11px] mt-1 font-medium">Practice</span>
           </Link>
           <Link
             href="/sessions"
-            className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+            className="flex flex-col items-center justify-center min-w-[56px] min-h-[56px] text-gray-400 active:text-purple-400 transition-colors touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <FileText className="w-6 h-6" />
-            <span className="text-[10px] mt-0.5">Sessions</span>
+            <span className="text-[11px] mt-1 font-medium">Sessions</span>
           </Link>
           <Link
             href="/leaderboard"
-            className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
+            className="flex flex-col items-center justify-center min-w-[56px] min-h-[56px] text-gray-400 active:text-purple-400 transition-colors touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <Trophy className="w-6 h-6" />
-            <span className="text-[10px] mt-0.5">Leaderboard</span>
+            <span className="text-[11px] mt-1 font-medium">Leaderboard</span>
           </Link>
         </nav>
       )}
@@ -3121,6 +3069,35 @@ function TrainerPageContent() {
           transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
           transition-duration: 200ms;
         }
+        
+        /* iOS Safari Optimizations */
+        @media (max-width: 768px) {
+          /* Prevent text size adjustment on orientation change */
+          html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+          }
+          
+          /* Optimize touch scrolling */
+          * {
+            -webkit-overflow-scrolling: touch;
+            -webkit-tap-highlight-color: transparent;
+          }
+          
+          /* Prevent pull-to-refresh on mobile */
+          body {
+            overscroll-behavior-y: none;
+            -webkit-overflow-scrolling: touch;
+          }
+          
+          /* Better button touch targets for iOS */
+          button, a {
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+          }
+        }
       `}</style>
       </motion.div>
     ) : (
@@ -3128,11 +3105,14 @@ function TrainerPageContent() {
         {/* Full Screen Session Container */}
         <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">
           
-          {/* Header */}
-          <div className="flex items-center justify-between px-3 sm:px-4 lg:px-8 py-2 sm:py-3 lg:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="text-xs sm:text-sm font-semibold text-white font-space truncate">
-                {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
+          {/* Header - iOS Optimized */}
+          <div 
+            className="flex items-center justify-between px-4 py-3 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-white font-space truncate">
+                {sessionActive ? `${selectedAgent?.name || 'Session'}` : 'Training Session'}
               </span>
             </div>
             {/* Mobile: Restart and End Session Buttons */}
@@ -3150,11 +3130,12 @@ function TrainerPageContent() {
                 )}
                 <button
                   onClick={() => handleDoorClosingSequence('User ended session')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 touch-manipulation active:scale-[0.95]"
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl min-h-[44px] touch-manipulation active:scale-[0.96] transition-transform"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
                   aria-label="End session"
                 >
-                  <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="font-medium">End</span>
+                  <PhoneOff className="w-4 h-4 flex-shrink-0" />
+                  <span>End</span>
                 </button>
               </div>
             )}
@@ -3427,29 +3408,65 @@ function TrainerPageContent() {
               </div>
             )}
 
-            {/* Mobile Layout - Stacked */}
+            {/* Mobile Layout - iOS Optimized Stacked */}
             {!sessionActive ? (
-              <div className="md:hidden flex flex-col h-full overflow-hidden">
-                {/* Mobile Top Section - Agent Video with CTA */}
-                <div className="relative w-full h-48 sm:h-64 bg-black flex-shrink-0">
-                  {renderAgentVideo()}
+              <div 
+                className="md:hidden flex flex-col h-full overflow-hidden w-full"
+                style={{ paddingTop: 'env(safe-area-inset-top)', width: '100vw', maxWidth: '100vw', height: '100vh', minHeight: '100vh' }}
+              >
+                {/* Mobile Top Section - Agent Video and Webcam Side-by-Side */}
+                <div className="relative w-full flex-shrink-0 flex flex-col" style={{ width: '100%', height: '50vh', minHeight: '50vh' }}>
+                  <div className="relative w-full flex-1 bg-black flex" style={{ minHeight: 0 }}>
+                    {/* Agent Video - Left Side */}
+                    <div className="relative flex-1 bg-black overflow-hidden">
+                      {renderAgentVideo()}
+                      {/* CTA Overlay - Centered on Agent Video */}
+                      {selectedAgent && (
+                        <div className="absolute inset-0 flex items-end justify-center pb-8 z-10 pointer-events-none">
+                          <button
+                            onClick={() => startSession()}
+                            className="relative px-6 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-semibold text-base rounded-2xl shadow-xl shadow-purple-500/40 min-h-[48px] touch-manipulation active:scale-[0.96] transition-transform pointer-events-auto"
+                            style={{
+                              WebkitTapHighlightColor: 'transparent',
+                              touchAction: 'manipulation',
+                            }}
+                          >
+                            <span className="flex items-center justify-center gap-2">
+                              <Mic className="w-4 h-4" />
+                              <span>Start Session</span>
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Webcam - Right Side (only show placeholder when session not active) */}
+                    <div className="relative flex-1 bg-black overflow-hidden">
+                      <div className="w-full h-full flex items-center justify-center bg-slate-900/50">
+                        <div className="text-center text-slate-500 text-xs">
+                          <VideoOff className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p>Camera</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   
-                  {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
-                  <div className="absolute top-2 left-2 z-30">
+                  {/* Challenge Mode Toggle - Below Videos */}
+                  <div className="w-full px-2 py-2 bg-black/50 flex-shrink-0">
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.2 }}
                       className={cn(
-                        "flex items-center gap-1.5 backdrop-blur-sm px-2 py-1 rounded-lg border shadow-lg scale-90",
+                        "flex items-center justify-between gap-2 backdrop-blur-sm px-3 py-2 rounded-lg border shadow-lg",
                         challengeModeEnabled 
                           ? "bg-orange-900/80 border-orange-700/50" 
                           : "bg-slate-900/80 border-slate-700/50"
                       )}
                     >
                       <label htmlFor="challenge-mode-agent-video-mobile-pre" className={cn(
-                        "text-xs cursor-pointer font-space font-medium",
+                        "text-sm cursor-pointer font-space font-medium",
                         challengeModeEnabled ? "text-orange-200" : "text-slate-300"
                       )}>
                         Challenge Mode
@@ -3476,43 +3493,26 @@ function TrainerPageContent() {
                             }
                           }
                         }}
-                        className="scale-75"
                       />
                     </motion.div>
                   </div>
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                  {selectedAgent && (
-                    <div className="absolute inset-0 flex items-end justify-center pb-6 z-10">
-                      <button
-                        onClick={() => startSession()}
-                        className="relative px-6 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-space font-bold text-base rounded-xl shadow-xl shadow-purple-500/40 transition-all overflow-hidden group touch-manipulation active:scale-95"
-                      >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <Mic className="w-4 h-4" />
-                          <span>Start Session</span>
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-active:opacity-100 transition-opacity duration-300" />
-                      </button>
-                    </div>
-                  )}
                 </div>
 
-                {/* Mobile Bottom Section - Scrollable Metrics/Transcript/Feedback */}
+                {/* Mobile Bottom Section - Metrics Cards */}
                 <div 
-                  className="flex-1 overflow-y-auto bg-black will-change-scroll"
+                  className="flex-1 overflow-y-auto bg-black"
                   style={{ 
-                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 6rem)',
+                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)',
                     WebkitOverflowScrolling: 'touch',
                     overscrollBehavior: 'none',
+                    WebkitTransform: 'translateZ(0)',
                     transform: 'translateZ(0)',
-                    WebkitTransform: 'translateZ(0)'
                   }}
                 >
-                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4">
-                    {/* Mobile Metrics Panel */}
-                    <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800/50">
-                      <Suspense fallback={<div className="h-32 bg-slate-800/50 rounded animate-pulse" />}>
+                  <div className="space-y-4 px-2 py-4">
+                    {/* Mobile Metrics Panel - Simplified */}
+                    <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
+                      <Suspense fallback={<div className="h-24 bg-slate-800/50 rounded animate-pulse" />}>
                         <LiveMetricsPanel 
                           metrics={metrics} 
                           getVoiceAnalysisData={getVoiceAnalysisData}
@@ -3526,97 +3526,96 @@ function TrainerPageContent() {
                         />
                       </Suspense>
                     </div>
-
-                    {/* Mobile Transcript Panel */}
-                    <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800/50">
-                      <LiveTranscript 
-                        transcript={transcript} 
-                        agentName={selectedAgent?.name}
-                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                        userAvatarUrl={userAvatarUrl}
-                        sessionActive={sessionActive}
-                      />
-                    </div>
-
-                    {/* Mobile Feedback Panel */}
-                    <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800/50">
-                      <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
-                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="md:hidden flex flex-col h-full overflow-hidden">
-                {/* Mobile Top Section - Agent Video */}
-                <div className="relative w-full h-48 sm:h-64 bg-black flex-shrink-0">
-                  {renderAgentVideo()}
-                  
-                  {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
-                  {sessionActive && !challengeModeEnabled && (
-                    <div className="absolute top-1.5 left-1.5 z-30">
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
-                        className={cn(
-                          "flex items-center gap-1 backdrop-blur-sm px-1.5 py-1 rounded-md border shadow-lg scale-75",
-                          challengeModeEnabled 
-                            ? "bg-orange-900/80 border-orange-700/50" 
-                            : "bg-slate-900/80 border-slate-700/50"
-                        )}
-                      >
-                        <label htmlFor="challenge-mode-agent-video-mobile" className={cn(
-                          "text-[10px] cursor-pointer font-space font-medium",
-                          challengeModeEnabled ? "text-orange-200" : "text-slate-300"
-                        )}>
-                          Challenge Mode
-                        </label>
-                        <LeverSwitch
-                          checked={challengeModeEnabled}
-                          onChange={(enabled) => {
-                            setChallengeModeEnabled(enabled)
-                            // Reset strikes when enabling challenge mode mid-session
-                            if (enabled) {
-                              setStrikes(0)
-                              fillerWordCountRef.current = 0
-                              poorHandlingCountRef.current = 0
-                              processedPoorHandlingRef.current.clear()
-                              setShowRestartWarning(false)
-                              setRestartCountdown(3)
-                              if (restartTimeoutRef.current) {
-                                clearTimeout(restartTimeoutRef.current)
-                                restartTimeoutRef.current = null
-                              }
-                              if (countdownIntervalRef.current) {
-                                clearInterval(countdownIntervalRef.current)
-                                countdownIntervalRef.current = null
-                              }
-                            }
-                          }}
-                          className="scale-75"
-                        />
-                      </motion.div>
+              <div 
+                className="md:hidden flex flex-col h-full overflow-hidden w-full"
+                style={{ paddingTop: 'env(safe-area-inset-top)', width: '100vw', maxWidth: '100vw', height: '100vh', minHeight: '100vh' }}
+              >
+                {/* Mobile Top Section - Agent Video and Webcam Side-by-Side */}
+                <div className="w-full flex-shrink-0 flex flex-col" style={{ height: '50vh', minHeight: '50vh' }}>
+                  <div className="relative w-full flex-1 bg-black flex" style={{ minHeight: 0 }}>
+                    {/* Agent Video - Left Side (full width if camera is off) */}
+                    <div className={cn(
+                      "relative bg-black overflow-hidden",
+                      isCameraOff ? "w-full" : "flex-1"
+                    )}>
+                      {renderAgentVideo()}
                     </div>
-                  )}
+                    
+                    {/* Webcam - Right Side */}
+                    {sessionActive && !isCameraOff && (
+                      <div className="relative flex-1 bg-black overflow-hidden">
+                        <WebcamPIP ref={webcamPIPRef} className="w-full h-full" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Challenge Mode Toggle - Below Videos */}
+                  <div className="w-full px-2 py-2 bg-black/50 flex-shrink-0">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                      className={cn(
+                        "flex items-center justify-between gap-2 backdrop-blur-sm px-3 py-2 rounded-lg border shadow-lg",
+                        challengeModeEnabled 
+                          ? "bg-orange-900/80 border-orange-700/50" 
+                          : "bg-slate-900/80 border-slate-700/50"
+                      )}
+                    >
+                      <label htmlFor="challenge-mode-agent-video-mobile" className={cn(
+                        "text-sm cursor-pointer font-space font-medium",
+                        challengeModeEnabled ? "text-orange-200" : "text-slate-300"
+                      )}>
+                        Challenge Mode
+                      </label>
+                      <LeverSwitch
+                        checked={challengeModeEnabled}
+                        onChange={(enabled) => {
+                          setChallengeModeEnabled(enabled)
+                          // Reset strikes when enabling challenge mode mid-session
+                          if (enabled) {
+                            setStrikes(0)
+                            fillerWordCountRef.current = 0
+                            poorHandlingCountRef.current = 0
+                            processedPoorHandlingRef.current.clear()
+                            setShowRestartWarning(false)
+                            setRestartCountdown(3)
+                            if (restartTimeoutRef.current) {
+                              clearTimeout(restartTimeoutRef.current)
+                              restartTimeoutRef.current = null
+                            }
+                            if (countdownIntervalRef.current) {
+                              clearInterval(countdownIntervalRef.current)
+                              countdownIntervalRef.current = null
+                            }
+                          }
+                        }}
+                      />
+                    </motion.div>
+                  </div>
                 </div>
 
-                {/* Mobile Bottom Section - Scrollable Metrics/Transcript/Feedback */}
+                {/* Mobile Bottom Section - Metrics Cards */}
                 <div 
-                  className="flex-1 overflow-y-auto bg-black will-change-scroll"
+                  className="flex-1 overflow-y-auto bg-black"
                   style={{ 
-                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 6rem)',
+                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
                     WebkitOverflowScrolling: 'touch',
                     overscrollBehavior: 'none',
+                    WebkitTransform: 'translateZ(0)',
                     transform: 'translateZ(0)',
-                    WebkitTransform: 'translateZ(0)'
                   }}
                 >
-                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4">
-                    {/* Mobile Metrics Panel */}
+                  <div className="space-y-4 px-2 py-4">
+                    {/* Mobile Metrics Panel - Simplified */}
                     {sessionActive && (
-                      <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800/50">
-                        <Suspense fallback={<div className="h-32 bg-slate-800/50 rounded animate-pulse" />}>
+                      <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
+                        <Suspense fallback={<div className="h-24 bg-slate-800/50 rounded animate-pulse" />}>
                           <LiveMetricsPanel 
                             metrics={metrics} 
                             getVoiceAnalysisData={getVoiceAnalysisData}
@@ -3631,31 +3630,15 @@ function TrainerPageContent() {
                         </Suspense>
                       </div>
                     )}
-
-                    {/* Mobile Transcript Panel */}
-                    <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800/50">
-                      <LiveTranscript 
-                        transcript={transcript} 
-                        agentName={selectedAgent?.name}
-                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                        userAvatarUrl={userAvatarUrl}
-                        sessionActive={sessionActive}
-                      />
-                    </div>
-
-                    {/* Mobile Feedback Panel */}
-                    <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 sm:p-5 shadow-lg border border-slate-800/50">
-                      <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
-                    </div>
                   </div>
                 </div>
               </div>
             )}
             
-            {/* PIP Webcam Overlay - Bottom Right (above controls) - Mobile optimized */}
+            {/* PIP Webcam Overlay - Bottom Right (above controls) - Desktop only */}
             {sessionActive && (
               <div className={cn(
-                "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
+                "hidden md:block absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
                 isCameraOff && "hidden"
               )}>
                 <WebcamPIP ref={webcamPIPRef} />
