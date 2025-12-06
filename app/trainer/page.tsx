@@ -2599,9 +2599,9 @@ function TrainerPageContent() {
           <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Webcam - Full height of quadrant */}
             <div className="relative bg-slate-900 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[35vh] sm:h-[40vh] lg:h-full flex-shrink-0">
-              {/* Challenge Mode Toggle - Top Right Corner of Agent Video */}
+              {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
               {sessionActive && (
-                <div className="absolute top-1.5 right-1.5 z-30">
+                <div className="absolute top-1.5 left-1.5 z-30">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -3215,9 +3215,9 @@ function TrainerPageContent() {
                   <div className="relative w-full flex-1 bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl min-h-0">
                     {renderAgentVideo()}
                     
-                    {/* Challenge Mode Toggle - Top Right Corner of Agent Video */}
+                    {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
                     {sessionActive && (
-                      <div className="absolute top-2 right-2 z-30">
+                      <div className="absolute top-2 left-2 z-30">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -3321,9 +3321,9 @@ function TrainerPageContent() {
                   <div className="relative flex-1 bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl min-h-0 group">
                     {renderAgentVideo()}
                     
-                    {/* Challenge Mode Toggle - Top Right Corner of Agent Video */}
+                    {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
                     {sessionActive && (
-                      <div className="absolute top-3 right-3 z-30">
+                      <div className="absolute top-3 left-3 z-30">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -3434,8 +3434,8 @@ function TrainerPageContent() {
                 <div className="relative w-full h-48 sm:h-64 bg-black flex-shrink-0">
                   {renderAgentVideo()}
                   
-                  {/* Challenge Mode Toggle - Top Right Corner of Agent Video */}
-                  <div className="absolute top-2 right-2 z-30">
+                  {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
+                  <div className="absolute top-2 left-2 z-30">
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -3551,9 +3551,9 @@ function TrainerPageContent() {
                 <div className="relative w-full h-48 sm:h-64 bg-black flex-shrink-0">
                   {renderAgentVideo()}
                   
-                  {/* Challenge Mode Toggle - Top Right Corner of Agent Video */}
+                  {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
                   {sessionActive && (
-                    <div className="absolute top-1.5 right-1.5 z-30">
+                    <div className="absolute top-1.5 left-1.5 z-30">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
