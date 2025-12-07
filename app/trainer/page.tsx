@@ -2840,9 +2840,9 @@ function TrainerPageContent() {
                     )}
                     
                     
-                    {/* Challenge Mode Strike Counter - Above webcam */}
+                    {/* Challenge Mode Strike Counter - Top left of agent video */}
                     {sessionActive && challengeModeEnabled && (
-                      <div className="absolute bottom-[calc(92px+60px)] sm:bottom-[calc(120px+60px)] lg:bottom-[calc(190px+60px)] left-2 sm:left-3 lg:left-6 z-30">
+                      <div className="absolute top-2 sm:top-3 lg:top-4 left-2 sm:left-3 lg:left-4 z-30">
                         <StrikeCounter strikes={strikes} maxStrikes={3} />
                       </div>
                     )}

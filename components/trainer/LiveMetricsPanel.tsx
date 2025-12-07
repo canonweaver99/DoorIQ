@@ -1105,24 +1105,34 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
       <TalkTimeCard
         {...TalkTimeCardProps}
         className={cn(
-          "bg-slate-900 rounded-md sm:rounded-lg pt-0.5 sm:pt-1.5 px-3 sm:px-4 pb-0.5 sm:pb-1.5 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col relative w-full",
+          "bg-slate-900 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] transition-all duration-300 group flex flex-col relative w-full h-full",
+          isMobile 
+            ? "rounded-2xl pt-3 px-4 pb-3" 
+            : "rounded-md sm:rounded-lg pt-0.5 sm:pt-1.5 px-3 sm:px-4 pb-0.5 sm:pb-1.5 hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)]",
           talkTimeColors.border
         )}
       >
-        {/* Talk Time Section */}
-        <div className="mb-3 sm:mb-4">
+        {/* Talk Time Section - 50% of card height */}
+        <div className="flex-1 flex flex-col min-h-0 justify-between">
           {/* Header: Icon + Title + Percentage */}
           <div className="flex items-start gap-2 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">
-            <div className={cn("p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0", talkTimeColors.bg, talkTimeColors.hover)}>
-              <Mic className={cn("w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5", talkTimeColors.icon)} />
+            <div className={cn("rounded-md transition-colors flex-shrink-0", talkTimeColors.bg, talkTimeColors.hover)} style={{ padding: 'clamp(0.375rem, 1.5vh, 0.625rem)' }}>
+              <Mic className={cn(talkTimeColors.icon)} style={{ width: 'clamp(1rem, 2.5vh, 1.5rem)', height: 'clamp(1rem, 2.5vh, 1.5rem)' }} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">Talk Time Ratio</div>
+                <div className="font-semibold text-white font-space leading-tight" style={{ fontSize: 'clamp(0.875rem, 2vh, 1.25rem)' }}>Talk Time Ratio</div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white font-space leading-tight">{talkTimeRatio}%</div>
+                  <div className="font-bold text-white font-space leading-tight" style={{ fontSize: 'clamp(1.125rem, 3vh, 2rem)' }}>{talkTimeRatio}%</div>
                   {talkTimeStatus.badge && (
-                    <Badge variant={talkTimeStatus.variant} className="text-[10px] sm:text-xs lg:text-sm px-1.5 sm:px-1.5 lg:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold mt-0.5">
+                    <Badge variant={talkTimeStatus.variant} className="bg-slate-800 border-slate-600 text-white font-semibold" style={{ 
+                      paddingLeft: 'clamp(0.375rem, 1vh, 0.5rem)',
+                      paddingRight: 'clamp(0.375rem, 1vh, 0.5rem)',
+                      paddingTop: 'clamp(0.125rem, 0.5vh, 0.25rem)',
+                      paddingBottom: 'clamp(0.125rem, 0.5vh, 0.25rem)',
+                      fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)',
+                      marginTop: 'clamp(0.125rem, 0.3vh, 0.25rem)'
+                    }}>
                       {talkTimeStatus.badge}
                     </Badge>
                   )}
@@ -1132,8 +1142,14 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
           </div>
           
           {/* Dynamic Progress Bar */}
-          <div className="-mt-1 sm:-mt-2 pt-3 sm:pt-5 lg:pt-6 flex-shrink-0 min-h-0">
-            <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
+          <div className={cn(
+            "flex-1 flex flex-col justify-center min-h-0",
+            isMobile ? "pt-2" : "pt-1 sm:pt-2"
+          )}>
+            <div 
+              className="relative bg-slate-800/80 rounded-full overflow-hidden"
+              style={{ height: 'clamp(0.5rem, 1.5vh, 1rem)' }}
+            >
               {/* Background zones */}
               <div className="absolute inset-0 flex">
                 <div className="w-[25%] bg-orange-500/20" />
@@ -1157,71 +1173,88 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
                 />
               )}
               
-              {/* Zone markers */}
-              <div className="absolute inset-0 flex items-center">
-                <div className="absolute left-[25%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-                <div className="absolute left-[50%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-                <div className="absolute left-[75%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-              </div>
+              {/* Zone markers - Hidden on mobile for cleaner UI */}
+              {!isMobile && (
+                <div className="absolute inset-0 flex items-center">
+                  <div className="absolute left-[25%] top-1/2 -translate-y-1/2 bg-slate-500/60" style={{ width: 'clamp(0.125rem, 0.3vh, 0.25rem)', height: 'clamp(0.5rem, 1.2vh, 0.875rem)' }} />
+                  <div className="absolute left-[50%] top-1/2 -translate-y-1/2 bg-slate-500/60" style={{ width: 'clamp(0.125rem, 0.3vh, 0.25rem)', height: 'clamp(0.5rem, 1.2vh, 0.875rem)' }} />
+                  <div className="absolute left-[75%] top-1/2 -translate-y-1/2 bg-slate-500/60" style={{ width: 'clamp(0.125rem, 0.3vh, 0.25rem)', height: 'clamp(0.5rem, 1.2vh, 0.875rem)' }} />
+                </div>
+              )}
               
               {/* Current position indicator */}
               <div 
-                className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-white rounded-full shadow-lg"
-                style={{ left: `calc(${talkTimeRatio}% - 1px)` }}
+                className="absolute top-1/2 -translate-y-1/2 bg-white rounded-full shadow-lg"
+                style={{ 
+                  left: `calc(${talkTimeRatio}% - 1px)`,
+                  width: 'clamp(0.125rem, 0.3vh, 0.25rem)',
+                  height: 'clamp(0.75rem, 2vh, 1.25rem)'
+                }}
               />
             </div>
             
-            {/* Scale labels */}
-            <div className="flex justify-between text-[11px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 sm:mb-1 leading-tight">
-              <span>Talk More</span>
-              <span className="hidden xs:inline">Balanced</span>
-              <span className="xs:hidden">Bal.</span>
-              <span>Listen More</span>
+            {/* Scale labels - Simplified for mobile */}
+            <div className="flex justify-between text-white font-space font-medium leading-tight" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)', marginTop: 'clamp(0.25rem, 0.8vh, 0.5rem)' }}>
+              <span style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>{isMobile ? "Talk" : "Talk More"}</span>
+              <span className={isMobile ? "hidden" : ""} style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>{isMobile ? "" : "Balanced"}</span>
+              <span style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>{isMobile ? "Listen" : "Listen More"}</span>
             </div>
             
-            {/* Percentage markers */}
-            <div className="relative text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 leading-tight h-4">
-              <span className="absolute left-0">0%</span>
-              <span className="absolute left-[25%] -translate-x-1/2 hidden sm:inline">25%</span>
-              <span className="absolute left-[50%] -translate-x-1/2 hidden sm:inline">50%</span>
-              <span className="absolute left-[75%] -translate-x-1/2 hidden sm:inline">75%</span>
-              <span className="absolute right-0">100%</span>
-            </div>
+            {/* Percentage markers - Hidden on mobile for cleaner UI */}
+            {!isMobile && (
+              <div className="relative text-white font-space font-medium leading-tight flex-shrink-0" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)', height: 'clamp(0.75rem, 1.5vh, 1rem)', marginTop: 'clamp(0.25rem, 0.5vh, 0.5rem)' }}>
+                <span className="absolute left-0" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>0%</span>
+                <span className="absolute left-[25%] -translate-x-1/2 hidden sm:inline" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>25%</span>
+                <span className="absolute left-[50%] -translate-x-1/2 hidden sm:inline" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>50%</span>
+                <span className="absolute left-[75%] -translate-x-1/2 hidden sm:inline" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>75%</span>
+                <span className="absolute right-0" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>100%</span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-slate-700/50 my-2 sm:my-3" />
+        <div className="h-px bg-slate-700/50 flex-shrink-0 my-1" />
 
-        {/* Sentiment Section */}
-        <div>
+        {/* Sentiment Section - 50% of card height */}
+        <div className="flex-1 flex flex-col min-h-0 justify-between">
           {/* Header: Icon + Title + Percentage */}
-          <div className="flex items-start gap-2 sm:gap-2 mb-1.5 sm:mb-2.5 flex-shrink-0">
-            <div className={cn("p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0", sentimentColors.bg, sentimentColors.hover)}>
-              <TrendingUp className={cn("w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5", sentimentColors.icon)} />
+          <div className="flex items-start gap-2 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">
+            <div className={cn("rounded-md transition-colors flex-shrink-0", sentimentColors.bg, sentimentColors.hover)} style={{ padding: 'clamp(0.375rem, 1.5vh, 0.625rem)' }}>
+              <TrendingUp className={cn(sentimentColors.icon)} style={{ width: 'clamp(1rem, 2.5vh, 1.5rem)', height: 'clamp(1rem, 2.5vh, 1.5rem)' }} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
                 <div className="flex items-center gap-1 sm:gap-1.5">
-                  <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">
+                  <div className="font-semibold text-white font-space leading-tight" style={{ fontSize: 'clamp(0.875rem, 2vh, 1.25rem)' }}>
                     Sale Sentiment
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowSentimentInfo(!showSentimentInfo)
-                    }}
-                    className="p-1 sm:p-0.5 active:bg-slate-700/50 rounded transition-colors flex-shrink-0 touch-manipulation min-w-[28px] min-h-[28px] flex items-center justify-center"
-                    aria-label="Show sentiment calculation info"
-                  >
-                    <Info className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-slate-400 active:text-slate-200" />
-                  </button>
+                  {!isMobile && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowSentimentInfo(!showSentimentInfo)
+                      }}
+                      className="active:bg-slate-700/50 rounded transition-colors flex-shrink-0 touch-manipulation flex items-center justify-center"
+                      style={{ padding: 'clamp(0.25rem, 0.8vh, 0.5rem)', minWidth: 'clamp(1.5rem, 3vh, 2rem)', minHeight: 'clamp(1.5rem, 3vh, 2rem)' }}
+                      aria-label="Show sentiment calculation info"
+                    >
+                      <Info className="text-slate-400 active:text-slate-200" style={{ width: 'clamp(0.875rem, 1.8vh, 1.25rem)', height: 'clamp(0.875rem, 1.8vh, 1.25rem)' }} />
+                    </button>
+                  )}
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-lg sm:text-xl lg:text-2xl font-bold text-white font-space leading-tight">
+                  <div className="font-bold text-white font-space leading-tight" style={{ fontSize: 'clamp(1.125rem, 3vh, 2rem)' }}>
                     {sentimentScore}%
                   </div>
-                  <Badge variant="secondary" className="text-[10px] sm:text-xs lg:text-sm px-1.5 sm:px-1.5 lg:px-2 py-0.5 bg-slate-800 border-slate-600 text-white font-semibold mt-0.5">
+                  <Badge variant="secondary" className="bg-slate-800 border-slate-600 text-white font-semibold" style={{ 
+                    paddingLeft: 'clamp(0.375rem, 1vh, 0.5rem)',
+                    paddingRight: 'clamp(0.375rem, 1vh, 0.5rem)',
+                    paddingTop: 'clamp(0.125rem, 0.5vh, 0.25rem)',
+                    paddingBottom: 'clamp(0.125rem, 0.5vh, 0.25rem)',
+                    fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)',
+                    marginTop: 'clamp(0.125rem, 0.3vh, 0.25rem)'
+                  }}>
                     {sentimentLevel === 'low' ? 'Low' : sentimentLevel === 'building' ? 'Building' : 'Positive'}
                   </Badge>
                 </div>
@@ -1230,8 +1263,14 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
           </div>
           
           {/* Progress Bar */}
-          <div className="-mt-1 sm:-mt-2 pt-3.5 sm:pt-5.5 lg:pt-6.5 flex-shrink-0 min-h-0">
-            <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
+          <div className={cn(
+            "flex-1 flex flex-col justify-center min-h-0",
+            isMobile ? "pt-2" : "pt-1 sm:pt-2"
+          )}>
+            <div 
+              className="relative bg-slate-800/80 rounded-full overflow-hidden"
+              style={{ height: 'clamp(0.5rem, 1.5vh, 1rem)' }}
+            >
               {/* Background zones */}
               <div className="absolute inset-0 flex">
                 <div className="w-[30%] bg-orange-500/20" />
@@ -1254,35 +1293,42 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
                 />
               )}
               
-              {/* Zone markers */}
-              <div className="absolute inset-0 flex items-center">
-                <div className="absolute left-[30%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-                <div className="absolute left-[60%] top-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-slate-500/60" />
-              </div>
+              {/* Zone markers - Hidden on mobile for cleaner UI */}
+              {!isMobile && (
+                <div className="absolute inset-0 flex items-center">
+                  <div className="absolute left-[30%] top-1/2 -translate-y-1/2 bg-slate-500/60" style={{ width: 'clamp(0.125rem, 0.3vh, 0.25rem)', height: 'clamp(0.5rem, 1.2vh, 0.875rem)' }} />
+                  <div className="absolute left-[60%] top-1/2 -translate-y-1/2 bg-slate-500/60" style={{ width: 'clamp(0.125rem, 0.3vh, 0.25rem)', height: 'clamp(0.5rem, 1.2vh, 0.875rem)' }} />
+                </div>
+              )}
               
               {/* Current position indicator */}
               <div 
-                className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-white rounded-full shadow-lg"
-                style={{ left: `calc(${sentimentScore}% - 1px)` }}
+                className="absolute top-1/2 -translate-y-1/2 bg-white rounded-full shadow-lg"
+                style={{ 
+                  left: `calc(${sentimentScore}% - 1px)`,
+                  width: 'clamp(0.125rem, 0.3vh, 0.25rem)',
+                  height: 'clamp(0.75rem, 2vh, 1.25rem)'
+                }}
               />
             </div>
             
-            {/* Scale labels */}
-            <div className="flex justify-between text-[11px] sm:text-xs lg:text-sm text-white font-space font-medium mb-0.5 sm:mb-1 leading-tight">
-              <span>Low</span>
-              <span className="hidden xs:inline">Building</span>
-              <span className="xs:hidden">Build</span>
-              <span>Positive</span>
+            {/* Scale labels - Simplified for mobile */}
+            <div className="flex justify-between text-white font-space font-medium leading-tight" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)', marginTop: 'clamp(0.25rem, 0.8vh, 0.5rem)' }}>
+              <span style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>Low</span>
+              <span className={isMobile ? "hidden" : ""} style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>{isMobile ? "" : "Building"}</span>
+              <span style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>Positive</span>
             </div>
             
-            {/* Percentage markers */}
-            <div className="relative text-[10px] sm:text-xs lg:text-sm text-white font-space font-medium mb-1.5 sm:mb-2.5 lg:mb-3.5 leading-tight h-4">
-              <span className="absolute left-0">0%</span>
-              <span className="absolute left-[25%] -translate-x-1/2 hidden sm:inline">25%</span>
-              <span className="absolute left-[50%] -translate-x-1/2 hidden sm:inline">50%</span>
-              <span className="absolute left-[75%] -translate-x-1/2 hidden sm:inline">75%</span>
-              <span className="absolute right-0">100%</span>
-            </div>
+            {/* Percentage markers - Hidden on mobile for cleaner UI */}
+            {!isMobile && (
+              <div className="relative text-white font-space font-medium leading-tight flex-shrink-0" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)', height: 'clamp(0.75rem, 1.5vh, 1rem)', marginTop: 'clamp(0.25rem, 0.5vh, 0.5rem)' }}>
+                <span className="absolute left-0" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>0%</span>
+                <span className="absolute left-[25%] -translate-x-1/2 hidden sm:inline" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>25%</span>
+                <span className="absolute left-[50%] -translate-x-1/2 hidden sm:inline" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>50%</span>
+                <span className="absolute left-[75%] -translate-x-1/2 hidden sm:inline" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>75%</span>
+                <span className="absolute right-0" style={{ fontSize: 'clamp(0.625rem, 1.2vh, 0.875rem)' }}>100%</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1401,133 +1447,6 @@ export const LiveMetricsPanel = memo(function LiveMetricsPanel({ metrics, getVoi
           </div>
         )}
       </TalkTimeCard>
-      
-      {/* Strikes Card - Always visible */}
-      {sessionActive && (
-        (() => {
-          // Calculate summary from strikeCauses
-          const fillerWordStrikes = strikeCauses
-            .filter(cause => cause.type === 'filler_words')
-            .reduce((sum, cause) => sum + (cause.count || 1), 0)
-          const poorHandlingStrikes = strikeCauses
-            .filter(cause => cause.type === 'poor_objection_handling')
-            .length
-          
-          const StrikesCardComponent = shouldAnimate ? motion.div : 'div'
-          const strikesCardProps = shouldAnimate ? {
-            initial: { opacity: 0, y: 10 },
-            animate: { opacity: 1, y: 0 },
-            transition: { duration: 0.3 }
-          } : {}
-          
-          return (
-            <StrikesCardComponent
-              {...strikesCardProps}
-              className={cn(
-                "bg-slate-900 rounded-md sm:rounded-lg pt-0.5 sm:pt-1.5 px-3 sm:px-4 pb-0.5 sm:pb-1.5 border-[2px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.7)] transition-all duration-300 group flex flex-col relative w-full",
-                strikes === 0 ? 'border-slate-600/50' :
-                strikes === 1 ? 'border-amber-500/60' :
-                strikes === 2 ? 'border-orange-500/60' :
-                'border-red-500/60'
-              )}
-            >
-              <div className="flex items-start gap-2 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">
-                <div className={cn(
-                  "p-1.5 sm:p-1.5 rounded-md transition-colors flex-shrink-0",
-                  strikes === 0 ? 'bg-slate-700/50' :
-                  strikes === 1 ? 'bg-amber-500/20' :
-                  strikes === 2 ? 'bg-orange-500/20' :
-                  'bg-red-500/20'
-                )}>
-                  <AlertTriangle className={cn(
-                    "w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5",
-                    strikes === 0 ? 'text-slate-400' :
-                    strikes === 1 ? 'text-amber-400' :
-                    strikes === 2 ? 'text-orange-400' :
-                    'text-red-400'
-                  )} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                    <div className="text-sm sm:text-base lg:text-lg font-semibold text-white font-space leading-tight">
-                      Strikes
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className={cn(
-                        "text-lg sm:text-xl lg:text-2xl font-bold font-space leading-tight",
-                        strikes === 0 ? 'text-slate-300' :
-                        strikes === 1 ? 'text-amber-300' :
-                        strikes === 2 ? 'text-orange-300' :
-                        'text-red-300'
-                      )}>
-                        {strikes}/3
-                      </div>
-                      {strikes >= 3 && (
-                        <Badge variant="destructive" className="text-[10px] sm:text-xs lg:text-sm px-1.5 sm:px-1.5 lg:px-2 py-0.5 bg-red-500/20 border-red-500/60 text-red-300 font-semibold mt-0.5">
-                          Restarting...
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Cause Breakdown Summary */}
-              {strikes > 0 && (
-                <div className="mb-2 sm:mb-3 text-xs sm:text-sm text-slate-300 font-space">
-                  {fillerWordStrikes > 0 && poorHandlingStrikes > 0 && (
-                    <div className="leading-tight">
-                      {fillerWordStrikes} from filler words, {poorHandlingStrikes} from poor objection handling
-                    </div>
-                  )}
-                  {fillerWordStrikes > 0 && poorHandlingStrikes === 0 && (
-                    <div className="leading-tight">
-                      {fillerWordStrikes} from filler words
-                    </div>
-                  )}
-                  {fillerWordStrikes === 0 && poorHandlingStrikes > 0 && (
-                    <div className="leading-tight">
-                      {poorHandlingStrikes} from poor objection handling
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Progress Bar */}
-              <div className="-mt-1 sm:-mt-2 pt-3 sm:pt-5 lg:pt-6 flex-shrink-0 min-h-0">
-                <div className="relative h-2 sm:h-2.5 lg:h-2 bg-slate-800/80 rounded-full overflow-hidden mb-1 sm:mb-1.5">
-                  {/* Progress fill */}
-                  {shouldAnimate ? (
-                    <motion.div
-                      className={cn(
-                        "absolute left-0 top-0 h-full rounded-full",
-                        strikes === 0 ? 'bg-slate-600' :
-                        strikes === 1 ? 'bg-amber-500' :
-                        strikes === 2 ? 'bg-orange-500' :
-                        'bg-red-500'
-                      )}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(strikes / 3) * 100}%` }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                    />
-                  ) : (
-                    <div
-                      className={cn(
-                        "absolute left-0 top-0 h-full rounded-full transition-all duration-300",
-                        strikes === 0 ? 'bg-slate-600' :
-                        strikes === 1 ? 'bg-amber-500' :
-                        strikes === 2 ? 'bg-orange-500' :
-                        'bg-red-500'
-                      )}
-                      style={{ width: `${(strikes / 3) * 100}%` }}
-                    />
-                  )}
-                </div>
-              </div>
-            </StrikesCardComponent>
-          )
-        })()
-      )}
     </div>
   )
 })

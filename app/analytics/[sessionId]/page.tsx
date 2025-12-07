@@ -32,10 +32,6 @@ const ConversationFlow = dynamic(() => import('@/components/analytics/Conversati
   loading: () => <div className="h-96 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
   ssr: false
 })
-const AICoachingInsights = dynamic(() => import('@/components/analytics/AICoachingInsights').then(mod => ({ default: mod.AICoachingInsights })), {
-  loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
-  ssr: false
-})
 const ObjectionAnalysis = dynamic(() => import('@/components/analytics/ObjectionAnalysis').then(mod => ({ default: mod.default })), {
   loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
   ssr: false
@@ -380,8 +376,8 @@ export default function AnalyticsPage() {
           }, 1000)
         }
         
-        // Load coaching and objection analysis if available
-        if (data.analytics?.coaching_plan || data.analytics?.feedback || data.analytics?.objection_analysis) {
+        // Load objection analysis if available
+        if (data.analytics?.objection_analysis) {
           setTimeout(() => {
             setLoadingStates(prev => ({ ...prev, coaching: true }))
           }, 2000)
@@ -586,17 +582,6 @@ export default function AnalyticsPage() {
           )
         ) : null}
         
-        {/* AI Coaching Insights - Personalized feedback and coaching plan */}
-        {(session.analytics?.coaching_plan || session.analytics?.feedback) ? (
-          loadingStates.coaching ? (
-            <AICoachingInsights
-              coachingPlan={session.analytics?.coaching_plan}
-              feedback={session.analytics?.feedback}
-            />
-          ) : (
-            <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
-          )
-        ) : null}
       </div>
     </div>
   )
