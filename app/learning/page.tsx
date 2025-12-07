@@ -157,7 +157,7 @@ export default function LearningPage() {
 
   return (
     <div className="min-h-screen bg-black py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
-      <div className="max-w-[1800px] mx-auto">
+      <div className="max-w-[1800px] mx-auto pt-4 sm:pt-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

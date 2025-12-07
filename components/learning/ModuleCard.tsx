@@ -263,12 +263,8 @@ export function ModuleCard({ module, delay = 0, isLast = false, displayNumber }:
                   'px-4 sm:px-5 py-2.5 sm:py-2.5 rounded-lg font-semibold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 text-white min-h-[44px] sm:min-h-auto touch-manipulation active:scale-95',
                   'group-hover:scale-105'
                 )}
-                style={isCompleted ? {
-                  backgroundColor: cardColors.numberBg,
-                } : isInProgress ? {
-                  backgroundColor: cardColors.numberBg,
-                } : {
-                  backgroundColor: '#3a3a3a',
+                style={{
+                  backgroundColor: categoryColors.border,
                 }}
                 onClick={(e) => {
                   e.preventDefault()

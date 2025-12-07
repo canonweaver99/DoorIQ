@@ -29,6 +29,36 @@ const categoryDescriptions: Record<ModuleCategory, string> = {
   communication: 'Master verbal and non-verbal communication skills',
 }
 
+// Map categories to background colors
+const getCategoryBackground = (category: ModuleCategory | null) => {
+  if (!category) return 'bg-black'
+  
+  const colorMap: Record<ModuleCategory, string> = {
+    approach: 'bg-[#0a1a12]', // Dark green
+    pitch: 'bg-[#0f1419]', // Dark blue
+    overcome: 'bg-[#1a1410]', // Dark amber
+    close: 'bg-[#1a0f14]', // Dark pink
+    objections: 'bg-[#1a1410]', // Dark amber
+    communication: 'bg-[#0f0f0f]', // Dark slate
+  }
+  return colorMap[category] || 'bg-black'
+}
+
+// Map categories to icon colors
+const getCategoryIconColor = (category: ModuleCategory | null) => {
+  if (!category) return 'text-purple-400'
+  
+  const colorMap: Record<ModuleCategory, string> = {
+    approach: 'text-emerald-400', // Green
+    pitch: 'text-blue-400', // Blue
+    overcome: 'text-amber-400', // Amber
+    close: 'text-pink-400', // Pink
+    objections: 'text-amber-400', // Amber
+    communication: 'text-slate-400', // Slate
+  }
+  return colorMap[category] || 'text-purple-400'
+}
+
 function ModulesPageContent() {
   const searchParams = useSearchParams()
   const categoryParam = searchParams.get('category') as ModuleCategory | null
@@ -46,7 +76,7 @@ function ModulesPageContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
-        <div className="max-w-[1800px] mx-auto">
+        <div className="max-w-[1800px] mx-auto pt-4 sm:pt-6">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-purple-500"></div>
           </div>
@@ -58,7 +88,7 @@ function ModulesPageContent() {
   if (error) {
     return (
       <div className="min-h-screen bg-black py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
-        <div className="max-w-[1800px] mx-auto">
+        <div className="max-w-[1800px] mx-auto pt-4 sm:pt-6">
           <div className="flex flex-col items-center justify-center py-12 sm:py-20 px-4">
             <p className="text-red-400 font-sans text-sm sm:text-base text-center">Error loading modules: {error.message}</p>
           </div>
@@ -67,9 +97,12 @@ function ModulesPageContent() {
     )
   }
 
+  const backgroundClass = getCategoryBackground(selectedCategory)
+  const iconColorClass = getCategoryIconColor(selectedCategory)
+
   return (
-    <div className="min-h-screen bg-black py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
-      <div className="max-w-[1800px] mx-auto">
+    <div className={`min-h-screen ${backgroundClass} py-6 sm:py-8 px-3 sm:px-4 lg:px-6 xl:px-8 pt-24 sm:pt-32 transition-colors duration-500`} style={{ paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}>
+      <div className="max-w-[1800px] mx-auto pt-4 sm:pt-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -85,8 +118,8 @@ function ModulesPageContent() {
             <span className="hidden sm:inline">Back to Learning Center</span>
             <span className="sm:hidden">Back</span>
           </Link>
-          <div className="flex items-center justify-center gap-2 mb-2 px-2">
-            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400 flex-shrink-0" />
+          <div className="flex items-center justify-center gap-3 sm:gap-4 mb-2 px-2">
+            <BookOpen className={`w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 ${iconColorClass} flex-shrink-0 transition-colors duration-500`} />
             <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white font-space uppercase leading-tight text-center">
               {selectedCategory ? categoryLabels[selectedCategory] : 'Learning Modules'}
             </h1>

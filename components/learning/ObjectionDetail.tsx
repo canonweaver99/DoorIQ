@@ -7,6 +7,13 @@ import { LearningObjection } from '@/lib/learning/types'
 import { useObjectionProgress } from '@/hooks/learning/useObjectionProgress'
 import { cn } from '@/lib/utils'
 
+// Objections category colors (matching objections module category)
+const objectionsColors = {
+  bg: '#3a2a1a',
+  border: '#6a4a2a',
+  glow: 'rgba(245, 158, 11, 0.1)',
+}
+
 interface ObjectionDetailProps {
   objection: LearningObjection & { progress?: { completed_at: string | null } | null }
 }
@@ -43,11 +50,21 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Content Card with Title */}
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 sm:p-8 mb-6 shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+      <div 
+        className="rounded-lg p-6 sm:p-8 mb-6"
+        style={{
+          backgroundColor: objectionsColors.bg,
+          border: `2px solid ${objectionsColors.border}`,
+          boxShadow: `inset 0 0 20px ${objectionsColors.glow}, 0 4px 16px rgba(0, 0, 0, 0.4)`
+        }}
+      >
         {/* Title */}
-        <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
+        <div 
+          className="mb-6 pb-6 border-b"
+          style={{ borderColor: objectionsColors.border }}
+        >
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">
               {objection.name}
@@ -72,7 +89,12 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
           {objection.scripts.map((script, index) => (
             <div
               key={index}
-              className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+              className="rounded-lg p-6"
+              style={{
+                backgroundColor: objectionsColors.bg,
+                border: `2px solid ${objectionsColors.border}`,
+                boxShadow: `inset 0 0 20px ${objectionsColors.glow}, 0 4px 16px rgba(0, 0, 0, 0.4)`
+              }}
             >
               {script.title && (
                 <h3 className="text-xl font-semibold text-white mb-4 font-space">
