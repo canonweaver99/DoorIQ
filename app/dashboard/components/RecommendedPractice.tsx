@@ -209,12 +209,53 @@ export default function RecommendedPractice() {
     router.push('/trainer')
   }
 
+  const getDifficultyColor = (difficulty: string) => {
+    const colorMap: Record<string, string> = {
+      'Easy': 'text-green-400 fill-green-400',
+      'Moderate': 'text-yellow-400 fill-yellow-400',
+      'Hard': 'text-orange-400 fill-orange-400',
+      'Expert': 'text-red-400 fill-red-400',
+    }
+    return colorMap[difficulty] || colorMap['Moderate']
+  }
+
   const getDifficultyStars = (difficulty: string) => {
-    // Always return 2.5 stars (2 filled, 1 half-filled, 2 empty)
+    // Map difficulty to star ranges
+    const difficultyRanges: Record<string, { min: number; max: number }> = {
+      'Easy': { min: 1.0, max: 2.0 },
+      'Moderate': { min: 2.5, max: 3.5 },
+      'Hard': { min: 3.5, max: 4.5 },
+      'Expert': { min: 4.0, max: 5.0 },
+    }
+    
+    // Get base range for difficulty
+    const range = difficultyRanges[difficulty] || difficultyRanges['Moderate']
+    
+    // Generate a daily seed based on current date (changes daily, consistent throughout the day)
+    const today = new Date()
+    const dateString = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
+    // Simple hash function to convert date string to a number between 0 and 1
+    let hash = 0
+    for (let i = 0; i < dateString.length; i++) {
+      const char = dateString.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    const seed = Math.abs(hash) % 1000 / 1000 // Normalize to 0-1
+    
+    // Calculate star rating within the range using the seed
+    const starRating = range.min + (range.max - range.min) * seed
+    
+    // Convert star rating to array of star states
     return Array.from({ length: 5 }, (_, i) => {
-      if (i < 2) return 'filled'
-      if (i === 2) return 'half'
-      return 'empty'
+      const starIndex = i + 1
+      if (starRating >= starIndex) {
+        return 'filled'
+      } else if (starRating >= starIndex - 0.5) {
+        return 'half'
+      } else {
+        return 'empty'
+      }
     })
   }
 
@@ -264,7 +305,9 @@ export default function RecommendedPractice() {
   const personaMeta = PERSONA_METADATA[personaName]
   const agentImage = personaMeta?.bubble?.image || '/agents/default.png'
   const estimatedTime = personaMeta?.card?.estimatedTime || '5-7 min'
-  const difficultyStars = getDifficultyStars(personaMeta?.bubble?.difficulty || 'Moderate')
+  const difficulty = personaMeta?.bubble?.difficulty || 'Moderate'
+  const difficultyStars = getDifficultyStars(difficulty)
+  const difficultyColor = getDifficultyColor(difficulty)
   const tip = personaMeta?.card?.bestFor || recommendation.reasoning
   
   // Get agent bubble color variant
@@ -276,18 +319,20 @@ export default function RecommendedPractice() {
   const homeownerQuote = agentQuotes[personaName] || agentQuotes['Average Austin']
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      className="relative bg-white/[0.06] border-2 border-white/12 hover:border-white/30 hover:bg-white/[0.08] rounded-lg p-4 sm:p-6 md:p-8 transition-all shadow-xl shadow-black/20 overflow-hidden"
-    >
-      <div className="flex items-center gap-2 mb-4 sm:mb-4">
-        <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
-        <h3 className="text-sm sm:text-base font-semibold text-purple-300 uppercase tracking-wide">
-          YOUR MISSION TODAY
-        </h3>
-      </div>
+    <>
+      {/* Your Mission Today Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -2 }}
+        className="relative bg-white/[0.06] hover:bg-white/[0.08] rounded-lg p-4 sm:p-6 md:p-8 transition-all shadow-xl shadow-black/20 overflow-hidden mb-4 sm:mb-6"
+      >
+        <div className="flex items-center gap-2 mb-4 sm:mb-4">
+          <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+          <h3 className="text-sm sm:text-base font-semibold text-purple-300 uppercase tracking-wide">
+            YOUR MISSION TODAY
+          </h3>
+        </div>
 
       <div className="flex flex-col md:flex-row gap-4 sm:gap-6 mb-4 sm:mb-6">
         {/* Animated Persona Portrait with Colored Circles */}
@@ -358,7 +403,9 @@ export default function RecommendedPractice() {
                       objectPosition: `${horizontal} ${vertical}`,
                       transform: `scale(${scaleValue}) translateY(${translateY})`,
                     }}
-                    sizes="160px"
+                    sizes="(max-width: 640px) 112px, (max-width: 768px) 128px, 160px"
+                    quality={100}
+                    priority
                   />
                 )
               })()}
@@ -393,12 +440,12 @@ export default function RecommendedPractice() {
               {difficultyStars.map((starType, i) => (
                 <div key={i} className="relative w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 flex-shrink-0">
                   {starType === 'filled' ? (
-                    <Star className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-purple-400 fill-purple-400" />
+                    <Star className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 ${difficultyColor}`} />
                   ) : starType === 'half' ? (
                     <>
                       <Star className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white/20 absolute inset-0" />
                       <div className="absolute inset-0 overflow-hidden w-1/2">
-                        <Star className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-purple-400 fill-purple-400" />
+                        <Star className={`w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 ${difficultyColor}`} />
                       </div>
                     </>
                   ) : (
@@ -424,7 +471,7 @@ export default function RecommendedPractice() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleStartPractice}
-          className="relative flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-black hover:bg-white/95 font-bold rounded-lg transition-all overflow-hidden group text-sm sm:text-base shadow-lg shadow-white/10"
+          className="relative flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 font-bold rounded-lg transition-all overflow-hidden group text-sm sm:text-base shadow-lg shadow-purple-500/20"
         >
           <motion.div
             animate={{
@@ -443,14 +490,16 @@ export default function RecommendedPractice() {
         </motion.button>
       </div>
 
-      {/* Unfinished Lessons/Modules Section */}
+      </motion.div>
+
+      {/* Recommended Study Card - Separate */}
       {!modulesLoading && nextModule && (() => {
         const categoryColors = getCategoryColors(nextModule.category)
         const isCompleted = nextModule.progress !== null && nextModule.progress !== undefined && nextModule.progress.completed_at !== null
         const timeSpent = nextModule.progress?.time_spent_seconds || 0
         const isInProgress = timeSpent > 0 && !isCompleted
         
-        // Get card colors based on progress state (matching ModuleCard logic)
+        // Get card colors based on progress state - always use category colors
         const getCardColors = () => {
           if (isCompleted) {
             return {
@@ -463,19 +512,20 @@ export default function RecommendedPractice() {
           }
           if (isInProgress) {
             return {
-              bg: '#1a1a1a',
-              border: `${categoryColors.border}80`,
-              glow: `${categoryColors.glow}50`,
-              numberBg: `${categoryColors.border}80`,
-              iconBg: `${categoryColors.border}30`
+              bg: categoryColors.bg,
+              border: categoryColors.border,
+              glow: categoryColors.glow,
+              numberBg: categoryColors.border,
+              iconBg: `${categoryColors.border}40`
             }
           }
+          // Not started - use category colors
           return {
-            bg: '#1a1a1a',
-            border: '#3a3a3a',
-            glow: 'rgba(148, 163, 184, 0.05)',
-            numberBg: '#3a3a3a',
-            iconBg: '#3a3a3a40'
+            bg: categoryColors.bg,
+            border: categoryColors.border,
+            glow: categoryColors.glow,
+            numberBg: categoryColors.border,
+            iconBg: `${categoryColors.border}40`
           }
         }
         
@@ -486,15 +536,16 @@ export default function RecommendedPractice() {
         
         return (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -2 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="mt-6 pt-6 border-t border-white/15"
+            className="relative bg-white/[0.06] hover:bg-white/[0.08] rounded-lg p-4 sm:p-6 md:p-8 transition-all shadow-xl shadow-black/20 overflow-hidden"
           >
-            <div className="flex items-center gap-2 mb-2 sm:mb-3">
+            <div className="flex items-center gap-2 mb-4 sm:mb-4">
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
               <h4 className="text-sm sm:text-base font-semibold text-purple-300 uppercase tracking-wide">
-                Recommended Study
+                RECOMMENDED STUDY
               </h4>
             </div>
             <Link href={`/learning/modules/${nextModule.slug}`}>
@@ -525,9 +576,14 @@ export default function RecommendedPractice() {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm sm:text-base md:text-xl font-bold text-white mb-1 sm:mb-2 font-space line-clamp-1">
-                    {nextModule.title}
-                  </h3>
+                  <div className="flex items-center gap-2 mb-1 sm:mb-1.5 flex-wrap">
+                    <span className={`text-xs sm:text-sm px-2 py-0.5 rounded-full font-medium ${categoryColors.badgeBg} ${categoryColors.badgeBorder} border ${categoryColors.badgeText}`}>
+                      {categoryLabels[nextModule.category]}
+                    </span>
+                    <h3 className="text-sm sm:text-base md:text-xl font-bold text-white font-space line-clamp-1">
+                      {nextModule.title}
+                    </h3>
+                  </div>
                   {hookLine && (
                     <p className="text-xs sm:text-sm md:text-base text-white/85 font-sans line-clamp-1">
                       {hookLine}
@@ -546,12 +602,8 @@ export default function RecommendedPractice() {
                   {/* Button */}
                   <button
                     className="px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 rounded-lg font-semibold text-xs sm:text-sm md:text-base transition-all duration-200 flex items-center gap-1 sm:gap-2 text-white group-hover:scale-105"
-                    style={isCompleted ? {
-                      backgroundColor: cardColors.numberBg,
-                    } : isInProgress ? {
-                      backgroundColor: cardColors.numberBg,
-                    } : {
-                      backgroundColor: '#3a3a3a',
+                    style={{
+                      backgroundColor: categoryColors.border,
                     }}
                     onClick={(e) => {
                       e.preventDefault()
@@ -574,7 +626,7 @@ export default function RecommendedPractice() {
           </motion.div>
         )
       })()}
-    </motion.div>
+    </>
   )
 }
 
