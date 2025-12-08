@@ -540,36 +540,7 @@ export async function POST(req: NextRequest) {
     let earningsData = deepAnalysis.earningsData || {}
     const dealDetails = deepAnalysis.dealDetails || {}
     
-    // CRITICAL: Enforce minimum scores for closed sales AFTER all detection logic
-    // If sale closed, overall score MUST be at least 80 (85+ if objections handled well)
-    if (saleClosed) {
-      const objectionHandlingScore = finalScores.objectionHandling || 0
-      const objectionsHandledWell = objectionHandlingScore >= 85
-      
-      // Minimum score: 85 if objections handled well, 80 otherwise
-      const minimumScore = objectionsHandledWell ? 85 : 80
-      
-      if (finalScores.overall < minimumScore) {
-        logger.warn('Enforcing minimum score for closed sale', {
-          sessionId,
-          originalScore: finalScores.overall,
-          minimumScore,
-          objectionHandlingScore,
-          objectionsHandledWell
-        })
-        finalScores.overall = minimumScore
-      }
-      
-      // Also ensure closing score is at least 90 for closed sales
-      if (finalScores.closing < 90) {
-        logger.info('Enforcing minimum closing score for closed sale', {
-          sessionId,
-          originalClosingScore: finalScores.closing,
-          newClosingScore: 90
-        })
-        finalScores.closing = 90
-      }
-    }
+    // Note: Score enforcement happens AFTER fallback detection (see below)
     
     // FALLBACK DETECTION: Re-evaluate if sale wasn't detected but evidence suggests it should be
     if (!saleClosed && transcript && transcript.length > 0) {
@@ -657,6 +628,14 @@ export async function POST(req: NextRequest) {
         /(sure|okay|ok|yes|alright|sounds good|that works|go ahead)/i.test(transcriptText)
       
       if ((closeAttempts > 0 || hasBuyingSignal || repAskedForInfo) && customerRespondedPositively) {
+        const fallbackReason = [
+          closeAttempts > 0 ? `${closeAttempts} close attempt(s)` : null,
+          hasBuyingSignal ? 'buying signal detected' : null,
+          repAskedForInfo ? 'rep asked for info' : null,
+          hasInfoCollection ? 'info collection detected' : null,
+          hasSpouseApproval ? 'spouse approval' : null
+        ].filter(Boolean).join(' + ')
+        
         logger.warn('Fallback detection: Sale should be marked as closed', {
           sessionId,
           closeAttempts,
@@ -664,7 +643,8 @@ export async function POST(req: NextRequest) {
           hasInfoCollection,
           repAskedForInfo,
           hasSpouseApproval,
-          originalSaleClosed: saleClosed
+          originalSaleClosed: saleClosed,
+          fallbackReason
         })
         
         saleClosed = true
@@ -686,6 +666,7 @@ export async function POST(req: NextRequest) {
           }
         }
         
+        // Store fallback detection info for audit log (will be added to gradingAudit below)
         // Note: Minimum scores will be enforced in final enforcement step below
       }
     }
@@ -774,6 +755,77 @@ export async function POST(req: NextRequest) {
     
     // Safety score removed - no longer tracked
     
+    // Build grading audit log to track detection process
+    const gradingAudit = {
+      gpt_detected_sale: deepAnalysis.saleClosed || false,
+      gpt_virtual_earnings: deepAnalysis.virtualEarnings || 0,
+      gpt_total_contract_value: deepAnalysis.dealDetails?.total_contract_value || 0,
+      fallback_detection_triggered: false,
+      fallback_detected_sale: false,
+      fallback_reason: null as string | null,
+      final_sale_closed: saleClosed,
+      final_virtual_earnings: virtualEarnings,
+      score_adjustments: {} as any,
+      original_scores: {
+        overall: finalScores.overall,
+        closing: finalScores.closing
+      },
+      detection_evidence: {
+        has_buying_signal: false,
+        has_info_collection: false,
+        rep_asked_for_info: false,
+        has_spouse_approval: false,
+        close_attempts: instantMetrics?.closeAttempts || 0
+      },
+      graded_at: new Date().toISOString(),
+      grading_version: '2.0'
+    }
+    
+    // Track fallback detection if it was triggered
+    if (!deepAnalysis.saleClosed && saleClosed) {
+      gradingAudit.fallback_detection_triggered = true
+      gradingAudit.fallback_detected_sale = true
+      gradingAudit.fallback_reason = 'Fallback patterns detected sale evidence'
+    }
+    
+    // Track score adjustments
+    const originalOverall = deepAnalysis.finalScores?.overall || finalScores.overall
+    const originalClosing = deepAnalysis.finalScores?.closing || finalScores.closing
+    if (saleClosed) {
+      if (finalScores.overall !== originalOverall && finalScores.overall >= 80) {
+        gradingAudit.score_adjustments.overall = {
+          original: originalOverall,
+          adjusted: finalScores.overall,
+          reason: 'Enforced minimum score for closed sale'
+        }
+      }
+      if (finalScores.closing !== originalClosing && finalScores.closing >= 90) {
+        gradingAudit.score_adjustments.closing = {
+          original: originalClosing,
+          adjusted: finalScores.closing,
+          reason: 'Enforced minimum closing score for closed sale'
+        }
+      }
+    }
+    
+    // Track detection evidence if fallback was used
+    if (!deepAnalysis.saleClosed && transcript && transcript.length > 0) {
+      const transcriptText = transcript.map((t: any) => (t.text || '').toLowerCase()).join(' ')
+      const buyingSignals = ["let's do it", "go ahead", "sounds good", "yes", "okay", "sure", "sign me up"]
+      const hasBuyingSignal = buyingSignals.some(signal => transcriptText.includes(signal))
+      const hasInfoCollection = /(my (name|phone|number|email|address) is|call me|tomorrow|next week)/i.test(transcriptText)
+      const repAskedForInfo = /(need your|what's your|can get you signed up)/i.test(transcriptText)
+      const hasSpouseApproval = /(spouse|wife|husband).*(said|okay|ok|fine|good).*(let's|go ahead|do it)/i.test(transcriptText)
+      
+      gradingAudit.detection_evidence = {
+        has_buying_signal: hasBuyingSignal,
+        has_info_collection: hasInfoCollection,
+        rep_asked_for_info: repAskedForInfo,
+        has_spouse_approval: hasSpouseApproval,
+        close_attempts: instantMetrics?.closeAttempts || 0
+      }
+    }
+    
     // Merge analytics carefully - preserve voice_analysis and other existing data
     const newAnalytics = {
       ...existingAnalytics,
@@ -790,6 +842,7 @@ export async function POST(req: NextRequest) {
       final_scores: finalScores,
       earnings_data: earningsData,
       deal_details: dealDetails,
+      grading_audit: gradingAudit, // NEW: Audit trail for debugging
       grading_version: '2.0',
       graded_at: new Date().toISOString()
     }
