@@ -761,6 +761,34 @@ export async function POST(req: NextRequest) {
       }
     }
     
+    // Build analytics object first (will be added to updateData later)
+    const newAnalytics = {
+      ...existingAnalytics,
+      deep_analysis: deepAnalysis,
+      coaching_plan: coachingPlan,
+      feedback: deepAnalysis.feedback || existingAnalytics.feedback || {
+        strengths: deepAnalysis.topStrengths || [],
+        improvements: deepAnalysis.topImprovements || [],
+        specific_tips: []
+      },
+      session_highlight: deepAnalysis.sessionHighlight || deepAnalysis.feedback?.strengths?.[0] || '',
+      comparative_performance: comparativePerformance,
+      improvement_trends: improvementTrends,
+      final_scores: finalScores,
+      earnings_data: earningsData,
+      deal_details: dealDetails,
+      grading_audit: gradingAudit,
+      graded_at: new Date().toISOString(),
+      // Clear error flags and mark completion
+      deep_analysis_error: false,
+      deep_analysis_completed_at: new Date().toISOString()
+    }
+    
+    // Preserve voice_analysis if it exists (critical!)
+    if (existingAnalytics.voice_analysis) {
+      newAnalytics.voice_analysis = existingAnalytics.voice_analysis
+    }
+    
     const updateData: any = {
       // Core scores (GPT finalScores)
       overall_score: finalScores.overall,
@@ -797,12 +825,8 @@ export async function POST(req: NextRequest) {
       graded_at: new Date().toISOString(),
       grading_audit: gradingAudit,
       
-      // Clear any error flags since we succeeded
-      analytics: {
-        ...existingAnalytics,
-        deep_analysis_error: false,
-        deep_analysis_completed_at: new Date().toISOString()
-      }
+      // Analytics (includes all the above plus error tracking)
+      analytics: newAnalytics
     }
     
     // CRITICAL: Ensure ended_at is set so the trigger can fire and update user earnings
@@ -884,36 +908,7 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Merge analytics carefully - preserve voice_analysis and other existing data
-    const newAnalytics = {
-      ...existingAnalytics,
-      deep_analysis: deepAnalysis,
-      coaching_plan: coachingPlan,
-      feedback: deepAnalysis.feedback || existingAnalytics.feedback || {
-        strengths: deepAnalysis.topStrengths || [],
-        improvements: deepAnalysis.topImprovements || [],
-        specific_tips: []
-      },
-      session_highlight: deepAnalysis.sessionHighlight || deepAnalysis.feedback?.strengths?.[0] || '',
-      comparative_performance: comparativePerformance,
-      improvement_trends: improvementTrends,
-      final_scores: finalScores,
-      earnings_data: earningsData,
-      deal_details: dealDetails,
-      grading_audit: gradingAudit, // NEW: Audit trail for debugging
-      graded_at: new Date().toISOString(),
-      // Clear error flags and mark completion
-      deep_analysis_error: false,
-      deep_analysis_completed_at: new Date().toISOString()
-    }
-    
-    // Preserve voice_analysis if it exists (critical!)
-    if (existingAnalytics.voice_analysis) {
-      newAnalytics.voice_analysis = existingAnalytics.voice_analysis
-    }
-    
-    // Update analytics in updateData (don't override the one we set above)
-    updateData.analytics = newAnalytics
+    // Analytics already built above in updateData
     
     // NOTE: The database trigger update_user_virtual_earnings_from_live_sessions_trigger
     // will automatically update the user's total virtual_earnings when:
@@ -935,81 +930,37 @@ export async function POST(req: NextRequest) {
       earningsWillUpdateUser: virtualEarnings > 0 && !!updateData.ended_at
     })
     
-    // CRITICAL: Use a transaction-like approach - update in steps to avoid conflicts
-    // First, update core fields
-    const { error: coreUpdateError } = await supabase
+    // Update all fields in a single operation (Supabase handles JSONB updates efficiently)
+    const { data: updatedSession, error: updateError } = await supabase
       .from('live_sessions')
-      .update({
-        overall_score: updateData.overall_score,
-        rapport_score: updateData.rapport_score,
-        discovery_score: updateData.discovery_score,
-        objection_handling_score: updateData.objection_handling_score,
-        close_score: updateData.close_score,
-        sale_closed: updateData.sale_closed,
-        virtual_earnings: updateData.virtual_earnings,
-        return_appointment: updateData.return_appointment,
-        total_contract_value: updateData.total_contract_value,
-        earnings_data: updateData.earnings_data,
-        deal_details: updateData.deal_details,
-        grading_status: updateData.grading_status,
-        graded_at: updateData.graded_at,
-        grading_audit: updateData.grading_audit
-      })
+      .update(updateData)
       .eq('id', sessionId)
-    
-    if (coreUpdateError) {
-      logger.error('Error updating core fields', {
-        error: coreUpdateError,
-        message: coreUpdateError.message,
-        code: coreUpdateError.code
-      })
-      // Continue to try analytics update anyway
-    }
-    
-    // Then update analytics separately (larger JSONB field)
-    const { error: analyticsUpdateError } = await supabase
-      .from('live_sessions')
-      .update({
-        analytics: newAnalytics
-      })
-      .eq('id', sessionId)
-    
-    if (analyticsUpdateError) {
-      logger.error('Error updating analytics', {
-        error: analyticsUpdateError,
-        message: analyticsUpdateError.message,
-        code: analyticsUpdateError.code
-      })
-      // If analytics update fails, we still have core data, so continue
-    }
-    
-    // Verify the update succeeded by fetching the session
-    const { data: updatedSession, error: fetchError } = await supabase
-      .from('live_sessions')
       .select('id, grading_status, overall_score, analytics, virtual_earnings, sale_closed, ended_at')
-      .eq('id', sessionId)
       .single()
     
-    if (fetchError || !updatedSession) {
-      logger.error('Error fetching updated session', { error: fetchError })
-      // Return success anyway since we tried to update
-      return NextResponse.json({ 
-        status: 'complete',
-        warning: 'Update may not have been fully saved - please verify',
-        deepAnalysis,
-        finalScores,
-        saleClosed,
-        virtualEarnings
+    if (updateError) {
+      logger.error('Error updating session with deep analysis', {
+        error: updateError,
+        message: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint,
+        updateDataKeys: Object.keys(updateData)
       })
+      return NextResponse.json({ 
+        error: 'Failed to save deep analysis',
+        details: updateError.message || updateError.code || 'Unknown database error',
+        code: updateError.code,
+        hint: 'Check database logs for more details',
+        updateDataKeys: Object.keys(updateData),
+        errorObject: JSON.stringify(updateError).substring(0, 500)
+      }, { status: 500 })
     }
     
-    // Check if update actually worked
-    if (updatedSession.grading_status !== 'complete' || updatedSession.sale_closed === null) {
-      logger.warn('Update may not have been fully applied', {
-        sessionId,
-        gradingStatus: updatedSession.grading_status,
-        saleClosed: updatedSession.sale_closed
-      })
+    // Verify the update succeeded
+    if (!updatedSession) {
+      logger.error('Update returned no data', { sessionId })
+      return NextResponse.json({ error: 'Update succeeded but no data returned' }, { status: 500 })
     }
     
     // Verify the update succeeded
