@@ -336,13 +336,16 @@ export async function POST(req: NextRequest) {
     }
     
     // Phase 3: Deep Analysis (5-15s, fire and forget)
-    // Trigger in background - don't wait for completion
+    // Trigger in background - don't wait for completion, but track errors
     try {
       logger.info('Starting Phase 3: Deep Analysis (background)', { sessionId })
       
-      // Fire and forget - don't await, but log the request
+      // Fire and forget - don't await, but log the request and track errors
       const deepAnalysisUrl = `${req.nextUrl.origin}/api/grade/deep-analysis`
       logger.info('Triggering deep analysis', { sessionId, url: deepAnalysisUrl })
+      
+      // Track start time for timeout detection
+      const deepAnalysisStartTime = Date.now()
       
       fetch(deepAnalysisUrl, {
         method: 'POST',
@@ -357,17 +360,89 @@ export async function POST(req: NextRequest) {
         })
       })
       .then(async (response) => {
+        const elapsed = Date.now() - deepAnalysisStartTime
         if (response.ok) {
           const data = await response.json().catch(() => ({}))
-          logger.info('Deep analysis completed successfully', { sessionId, status: data.status })
+          logger.info('Deep analysis completed successfully', { 
+            sessionId, 
+            status: data.status,
+            timeElapsed: `${elapsed}ms`
+          })
         } else {
           const errorText = await response.text().catch(() => 'Unknown error')
-          logger.error('Deep analysis failed', { sessionId, status: response.status, error: errorText })
+          logger.error('Deep analysis failed', { 
+            sessionId, 
+            status: response.status, 
+            error: errorText,
+            timeElapsed: `${elapsed}ms`
+          })
+          
+          // CRITICAL: Track error in database so polling can detect it
+          await supabase
+            .from('live_sessions')
+            .update({
+              analytics: {
+                ...session.analytics,
+                deep_analysis_error: true,
+                deep_analysis_error_message: errorText.substring(0, 200),
+                deep_analysis_failed_at: new Date().toISOString()
+              }
+            })
+            .eq('id', sessionId)
         }
       })
-      .catch(error => {
-        logger.error('Phase 3 background error', { sessionId, error: error.message, stack: error.stack })
+      .catch(async (error) => {
+        const elapsed = Date.now() - deepAnalysisStartTime
+        logger.error('Phase 3 background error', { 
+          sessionId, 
+          error: error.message, 
+          stack: error.stack,
+          timeElapsed: `${elapsed}ms`
+        })
+        
+        // CRITICAL: Track error in database so polling can detect it
+        await supabase
+          .from('live_sessions')
+          .update({
+            analytics: {
+              ...session.analytics,
+              deep_analysis_error: true,
+              deep_analysis_error_message: error.message?.substring(0, 200) || 'Network error',
+              deep_analysis_failed_at: new Date().toISOString()
+            }
+          })
+          .eq('id', sessionId)
       })
+      
+      // Also set a timeout to detect if deep analysis takes too long
+      setTimeout(async () => {
+        // Check if deep analysis completed after 2 minutes
+        const { data: checkSession } = await supabase
+          .from('live_sessions')
+          .select('grading_status, sale_closed, analytics')
+          .eq('id', sessionId)
+          .single()
+        
+        if (checkSession && 
+            checkSession.grading_status !== 'complete' && 
+            !checkSession.analytics?.deep_analysis_error) {
+          logger.warn('Deep analysis timeout detected - marking as failed', { sessionId })
+          
+          // Mark as failed so polling can detect it
+          await supabase
+            .from('live_sessions')
+            .update({
+              analytics: {
+                ...checkSession.analytics,
+                deep_analysis_error: true,
+                deep_analysis_error_message: 'Timeout after 2 minutes',
+                deep_analysis_failed_at: new Date().toISOString(),
+                deep_analysis_timeout: true
+              }
+            })
+            .eq('id', sessionId)
+        }
+      }, 120000) // 2 minutes timeout
       
       results.phases.deepAnalysis = {
         status: 'processing',
@@ -375,6 +450,20 @@ export async function POST(req: NextRequest) {
       }
     } catch (error: any) {
       logger.error('Phase 3 trigger error', { sessionId, error: error.message, stack: error.stack })
+      
+      // Track trigger error in database
+      await supabase
+        .from('live_sessions')
+        .update({
+          analytics: {
+            ...session.analytics,
+            deep_analysis_error: true,
+            deep_analysis_error_message: error.message?.substring(0, 200) || 'Trigger error',
+            deep_analysis_failed_at: new Date().toISOString()
+          }
+        })
+        .eq('id', sessionId)
+      
       results.phases.deepAnalysis = {
         status: 'error',
         error: error.message

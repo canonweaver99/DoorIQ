@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 
 export const maxDuration = 60 // 60 seconds for deep analysis
 export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -958,6 +959,34 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     logger.error('Error performing deep analysis', error)
+    
+    // CRITICAL: Track error in database so polling can detect it
+    try {
+      const supabase = await createServiceSupabaseClient()
+      const { data: errorSession } = await supabase
+        .from('live_sessions')
+        .select('analytics')
+        .eq('id', sessionId)
+        .single()
+      
+      if (errorSession) {
+        await supabase
+          .from('live_sessions')
+          .update({
+            analytics: {
+              ...errorSession.analytics,
+              deep_analysis_error: true,
+              deep_analysis_error_message: error.message?.substring(0, 200) || 'Unknown error',
+              deep_analysis_failed_at: new Date().toISOString(),
+              deep_analysis_error_type: error.name || 'Error'
+            }
+          })
+          .eq('id', sessionId)
+      }
+    } catch (trackingError) {
+      logger.error('Failed to track deep analysis error', trackingError)
+    }
+    
     return NextResponse.json(
       { error: error.message || 'Failed to perform deep analysis' },
       { status: 500 }

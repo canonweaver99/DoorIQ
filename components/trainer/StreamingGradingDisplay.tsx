@@ -465,9 +465,50 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                 // Deep analysis is complete when:
                 // 1. grading_status === 'complete' (Phase 3 finished)
                 // 2. sale_closed is not null (sale status has been determined)
+                // OR if deep analysis failed, show partial results
                 const gradingStatus = session.grading_status
                 const saleClosed = session.sale_closed
+                const deepAnalysisError = session.analytics?.deep_analysis_error
                 const deepAnalysisComplete = gradingStatus === 'complete' && saleClosed !== null && saleClosed !== undefined
+                
+                // If deep analysis failed but we have scores, show partial results
+                if (deepAnalysisError && session.overall_score !== null && session.overall_score !== undefined) {
+                  console.warn('⚠️ Deep analysis failed, but showing partial results', {
+                    sessionId,
+                    overallScore: session.overall_score,
+                    error: session.analytics?.deep_analysis_error_message
+                  })
+                  setIsComplete(true)
+                  setStatus('Grading complete (partial results - deep analysis failed)')
+                  setCompletedSections(newCompletedSections)
+                  setSections(prev => ({
+                    ...prev,
+                    scores: {
+                      overall: session.overall_score || 0,
+                      rapport: session.rapport_score || 0,
+                      discovery: session.discovery_score || 0,
+                      objection_handling: session.objection_handling_score || 0,
+                      closing: session.close_score || 0
+                    },
+                    feedback: session.analytics?.feedback || {},
+                    coaching_plan: session.analytics?.coaching_plan || {}
+                  }))
+                  
+                  // Check if feedback submitted
+                  const hasFeedback = !!(session.user_feedback_submitted_at)
+                  setFeedbackSubmitted(hasFeedback)
+                  
+                  if (hasFeedback) {
+                    setTimeout(() => {
+                      if (currentSessionId === sessionId) {
+                        onComplete()
+                      }
+                    }, 1500)
+                    return
+                  }
+                  // Continue to show feedback form if no feedback
+                  return
+                }
                 
                 // Fallback: Check if Phase 1+2 are done (for backwards compatibility)
                 const hasPhase1And2 = session.overall_score && (
