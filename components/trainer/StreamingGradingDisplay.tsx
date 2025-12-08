@@ -299,11 +299,69 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
         
         // Poll for completion and track section progress
         const pollForCompletion = async () => {
-          // No timeout - keep polling until completion
+          // Add timeout to prevent infinite polling
+          const MAX_POLL_TIME = 5 * 60 * 1000 // 5 minutes maximum
+          const startPollTime = Date.now()
           let pollCount = 0
           
           while (currentSessionId === sessionId) {
             if (abortController.signal.aborted) break
+            
+            // Check if we've exceeded maximum polling time
+            const elapsedPollTime = Date.now() - startPollTime
+            if (elapsedPollTime > MAX_POLL_TIME) {
+              console.warn('⚠️ Polling timeout reached, checking final status...')
+              
+              // Final check - if we have partial results, show them
+              try {
+                const finalCheck = await fetch(`/api/session?id=${currentSessionId}`)
+                if (finalCheck.ok) {
+                  const finalSession = await finalCheck.json()
+                  
+                  // If we have scores but grading isn't marked complete, mark it as complete anyway
+                  if (finalSession.overall_score !== null && finalSession.overall_score !== undefined) {
+                    console.log('✅ Found scores despite timeout, proceeding to completion')
+                    setIsComplete(true)
+                    setStatus('Grading complete!')
+                    setCompletedSections(new Set(['session_summary', 'scores', 'feedback', 'objection_analysis', 'coaching_plan']))
+                    setSections(prev => ({
+                      ...prev,
+                      scores: {
+                        overall: finalSession.overall_score,
+                        rapport: finalSession.rapport_score || 0,
+                        discovery: finalSession.discovery_score || 0,
+                        objection_handling: finalSession.objection_handling_score || 0,
+                        closing: finalSession.close_score || 0
+                      },
+                      feedback: finalSession.analytics?.feedback || {},
+                      coaching_plan: finalSession.analytics?.coaching_plan || {}
+                    }))
+                    
+                    // Check if feedback submitted
+                    const hasFeedback = !!(finalSession.user_feedback_submitted_at)
+                    setFeedbackSubmitted(hasFeedback)
+                    
+                    if (hasFeedback) {
+                      setTimeout(() => {
+                        if (currentSessionId === sessionId) {
+                          onComplete()
+                        }
+                      }, 1500)
+                    }
+                    return
+                  }
+                }
+              } catch (finalError) {
+                console.error('Error in final status check:', finalError)
+              }
+              
+              // If no scores found, show error
+              setError('Grading is taking longer than expected. Please try refreshing or contact support if this persists.')
+              setErrorType('timeout')
+              setConnectionState('error')
+              setStatus('Grading timeout - please refresh the page')
+              return
+            }
             
             try {
               const sessionResponse = await fetch(`/api/session?id=${currentSessionId}`)
@@ -472,17 +530,25 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
               }
             } catch (pollError) {
               console.warn('Polling error:', pollError)
+              // If we get multiple consecutive errors, show error state
+              if (pollCount > 10 && pollCount % 10 === 0) {
+                console.error('Multiple polling errors detected, checking if we should continue...')
+                // Continue polling but log the issue
+              }
             }
             
             pollCount++
             // Poll more frequently: every 300ms for first 20 polls, then every 500ms, then every 1000ms after 60 polls
+            // After 2 minutes, slow down to every 2 seconds
             let pollDelay = 500
             if (pollCount < 20) {
               pollDelay = 300
             } else if (pollCount < 60) {
               pollDelay = 500
+            } else if (pollCount < 120) {
+              pollDelay = 1000
             } else {
-              pollDelay = 1000 // Slow down after 60 polls but keep going
+              pollDelay = 2000 // Slow down significantly after 2 minutes
             }
             await new Promise(resolve => setTimeout(resolve, pollDelay))
           }
@@ -720,6 +786,39 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                   className="w-full px-4 sm:px-5 py-3 sm:py-3.5 bg-purple-500/20 hover:bg-purple-500/30 active:bg-purple-500/40 border border-purple-500/30 rounded-lg sm:rounded-xl text-purple-300 font-medium transition-colors font-space touch-manipulation text-sm sm:text-base min-h-[44px] sm:min-h-[48px]"
                 >
                   Retry Connection
+                </button>
+              )}
+              {errorType === 'timeout' && (
+                <button
+                  onClick={async () => {
+                    // Try to fetch final session state and proceed
+                    try {
+                      const response = await fetch(`/api/session?id=${sessionId}`)
+                      if (response.ok) {
+                        const session = await response.json()
+                        // If we have any scores, proceed to analytics
+                        if (session.overall_score !== null && session.overall_score !== undefined) {
+                          console.log('✅ Proceeding with partial results')
+                          onComplete()
+                        } else {
+                          // No scores yet - retry grading
+                          console.log('🔄 Retrying grading...')
+                          handleRetry()
+                        }
+                      } else {
+                        // On error, just proceed to analytics anyway
+                        console.warn('⚠️ Proceeding to analytics despite timeout')
+                        onComplete()
+                      }
+                    } catch (err) {
+                      console.error('Error checking final state:', err)
+                      // Proceed anyway
+                      onComplete()
+                    }
+                  }}
+                  className="w-full px-4 sm:px-5 py-3 sm:py-3.5 bg-yellow-500/20 hover:bg-yellow-500/30 active:bg-yellow-500/40 border border-yellow-500/30 rounded-lg sm:rounded-xl text-yellow-300 font-medium transition-colors font-space touch-manipulation text-sm sm:text-base min-h-[44px] sm:min-h-[48px]"
+                >
+                  Continue to Results
                 </button>
               )}
             </div>
