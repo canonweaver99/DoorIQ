@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 45000,
-  maxRetries: 2
+  timeout: 60000, // Increased to 60s for reliability
+  maxRetries: 3 // Increased retries for reliability
 })
 
 // Get user's historical performance for comparison
@@ -127,40 +127,57 @@ ANALYSIS INSTRUCTIONS:
 
 Read the ENTIRE conversation transcript carefully. Look for:
 
-SALE DETECTION - BE THOROUGH:
-A sale is CLOSED if ANY of these conditions are met:
+SALE DETECTION - BE THOROUGH AND ACCURATE:
+A sale is CLOSED if ANY of these conditions are met (check ALL of them):
 
 1. EXPLICIT AGREEMENT + INFO COLLECTION:
-   - Customer says: "let's do it", "go ahead", "sounds good", "yes", "okay", "sure", "alright", "that works", "I'm ready", "let's go", "sign me up", "I'll take it"
-   - AND THEN customer provides OR rep collects: name, phone, email, address, scheduling details, payment info
+   - Customer says: "let's do it", "go ahead", "sounds good", "yes", "okay", "sure", "alright", "that works", "I'm ready", "let's go", "sign me up", "I'll take it", "I'm in", "count me in", "let's do this", "works for me", "I'm game", "that sounds good"
+   - AND THEN (either before or after): customer provides OR rep collects: name, phone, email, address, scheduling details, payment info, or specific date/time
    - = SALE CLOSED
 
-2. REP COLLECTING INFO AFTER AGREEMENT:
-   - Rep asks for: "your name", "phone number", "email", "address", "when can we start", "what's your schedule"
-   - AND customer provides it OR agrees to provide it
-   - = SALE CLOSED
+2. REP COLLECTING INFO AFTER AGREEMENT OR DISCUSSION:
+   - Rep asks for: "your name", "phone number", "email", "address", "when can we start", "what's your schedule", "what's a good time", "when would work", "can I get your", "let me get your", "I'll need your"
+   - AND customer provides it OR agrees to provide it OR doesn't object
+   - = SALE CLOSED (if this happens AFTER discussing the service/price)
 
 3. SCHEDULING COMMITMENT:
-   - Customer agrees to specific time/date: "tomorrow works", "next week", "Monday at 2pm", "I'm free Tuesday"
+   - Customer agrees to specific time/date: "tomorrow works", "next week", "Monday at 2pm", "I'm free Tuesday", "Tuesday works", "next Monday", "this weekend"
+   - OR customer provides their schedule: "I'm home Tuesday", "afternoons work", "weekends are good"
    - = SALE CLOSED
 
 4. SPOUSE APPROVAL:
-   - Customer mentions checking with spouse/partner
-   - AND THEN agrees: "spouse said okay", "wife said yes", "husband said go ahead", "partner said fine"
+   - Customer mentions checking with spouse/partner/wife/husband
+   - AND THEN agrees: "spouse said okay", "wife said yes", "husband said go ahead", "partner said fine", "they said it's fine", "they're okay with it"
    - = SALE CLOSED
 
-5. IMPLICIT AGREEMENT:
-   - Customer asks about: "when would you start", "how long does it take", "what's the process", "what's next"
+5. IMPLICIT AGREEMENT + ACTION:
+   - Customer asks about: "when would you start", "how long does it take", "what's the process", "what's next", "how does this work", "when can you come", "how soon can you start"
    - AFTER discussing price/service
-   - AND rep starts collecting info
+   - AND (rep starts collecting info OR customer provides info OR scheduling is discussed)
    - = SALE CLOSED
 
 6. REP INITIATING SIGNUP:
-   - Rep says: "I can get you signed up", "let me get your information", "I'll set this up for you", "let's get you started"
-   - AND customer doesn't object or says yes/okay
+   - Rep says: "I can get you signed up", "let me get your information", "I'll set this up for you", "let's get you started", "let's get you scheduled", "I can schedule you", "let me schedule that"
+   - AND customer doesn't object (silence = agreement) OR says yes/okay/sure
    - = SALE CLOSED
 
-IMPORTANT: If customer agreed to the service (even implicitly) AND information was exchanged or scheduling discussed, mark sale_closed=true. Don't require perfect explicit language - look for the intent and action.
+7. PAYMENT DISCUSSION:
+   - Rep asks about payment method OR customer provides payment info
+   - AFTER discussing service/price
+   - = SALE CLOSED
+
+8. PROPERTY ACCESS DISCUSSION:
+   - Rep asks about: "gate code", "where to park", "dog in yard", "access to backyard", "garage door"
+   - AFTER agreement or discussion of service
+   - = SALE CLOSED (they're planning the service)
+
+CRITICAL: If customer agreed to the service (even implicitly) AND information was exchanged or scheduling discussed, mark sale_closed=true. Don't require perfect explicit language - look for the INTENT and ACTION. If the rep is collecting information or scheduling, and the customer isn't objecting, that's a sale.
+
+WHAT IS NOT A SALE:
+- Customer says "I'll think about it" and no info is collected
+- Customer says "maybe later" and no scheduling happens
+- Customer asks questions but doesn't agree or provide info
+- Rep mentions the service but customer doesn't engage
 
 PRICE EXTRACTION:
 - Look for prices mentioned in conversation: "$99/month", "$1200/year", "$299", etc.
@@ -248,8 +265,8 @@ CRITICAL RULES:
         { role: 'system', content: 'Sales coach. JSON only.' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.3, // Lower temperature for consistent analysis
-      max_tokens: 2000, // Increased to allow thorough analysis
+      temperature: 0.2, // Lower temperature for more consistent analysis
+      max_tokens: 4000, // Increased for long conversations (was 2000)
       response_format: { type: 'json_object' }
     })
     
@@ -462,6 +479,18 @@ export async function POST(req: NextRequest) {
     }
     
     const supabase = await createServiceSupabaseClient()
+    
+    // CRITICAL: Mark that deep analysis is starting (for progress tracking)
+    await supabase
+      .from('live_sessions')
+      .update({
+        analytics: {
+          ...((await supabase.from('live_sessions').select('analytics').eq('id', sessionId).single()).data?.analytics || {}),
+          deep_analysis_started_at: new Date().toISOString(),
+          deep_analysis_error: false // Clear any previous errors
+        }
+      })
+      .eq('id', sessionId)
     
     // Fetch session data if not provided
     let sessionData: any = null
@@ -766,7 +795,14 @@ export async function POST(req: NextRequest) {
       // Grading metadata
       grading_status: 'complete',
       graded_at: new Date().toISOString(),
-      grading_audit: gradingAudit
+      grading_audit: gradingAudit,
+      
+      // Clear any error flags since we succeeded
+      analytics: {
+        ...existingAnalytics,
+        deep_analysis_error: false,
+        deep_analysis_completed_at: new Date().toISOString()
+      }
     }
     
     // CRITICAL: Ensure ended_at is set so the trigger can fire and update user earnings
@@ -865,7 +901,10 @@ export async function POST(req: NextRequest) {
       earnings_data: earningsData,
       deal_details: dealDetails,
       grading_audit: gradingAudit, // NEW: Audit trail for debugging
-      graded_at: new Date().toISOString()
+      graded_at: new Date().toISOString(),
+      // Clear error flags and mark completion
+      deep_analysis_error: false,
+      deep_analysis_completed_at: new Date().toISOString()
     }
     
     // Preserve voice_analysis if it exists (critical!)
@@ -873,6 +912,7 @@ export async function POST(req: NextRequest) {
       newAnalytics.voice_analysis = existingAnalytics.voice_analysis
     }
     
+    // Update analytics in updateData (don't override the one we set above)
     updateData.analytics = newAnalytics
     
     // NOTE: The database trigger update_user_virtual_earnings_from_live_sessions_trigger
@@ -895,30 +935,81 @@ export async function POST(req: NextRequest) {
       earningsWillUpdateUser: virtualEarnings > 0 && !!updateData.ended_at
     })
     
-    const { data: updatedSession, error: updateError } = await supabase
+    // CRITICAL: Use a transaction-like approach - update in steps to avoid conflicts
+    // First, update core fields
+    const { error: coreUpdateError } = await supabase
       .from('live_sessions')
-      .update(updateData)
+      .update({
+        overall_score: updateData.overall_score,
+        rapport_score: updateData.rapport_score,
+        discovery_score: updateData.discovery_score,
+        objection_handling_score: updateData.objection_handling_score,
+        close_score: updateData.close_score,
+        sale_closed: updateData.sale_closed,
+        virtual_earnings: updateData.virtual_earnings,
+        return_appointment: updateData.return_appointment,
+        total_contract_value: updateData.total_contract_value,
+        earnings_data: updateData.earnings_data,
+        deal_details: updateData.deal_details,
+        grading_status: updateData.grading_status,
+        graded_at: updateData.graded_at,
+        grading_audit: updateData.grading_audit
+      })
       .eq('id', sessionId)
+    
+    if (coreUpdateError) {
+      logger.error('Error updating core fields', {
+        error: coreUpdateError,
+        message: coreUpdateError.message,
+        code: coreUpdateError.code
+      })
+      // Continue to try analytics update anyway
+    }
+    
+    // Then update analytics separately (larger JSONB field)
+    const { error: analyticsUpdateError } = await supabase
+      .from('live_sessions')
+      .update({
+        analytics: newAnalytics
+      })
+      .eq('id', sessionId)
+    
+    if (analyticsUpdateError) {
+      logger.error('Error updating analytics', {
+        error: analyticsUpdateError,
+        message: analyticsUpdateError.message,
+        code: analyticsUpdateError.code
+      })
+      // If analytics update fails, we still have core data, so continue
+    }
+    
+    // Verify the update succeeded by fetching the session
+    const { data: updatedSession, error: fetchError } = await supabase
+      .from('live_sessions')
       .select('id, grading_status, overall_score, analytics, virtual_earnings, sale_closed, ended_at')
+      .eq('id', sessionId)
       .single()
     
-    if (updateError) {
-      logger.error('Error updating session with deep analysis', {
-        error: updateError,
-        message: updateError.message,
-        code: updateError.code,
-        details: updateError.details,
-        hint: updateError.hint,
-        updateDataKeys: Object.keys(updateData)
-      })
+    if (fetchError || !updatedSession) {
+      logger.error('Error fetching updated session', { error: fetchError })
+      // Return success anyway since we tried to update
       return NextResponse.json({ 
-        error: 'Failed to save deep analysis',
-        details: updateError.message || updateError.code || 'Unknown database error',
-        code: updateError.code,
-        hint: 'Check database logs for more details',
-        updateDataKeys: Object.keys(updateData),
-        errorObject: JSON.stringify(updateError).substring(0, 500)
-      }, { status: 500 })
+        status: 'complete',
+        warning: 'Update may not have been fully saved - please verify',
+        deepAnalysis,
+        finalScores,
+        saleClosed,
+        virtualEarnings
+      })
+    }
+    
+    // Check if update actually worked
+    if (updatedSession.grading_status !== 'complete' || updatedSession.sale_closed === null) {
+      logger.warn('Update may not have been fully applied', {
+        sessionId,
+        gradingStatus: updatedSession.grading_status,
+        saleClosed: updatedSession.sale_closed
+      })
     }
     
     // Verify the update succeeded

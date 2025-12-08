@@ -415,6 +415,7 @@ export async function POST(req: NextRequest) {
       })
       
       // Also set a timeout to detect if deep analysis takes too long
+      // After 2 minutes, check and potentially retry
       setTimeout(async () => {
         // Check if deep analysis completed after 2 minutes
         const { data: checkSession } = await supabase
@@ -426,21 +427,65 @@ export async function POST(req: NextRequest) {
         if (checkSession && 
             checkSession.grading_status !== 'complete' && 
             !checkSession.analytics?.deep_analysis_error) {
-          logger.warn('Deep analysis timeout detected - marking as failed', { sessionId })
+          logger.warn('Deep analysis timeout detected - attempting retry', { sessionId })
           
-          // Mark as failed so polling can detect it
-          await supabase
-            .from('live_sessions')
-            .update({
-              analytics: {
-                ...checkSession.analytics,
-                deep_analysis_error: true,
-                deep_analysis_error_message: 'Timeout after 2 minutes',
-                deep_analysis_failed_at: new Date().toISOString(),
-                deep_analysis_timeout: true
+          // Try to retry automatically (up to 2 retries)
+          const retryCount = checkSession.analytics?.deep_analysis_retry_count || 0
+          if (retryCount < 2) {
+            logger.info('Auto-retrying deep analysis', { sessionId, retryCount: retryCount + 1 })
+            
+            // Retry deep analysis
+            try {
+              const retryResponse = await fetch(`${req.nextUrl.origin}/api/grade/deep-analysis`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sessionId,
+                  keyMoments: session.key_moments,
+                  instantMetrics: session.instant_metrics,
+                  elevenLabsData: session.elevenlabs_metrics
+                })
+              })
+              
+              if (!retryResponse.ok) {
+                throw new Error(`Retry failed: ${retryResponse.status}`)
               }
-            })
-            .eq('id', sessionId)
+              
+              logger.info('Deep analysis retry initiated successfully', { sessionId })
+            } catch (retryError: any) {
+              logger.error('Auto-retry failed, marking as error', { sessionId, error: retryError.message })
+              
+              // Mark as failed so polling can detect it
+              await supabase
+                .from('live_sessions')
+                .update({
+                  analytics: {
+                    ...checkSession.analytics,
+                    deep_analysis_error: true,
+                    deep_analysis_error_message: 'Timeout after 2 minutes, retry also failed',
+                    deep_analysis_failed_at: new Date().toISOString(),
+                    deep_analysis_timeout: true,
+                    deep_analysis_retry_count: retryCount + 1
+                  }
+                })
+                .eq('id', sessionId)
+            }
+          } else {
+            // Max retries reached, mark as failed
+            logger.error('Deep analysis failed after max retries', { sessionId })
+            await supabase
+              .from('live_sessions')
+              .update({
+                analytics: {
+                  ...checkSession.analytics,
+                  deep_analysis_error: true,
+                  deep_analysis_error_message: 'Timeout after 2 minutes, max retries reached',
+                  deep_analysis_failed_at: new Date().toISOString(),
+                  deep_analysis_timeout: true
+                }
+              })
+              .eq('id', sessionId)
+          }
         }
       }, 120000) // 2 minutes timeout
       
