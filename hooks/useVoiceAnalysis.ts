@@ -340,12 +340,10 @@ export function useVoiceAnalysis(options: UseVoiceAnalysisOptions = {}): UseVoic
     const hasAudioData = hasValidPitches
     
     // Only return null if we have absolutely no data
+    // Suppress warnings during initial load or when data is still being collected
     if (!hasTranscriptData && !hasAudioData) {
-      console.warn('⚠️ getVoiceAnalysisData: No transcript or pitch data available - cannot generate voice analysis', {
-        transcriptLength: transcript.length,
-        hasValidPitches,
-        pitchHistoryLength: pitchHistoryRef.current.length
-      })
+      // Don't spam console - this is expected during initial load or when session hasn't started
+      // Only return null silently (no warning)
       return null
     }
     

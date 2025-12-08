@@ -165,7 +165,8 @@ export default function WebcamRecorder({ sessionActive, duration = 0, onStreamRe
           console.error('⚠️ Video play error (might auto-recover):', playError)
         }
       } else {
-        console.warn('⚠️ Video ref is null, will retry in useEffect')
+        // Video ref will be available after mount - this is expected during initial render
+        // No need to warn - useEffect will handle it
       }
     } catch (err: any) {
       console.error('❌ Error accessing webcam:', err)

@@ -33,8 +33,17 @@ export default function DoorClosingVideo({
   useEffect(() => {
     const video = videoRef.current
     if (!video) {
-      console.warn('⚠️ DoorClosingVideo: video ref is null')
-      return
+      // Video ref will be available after mount - retry in next effect cycle
+      const retryTimer = setTimeout(() => {
+        if (videoRef.current) {
+          // Retry setup if video becomes available
+          const retryVideo = videoRef.current
+          retryVideo.loop = false
+          retryVideo.src = closingVideoPath
+          retryVideo.load()
+        }
+      }, 100)
+      return () => clearTimeout(retryTimer)
     }
 
     console.log('🎬 DoorClosingVideo: Setting up video for:', agentName, 'Path:', closingVideoPath)
