@@ -403,15 +403,23 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                   }
                 }
                 
-                // Check if grading is complete - proceed when Phase 1+2 are done (don't wait for Phase 3)
-                // Phase 1+2 complete when: overall_score exists AND (session_summary + scores sections OR grading_status is moments_complete)
+                // CRITICAL: Check if deep analysis is complete AND sale status is determined
+                // Deep analysis is complete when:
+                // 1. grading_status === 'complete' (Phase 3 finished)
+                // 2. sale_closed is not null (sale status has been determined)
+                const gradingStatus = session.grading_status
+                const saleClosed = session.sale_closed
+                const deepAnalysisComplete = gradingStatus === 'complete' && saleClosed !== null && saleClosed !== undefined
+                
+                // Fallback: Check if Phase 1+2 are done (for backwards compatibility)
                 const hasPhase1And2 = session.overall_score && (
                   (newCompletedSections.has('session_summary') && newCompletedSections.has('scores')) ||
                   session.grading_status === 'moments_complete' ||
                   session.key_moments?.length > 0
                 )
                 
-                if (session.grading_status === 'complete' || session.grading_status === 'completed' || hasPhase1And2) {
+                // Only mark complete if deep analysis is done AND sale status is determined
+                if (deepAnalysisComplete || (session.grading_status === 'completed' && saleClosed !== null && saleClosed !== undefined)) {
                   setIsComplete(true)
                   setStatus('Grading complete!')
                   setCompletedSections(newCompletedSections)

@@ -359,6 +359,23 @@ export default function AnalyticsPage() {
         if (!response.ok) throw new Error('Failed to fetch session')
       
       const data = await response.json()
+      
+      // CRITICAL: Only show analytics if deep analysis is complete and sale status is determined
+      const gradingStatus = data.grading_status
+      const saleClosed = data.sale_closed
+      const deepAnalysisComplete = gradingStatus === 'complete' && saleClosed !== null && saleClosed !== undefined
+      
+      if (!deepAnalysisComplete) {
+        // Deep analysis not complete - redirect to loading page
+        console.log('Deep analysis not complete, redirecting to loading page', {
+          gradingStatus,
+          saleClosed,
+          deepAnalysisComplete
+        })
+        router.push(`/trainer/loading/${sessionId}`)
+        return
+      }
+      
       setSession(data)
         setLoadingStates(prev => ({ ...prev, hero: true }))
         
@@ -402,7 +419,7 @@ export default function AnalyticsPage() {
   }
 
     fetchSession()
-  }, [sessionId])
+  }, [sessionId, router])
   
   // Fetch comparison data
   useEffect(() => {

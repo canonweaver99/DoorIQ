@@ -197,7 +197,7 @@ async function createSessionAndGrade() {
     const sessionId = session.id
     console.log('✅ Session created:', sessionId)
     
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3004'
     
     // Step 4: Trigger grading via orchestration endpoint
     console.log('\n🎯 Step 4: Triggering grading orchestration...')

@@ -455,8 +455,7 @@ export async function POST(req: NextRequest) {
           feedback,
           analyzedAt: new Date().toISOString()
         },
-        grading_status: 'moments_complete',
-        grading_version: '2.0'
+        grading_status: 'processing' // Using 'processing' since 'moments_complete' not in constraint
       })
       .eq('id', sessionId)
     

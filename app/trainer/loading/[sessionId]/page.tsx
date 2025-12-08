@@ -222,19 +222,24 @@ export default function LoadingPage() {
             overall_score: session.overall_score
           })
           
-          // Check if basic grading is complete (Phase 1 + Phase 2)
-          // Don't wait for Phase 3 (Deep Analysis) - it runs in background
+          // Check if deep analysis is complete (Phase 3) AND sale status is determined
+          // CRITICAL: Must wait for deep analysis to complete before showing results
+          const gradingStatus = session.grading_status
+          const saleClosed = session.sale_closed
           const hasOverallScore = session.overall_score !== null && session.overall_score !== undefined
           const hasInstantMetrics = session.instant_metrics !== null && session.instant_metrics !== undefined
-          const hasKeyMoments = session.key_moments !== null && session.key_moments !== undefined
           
-          // Phase 1 (Instant Metrics) sets overall_score and instant_metrics
-          // Phase 2 (Key Moments) sets key_moments
-          // Phase 3 (Deep Analysis) runs in background and adds detailed analytics later
-          const gradingComplete = Boolean(hasOverallScore && hasInstantMetrics)
+          // Deep analysis is complete when:
+          // 1. grading_status === 'complete' (Phase 3 finished)
+          // 2. sale_closed is not null (sale status has been determined)
+          const deepAnalysisComplete = gradingStatus === 'complete' && saleClosed !== null && saleClosed !== undefined
           
-          if (gradingComplete) {
-            console.log('✅ Grading 100% complete! Redirecting to analytics...')
+          // Fallback: If deep analysis hasn't completed but we have scores, still check sale status
+          const hasBasicGrading = Boolean(hasOverallScore && hasInstantMetrics)
+          const saleStatusDetermined = saleClosed !== null && saleClosed !== undefined
+          
+          if (deepAnalysisComplete) {
+            console.log('✅ Deep analysis complete and sale status determined! Redirecting to analytics...')
             setGradingStatus('completed')
             setStatus('Analysis complete! Loading your performance insights...')
             
@@ -244,6 +249,14 @@ export default function LoadingPage() {
             }, 1000)
             
             return true
+          } else if (hasBasicGrading && !saleStatusDetermined) {
+            // Basic grading done but sale status not determined yet - still processing
+            setStatus('Analyzing sale outcome...')
+            setGradingStatus('in-progress')
+          } else if (hasBasicGrading && saleStatusDetermined && gradingStatus !== 'complete') {
+            // Sale status determined but deep analysis still running
+            setStatus('Finalizing analysis...')
+            setGradingStatus('in-progress')
           }
           
           // Check if transcript exists (if not, there's a problem)

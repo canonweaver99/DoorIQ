@@ -480,9 +480,8 @@ export async function POST(req: NextRequest) {
     // Step 6: Save instantly
     const updateData: any = {
       instant_metrics: instantMetrics,
-      grading_status: 'instant_complete',
+      grading_status: 'processing', // Using 'processing' since 'instant_complete' not in constraint
       overall_score: scores.estimatedScore, // 70-90% accurate estimate
-      grading_version: '2.0',
       ...(conversationId && !session.elevenlabs_conversation_id ? {
         elevenlabs_conversation_id: conversationId,
         elevenlabs_metrics: elevenLabsData

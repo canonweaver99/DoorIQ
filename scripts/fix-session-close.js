@@ -177,19 +177,47 @@ async function fixSession(sessionId) {
   let earningsData = session.earnings_data || {}
   
   if (shouldBeClosed && virtualEarnings === 0) {
-    // Extract price from transcript or use default
+    // Extract price from transcript - look for first service + recurring pricing
     const transcriptText = transcript.map(t => t.text || '').join(' ')
-    const priceMatch = transcriptText.match(/\$(\d+)/)
-    const basePrice = priceMatch ? parseInt(priceMatch[1]) : 1000
     
-    virtualEarnings = basePrice
-    earningsData = {
-      base_amount: basePrice,
-      closed_amount: basePrice,
-      total_earned: basePrice
+    // Look for patterns like "$99 for first service, then $135 quarterly"
+    const firstServiceMatch = transcriptText.match(/\$(\d+)\s*(?:for|first|initial)/i)
+    const quarterlyMatch = transcriptText.match(/(?:quarterly|every\s*three\s*months|every\s*3\s*months).*?\$(\d+)/i)
+    const monthlyMatch = transcriptText.match(/\$(\d+)\s*(?:per\s*month|monthly)/i)
+    
+    let totalContractValue = 1000 // Default
+    
+    if (firstServiceMatch && quarterlyMatch) {
+      const firstService = parseInt(firstServiceMatch[1])
+      const quarterly = parseInt(quarterlyMatch[1])
+      // Calculate first year: first service + 3 quarters
+      totalContractValue = firstService + (quarterly * 3)
+      console.log(`💰 Found pricing: $${firstService} first service + $${quarterly} quarterly`)
+      console.log(`   First year value: $${totalContractValue}`)
+    } else if (firstServiceMatch) {
+      totalContractValue = parseInt(firstServiceMatch[1])
+    } else if (quarterlyMatch) {
+      const quarterly = parseInt(quarterlyMatch[1])
+      totalContractValue = quarterly * 4 // Annual value
+    } else if (monthlyMatch) {
+      const monthly = parseInt(monthlyMatch[1])
+      totalContractValue = monthly * 12 // Annual value
+    } else {
+      // Try to find any price mentioned
+      const priceMatch = transcriptText.match(/\$(\d+)/)
+      if (priceMatch) {
+        totalContractValue = parseInt(priceMatch[1])
+      }
     }
     
-    console.log(`💰 Calculated earnings: $${virtualEarnings}`)
+    virtualEarnings = totalContractValue
+    earningsData = {
+      base_amount: firstServiceMatch ? parseInt(firstServiceMatch[1]) : totalContractValue,
+      closed_amount: totalContractValue,
+      total_earned: totalContractValue
+    }
+    
+    console.log(`💰 Calculated total contract value: $${virtualEarnings}`)
   }
 
   // Update session

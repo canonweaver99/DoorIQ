@@ -27,7 +27,7 @@ export default function FeedbackPage() {
         // Verify session exists and belongs to user
         const { data: session, error: sessionError } = await supabase
           .from('live_sessions')
-          .select('id, user_id')
+          .select('id, user_id, grading_status, sale_closed')
           .eq('id', sessionId)
           .single()
 
@@ -40,6 +40,16 @@ export default function FeedbackPage() {
         if (session.user_id !== user.id) {
           setError('Unauthorized access')
           setLoading(false)
+          return
+        }
+
+        // CRITICAL: Only show feedback page if deep analysis is complete and sale status is determined
+        const gradingStatus = session.grading_status
+        const saleClosed = session.sale_closed
+        
+        if (gradingStatus !== 'complete' || saleClosed === null || saleClosed === undefined) {
+          // Deep analysis not complete yet - redirect to loading page
+          router.push(`/trainer/loading/${sessionId}`)
           return
         }
 

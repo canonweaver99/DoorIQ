@@ -764,7 +764,6 @@ export async function POST(req: NextRequest) {
       
       // Grading metadata
       grading_status: 'complete',
-      grading_version: '2.0',
       graded_at: new Date().toISOString(),
       grading_audit: gradingAudit
     }
@@ -800,8 +799,7 @@ export async function POST(req: NextRequest) {
         has_spouse_approval: false,
         close_attempts: instantMetrics?.closeAttempts || 0
       },
-      graded_at: new Date().toISOString(),
-      grading_version: '2.0'
+      graded_at: new Date().toISOString()
     }
     
     // Track fallback detection if it was triggered
@@ -866,7 +864,6 @@ export async function POST(req: NextRequest) {
       earnings_data: earningsData,
       deal_details: dealDetails,
       grading_audit: gradingAudit, // NEW: Audit trail for debugging
-      grading_version: '2.0',
       graded_at: new Date().toISOString()
     }
     
