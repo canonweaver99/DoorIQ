@@ -8,10 +8,11 @@
 -- ============================================
 
 -- These are replaced by the core 5 scores (overall, rapport, discovery, objection_handling, close)
-ALTER TABLE live_sessions DROP COLUMN IF EXISTS close_effectiveness_score;
+-- NOTE: Keeping close_effectiveness_score, introduction_score, listening_score as they're still used in some routes
+-- ALTER TABLE live_sessions DROP COLUMN IF EXISTS close_effectiveness_score; -- Still used in team analytics
+-- ALTER TABLE live_sessions DROP COLUMN IF EXISTS introduction_score; -- Still used in dashboard
+-- ALTER TABLE live_sessions DROP COLUMN IF EXISTS listening_score; -- Still used in team rep routes
 ALTER TABLE live_sessions DROP COLUMN IF EXISTS needs_discovery_score;
-ALTER TABLE live_sessions DROP COLUMN IF EXISTS introduction_score;
-ALTER TABLE live_sessions DROP COLUMN IF EXISTS listening_score;
 ALTER TABLE live_sessions DROP COLUMN IF EXISTS speaking_pace_score;
 ALTER TABLE live_sessions DROP COLUMN IF EXISTS filler_words_score;
 ALTER TABLE live_sessions DROP COLUMN IF EXISTS question_ratio_score;
