@@ -38,6 +38,12 @@ export function MobileBottomNav() {
     [pathname]
   )
 
+  // Check if we're on the landing page (should hide nav on mobile)
+  const isLandingPage = useMemo(() => 
+    pathname === '/landing',
+    [pathname]
+  )
+
   useEffect(() => {
     const checkAuth = async () => {
       const supabase = createClient()
@@ -224,8 +230,8 @@ export function MobileBottomNav() {
     }
   }, [router])
 
-  // Hide nav only during active practice sessions
-  if (isPracticeActive) {
+  // Hide nav during active practice sessions or on landing page
+  if (isPracticeActive || isLandingPage) {
     return null
   }
 

@@ -27,14 +27,14 @@ function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; s
             transition={{ delay: 0.2 + index * 0.1 }}
             className={`bg-white/[0.06] border-2 border-white/12 rounded-lg p-4 sm:p-6 md:p-8 transition-all duration-300 hover:border-white/30 hover:bg-white/[0.08] shadow-lg shadow-black/20 ${stat.bgColor} ${stat.borderColor}`}
           >
-            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-              <div className={`${stat.color} p-1.5 sm:p-2 rounded-lg bg-white/[0.08] flex-shrink-0`}>
-                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+            <div className="flex items-center justify-between gap-2 sm:gap-3 flex-nowrap">
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0">
+                <div className={`${stat.color} p-1.5 sm:p-2 rounded-lg bg-white/[0.08] flex-shrink-0`}>
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                </div>
+                <span className="font-space text-white/75 text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider leading-tight whitespace-nowrap">{stat.label}</span>
               </div>
-              <span className="font-space text-white/75 text-[10px] sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wider leading-tight">{stat.label}</span>
-            </div>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className={`font-space text-white text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-none ${stat.color}`}>{stat.value}</span>
+              <span className={`font-space text-white text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-none ${stat.color} flex-shrink-0 whitespace-nowrap`}>{stat.value}</span>
             </div>
           </motion.div>
         )
@@ -63,12 +63,14 @@ function MobileQuickStatsCard({ streak, sessionsToday, avgScore }: { streak: num
             transition={{ delay: 0.3 + index * 0.1, type: 'spring', stiffness: 200 }}
             className={`${stat.bgColor} rounded-3xl p-5 shadow-xl border border-white/12`}
           >
-            <div className="flex flex-col items-center justify-center">
-              <div className={`${stat.color} mb-2.5`}>
-                <Icon className="w-5 h-5" />
+            <div className="flex items-center justify-between gap-2 flex-nowrap">
+              <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+                <div className={stat.color}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <span className="font-space text-white/75 text-xs font-medium uppercase tracking-wider whitespace-nowrap">{stat.label}</span>
               </div>
-              <span className={`font-space ${stat.color} text-2xl font-bold mb-1.5`}>{stat.value}</span>
-              <span className="font-space text-white/75 text-xs font-medium uppercase tracking-wider">{stat.label}</span>
+              <span className={`font-space ${stat.color} text-xl font-bold flex-shrink-0 whitespace-nowrap`}>{stat.value}</span>
             </div>
           </motion.div>
         )
