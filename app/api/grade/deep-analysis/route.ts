@@ -5,7 +5,6 @@ import { logger } from '@/lib/logger'
 
 export const maxDuration = 60 // 60 seconds for deep analysis
 export const dynamic = 'force-dynamic'
-export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
