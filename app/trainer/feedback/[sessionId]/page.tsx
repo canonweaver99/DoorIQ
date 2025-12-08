@@ -43,16 +43,8 @@ export default function FeedbackPage() {
           return
         }
 
-        // CRITICAL: Only show feedback page if deep analysis is complete and sale status is determined
-        const gradingStatus = session.grading_status
-        const saleClosed = session.sale_closed
-        
-        if (gradingStatus !== 'complete' || saleClosed === null || saleClosed === undefined) {
-          // Deep analysis not complete yet - redirect to loading page
-          router.push(`/trainer/loading/${sessionId}`)
-          return
-        }
-
+        // Show feedback page immediately - grading runs in background
+        // User can fill out feedback while grading completes
         setLoading(false)
       } catch (err) {
         console.error('Error verifying session:', err)

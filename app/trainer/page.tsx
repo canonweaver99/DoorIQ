@@ -1594,9 +1594,9 @@ function TrainerPageContent() {
         
         // Now redirect after save completes (unless skipRedirect is true)
         if (!skipRedirect) {
-          // Redirect to feedback page - grading runs in background
+          // Redirect to feedback page immediately - grading runs in background
           const redirectUrl = `/trainer/feedback/${sessionId}`
-          console.log('🚀 Redirecting to feedback page:', redirectUrl)
+          console.log('🚀 Redirecting to feedback page (grading running in background):', redirectUrl)
           
           // Use window.location.href for reliable redirect (blocking)
           window.location.href = redirectUrl
@@ -1615,7 +1615,7 @@ function TrainerPageContent() {
         logger.error('Error ending session', error)
         console.error('❌ Error in endSession, attempting redirect anyway:', error)
         // Still try to redirect even if there's an error
-        window.location.href = `/trainer/loading/${sessionId}`
+        window.location.href = `/trainer/feedback/${sessionId}`
       }
     } else {
       console.log('⚠️ No sessionId, redirecting to trainer page')

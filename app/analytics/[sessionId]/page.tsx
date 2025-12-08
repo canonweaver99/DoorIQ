@@ -360,23 +360,64 @@ export default function AnalyticsPage() {
       
       const data = await response.json()
       
-      // CRITICAL: Only show analytics if deep analysis is complete and sale status is determined
+      // Check if deep analysis is complete
       const gradingStatus = data.grading_status
       const saleClosed = data.sale_closed
       const deepAnalysisComplete = gradingStatus === 'complete' && saleClosed !== null && saleClosed !== undefined
       
-      if (!deepAnalysisComplete) {
-        // Deep analysis not complete - redirect to loading page
-        console.log('Deep analysis not complete, redirecting to loading page', {
+      // If grading is complete, show analytics immediately
+      if (deepAnalysisComplete) {
+        setSession(data)
+      } else {
+        // Grading not complete yet - start polling for completion
+        console.log('Grading not complete yet, polling for completion...', {
           gradingStatus,
           saleClosed,
           deepAnalysisComplete
         })
-        router.push(`/trainer/loading/${sessionId}`)
-        return
+        
+        // Poll for grading completion (up to 2 minutes)
+        let pollCount = 0
+        const maxPolls = 120 // 2 minutes at 1 second intervals
+        
+        const pollForCompletion = async () => {
+          try {
+            const pollResponse = await fetch(`/api/session?id=${sessionId}`)
+            if (pollResponse.ok) {
+              const pollData = await pollResponse.json()
+              const pollGradingStatus = pollData.grading_status
+              const pollSaleClosed = pollData.sale_closed
+              const pollComplete = pollGradingStatus === 'complete' && pollSaleClosed !== null && pollSaleClosed !== undefined
+              
+              if (pollComplete) {
+                console.log('Grading complete! Loading analytics...')
+                setSession(pollData)
+                return
+              }
+            }
+            
+            pollCount++
+            if (pollCount < maxPolls) {
+              // Continue polling
+              setTimeout(pollForCompletion, 1000)
+            } else {
+              // Timeout - show what we have (partial results)
+              console.warn('Grading timeout - showing partial results')
+              setSession(data)
+            }
+          } catch (error) {
+            console.error('Error polling for grading completion:', error)
+            // Show what we have on error
+            setSession(data)
+          }
+        }
+        
+        // Start polling after a short delay
+        setTimeout(pollForCompletion, 1000)
+        
+        // Show partial data while polling
+        setSession(data)
       }
-      
-      setSession(data)
         setLoadingStates(prev => ({ ...prev, hero: true }))
         
         // Load insights immediately if available
