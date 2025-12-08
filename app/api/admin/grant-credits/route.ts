@@ -52,13 +52,13 @@ export async function POST(request: NextRequest) {
     
     // Add credits to users.credits (source of truth)
     // Get current credits
-    const { data: userData } = await supabase
+    const { data: targetUserData } = await supabase
       .from('users')
       .select('credits')
       .eq('id', userId)
       .single()
     
-    const currentCredits = userData?.credits || 75
+    const currentCredits = targetUserData?.credits || 75
     const newCredits = currentCredits + credits
     
     // Update users.credits

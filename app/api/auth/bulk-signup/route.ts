@@ -65,9 +65,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const serviceSupabase = await createServiceSupabaseClient()
-
     // Check if user already exists by listing users and filtering
+    // serviceSupabase is already defined above for invite validation
     const { data: usersData } = await (serviceSupabase as any).auth.admin.listUsers()
     if (usersData?.users) {
       const existingUser = usersData.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
