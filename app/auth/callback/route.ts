@@ -62,6 +62,27 @@ export async function GET(request: Request) {
           .single()
         
         if (!existingUser) {
+          // Validate invite/checkout for email verification signups
+          const inviteToken = requestUrl.searchParams.get('invite')
+          const checkoutIntent = requestUrl.searchParams.get('checkout')
+          
+          // Note: If user came from fast-signup, invite was already validated there
+          // But we still check here as a safety measure
+          if (!inviteToken && !checkoutIntent) {
+            // Check if this is a new signup (user just created)
+            // If user was created very recently (within last hour), might be from signup flow
+            const userCreatedAt = new Date(data.user.created_at)
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+            
+            if (userCreatedAt < oneHourAgo) {
+              // User was created more than an hour ago, this might be a bypass attempt
+              console.error('❌ Email verification signup blocked: No invite token or checkout intent')
+              await supabase.auth.signOut()
+              return NextResponse.redirect(new URL('/auth/login?error=Signups are invite-only. Please use a valid invite link.', requestUrl.origin))
+            }
+            // If created recently, assume it came from signup flow (invite was validated there)
+          }
+          
           const serviceSupabase = await createServiceSupabaseClient()
           const userMetadata = data.user.user_metadata
           
@@ -77,10 +98,10 @@ export async function GET(request: Request) {
           await serviceSupabase.from('user_session_limits').insert({
             user_id: data.user.id,
             sessions_this_month: 0,
-            sessions_limit: 5,
+            sessions_limit: 75,
             last_reset_date: new Date().toISOString().split('T')[0]
           })
-          console.log('✅ User profile created with 5 credits')
+          console.log('✅ User profile created with 75 credits')
           
           // Send notification email to admin about new user signup
           const userName = userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User'
@@ -174,7 +195,7 @@ export async function GET(request: Request) {
             .insert({
               user_id: verificationData.user.id,
               sessions_this_month: 0,
-              sessions_limit: 5,
+              sessions_limit: 75,
               last_reset_date: new Date().toISOString().split('T')[0]
             })
 
@@ -255,8 +276,56 @@ export async function GET(request: Request) {
         .eq('id', data.user.id)
         .single()
 
-      // If user doesn't exist in users table, create profile
+      // If user doesn't exist in users table, validate invite/checkout before creating profile
+      const inviteToken = requestUrl.searchParams.get('invite')
+      const checkoutIntent = requestUrl.searchParams.get('checkout')
+      
       if (!existingUser) {
+        // ============================================
+        // INVITE-ONLY SIGNUP VALIDATION FOR OAUTH
+        // ============================================
+        
+        if (!inviteToken && !checkoutIntent) {
+          console.error('❌ OAuth signup blocked: No invite token or checkout intent')
+          // Sign out the user since they shouldn't have an account
+          await supabase.auth.signOut()
+          return NextResponse.redirect(new URL('/auth/login?error=Signups are invite-only. Please use a valid invite link or complete checkout first.', requestUrl.origin))
+        }
+        
+        // Validate admin invite token if provided
+        let inviteData = null
+        if (inviteToken) {
+          const serviceSupabase = await createServiceSupabaseClient()
+          const { data: invite, error: inviteError } = await serviceSupabase
+            .from('admin_invites')
+            .select('*')
+            .eq('token', inviteToken)
+            .is('used_at', null)
+            .gt('expires_at', new Date().toISOString())
+            .single()
+          
+          if (inviteError || !invite) {
+            console.error('❌ Invalid or expired invite token:', inviteError?.message)
+            await supabase.auth.signOut()
+            return NextResponse.redirect(new URL('/auth/login?error=Invalid or expired invite token. Please request a new invite.', requestUrl.origin))
+          }
+          
+          // Check email match if invite has email
+          if (invite.email && invite.email.toLowerCase() !== data.user.email?.toLowerCase()) {
+            console.error('❌ Email mismatch for invite')
+            await supabase.auth.signOut()
+            return NextResponse.redirect(new URL('/auth/login?error=This invite is for a different email address.', requestUrl.origin))
+          }
+          
+          inviteData = invite
+        }
+        
+        // Validate checkout intent if provided
+        if (checkoutIntent) {
+          // TODO: Verify Stripe checkout session is completed
+          // For now, just allow if checkout_intent is present
+          console.log('✅ Checkout intent provided:', checkoutIntent)
+        }
         console.log('📝 Creating user profile in database...')
         const userMetadata = data.user.user_metadata
         
@@ -285,7 +354,7 @@ export async function GET(request: Request) {
             .insert({
               user_id: data.user.id,
               sessions_this_month: 0,
-              sessions_limit: 5,
+              sessions_limit: 75,
               last_reset_date: new Date().toISOString().split('T')[0]
             })
 
@@ -298,25 +367,38 @@ export async function GET(request: Request) {
           // Send notification email to admin about new user signup
           const userName = userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User'
           await sendNewUserNotification(data.user.email || '', userName, data.user.id)
+          
+          // Mark admin invite as used if invite token was provided
+          if (inviteToken && inviteData) {
+            await serviceSupabase
+              .from('admin_invites')
+              .update({
+                used_at: new Date().toISOString(),
+                used_by: data.user.id
+              })
+              .eq('token', inviteToken)
+            
+            console.log('✅ Admin invite marked as used:', inviteToken)
+          }
         }
       }
 
-      // Handle invite token if present in URL
-      const inviteToken = requestUrl.searchParams.get('invite')
-      if (inviteToken) {
+      // Handle team invite token if present in URL (separate from admin invites)
+      const teamInviteToken = requestUrl.searchParams.get('team_invite')
+      if (teamInviteToken) {
         try {
           const inviteResponse = await fetch(`${requestUrl.origin}/api/invites/accept`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: inviteToken })
+            body: JSON.stringify({ token: teamInviteToken })
           })
           if (inviteResponse.ok) {
-            console.log('✅ Invite accepted during OAuth callback')
+            console.log('✅ Team invite accepted during OAuth callback')
           } else {
-            console.warn('⚠️ Failed to accept invite during OAuth callback')
+            console.warn('⚠️ Failed to accept team invite during OAuth callback')
           }
         } catch (e) {
-          console.warn('⚠️ Error accepting invite during OAuth callback:', e)
+          console.warn('⚠️ Error accepting team invite during OAuth callback:', e)
         }
       }
 

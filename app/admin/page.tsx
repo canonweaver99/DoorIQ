@@ -230,6 +230,18 @@ export default function AdminDashboard() {
               </div>
             </Link>
 
+            <Link href="/admin/invites">
+              <div className="p-4 sm:p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group min-h-[80px] sm:min-h-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Manage Invites</h3>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Create invite tokens</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors flex-shrink-0 ml-2" />
+                </div>
+              </div>
+            </Link>
+
           </div>
         </div>
       </div>

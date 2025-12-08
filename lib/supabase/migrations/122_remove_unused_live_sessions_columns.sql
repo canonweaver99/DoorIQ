@@ -108,10 +108,56 @@ ALTER TABLE live_sessions DROP COLUMN IF EXISTS conversation_metadata;
 ALTER TABLE live_sessions DROP COLUMN IF EXISTS user_feedback_submitted_at; -- Check if this is used
 
 -- ============================================
--- 7. Update table comment to reflect cleaned structure
+-- 7. Remove GPT output columns that are duplicated in analytics JSONB
+-- ============================================
+-- These columns were added in migration 121 but are not used in the grading/feedback pages
+-- All data is accessed via analytics JSONB instead
+
+-- Feedback columns (now in analytics.feedback)
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS top_strengths; -- Replaced by analytics.feedback.strengths
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS top_improvements; -- Replaced by analytics.feedback.improvements
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS overall_assessment; -- Replaced by analytics.deep_analysis.overallAssessment
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS session_highlight; -- Replaced by analytics.session_highlight
+
+-- JSONB columns that duplicate analytics data
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS feedback_data; -- Replaced by analytics.feedback
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS final_scores; -- Replaced by analytics.deep_analysis.finalScores
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS coaching_plan; -- Replaced by analytics.coaching_plan
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS grading_audit; -- Replaced by analytics.grading_audit
+
+-- Deal value (now in deal_details.total_contract_value)
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS total_contract_value; -- Replaced by deal_details.total_contract_value
+
+-- Audio metadata columns (not displayed in grading/feedback pages)
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS audio_duration; -- Not displayed in feedback
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS audio_file_size; -- Not displayed in feedback
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS has_video; -- Not displayed in feedback
+
+-- User feedback columns (mostly NULL, not used in grading display)
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS user_feedback_rating; -- Not displayed in grading page
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS user_feedback_improvement_area; -- Not displayed in grading page
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS user_feedback_text; -- Not displayed in grading page
+
+-- Grading version (mostly 0 or NULL, not displayed)
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS grading_version; -- Not displayed in feedback pages
+
+-- Coaching suggestions (not used)
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS coaching_suggestions; -- Not used
+
+-- Legacy columns that might still exist
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS gradir; -- Typo/legacy column
+ALTER TABLE live_sessions DROP COLUMN IF EXISTS uuid; -- Duplicate of id
+
+-- NOTE: Keeping these columns as they are used in the codebase:
+-- - elevenlabs_conversation_id: Used in grading orchestration
+-- - is_free_demo: Used in business logic for demo sessions
+-- - homeowner_name: Displayed in feedback modal
+
+-- ============================================
+-- 8. Update table comment to reflect cleaned structure
 -- ============================================
 
-COMMENT ON TABLE live_sessions IS 'Core training sessions table. All GPT grading outputs stored in dedicated columns. Detailed analysis in analytics JSONB.';
+COMMENT ON TABLE live_sessions IS 'Core training sessions table. All GPT grading outputs stored in analytics JSONB. Core scores and sale data in dedicated columns for easy querying.';
 
 -- ============================================
 -- Migration Complete

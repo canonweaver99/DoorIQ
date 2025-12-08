@@ -134,22 +134,47 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
     canStartSession: true,
     sessionsRemaining: 0,
     sessionsUsed: 0,
-    sessionsLimit: 5,
+    sessionsLimit: 75, // Universal 75 limit for all users
     isUnlimited: false,
     loading: true
   })
 
   const fetchSessionLimit = async () => {
-    // Credit system removed - always allow sessions
-    // User will integrate free trial and Stripe paywall separately
-    setData({
-      canStartSession: true,
-      sessionsRemaining: 999, // Show high number for UI purposes
-      sessionsUsed: 0,
-      sessionsLimit: 999,
-      isUnlimited: true,
-      loading: false
-    })
+    try {
+      const response = await fetch('/api/session/check-limit')
+      if (response.ok) {
+        const limitInfo = await response.json()
+        setData({
+          canStartSession: limitInfo.canStartSession || false,
+          sessionsRemaining: limitInfo.sessionsRemaining || 0,
+          sessionsUsed: limitInfo.sessionsUsed || 0,
+          sessionsLimit: limitInfo.sessionsLimit || 75,
+          isUnlimited: false, // Everyone has 75 limit
+          loading: false
+        })
+      } else {
+        // Fallback to default
+        setData({
+          canStartSession: true,
+          sessionsRemaining: 75,
+          sessionsUsed: 0,
+          sessionsLimit: 75,
+          isUnlimited: false,
+          loading: false
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching session limit:', error)
+      // Fallback to default
+      setData({
+        canStartSession: true,
+        sessionsRemaining: 75,
+        sessionsUsed: 0,
+        sessionsLimit: 75,
+        isUnlimited: false,
+        loading: false
+      })
+    }
   }
 
   useEffect(() => {

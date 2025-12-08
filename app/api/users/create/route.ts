@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       .insert({
         user_id: id,
         sessions_this_month: 0,
-        sessions_limit: 5,
+        sessions_limit: 75,
         last_reset_date: today
       })
 

@@ -55,9 +55,7 @@ export async function checkSessionLimit(userId: string): Promise<{
       .eq('id', userId)
       .single()
 
-    // All users now use credit-based system, including paid users (50 credits/month)
-    // Removed unlimited access - paid users get 50 credits/month
-
+    // Universal 75 session limit for all users (anti-spam measure)
     // Check session limits using RPC
     const { data: canStart, error: limitError } = await supabase.rpc(
       'check_user_session_limit',
@@ -70,20 +68,28 @@ export async function checkSessionLimit(userId: string): Promise<{
         canStartSession: false,
         sessionsRemaining: 0,
         sessionsUsed: 0,
-        sessionsLimit: 5,
+        sessionsLimit: 75,
       }
     }
 
-    // Get current usage
+    // Get current usage and credits
     const { data: limitData } = await supabase
       .from('user_session_limits')
       .select('sessions_this_month, sessions_limit')
       .eq('user_id', userId)
       .single()
 
+    // Get credits from users table (source of truth)
+    const { data: userData } = await supabase
+      .from('users')
+      .select('credits')
+      .eq('id', userId)
+      .single()
+
     const sessionsUsed = limitData?.sessions_this_month || 0
-    const sessionsLimit = limitData?.sessions_limit || 5
-    const sessionsRemaining = Math.max(0, sessionsLimit - sessionsUsed)
+    const sessionsLimit = 75 // Universal limit for everyone
+    const creditsRemaining = userData?.credits || 0
+    const sessionsRemaining = Math.max(0, creditsRemaining) // Use credits as source of truth
 
     return {
       canStartSession: canStart === true,
@@ -97,7 +103,7 @@ export async function checkSessionLimit(userId: string): Promise<{
       canStartSession: false,
       sessionsRemaining: 0,
       sessionsUsed: 0,
-      sessionsLimit: 5,
+      sessionsLimit: 75, // Universal limit
     }
   }
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AnimatedBackground } from '@/components/ui/animated-background'
 import { User, Eye, EyeOff, Loader2, CheckCircle2, XCircle, Building2, Users } from 'lucide-react'
@@ -14,6 +14,8 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 
 export default function BulkSignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const inviteToken = searchParams.get('invite')
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -28,6 +30,13 @@ export default function BulkSignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  // Check for invite token on mount
+  useEffect(() => {
+    if (!inviteToken) {
+      setError('Signups are invite-only. Please use a valid invite link.')
+    }
+  }, [inviteToken])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,6 +62,12 @@ export default function BulkSignupPage() {
       return
     }
 
+    if (!inviteToken) {
+      setError('Signups are invite-only. Please use a valid invite link.')
+      setLoading(false)
+      return
+    }
+
     try {
       // Create account via API
       const response = await fetch('/api/auth/bulk-signup', {
@@ -64,7 +79,8 @@ export default function BulkSignupPage() {
           full_name: formData.fullName,
           role: formData.role,
           organization_name: formData.organizationName,
-          team_name: formData.teamName
+          team_name: formData.teamName,
+          invite_token: inviteToken
         })
       })
 

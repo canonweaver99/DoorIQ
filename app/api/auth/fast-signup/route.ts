@@ -149,13 +149,59 @@ async function sendConfirmationEmail(supabase: any, email: string, userId: strin
 
 export async function POST(req: Request) {
   try {
-    const { email, password, full_name, redirectUrl } = await req.json()
+    const { email, password, full_name, redirectUrl, invite_token, checkout_intent } = await req.json()
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Missing email or password' }, { status: 400 })
     }
 
     const supabase = await createServiceSupabaseClient()
+
+    // ============================================
+    // INVITE-ONLY SIGNUP VALIDATION
+    // ============================================
+    // Require either invite token or checkout intent
+    if (!invite_token && !checkout_intent) {
+      return NextResponse.json({ 
+        error: 'Signups are invite-only. Please use a valid invite link or complete checkout first.' 
+      }, { status: 403 })
+    }
+
+    // Validate invite token if provided
+    let inviteData = null
+    if (invite_token) {
+      const { data: invite, error: inviteError } = await supabase
+        .from('admin_invites')
+        .select('*')
+        .eq('token', invite_token)
+        .is('used_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .single()
+      
+      if (inviteError || !invite) {
+        return NextResponse.json({ 
+          error: 'Invalid or expired invite token. Please request a new invite.' 
+        }, { status: 403 })
+      }
+      
+      // Check email match if invite has email
+      if (invite.email && invite.email.toLowerCase() !== email.toLowerCase()) {
+        return NextResponse.json({ 
+          error: 'This invite is for a different email address.' 
+        }, { status: 403 })
+      }
+      
+      inviteData = invite
+    }
+
+    // Validate checkout intent if provided
+    // Note: For now, we just check if checkout_intent exists
+    // In production, you might want to verify the Stripe session status
+    if (checkout_intent) {
+      // TODO: Verify Stripe checkout session is completed
+      // For now, just allow if checkout_intent is present
+      console.log('✅ Checkout intent provided:', checkout_intent)
+    }
 
     // Try to create user first
     // Set email_confirm to false so Supabase sends confirmation email automatically
@@ -231,6 +277,19 @@ export async function POST(req: Request) {
     // Recommended: Set to 24-48 hours to prevent expiration issues
     if (data?.user?.id) {
       await sendConfirmationEmail(supabase, email, data.user.id, redirectUrl)
+      
+      // Mark invite as used if invite token was provided
+      if (invite_token && inviteData) {
+        await supabase
+          .from('admin_invites')
+          .update({
+            used_at: new Date().toISOString(),
+            used_by: data.user.id
+          })
+          .eq('token', invite_token)
+        
+        console.log('✅ Invite marked as used:', invite_token)
+      }
     }
 
     return NextResponse.json({ success: true, userId: data?.user?.id || null })

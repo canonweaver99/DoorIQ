@@ -23,11 +23,15 @@ const testimonials: Testimonial[] = testimonialsData.slice(0, 3).map((t, index) 
 function SignUpForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [inviteInput, setInviteInput] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const inviteToken = searchParams.get('invite')
+  const inviteToken = searchParams.get('invite') || inviteInput
   const nextUrl = searchParams.get('next')
   const checkoutIntent = searchParams.get('checkout')
+  
+  // Check if signup is allowed (invite or checkout required)
+  const hasValidAccess = !!inviteToken || !!checkoutIntent
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -47,11 +51,23 @@ function SignUpForm() {
       const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
       const redirectUrl = `${origin}/auth/callback?next=${encodeURIComponent(currentPath)}`
       
+      // Validate invite/checkout before proceeding
+      if (!inviteToken && !checkoutIntent) {
+        throw new Error('Signups are invite-only. Please use a valid invite link or complete checkout first.')
+      }
+
       // Step 1: Create user via server (requires email confirmation)
       const adminResp = await fetch('/api/auth/fast-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, full_name: fullName, redirectUrl })
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          full_name: fullName, 
+          redirectUrl,
+          invite_token: inviteToken || null,
+          checkout_intent: checkoutIntent || null
+        })
       })
       const adminJson = await adminResp.json()
       if (!adminResp.ok) {
@@ -78,6 +94,13 @@ function SignUpForm() {
   const handleGoogleSignUp = async () => {
     setLoading(true)
     setError(null)
+
+    // Block Google OAuth if no invite/checkout
+    if (!inviteToken && !checkoutIntent) {
+      setError('Signups are invite-only. Please use a valid invite link.')
+      setLoading(false)
+      return
+    }
 
     try {
       const supabase = createClient()
@@ -106,6 +129,13 @@ function SignUpForm() {
       setLoading(false)
     }
   }
+  
+  const handleInviteSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (inviteInput.trim()) {
+      router.push(`/auth/signup?invite=${inviteInput.trim()}`)
+    }
+  }
 
   const handleSignIn = () => {
     // Preserve redirect params when switching to login
@@ -117,6 +147,59 @@ function SignUpForm() {
       loginUrl += `?${params.toString()}`
     }
     router.push(loginUrl)
+  }
+
+  // Show invite-only message if no valid access
+  if (!hasValidAccess) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-slate-800 border border-slate-700 rounded-lg p-8 text-center">
+          <h1 className="text-2xl font-bold text-white mb-4">
+            Signups Are Invite-Only
+          </h1>
+          <p className="text-slate-300 mb-6">
+            To create an account, you need either:
+          </p>
+          <ul className="text-left text-slate-400 mb-6 space-y-2">
+            <li>• A valid invite link from an admin</li>
+            <li>• Complete checkout to purchase a subscription</li>
+          </ul>
+          
+          <div className="mb-6">
+            <form onSubmit={handleInviteSubmit} className="space-y-3">
+              <input
+                type="text"
+                value={inviteInput}
+                onChange={(e) => setInviteInput(e.target.value)}
+                placeholder="Enter invite token"
+                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <button
+                type="submit"
+                className="w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition"
+              >
+                Use Invite Token
+              </button>
+            </form>
+          </div>
+          
+          <div className="space-y-3">
+            <a
+              href="/pricing"
+              className="block w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition"
+            >
+              View Pricing
+            </a>
+            <a
+              href="/auth/login"
+              className="block text-slate-400 hover:text-white transition"
+            >
+              Already have an account? Sign in
+            </a>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

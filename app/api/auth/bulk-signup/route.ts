@@ -4,7 +4,45 @@ import { sendNewUserNotification, sendWelcomeEmail } from '@/lib/email/send'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, full_name, role, organization_name, team_name } = await request.json()
+    const { email, password, full_name, role, organization_name, team_name, invite_token } = await request.json()
+
+    // ============================================
+    // INVITE-ONLY SIGNUP VALIDATION
+    // ============================================
+    if (!invite_token) {
+      return NextResponse.json(
+        { error: 'Signups are invite-only. Please use a valid invite link.' },
+        { status: 403 }
+      )
+    }
+
+    // Validate invite token
+    const serviceSupabase = await createServiceSupabaseClient()
+    const { data: invite, error: inviteError } = await serviceSupabase
+      .from('admin_invites')
+      .select('*')
+      .eq('token', invite_token)
+      .is('used_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .single()
+    
+    if (inviteError || !invite) {
+      return NextResponse.json(
+        { error: 'Invalid or expired invite token. Please request a new invite.' },
+        { status: 403 }
+      )
+    }
+    
+    // Check email match if invite has email
+    if (invite.email && invite.email.toLowerCase() !== email.toLowerCase()) {
+      return NextResponse.json(
+        { error: 'This invite is for a different email address.' },
+        { status: 403 }
+      )
+    }
+    
+    // Store invite data for later use (to mark as used)
+    const inviteData = invite
 
     if (!email || !password || !full_name || !role || !organization_name || !team_name) {
       return NextResponse.json(
@@ -245,6 +283,24 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       console.error('Warning: Failed to send welcome email:', emailError)
       // Don't fail the request
+    }
+
+    // Mark invite as used
+    if (invite_token && inviteData) {
+      try {
+        await serviceSupabase
+          .from('admin_invites')
+          .update({
+            used_at: new Date().toISOString(),
+            used_by: userId
+          })
+          .eq('token', invite_token)
+        
+        console.log('✅ Admin invite marked as used:', invite_token)
+      } catch (inviteUpdateError) {
+        console.error('Warning: Failed to mark invite as used:', inviteUpdateError)
+        // Don't fail the request
+      }
     }
 
     return NextResponse.json({

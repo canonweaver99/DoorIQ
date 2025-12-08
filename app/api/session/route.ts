@@ -400,6 +400,71 @@ export async function PATCH(req: Request) {
       })
     }
     
+    // Also save to speech_analysis table if voice_analysis was provided
+    if (voice_analysis && data.id) {
+      const speechAnalysisData = {
+        session_id: data.id,
+        is_final: !!updateData.ended_at, // Final if session has ended
+        avg_wpm: Math.round(voice_analysis.avgWPM || 0),
+        total_filler_words: voice_analysis.totalFillerWords || 0,
+        filler_words_per_minute: duration_seconds && duration_seconds > 0
+          ? (voice_analysis.totalFillerWords || 0) / (duration_seconds / 60)
+          : 0,
+        avg_pitch: voice_analysis.avgPitch || null,
+        min_pitch: voice_analysis.minPitch || null,
+        max_pitch: voice_analysis.maxPitch || null,
+        pitch_variation: voice_analysis.pitchVariation || null,
+        avg_volume: voice_analysis.avgVolume || null,
+        volume_consistency: voice_analysis.volumeConsistency || null,
+        has_pitch_data: !!(voice_analysis.avgPitch && voice_analysis.avgPitch > 0),
+        has_volume_data: !!(voice_analysis.avgVolume && voice_analysis.avgVolume > 0),
+        pitch_timeline: voice_analysis.pitchTimeline || [],
+        volume_timeline: voice_analysis.volumeTimeline || [],
+        wpm_timeline: voice_analysis.wpmTimeline || [],
+        issues: {
+          excessiveFillers: (voice_analysis.totalFillerWords || 0) > 10,
+          tooFast: (voice_analysis.avgWPM || 0) > 200,
+          tooSlow: (voice_analysis.avgWPM || 0) < 120 && (voice_analysis.avgWPM || 0) > 0,
+          monotone: voice_analysis.isMonotone || false,
+          lowEnergy: voice_analysis.lowEnergy || false,
+          poorEndings: voice_analysis.poorEndings || false
+        },
+        analysis_timestamp: new Date().toISOString()
+      }
+      
+      // Upsert to speech_analysis table (update if exists, insert if not)
+      const { data: existingRecord } = await supabase
+        .from('speech_analysis')
+        .select('id')
+        .eq('session_id', data.id)
+        .single()
+      
+      let speechError = null
+      if (existingRecord) {
+        // Update existing record
+        const { error } = await supabase
+          .from('speech_analysis')
+          .update(speechAnalysisData)
+          .eq('session_id', data.id)
+        speechError = error
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('speech_analysis')
+          .insert(speechAnalysisData)
+        speechError = error
+      }
+      
+      if (speechError) {
+        console.error('⚠️ Failed to save to speech_analysis table (non-critical):', speechError)
+      } else {
+        console.log('✅ Saved to speech_analysis table on session end:', {
+          sessionId: data.id,
+          is_final: speechAnalysisData.is_final
+        })
+      }
+    }
+    
     return NextResponse.json({ 
       id: data.id,
       analytics: savedAnalytics // Include analytics in response so client can verify

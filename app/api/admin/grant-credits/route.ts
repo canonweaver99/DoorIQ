@@ -50,62 +50,58 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Update or insert user session limits
-    const { data: existingLimit } = await supabase
-      .from('user_session_limits')
-      .select('sessions_limit')
-      .eq('user_id', userId)
+    // Add credits to users.credits (source of truth)
+    // Get current credits
+    const { data: userData } = await supabase
+      .from('users')
+      .select('credits')
+      .eq('id', userId)
       .single()
     
-    if (existingLimit) {
-      // Update existing limit
-      const newLimit = existingLimit.sessions_limit + credits
-      const { error: updateError } = await supabase
-        .from('user_session_limits')
-        .update({ 
-          sessions_limit: newLimit,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId)
-      
-      if (updateError) {
-        console.error('Error updating session limit:', updateError)
-        return NextResponse.json(
-          { error: 'Failed to grant credits' },
-          { status: 500 }
-        )
-      }
-      
-      return NextResponse.json({
-        success: true,
-        message: `Granted ${credits} credits. New limit: ${newLimit}`,
-        newLimit
+    const currentCredits = userData?.credits || 75
+    const newCredits = currentCredits + credits
+    
+    // Update users.credits
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ 
+        credits: newCredits,
+        updated_at: new Date().toISOString()
       })
-    } else {
-      // Create new limit record
-      const { error: insertError } = await supabase
-        .from('user_session_limits')
-        .insert({
-          user_id: userId,
-          sessions_this_month: 0,
-          sessions_limit: 5 + credits,
-          last_reset_date: new Date().toISOString().split('T')[0]
-        })
-      
-      if (insertError) {
-        console.error('Error creating session limit:', insertError)
-        return NextResponse.json(
-          { error: 'Failed to grant credits' },
-          { status: 500 }
-        )
-      }
-      
-      return NextResponse.json({
-        success: true,
-        message: `Granted ${credits} credits. New limit: ${5 + credits}`,
-        newLimit: 5 + credits
-      })
+      .eq('id', userId)
+    
+    if (updateError) {
+      console.error('Error updating credits:', updateError)
+      return NextResponse.json(
+        { error: 'Failed to grant credits' },
+        { status: 500 }
+      )
     }
+    
+    // Ensure user_session_limits record exists (for tracking)
+    const { error: limitError } = await supabase
+      .from('user_session_limits')
+      .upsert({
+        user_id: userId,
+        sessions_this_month: 0,
+        sessions_limit: 75, // Universal limit
+        last_reset_date: new Date().toISOString().split('T')[0]
+      }, {
+        onConflict: 'user_id',
+        ignoreDuplicates: false
+      })
+    
+    if (limitError) {
+      console.warn('Warning: Could not update user_session_limits:', limitError)
+      // Non-critical, continue
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: `Granted ${credits} credits. New balance: ${newCredits}`,
+      credits: newCredits,
+      creditsLimit: 75 // Universal monthly limit
+    })
   } catch (error) {
     console.error('Error in grant-credits API:', error)
     return NextResponse.json(
