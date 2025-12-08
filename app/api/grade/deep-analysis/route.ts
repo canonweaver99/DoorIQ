@@ -126,16 +126,40 @@ ANALYSIS INSTRUCTIONS:
 
 Read the ENTIRE conversation transcript carefully. Look for:
 
-SALE DETECTION:
-- Did the customer commit to the service? Look for:
-  * Explicit agreement: "let's do it", "go ahead", "sounds good", "yes", "okay" after discussing service/price
-  * Information collection: Customer provides name, phone, email, address, or scheduling details AFTER agreeing
-  * Rep collecting customer info AFTER customer showed interest/agreement
-  * Spouse approval followed by agreement: "spouse said okay, let's do it"
-  * Scheduling commitment: Customer agrees to specific time/date for service
-- If customer said "let's do it" or "sounds good" AND then provided contact info or scheduling details = SALE CLOSED
-- If rep said "I can get you signed up" and customer agreed = SALE CLOSED
-- If customer checked with spouse then agreed = SALE CLOSED
+SALE DETECTION - BE THOROUGH:
+A sale is CLOSED if ANY of these conditions are met:
+
+1. EXPLICIT AGREEMENT + INFO COLLECTION:
+   - Customer says: "let's do it", "go ahead", "sounds good", "yes", "okay", "sure", "alright", "that works", "I'm ready", "let's go", "sign me up", "I'll take it"
+   - AND THEN customer provides OR rep collects: name, phone, email, address, scheduling details, payment info
+   - = SALE CLOSED
+
+2. REP COLLECTING INFO AFTER AGREEMENT:
+   - Rep asks for: "your name", "phone number", "email", "address", "when can we start", "what's your schedule"
+   - AND customer provides it OR agrees to provide it
+   - = SALE CLOSED
+
+3. SCHEDULING COMMITMENT:
+   - Customer agrees to specific time/date: "tomorrow works", "next week", "Monday at 2pm", "I'm free Tuesday"
+   - = SALE CLOSED
+
+4. SPOUSE APPROVAL:
+   - Customer mentions checking with spouse/partner
+   - AND THEN agrees: "spouse said okay", "wife said yes", "husband said go ahead", "partner said fine"
+   - = SALE CLOSED
+
+5. IMPLICIT AGREEMENT:
+   - Customer asks about: "when would you start", "how long does it take", "what's the process", "what's next"
+   - AFTER discussing price/service
+   - AND rep starts collecting info
+   - = SALE CLOSED
+
+6. REP INITIATING SIGNUP:
+   - Rep says: "I can get you signed up", "let me get your information", "I'll set this up for you", "let's get you started"
+   - AND customer doesn't object or says yes/okay
+   - = SALE CLOSED
+
+IMPORTANT: If customer agreed to the service (even implicitly) AND information was exchanged or scheduling discussed, mark sale_closed=true. Don't require perfect explicit language - look for the intent and action.
 
 PRICE EXTRACTION:
 - Look for prices mentioned in conversation: "$99/month", "$1200/year", "$299", etc.
@@ -151,8 +175,13 @@ OVERALL SCORE (0-100):
   * 60-69: Average - basic conversation, missed opportunities
   * 50-59: Below average - struggled with objections or closing
   * 0-49: Poor - major issues, no sale, poor technique
-- If sale closed AND handled objections well: score should be 85+
-- If sale closed: score should be at least 80
+
+CRITICAL SCORING RULES FOR CLOSED SALES:
+- If sale_closed=true AND objectionHandling >= 85: overall_score MUST be 85-100
+- If sale_closed=true: overall_score MUST be at least 80 (minimum)
+- If sale_closed=true: closing score MUST be 90-100 (sale closed = excellent closing)
+- A closed sale is a SUCCESS - don't penalize minor issues like talk ratio or energy drops if the sale closed
+- Focus on: Did they close? If yes, score reflects that success (80+ minimum)
 - Consider: rapport building, discovery questions, objection handling, closing technique, conversation flow
 
 Return JSON with your analysis:
@@ -202,8 +231,14 @@ Return JSON with your analysis:
 
 CRITICAL RULES:
 - If sale_closed=true, virtual_earnings MUST equal total_contract_value (at minimum $1000)
-- overall_score should reflect conversation quality - if sale closed and went well, score should be 85+
-- Be thorough in analyzing the transcript - don't miss sales that happened`
+- If sale_closed=true, overall_score MUST be at least 80 (85+ if objections handled well)
+- If sale_closed=true, closing score MUST be 90-100 (sale closed = excellent closing)
+- A closed sale is a SUCCESS - don't penalize minor issues if the sale closed
+- Be thorough in analyzing the transcript - don't miss sales that happened
+- Look for IMPLICIT agreements, not just explicit "yes" - if customer provided info or scheduled after discussing service, it's a sale
+- If rep collected customer information (name, phone, email, address) AFTER discussing the service, assume sale_closed=true
+- When in doubt and there's evidence of agreement + info exchange, err on the side of marking sale_closed=true
+- Remember: Closing a sale is the ultimate goal - if achieved, score should reflect that success (80+ minimum)`
 
   try {
     const response = await openai.chat.completions.create({
@@ -487,14 +522,15 @@ export async function POST(req: NextRequest) {
     const comparativePerformance = compareToHistory(userHistory, finalScores)
     const improvementTrends = calculateTrends(userHistory)
     
-    // Step 6: Get existing analytics to preserve
+    // Step 6: Get existing analytics to preserve AND check ended_at
     const { data: existingSession } = await supabase
       .from('live_sessions')
-      .select('analytics')
+      .select('analytics, ended_at')
       .eq('id', sessionId)
       .single()
     
     const existingAnalytics = existingSession?.analytics || {}
+    const hasEndedAt = !!existingSession?.ended_at
     
     // Step 7: Update with complete analysis
     // Build update object step by step to avoid issues
@@ -504,12 +540,43 @@ export async function POST(req: NextRequest) {
     let earningsData = deepAnalysis.earningsData || {}
     const dealDetails = deepAnalysis.dealDetails || {}
     
+    // CRITICAL: Enforce minimum scores for closed sales AFTER all detection logic
+    // If sale closed, overall score MUST be at least 80 (85+ if objections handled well)
+    if (saleClosed) {
+      const objectionHandlingScore = finalScores.objectionHandling || 0
+      const objectionsHandledWell = objectionHandlingScore >= 85
+      
+      // Minimum score: 85 if objections handled well, 80 otherwise
+      const minimumScore = objectionsHandledWell ? 85 : 80
+      
+      if (finalScores.overall < minimumScore) {
+        logger.warn('Enforcing minimum score for closed sale', {
+          sessionId,
+          originalScore: finalScores.overall,
+          minimumScore,
+          objectionHandlingScore,
+          objectionsHandledWell
+        })
+        finalScores.overall = minimumScore
+      }
+      
+      // Also ensure closing score is at least 90 for closed sales
+      if (finalScores.closing < 90) {
+        logger.info('Enforcing minimum closing score for closed sale', {
+          sessionId,
+          originalClosingScore: finalScores.closing,
+          newClosingScore: 90
+        })
+        finalScores.closing = 90
+      }
+    }
+    
     // FALLBACK DETECTION: Re-evaluate if sale wasn't detected but evidence suggests it should be
     if (!saleClosed && transcript && transcript.length > 0) {
       const closeAttempts = instantMetrics?.closeAttempts || 0
       const transcriptText = transcript.map((t: any) => (t.text || '').toLowerCase()).join(' ')
       
-      // Check for buying signals
+      // Check for buying signals - expanded list
       const buyingSignals = [
         "let's go ahead and do it",
         "let's do it",
@@ -521,12 +588,21 @@ export async function POST(req: NextRequest) {
         "sure",
         "alright",
         "okay",
-        "yes"
+        "yes",
+        "sign me up",
+        "i'll take it",
+        "i'm in",
+        "count me in",
+        "let's do this",
+        "i'm interested",
+        "that sounds good",
+        "works for me",
+        "i'm game"
       ]
       
       const hasBuyingSignal = buyingSignals.some(signal => transcriptText.includes(signal))
       
-      // Check for information collection patterns
+      // Check for information collection patterns - expanded
       const infoCollectionPatterns = [
         /my (name|phone|number|email|address) is/i,
         /call me/i,
@@ -534,20 +610,39 @@ export async function POST(req: NextRequest) {
         /my number is/i,
         /tomorrow at/i,
         /tomorrow works/i,
+        /next week/i,
+        /monday|tuesday|wednesday|thursday|friday|saturday|sunday/i,
         /[0-9]{3}.*[0-9]{3}.*[0-9]{4}/i, // Phone number pattern
-        /@.*\.(com|net|org)/i // Email pattern
+        /@.*\.(com|net|org)/i, // Email pattern
+        /you can reach me/i,
+        /my contact/i,
+        /when would you/i,
+        /when can you/i,
+        /what's next/i,
+        /how do we/i,
+        /let's schedule/i,
+        /i'm free/i
       ]
       
       const hasInfoCollection = infoCollectionPatterns.some(pattern => pattern.test(transcriptText))
       
-      // Check for rep asking for info after agreement
+      // Check for rep asking for info after agreement - expanded
       const repAskingForInfo = [
         /(just )?need your (name|phone|number|email|address)/i,
         /what's your (name|phone|number|email|address)/i,
         /what is your (name|phone|number|email|address)/i,
         /can get you signed up/i,
         /get you signed up/i,
-        /get you set up/i
+        /get you set up/i,
+        /let me get your/i,
+        /i'll need your/i,
+        /can i get your/i,
+        /let's get your/i,
+        /when would be/i,
+        /when can we/i,
+        /what's a good time/i,
+        /let's schedule/i,
+        /i can set/i
       ]
       
       const repAskedForInfo = repAskingForInfo.some(pattern => pattern.test(transcriptText))
@@ -557,7 +652,11 @@ export async function POST(req: NextRequest) {
       const hasSpouseApproval = spouseApprovalPattern.test(transcriptText)
       
       // Fallback conditions: If we have close attempts OR buying signals AND info collection, mark as sale
-      if ((closeAttempts > 0 || hasBuyingSignal || repAskedForInfo) && (hasInfoCollection || hasSpouseApproval)) {
+      // Also check if rep asked for info AND customer responded positively (even without explicit "yes")
+      const customerRespondedPositively = hasInfoCollection || hasSpouseApproval || 
+        /(sure|okay|ok|yes|alright|sounds good|that works|go ahead)/i.test(transcriptText)
+      
+      if ((closeAttempts > 0 || hasBuyingSignal || repAskedForInfo) && customerRespondedPositively) {
         logger.warn('Fallback detection: Sale should be marked as closed', {
           sessionId,
           closeAttempts,
@@ -586,6 +685,8 @@ export async function POST(req: NextRequest) {
             }
           }
         }
+        
+        // Note: Minimum scores will be enforced in final enforcement step below
       }
     }
     
@@ -618,6 +719,37 @@ export async function POST(req: NextRequest) {
       // Don't override saleClosed here - trust the AI's judgment, but log it
     }
     
+    // CRITICAL: Final enforcement of minimum scores for closed sales
+    // This happens AFTER all sale detection logic (GPT + fallback) is complete
+    if (saleClosed) {
+      const objectionHandlingScore = finalScores.objectionHandling || 0
+      const objectionsHandledWell = objectionHandlingScore >= 85
+      
+      // Minimum score: 85 if objections handled well, 80 otherwise
+      const minimumScore = objectionsHandledWell ? 85 : 80
+      
+      if (finalScores.overall < minimumScore) {
+        logger.warn('Final enforcement: Minimum score for closed sale', {
+          sessionId,
+          originalScore: finalScores.overall,
+          minimumScore,
+          objectionHandlingScore,
+          objectionsHandledWell
+        })
+        finalScores.overall = minimumScore
+      }
+      
+      // Also ensure closing score is at least 90 for closed sales
+      if (finalScores.closing < 90) {
+        logger.info('Final enforcement: Minimum closing score for closed sale', {
+          sessionId,
+          originalClosingScore: finalScores.closing,
+          newClosingScore: 90
+        })
+        finalScores.closing = 90
+      }
+    }
+    
     const updateData: any = {
       overall_score: finalScores.overall,
       rapport_score: Math.round(finalScores.rapport),
@@ -631,6 +763,13 @@ export async function POST(req: NextRequest) {
       deal_details: dealDetails,
       grading_status: 'complete',
       grading_version: '2.0'
+    }
+    
+    // CRITICAL: Ensure ended_at is set so the trigger can fire and update user earnings
+    // The trigger requires both virtual_earnings > 0 AND ended_at IS NOT NULL
+    if (!hasEndedAt) {
+      updateData.ended_at = new Date().toISOString()
+      logger.info('Setting ended_at during grading to ensure earnings trigger fires', { sessionId })
     }
     
     // Safety score removed - no longer tracked
@@ -676,7 +815,10 @@ export async function POST(req: NextRequest) {
       saleClosed,
       virtualEarnings,
       hasEarningsData: !!earningsData.total_earned,
-      earningsBreakdown: earningsData
+      earningsBreakdown: earningsData,
+      endedAtSet: !!updateData.ended_at,
+      hadEndedAt: hasEndedAt,
+      earningsWillUpdateUser: virtualEarnings > 0 && !!updateData.ended_at
     })
     
     const { data: updatedSession, error: updateError } = await supabase

@@ -184,23 +184,34 @@ function TrainerPageContent() {
     }
   }, [challengeModeEnabled])
 
-  // Reset strikes when starting a new session
+  // Reset strikes when starting a new session OR when session becomes inactive (after restart)
   useEffect(() => {
-    if (sessionActive && challengeModeEnabled) {
-      setStrikes(0)
-      setStrikeCauses([])
-      fillerWordCountRef.current = 0
-      poorHandlingCountRef.current = 0
-      processedPoorHandlingRef.current.clear()
-      setShowRestartWarning(false)
-      setRestartCountdown(3)
-      if (restartTimeoutRef.current) {
-        clearTimeout(restartTimeoutRef.current)
-        restartTimeoutRef.current = null
-      }
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current)
-        countdownIntervalRef.current = null
+    if (challengeModeEnabled) {
+      if (sessionActive) {
+        // Reset strikes when starting a new active session
+        setStrikes(0)
+        setStrikeCauses([])
+        fillerWordCountRef.current = 0
+        poorHandlingCountRef.current = 0
+        processedPoorHandlingRef.current.clear()
+        setShowRestartWarning(false)
+        setRestartCountdown(3)
+        if (restartTimeoutRef.current) {
+          clearTimeout(restartTimeoutRef.current)
+          restartTimeoutRef.current = null
+        }
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current)
+          countdownIntervalRef.current = null
+        }
+      } else {
+        // Also reset strikes when session becomes inactive (after restart, before knocking)
+        // This ensures counter shows 0/3 before user knocks
+        setStrikes(0)
+        setStrikeCauses([])
+        fillerWordCountRef.current = 0
+        poorHandlingCountRef.current = 0
+        processedPoorHandlingRef.current.clear()
       }
     }
   }, [sessionActive, challengeModeEnabled])
@@ -1356,8 +1367,9 @@ function TrainerPageContent() {
       setShowRestartWarning(false)
       setRestartCountdown(3)
       
-      // Reset strike counters
+      // Reset strike counters BEFORE restart to ensure they're 0 immediately
       setStrikes(0)
+      setStrikeCauses([])
       fillerWordCountRef.current = 0
       poorHandlingCountRef.current = 0
       processedPoorHandlingRef.current.clear()
@@ -1367,6 +1379,13 @@ function TrainerPageContent() {
       if (restartFn) {
         console.log('🔄 Executing auto-restart after 3 strikes countdown')
         restartFn().finally(() => {
+          // Ensure strikes are still 0 after restart completes
+          setStrikes(0)
+          setStrikeCauses([])
+          fillerWordCountRef.current = 0
+          poorHandlingCountRef.current = 0
+          processedPoorHandlingRef.current.clear()
+          
           // Reset restart flag after restart completes
           setTimeout(() => {
             isRestartingRef.current = false
