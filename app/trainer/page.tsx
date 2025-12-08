@@ -1500,27 +1500,76 @@ function TrainerPageContent() {
           console.warn('⚠️ This may indicate microphone access failed or voice analysis hook had an error')
         }
         
-        // Save session data
-        const saveResponse = await fetch('/api/session', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: sessionId,
-            transcript: transcript.length > 0 ? transcript : undefined, // Optional - already saved incrementally
-            duration_seconds: duration,
-            end_reason: endReason || 'manual',
-            voice_analysis: voiceAnalysisData || undefined
-          }),
-        })
+        // Save session data with retry logic
+        let saveResponse: Response | null = null
+        let saveAttempts = 0
+        const maxSaveAttempts = 3
         
-        if (!saveResponse.ok) {
-          const errorText = await saveResponse.text().catch(() => 'Unknown error')
-          console.error('❌ Error saving session:', saveResponse.status, errorText)
-          console.error('❌ Voice analysis data may not have been saved:', {
-            hadVoiceData: !!voiceAnalysisData,
-            sessionId
+        while (saveAttempts < maxSaveAttempts && !saveResponse?.ok) {
+          saveAttempts++
+          try {
+            saveResponse = await fetch('/api/session', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: sessionId,
+                transcript: transcript.length > 0 ? transcript : undefined, // Optional - already saved incrementally
+                duration_seconds: duration,
+                end_reason: endReason || 'manual',
+                voice_analysis: voiceAnalysisData || undefined
+              }),
+            })
+            
+            if (!saveResponse.ok && saveAttempts < maxSaveAttempts) {
+              console.warn(`⚠️ Session save attempt ${saveAttempts} failed, retrying...`, {
+                status: saveResponse.status,
+                sessionId
+              })
+              await new Promise(resolve => setTimeout(resolve, 500 * saveAttempts)) // Exponential backoff
+            }
+          } catch (error) {
+            console.error(`❌ Session save attempt ${saveAttempts} error:`, error)
+            if (saveAttempts < maxSaveAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 500 * saveAttempts))
+            }
+          }
+        }
+        
+        if (!saveResponse || !saveResponse.ok) {
+          const errorText = saveResponse ? await saveResponse.text().catch(() => 'Unknown error') : 'Request failed'
+          console.error('❌ CRITICAL: Failed to save session after retries:', {
+            status: saveResponse?.status || 'No response',
+            error: errorText,
+            attempts: saveAttempts,
+            sessionId,
+            hadVoiceData: !!voiceAnalysisData
           })
-          // Still redirect even if save fails - grading endpoint has retry logic
+          
+          // CRITICAL: Even if save fails, we need to ensure ended_at is set for grading to work
+          // Try a minimal update to just set ended_at
+          try {
+            console.log('🔄 Attempting minimal session finalization (ended_at only)...')
+            const minimalResponse = await fetch('/api/session', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: sessionId,
+                duration_seconds: duration,
+                end_reason: endReason || 'manual'
+              }),
+            })
+            
+            if (minimalResponse.ok) {
+              console.log('✅ Minimal session finalization succeeded')
+            } else {
+              console.error('❌ Minimal session finalization also failed:', await minimalResponse.text().catch(() => 'Unknown error'))
+            }
+          } catch (minimalError) {
+            console.error('❌ Error attempting minimal session finalization:', minimalError)
+          }
+          
+          // Still redirect - grading endpoint will handle missing data
+          console.warn('⚠️ Proceeding with redirect despite save failure - grading may need to retry')
         } else {
           const savedData = await saveResponse.json().catch(() => null)
           console.log('✅ Session data saved successfully', {

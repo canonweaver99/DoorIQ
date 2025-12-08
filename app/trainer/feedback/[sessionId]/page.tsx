@@ -61,9 +61,45 @@ export default function FeedbackPage() {
     }
   }, [sessionId, router])
 
-  const handleFeedbackComplete = () => {
-    // After feedback is submitted, redirect to analytics page
-    router.push(`/analytics/${sessionId}`)
+  const handleFeedbackComplete = async () => {
+    // Check if grading is complete before redirecting
+    try {
+      const supabase = createClient()
+      const { data: session, error: sessionError } = await supabase
+        .from('live_sessions')
+        .select('grading_status, sale_closed')
+        .eq('id', sessionId)
+        .single()
+
+      if (sessionError || !session) {
+        console.error('Error checking grading status:', sessionError)
+        // If we can't check, redirect to loading page to be safe
+        router.push(`/trainer/loading/${sessionId}`)
+        return
+      }
+
+      // Check if grading is 100% complete
+      // Grading is complete when: grading_status === 'complete' AND sale_closed is determined (not null)
+      const gradingComplete = session.grading_status === 'complete' && 
+                              session.sale_closed !== null && 
+                              session.sale_closed !== undefined
+
+      if (gradingComplete) {
+        // Grading is complete - go to analytics
+        router.push(`/analytics/${sessionId}`)
+      } else {
+        // Grading not complete yet - redirect to loading/grading stream page
+        console.log('Grading not complete yet, redirecting to grading stream page', {
+          gradingStatus: session.grading_status,
+          saleClosed: session.sale_closed
+        })
+        router.push(`/trainer/loading/${sessionId}`)
+      }
+    } catch (error) {
+      console.error('Error checking grading status:', error)
+      // On error, redirect to loading page to be safe
+      router.push(`/trainer/loading/${sessionId}`)
+    }
   }
 
   if (loading) {

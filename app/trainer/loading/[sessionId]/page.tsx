@@ -96,9 +96,9 @@ export default function LoadingPage() {
     router.push(`/analytics/${sessionId}`)
   }
 
-  // Check if this is a manager's first completed session and redirect accordingly
+  // Check if grading is already complete and handle first session redirects
   useEffect(() => {
-    const checkFirstSessionRedirect = async () => {
+    const checkGradingAndFirstSession = async () => {
       try {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
@@ -108,6 +108,77 @@ export default function LoadingPage() {
           return
         }
 
+        // First, check if grading is already complete
+        const { data: session } = await supabase
+          .from('live_sessions')
+          .select('grading_status, sale_closed')
+          .eq('id', sessionId)
+          .single()
+
+        // If grading is complete, redirect to analytics (or onboarding) immediately
+        if (session && session.grading_status === 'complete' && 
+            session.sale_closed !== null && session.sale_closed !== undefined) {
+          console.log('✅ Grading already complete, checking first session redirect...')
+          
+          // Get user role and check if they have completed any other sessions
+          const { data: userData } = await supabase
+            .from('users')
+            .select('role, onboarding_steps_completed')
+            .eq('id', user.id)
+            .single()
+
+          if (userData) {
+            const isManager = userData.role === 'manager' || userData.role === 'admin'
+            const stepsCompleted = userData.onboarding_steps_completed || {}
+            const hasInvitedTeam = stepsCompleted.invite_team === true
+
+            // Check if this is their first completed session (excluding current session)
+            const { count: completedSessionsCount } = await supabase
+              .from('live_sessions')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .neq('id', sessionId)
+              .not('grading_status', 'is', null)
+              .in('grading_status', ['complete', 'completed'])
+
+            const isFirstCompletedSession = (completedSessionsCount || 0) === 0
+
+            // If manager, first completed session, and hasn't invited team yet, redirect to invite page
+            if (isManager && isFirstCompletedSession && !hasInvitedTeam) {
+              console.log('👋 Manager first completed session - redirecting to invite page')
+              if (!stepsCompleted.first_session) {
+                await fetch('/api/onboarding/complete-step', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ step: 'first_session' }),
+                })
+              }
+              router.push(`/onboarding/invite-team`)
+              return
+            }
+
+            // If first completed session, redirect to book demo
+            if (isFirstCompletedSession) {
+              console.log('👋 First completed session - redirecting to book demo')
+              if (!stepsCompleted.first_session) {
+                await fetch('/api/onboarding/complete-step', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ step: 'first_session' }),
+                })
+              }
+              router.push(`/book-demo`)
+              return
+            }
+          }
+
+          // Not first session - redirect to analytics
+          console.log('✅ Grading complete, redirecting to analytics...')
+          router.push(`/analytics/${sessionId}`)
+          return
+        }
+
+        // Grading not complete yet - check first session for manager redirect logic
         // Get user role and check if they have completed any other sessions
         const { data: userData } = await supabase
           .from('users')
@@ -125,7 +196,6 @@ export default function LoadingPage() {
         const hasInvitedTeam = stepsCompleted.invite_team === true
 
         // Check if this is their first completed session (excluding current session)
-        // Use live_sessions table instead of sessions table
         const { count: completedSessionsCount } = await supabase
           .from('live_sessions')
           .select('*', { count: 'exact', head: true })
@@ -155,12 +225,12 @@ export default function LoadingPage() {
         // The redirect will happen in handleStreamingComplete after grading finishes
         setCheckedFirstSession(true)
       } catch (error) {
-        console.error('Error checking first session:', error)
+        console.error('Error checking grading and first session:', error)
         setCheckedFirstSession(true) // Continue with normal flow on error
       }
     }
 
-    checkFirstSessionRedirect()
+    checkGradingAndFirstSession()
   }, [router, sessionId])
 
   // If streaming mode is enabled and we've checked first session, show the streaming display

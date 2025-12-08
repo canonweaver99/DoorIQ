@@ -6,22 +6,30 @@ export async function POST(request: NextRequest) {
   try {
     const { sessionId, rating, improvementArea, feedbackText } = await request.json()
 
-    // Validate input
-    if (!sessionId || !rating || !improvementArea) {
+    // Validate input - only sessionId is required, all feedback fields are optional
+    if (!sessionId) {
       return NextResponse.json(
-        { error: 'Missing required fields: sessionId, rating, and improvementArea are required' },
+        { error: 'Missing required field: sessionId is required' },
         { status: 400 }
       )
     }
     
-    // Feedback text is optional
+    // All feedback fields are optional - user can skip feedback entirely
+    const ratingValue = rating && rating >= 1 && rating <= 10 ? rating : null
+    const improvementAreaValue = improvementArea?.trim() || null
     const feedbackTextValue = feedbackText?.trim() || null
 
-    if (rating < 1 || rating > 10) {
+    // If rating is provided, validate it
+    if (rating !== null && rating !== undefined && (rating < 1 || rating > 10)) {
       return NextResponse.json(
         { error: 'Rating must be between 1 and 10' },
         { status: 400 }
       )
+    }
+    
+    // If no feedback provided at all, that's okay - just return success
+    if (!ratingValue && !improvementAreaValue && !feedbackTextValue) {
+      return NextResponse.json({ success: true, message: 'No feedback provided' })
     }
 
     const supabase = await createServerSupabaseClient()
@@ -71,8 +79,8 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabase
       .from('live_sessions')
       .update({
-        user_feedback_rating: rating,
-        user_feedback_improvement_area: improvementArea,
+        user_feedback_rating: ratingValue,
+        user_feedback_improvement_area: improvementAreaValue,
         user_feedback_text: feedbackTextValue,
         user_feedback_submitted_at: new Date().toISOString()
       })
@@ -93,20 +101,22 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // Send email notification (fire-and-forget)
-    sendFeedbackEmail({
-      sessionId,
-      userName: userData?.full_name || 'User',
-      userEmail: userData?.email || user.email || 'Unknown',
-      agentName: session.agent_name || 'Unknown',
-      rating,
-      improvementArea,
-      feedbackText: feedbackTextValue || '',
-      overallScore: session.overall_score
-    }).catch((error) => {
-      // Log error but don't fail the request
-      console.error('Failed to send feedback email:', error)
-    })
+    // Send email notification (fire-and-forget) - only if feedback was provided
+    if (ratingValue || improvementAreaValue || feedbackTextValue) {
+      sendFeedbackEmail({
+        sessionId,
+        userName: userData?.full_name || 'User',
+        userEmail: userData?.email || user.email || 'Unknown',
+        agentName: session.agent_name || 'Unknown',
+        rating: ratingValue || 0,
+        improvementArea: improvementAreaValue || 'None specified',
+        feedbackText: feedbackTextValue || '',
+        overallScore: session.overall_score
+      }).catch((error) => {
+        // Log error but don't fail the request
+        console.error('Failed to send feedback email:', error)
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
@@ -132,8 +142,8 @@ async function sendFeedbackEmail({
   userName: string
   userEmail: string
   agentName: string
-  rating: number
-  improvementArea: string
+  rating: number | null
+  improvementArea: string | null
   feedbackText: string
   overallScore: number | null
 }) {
@@ -147,10 +157,11 @@ async function sendFeedbackEmail({
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dooriq.ai'
   const sessionUrl = `${appUrl}/analytics/${sessionId}`
   
-  const subject = `Session Feedback: ${userName} - Rating ${rating}/10`
+  const ratingDisplay = rating ? `${rating}/10` : 'No rating'
+  const subject = `Session Feedback: ${userName} - Rating ${ratingDisplay}`
   
   // Generate star rating display
-  const stars = '⭐'.repeat(rating) + '☆'.repeat(10 - rating)
+  const stars = rating ? '⭐'.repeat(rating) + '☆'.repeat(10 - rating) : 'No rating provided'
   
   const html = `
     <!DOCTYPE html>
@@ -178,11 +189,13 @@ async function sendFeedbackEmail({
           <div class="content">
             <p>A user has submitted feedback for their training session:</p>
             
+            ${rating ? `
             <div class="rating-display">
               <div style="font-size: 18px; color: #6b7280; margin-bottom: 10px;">Rating</div>
               <div style="font-size: 32px; font-weight: bold; color: #111827;">${rating}/10</div>
               <div style="font-size: 20px; margin-top: 10px;">${stars}</div>
             </div>
+            ` : ''}
             
             <div class="info-row">
               <div class="info-label">User</div>
@@ -206,10 +219,12 @@ async function sendFeedbackEmail({
             </div>
             ` : ''}
             
+            ${improvementArea ? `
             <div class="info-row">
               <div class="info-label">AI Agent Improvement Area</div>
               <div class="info-value">${improvementArea}</div>
             </div>
+            ` : ''}
             
             ${feedbackText ? `
             <div class="info-row">
