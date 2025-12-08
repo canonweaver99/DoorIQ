@@ -1225,9 +1225,8 @@ function TrainerPageContent() {
         console.error('❌ Error starting simple grading:', error)
       })
     
-    // Redirect to feedback page immediately - grading runs in background
-    console.log('🚀 Redirecting to feedback page (grading running in background)')
-    window.location.href = `/trainer/feedback/${sessionId}`
+    // Don't redirect here - let the door closing sequence handle the redirect
+    // This allows the door closing video to play before redirecting
   }, [])
 
   const restartSession = useCallback(async () => {
