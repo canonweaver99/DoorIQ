@@ -65,6 +65,19 @@ ALTER TABLE live_sessions ADD CONSTRAINT live_sessions_close_score_check
   CHECK (close_score IS NULL OR (close_score >= 0 AND close_score <= 100));
 
 -- Grading status constraint
+-- First, fix any invalid grading_status values before adding constraint
+UPDATE live_sessions
+SET grading_status = CASE
+  WHEN grading_status IS NULL THEN 'pending'
+  WHEN grading_status = '' THEN 'pending'
+  WHEN grading_status NOT IN ('pending', 'processing', 'complete', 'failed') THEN 'pending'
+  ELSE grading_status
+END
+WHERE grading_status IS NULL 
+   OR grading_status = ''
+   OR grading_status NOT IN ('pending', 'processing', 'complete', 'failed');
+
+-- Now add the constraint
 ALTER TABLE live_sessions DROP CONSTRAINT IF EXISTS live_sessions_grading_status_check;
 ALTER TABLE live_sessions ADD CONSTRAINT live_sessions_grading_status_check 
   CHECK (grading_status IN ('pending', 'processing', 'complete', 'failed'));
