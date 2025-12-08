@@ -374,14 +374,14 @@ function HeroSection() {
             {/* Headline */}
             <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
               <AnimatedText
-                text="Stop Losing Deals"
+                text="Unlimited AI Practice for"
                 textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
                 underlineClassName="hidden"
                 duration={0.036}
                 delay={0.014}
               />
               <AnimatedText
-                text="To Undertrained Reps"
+                text="DOOR-TO-DOOR SALES"
                 textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
                 underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                 underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
@@ -496,14 +496,14 @@ function HeroSection() {
               {/* Headline */}
               <div className="flex flex-col items-center gap-2 sm:gap-3 w-full max-w-full pb-2 px-4 sm:px-0">
                 <AnimatedText
-                  text="Stop Losing Deals"
+                  text="Unlimited AI Practice for"
                   textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-white text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full"
                   underlineClassName="hidden"
                   duration={0.036}
                   delay={0.014}
                 />
                 <AnimatedText
-                  text="To Undertrained Reps"
+                  text="DOOR-TO-DOOR SALES"
                   textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
                   underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                   underlineHeight="h-[2px] sm:h-[2px]"
