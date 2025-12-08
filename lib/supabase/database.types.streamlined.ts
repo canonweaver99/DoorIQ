@@ -34,7 +34,6 @@ export interface StreamlinedDatabase {
           needs_discovery_score: number | null
           
           // Additional scores
-          safety_score: number | null
           introduction_score: number | null
           listening_score: number | null
           

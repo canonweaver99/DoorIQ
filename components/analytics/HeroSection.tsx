@@ -158,10 +158,7 @@ export function HeroSection({
   
   // Calculate earnings breakdown
   const dealValue = dealDetails?.total_contract_value || dealDetails?.base_price || 0
-  const commissionEarned = earningsData?.commission_earned || 0
-  const bonusModifiers = earningsData?.bonus_modifiers || {}
-  const bonusValues = Object.values(bonusModifiers).filter((v): v is number => typeof v === 'number')
-  const totalBonus = bonusValues.reduce((sum, val) => sum + val, 0)
+  const totalEarned = earningsData?.total_earned || earningsData?.closed_amount || 0
   
   return (
     <motion.div
@@ -350,16 +347,10 @@ export function HeroSection({
                               <span className="text-slate-400 font-sans">Deal Value</span>
                               <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
                             </div>
-                            {commissionEarned > 0 && (
+                            {totalEarned > 0 && (
                               <div className="flex justify-between text-sm">
-                                <span className="text-slate-400 font-sans">Commission</span>
-                                <span className="text-emerald-400 font-medium font-sans">${commissionEarned.toFixed(2)}</span>
-                              </div>
-                            )}
-                            {totalBonus > 0 && (
-                              <div className="flex justify-between text-sm">
-                                <span className="text-slate-400 font-sans">Bonuses</span>
-                                <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
+                                <span className="text-slate-400 font-sans">Deal Value</span>
+                                <span className="text-emerald-400 font-medium font-sans">${totalEarned.toFixed(2)}</span>
                               </div>
                             )}
                           </div>

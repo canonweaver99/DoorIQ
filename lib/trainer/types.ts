@@ -77,7 +77,6 @@ export interface SessionAnalytics {
   overallScore: number
   rapportScore: number
   objectionHandlingScore: number
-  safetyScore: number
   closeEffectivenessScore: number
   timeToPrice: number | null
   timeToSafety: number | null

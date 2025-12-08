@@ -12,7 +12,6 @@ type LiveSession = {
   overall_score: number | null
   rapport_score: number | null
   objection_handling_score: number | null
-  safety_score: number | null
   close_effectiveness_score: number | null
   duration_seconds: number | null
   conversation_id: string | null
@@ -86,5 +85,6 @@ export function SessionMobileCard({ session, formatDuration }: SessionMobileCard
     </Link>
   )
 }
+
 
 

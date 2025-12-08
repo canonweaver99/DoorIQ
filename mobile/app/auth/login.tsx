@@ -31,17 +31,44 @@ export default function LoginScreen() {
     setError(null)
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      console.log('Attempting to sign in...')
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (signInError) throw signInError
+      if (signInError) {
+        console.error('Sign in error:', signInError)
+        throw signInError
+      }
 
-      router.replace('/dashboard')
+      // Verify session was created
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Session not created after sign in')
+      }
+
+      console.log('Sign in successful, session verified, navigating to dashboard...')
+      
+      // Wait a moment for auth state to update, then navigate
+      setTimeout(() => {
+        try {
+          if (router && typeof router.replace === 'function') {
+            router.replace('/dashboard')
+          } else {
+            console.error('Router not available or replace method missing')
+            setError('Sign in successful but navigation failed. Please restart the app.')
+            setLoading(false)
+          }
+        } catch (navError: any) {
+          console.error('Navigation error:', navError)
+          setError('Sign in successful but navigation failed: ' + (navError.message || 'Unknown error'))
+          setLoading(false)
+        }
+      }, 300)
     } catch (err: any) {
+      console.error('Login error:', err)
       setError(err.message || 'Failed to sign in')
-    } finally {
       setLoading(false)
     }
   }
@@ -51,15 +78,22 @@ export default function LoginScreen() {
     setError(null)
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithOAuth({
+      console.log('Attempting Google sign in...')
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: 'dooriq://auth/callback',
         },
       })
 
-      if (signInError) throw signInError
+      if (signInError) {
+        console.error('Google OAuth error:', signInError)
+        throw signInError
+      }
+      
+      console.log('Google OAuth initiated successfully')
     } catch (err: any) {
+      console.error('Google sign in error:', err)
       setError(err.message || 'Failed to sign in with Google')
       setLoading(false)
     }

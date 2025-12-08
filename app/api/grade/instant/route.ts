@@ -77,6 +77,43 @@ function analyzeTranscriptPatterns(transcript: any[]) {
       /credit or debit/i,
       /payment method/i,
       /how would you like to pay/i,
+      // Additional hard close patterns
+      /just get you signed up/i,
+      /get you signed up/i,
+      /sign you up/i,
+      /get you set up/i,
+      /just need your/i,
+      /need your name/i,
+      /need your phone/i,
+      /need your number/i,
+      /need your email/i,
+      /need your address/i,
+      /just need to get/i,
+      /can get you started/i,
+      /ready to get started/i,
+      /ready to move forward/i,
+      /ready to begin/i,
+      /let's do this/i,
+      /let's do it/i,
+      /let's get this done/i,
+      /let's make this happen/i,
+      /I can get you/i,
+      /I'll get you/i,
+      /we can get you/i,
+      // Soft close patterns
+      /are you ready to/i,
+      /are you interested in/i,
+      /want to get started/i,
+      /want to move forward/i,
+      /interested in/i,
+      /ready for/i,
+      /sounds good.*let's/i,
+      /if that works for you/i,
+      /if that sounds good/i,
+      /does that work/i,
+      /would that work/i,
+      /can we do/i,
+      /should we/i,
       // Urgency closes
       /best time to (service|treat)/i,
       /bug activity.*going to get worse/i,
@@ -270,7 +307,6 @@ function calculateInstantScores(data: {
   let discoveryScore = 70
   let objectionHandlingScore = 70
   let closingScore = 70
-  let safetyScore = 70
   
   // Rapport scoring (conversation balance, speaking pace)
   if (conversationBalance >= 40 && conversationBalance <= 60) {
@@ -318,12 +354,7 @@ function calculateInstantScores(data: {
     closingScore -= 20 // No close attempts
   }
   
-  // Safety scoring
-  if (instantAnalysis.safetyMentions > 0) {
-    safetyScore += 20 // Safety mentioned
-  } else {
-    safetyScore -= 10 // Safety not mentioned
-  }
+  // Safety score removed - no longer tracked
   
   // Penalties for filler words
   const fillerPenalty = Math.min(voiceMetrics.fillerWords * 2, 15)
@@ -340,11 +371,10 @@ function calculateInstantScores(data: {
   discoveryScore = Math.max(0, Math.min(100, discoveryScore))
   objectionHandlingScore = Math.max(0, Math.min(100, objectionHandlingScore))
   closingScore = Math.max(0, Math.min(100, closingScore))
-  safetyScore = Math.max(0, Math.min(100, safetyScore))
   
   // Calculate overall estimated score
   const estimatedScore = Math.round(
-    (rapportScore + discoveryScore + objectionHandlingScore + closingScore + safetyScore) / 5
+    (rapportScore + discoveryScore + objectionHandlingScore + closingScore) / 4
   )
   
   return {
@@ -352,8 +382,7 @@ function calculateInstantScores(data: {
     rapport: rapportScore,
     discovery: discoveryScore,
     objectionHandling: objectionHandlingScore,
-    closing: closingScore,
-    safety: safetyScore
+    closing: closingScore
   }
 }
 

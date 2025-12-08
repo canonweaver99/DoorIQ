@@ -130,7 +130,6 @@ export async function POST(req: NextRequest) {
           discovery_score: 0,
           objection_handling_score: 0,
           close_score: 0,
-          safety_score: 0,
           analytics: {
             ...session.analytics,
             inappropriate_language_detected: true,

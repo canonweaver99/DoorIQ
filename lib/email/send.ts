@@ -243,3 +243,40 @@ export async function sendWelcomeEmail(userEmail: string, fullName?: string) {
   }
 }
 
+/**
+ * Send manager promotion email when a user is promoted from rep to manager
+ */
+export async function sendManagerPromotionEmail(
+  userEmail: string,
+  fullName: string,
+  promotedBy?: string
+) {
+  try {
+    // Don't send if Resend is not configured
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⏭️  Skipping manager promotion email - Resend not configured')
+      return
+    }
+
+    const { getManagerPromotionEmailHtml, getManagerPromotionEmailText } = await import('./manager-promotion-email')
+    
+    const html = getManagerPromotionEmailHtml({
+      recipientName: fullName,
+      recipientEmail: userEmail,
+      promotedBy
+    })
+
+    await sendEmail({
+      to: userEmail,
+      subject: '🎉 Congratulations! You\'ve Been Promoted to Manager',
+      html,
+      from: 'DoorIQ <notifications@dooriq.ai>'
+    })
+
+    console.log(`✅ Manager promotion email sent to ${userEmail}`)
+  } catch (error) {
+    // Don't throw - this is a notification, shouldn't fail role update
+    console.error('❌ Failed to send manager promotion email:', error)
+  }
+}
+

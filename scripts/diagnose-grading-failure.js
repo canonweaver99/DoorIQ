@@ -111,8 +111,7 @@ async function diagnose(sessionId) {
   
   if (session.earnings_data) {
     console.log('\nEarnings Breakdown:')
-    console.log('  Commission:', session.earnings_data.commission_earned || 'N/A')
-    console.log('  Bonuses:', JSON.stringify(session.earnings_data.bonus_modifiers || {}))
+    console.log('  Total Earned:', session.earnings_data.total_earned || session.virtual_earnings || 'N/A')
     console.log('  Total:', session.earnings_data.total_earned || 'N/A')
   }
   

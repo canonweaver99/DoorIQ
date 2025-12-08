@@ -99,7 +99,12 @@ async function performDeepAnalysis(data: {
     return `[${index}] ${speaker}: ${text}`
   }).join('\n')
   
-  const prompt = `You are an expert door-to-door sales coach analyzing a sales conversation. Return ONLY valid JSON.
+  const prompt = `You are an expert door-to-door sales coach analyzing a sales conversation. Analyze the ENTIRE transcript carefully and determine:
+1. Did the sale close? (Was the customer committed to the service?)
+2. How much was the sale worth? (Extract price from conversation or use $1000 default)
+3. What should the overall score be? (0-100 based on conversation quality)
+
+Return ONLY valid JSON.
 
 CONTEXT:
 - User avg score: ${userHistory?.averageScore || 'N/A'}
@@ -117,106 +122,98 @@ ${topKeyMoments.map((m, i) => `${i + 1}. ${m.type}: "${m.transcript.slice(0, 60)
 FULL CONVERSATION TRANSCRIPT:
 ${fullTranscript}
 
-SCORING RULES (0-100):
-- Overall = average of rapport, discovery, objectionHandling, closing (weighted equally)
-- Rapport = connection and trust building
-- Discovery = quality of questions asked and listening
-- ObjectionHandling = how well objections were addressed (85+ if handled effectively)
-- Closing = commitment level (90-100=sale, 75-89=appointment, 60-74=trial, 40-59=weak, 0-39=none)
-- If sale_closed=true AND objections handled well: overall should be 90+
-- If sale_closed=true: closing score should be 90+
+ANALYSIS INSTRUCTIONS:
 
-SALE DETECTION (CRITICAL - BE THOROUGH):
-✅ sale_closed=true if ANY of these occur (customer must show clear commitment):
+Read the ENTIRE conversation transcript carefully. Look for:
 
-1. STRONG BUYING SIGNALS & AGREEMENTS:
-   - "sounds good", "that works", "I'm interested", "let's do it", "I'll take it", "count me in", "I'm ready"
-   - "when can you start", "what's next", "how do I sign up", "that makes sense", "I like that", "we need that", "definitely need"
-   - "yes" or "okay" after price discussion or service explanation
-   - "go ahead", "let's go", "sure", "alright", "fine", "okay" in response to service offer
-   - Agreement phrases: "I agree", "that's fine", "works for me", "I'm good with that"
+SALE DETECTION:
+- Did the customer commit to the service? Look for:
+  * Explicit agreement: "let's do it", "go ahead", "sounds good", "yes", "okay" after discussing service/price
+  * Information collection: Customer provides name, phone, email, address, or scheduling details AFTER agreeing
+  * Rep collecting customer info AFTER customer showed interest/agreement
+  * Spouse approval followed by agreement: "spouse said okay, let's do it"
+  * Scheduling commitment: Customer agrees to specific time/date for service
+- If customer said "let's do it" or "sounds good" AND then provided contact info or scheduling details = SALE CLOSED
+- If rep said "I can get you signed up" and customer agreed = SALE CLOSED
+- If customer checked with spouse then agreed = SALE CLOSED
 
-2. HARD COMMITMENTS & PAYMENT:
-   - Payment agreement or discussion: "how do I pay", "what's the payment", "credit or debit", "payment method"
-   - Contract signing language: "let's get started", "I'm ready to sign", "sign me up", "I'll sign"
-   - Explicit "yes" to service after price discussion
-   - Customer providing personal information for service (name, address, phone, email) AFTER agreeing to service
-   - Asking about installation/scheduling details AFTER agreeing: "when can you install", "what time", "how long does it take"
+PRICE EXTRACTION:
+- Look for prices mentioned in conversation: "$99/month", "$1200/year", "$299", etc.
+- If monthly price: multiply by 12 for annual value (or use contract length if specified)
+- If no price found: use $1000 as default base price
+- Calculate total_contract_value from the price found
 
-3. INFORMATION COLLECTION (STRONG CLOSE INDICATOR):
-   - Rep asking for customer's name, address, phone, email AFTER discussing service/price
-   - Rep asking "what's your name", "what's your address", "what's your phone number", "what's your email"
-   - Rep asking "anything else I should know", "special instructions", "gate code", "dog in yard"
-   - Rep asking about payment method: "credit or debit", "how would you like to pay"
-   - Customer providing contact info or payment info = SALE CLOSED
+OVERALL SCORE (0-100):
+- Base score on conversation quality:
+  * 90-100: Excellent - sale closed, great rapport, handled objections well, smooth close
+  * 80-89: Very good - sale closed or strong progress, good technique
+  * 70-79: Good - decent conversation, some areas for improvement
+  * 60-69: Average - basic conversation, missed opportunities
+  * 50-59: Below average - struggled with objections or closing
+  * 0-49: Poor - major issues, no sale, poor technique
+- If sale closed AND handled objections well: score should be 85+
+- If sale closed: score should be at least 80
+- Consider: rapport building, discovery questions, objection handling, closing technique, conversation flow
 
-4. APPOINTMENT SCHEDULING WITH SPECIFIC COMMITMENT:
-   - "I'm coming back", "I'll come back", "coming back tomorrow", "coming back at [time]"
-   - "see you tomorrow", "see you at [time]", specific time commitments after service discussion
-   - Rep scheduling specific installation/service time = SALE
-
-5. ASSUMPTIVE LANGUAGE ACCEPTED:
-   - Rep uses assumptive language ("when we install", "after we get started") and customer agrees or doesn't object
-   - Customer asks follow-up questions about service details AFTER agreeing = SALE
-
-❌ NOT a sale (be careful not to confuse these):
-- "I'll think about it" without commitment
-- Vague "sometime" or "later" without specific time
-- "maybe" without follow-up commitment
-- "I need to talk to my spouse/partner" without agreement
-- Customer ends conversation without agreement
-- Rep collects info BEFORE customer agrees = NOT a sale
-
-IMPORTANT: If rep collects customer information (name, address, phone, payment) AFTER customer shows interest/agreement, this is a CLOSED SALE.
-
-EARNINGS CALCULATION (MANDATORY if sale_closed=true):
-- virtual_earnings MUST be > 0 if sale_closed=true
-- Extract deal value from conversation:
-  * Look for prices mentioned: "$99/month", "$1200/year", "$299 initial + $89/month", etc.
-  * If monthly price given: total_contract_value = monthly_price × 12 (or contract_length if specified)
-  * If annual price given: total_contract_value = annual_price × years
-  * If one-time price: total_contract_value = that amount
-  * Default if no price found: use $1000 as base (standard door-to-door service)
-- FULL DEAL VALUE: virtual_earnings = total_contract_value (the FULL deal amount, NOT a commission percentage)
-- Bonuses (add to full deal value):
-  * quick_close: $25 if duration < 15 minutes AND sale closed
-  * upsell: $50 if premium package or add-ons mentioned
-  * retention: $30 if annual or multi-year contract (not just monthly)
-  * same_day_start: $20 if customer agreed to start today/tomorrow
-  * referral_secured: $25 if rep got referral/neighbor recommendation
-  * perfect_pitch: $50 if overall_score >= 90
-- total_earned = total_contract_value + sum of all applicable bonuses
-- virtual_earnings = total_earned (must match earnings_data.total_earned)
-- earnings_data.commission_rate should be 1.0 (100%) since full value is earned
-- earnings_data.commission_earned = total_contract_value (full value)
-
-CRITICAL: If sale_closed=true, virtual_earnings MUST be calculated and > 0. Never set sale_closed=true with virtual_earnings=0. The user earns the FULL deal value, not a percentage.
-
-Return JSON:
+Return JSON with your analysis:
 {
-  "overallAssessment": "1 sentence comparison",
-  "topStrengths": ["s1", "s2"],
-  "topImprovements": ["i1", "i2"],
-  "finalScores": {"overall": n, "rapport": n, "discovery": n, "objectionHandling": n, "closing": n, "safety": n},
-  "sale_closed": bool,
-  "return_appointment": bool,
-  "virtual_earnings": number,
-  "earnings_data": {"base_amount": n, "closed_amount": n, "commission_rate": 1.0, "commission_earned": n, "bonus_modifiers": {"quick_close": n, "upsell": n, "retention": n, "same_day_start": n, "referral_secured": n, "perfect_pitch": n}, "total_earned": n},
-  "deal_details": {"product_sold": "s", "service_type": "s", "base_price": n, "monthly_value": n, "contract_length": n, "total_contract_value": n, "payment_method": "s", "add_ons": [], "start_date": "s"},
-  "coachingPlan": {"immediateFixes": [{"issue": "i", "practiceScenario": "s"}], "rolePlayScenarios": [{"scenario": "s", "focus": "f"}]},
-  "feedback": {"strengths": ["s1 with specific quote"], "improvements": ["i1"], "specific_tips": ["t1"]},
-  "session_highlight": "One specific highlight with actual quote from conversation (1 line max, include quote)"
-}`
+  "sale_closed": true/false,  // Did the sale close? Be thorough - if customer agreed and info was collected, it's a sale
+  "total_contract_value": number,  // How much was the sale worth? Extract from conversation or use 1000
+  "overall_score": number,  // What should the overall score be (0-100)? Base on conversation quality
+  "overallAssessment": "1 sentence summary of the conversation",
+  "topStrengths": ["strength1", "strength2"],
+  "topImprovements": ["improvement1", "improvement2"],
+  "finalScores": {
+    "overall": number,  // Use the overall_score you determined above
+    "rapport": number,  // 0-100 based on connection and trust building
+    "discovery": number,  // 0-100 based on quality of questions and listening
+    "objectionHandling": number,  // 0-100 based on how objections were handled (85+ if handled well)
+    "closing": number  // 0-100 (90-100=sale, 75-89=appointment, 60-74=trial, 40-59=weak, 0-39=none)
+  },
+  "return_appointment": false,  // Usually false if sale_closed=true
+  "virtual_earnings": number,  // Same as total_contract_value (full deal value, not commission)
+  "earnings_data": {
+    "base_amount": number,  // Base price from conversation
+    "closed_amount": number,  // Same as total_contract_value
+    "total_earned": number  // Same as total_contract_value (full deal value)
+  },
+  "deal_details": {
+    "product_sold": "string",  // What product/service was sold?
+    "service_type": "string",  // Type of service
+    "base_price": number,  // Base price found in conversation
+    "monthly_value": number,  // Monthly value if applicable
+    "contract_length": number,  // Contract length in months
+    "total_contract_value": number,  // Total value (same as above)
+    "payment_method": "string",  // Payment method if mentioned
+    "add_ons": [],  // Any add-ons mentioned
+    "start_date": "string"  // Start date if mentioned
+  },
+  "coachingPlan": {
+    "immediateFixes": [{"issue": "issue", "practiceScenario": "scenario"}],
+    "rolePlayScenarios": [{"scenario": "scenario", "focus": "focus"}]
+  },
+  "feedback": {
+    "strengths": ["strength with quote"],
+    "improvements": ["improvement"],
+    "specific_tips": ["tip"]
+  },
+  "session_highlight": "One highlight with quote from conversation"
+}
+
+CRITICAL RULES:
+- If sale_closed=true, virtual_earnings MUST equal total_contract_value (at minimum $1000)
+- overall_score should reflect conversation quality - if sale closed and went well, score should be 85+
+- Be thorough in analyzing the transcript - don't miss sales that happened`
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Best model for quality
+      model: 'gpt-4o', // Use GPT-4o for best analysis quality
       messages: [
         { role: 'system', content: 'Sales coach. JSON only.' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.3, // Lower temperature for faster responses
-      max_tokens: 1000, // Reduced for speed
+      temperature: 0.3, // Lower temperature for consistent analysis
+      max_tokens: 2000, // Increased to allow thorough analysis
       response_format: { type: 'json_object' }
     })
     
@@ -227,6 +224,13 @@ Return JSON:
     
     const parsed = JSON.parse(content)
     
+    logger.info('GPT-4o analysis result', {
+      sale_closed: parsed.sale_closed,
+      total_contract_value: parsed.total_contract_value,
+      overall_score: parsed.overall_score,
+      hasFinalScores: !!parsed.finalScores
+    })
+    
     // Extract coaching plan from combined response
     const coachingPlan = parsed.coachingPlan || {
       immediateFixes: [],
@@ -234,44 +238,46 @@ Return JSON:
       rolePlayScenarios: []
     }
     
-    // CRITICAL VALIDATION: Ensure earnings are calculated if sale is closed
+    // Use GPT-4o's direct analysis - trust its judgment
     let saleClosed = parsed.sale_closed || false
-    let virtualEarnings = parsed.virtual_earnings || 0
+    const totalContractValue = parsed.total_contract_value || (saleClosed ? 1000 : 0)
+    
+    // Use GPT-4o's overall_score if provided, otherwise calculate from finalScores
+    const gptOverallScore = parsed.overall_score
+    const finalScores = parsed.finalScores || {}
+    
+    // If GPT provided overall_score, use it; otherwise use the calculated one
+    if (gptOverallScore !== undefined) {
+      finalScores.overall = gptOverallScore
+      logger.info('Using GPT-4o overall_score', { overall_score: gptOverallScore })
+    }
+    
+    // Calculate earnings from GPT's analysis
+    let virtualEarnings = saleClosed ? totalContractValue : 0
     let earningsData = parsed.earnings_data || {}
     let dealDetails = parsed.deal_details || {}
     
-    // If sale is closed but earnings are missing or zero, calculate them
-    if (saleClosed && (virtualEarnings === 0 || !earningsData.total_earned)) {
-      logger.warn('Sale closed but earnings not calculated, computing now', {
-        virtualEarnings,
-        hasEarningsData: !!earningsData.total_earned
+    // If sale is closed, ensure earnings are set
+    if (saleClosed && virtualEarnings === 0) {
+      virtualEarnings = totalContractValue
+      logger.warn('Sale closed but virtual_earnings was 0, using total_contract_value', {
+        totalContractValue,
+        saleClosed
       })
-      
-      // Calculate from deal_details if available - FULL DEAL VALUE (not commission)
-      const totalContractValue = dealDetails?.total_contract_value || dealDetails?.base_price || 1000
-      
-      // Calculate bonuses
-      const bonuses = earningsData?.bonus_modifiers || {}
-      const totalBonuses = Object.values(bonuses).reduce((sum: number, val: any) => sum + (Number(val) || 0), 0)
-      
-      // Full deal value + bonuses
-      const totalEarned = totalContractValue + totalBonuses
-      
-      // Update earnings data - commission_rate is 1.0 (100%) since full value is earned
+    }
+    
+    // Ensure earnings_data is populated if sale closed
+    if (saleClosed && (!earningsData.total_earned || earningsData.total_earned === 0)) {
       earningsData = {
         base_amount: dealDetails?.base_price || totalContractValue,
         closed_amount: totalContractValue,
-        commission_rate: 1.0, // Full value earned, not a percentage
-        commission_earned: totalContractValue, // Full deal value
-        bonus_modifiers: bonuses,
-        total_earned: totalEarned
+        total_earned: totalContractValue
       }
       
-      virtualEarnings = totalEarned
+      virtualEarnings = totalContractValue
       
-      logger.info('Calculated earnings for closed sale (full deal value)', {
+      logger.info('Populated earnings_data from GPT analysis', {
         totalContractValue,
-        totalBonuses,
         totalEarned: virtualEarnings
       })
     }
@@ -283,16 +289,20 @@ Return JSON:
     }
     
     // Return structured response matching old format
+    // Use GPT-4o's analysis directly - it analyzed the transcript and determined sale_closed, total_contract_value, and overall_score
     return {
       overallAssessment: parsed.overallAssessment || '',
       topStrengths: parsed.topStrengths || [],
       topImprovements: parsed.topImprovements || [],
-      finalScores: parsed.finalScores || {},
+      finalScores: finalScores, // Use GPT's overall_score if provided
       saleClosed,
       returnAppointment: parsed.return_appointment || false,
       virtualEarnings,
       earningsData,
-      dealDetails,
+      dealDetails: {
+        ...dealDetails,
+        total_contract_value: totalContractValue // Use GPT's analysis
+      },
       coachingPlan,
       feedback: parsed.feedback || {
         strengths: parsed.topStrengths || [],
@@ -319,23 +329,24 @@ async function generateCoachingPlan(deepAnalysis: any, userHistory: any) {
 }
 
 // Calculate final scores with adjustments
+// Prioritizes GPT-4o's analysis if provided
 function calculateFinalScores(deepAnalysis: any, instantMetrics: any) {
   const instantScores = instantMetrics?.estimatedScores || {}
-  
   const adjustments = deepAnalysis.scoreAdjustments || {}
   
+  // Use GPT-4o's scores if provided (it analyzed the transcript)
+  const gptScores = deepAnalysis.finalScores || {}
+  
   return {
-    overall: deepAnalysis.finalScores?.overall || instantMetrics?.estimatedScore || 0,
-    rapport: deepAnalysis.finalScores?.rapport || 
+    overall: gptScores.overall || deepAnalysis.finalScores?.overall || instantMetrics?.estimatedScore || 0,
+    rapport: gptScores.rapport || deepAnalysis.finalScores?.rapport || 
              (instantScores.rapport + (adjustments.rapport?.adjustment || 0)),
-    discovery: deepAnalysis.finalScores?.discovery || 
+    discovery: gptScores.discovery || deepAnalysis.finalScores?.discovery || 
                (instantScores.discovery + (adjustments.discovery?.adjustment || 0)),
-    objectionHandling: deepAnalysis.finalScores?.objectionHandling || 
+    objectionHandling: gptScores.objectionHandling || deepAnalysis.finalScores?.objectionHandling || 
                        (instantScores.objectionHandling + (adjustments.objectionHandling?.adjustment || 0)),
-    closing: deepAnalysis.finalScores?.closing || 
-             (instantScores.closing + (adjustments.closing?.adjustment || 0)),
-    safety: deepAnalysis.finalScores?.safety || 
-            (instantScores.safety + (adjustments.safety?.adjustment || 0))
+    closing: gptScores.closing || deepAnalysis.finalScores?.closing || 
+             (instantScores.closing + (adjustments.closing?.adjustment || 0))
   }
 }
 
@@ -458,8 +469,19 @@ export async function POST(req: NextRequest) {
       rolePlayScenarios: []
     }
     
-    // Step 4: Calculate final precise scores
-    const finalScores = calculateFinalScores(deepAnalysis, finalInstantMetrics)
+    // Step 4: Use GPT-4o's scores directly (it analyzed the transcript)
+    // Only calculate if GPT didn't provide scores
+    let finalScores = deepAnalysis.finalScores || {}
+    
+    // If GPT provided overall_score, use it; otherwise calculate
+    if (deepAnalysis.finalScores?.overall !== undefined) {
+      finalScores = deepAnalysis.finalScores
+      logger.info('Using GPT-4o finalScores directly', { overall: finalScores.overall })
+    } else {
+      // Fallback to calculation if GPT didn't provide scores
+      finalScores = calculateFinalScores(deepAnalysis, finalInstantMetrics)
+      logger.info('Calculated finalScores (GPT did not provide)', { overall: finalScores.overall })
+    }
     
     // Step 5: Compare to history
     const comparativePerformance = compareToHistory(userHistory, finalScores)
@@ -476,11 +498,96 @@ export async function POST(req: NextRequest) {
     
     // Step 7: Update with complete analysis
     // Build update object step by step to avoid issues
-    const saleClosed = deepAnalysis.saleClosed || false
+    let saleClosed = deepAnalysis.saleClosed || false
     const returnAppointment = deepAnalysis.returnAppointment || false
     let virtualEarnings = saleClosed ? (deepAnalysis.virtualEarnings || 0) : 0
     let earningsData = deepAnalysis.earningsData || {}
     const dealDetails = deepAnalysis.dealDetails || {}
+    
+    // FALLBACK DETECTION: Re-evaluate if sale wasn't detected but evidence suggests it should be
+    if (!saleClosed && transcript && transcript.length > 0) {
+      const closeAttempts = instantMetrics?.closeAttempts || 0
+      const transcriptText = transcript.map((t: any) => (t.text || '').toLowerCase()).join(' ')
+      
+      // Check for buying signals
+      const buyingSignals = [
+        "let's go ahead and do it",
+        "let's do it",
+        "go ahead",
+        "sounds good",
+        "that works",
+        "i'm ready",
+        "let's go",
+        "sure",
+        "alright",
+        "okay",
+        "yes"
+      ]
+      
+      const hasBuyingSignal = buyingSignals.some(signal => transcriptText.includes(signal))
+      
+      // Check for information collection patterns
+      const infoCollectionPatterns = [
+        /my (name|phone|number|email|address) is/i,
+        /call me/i,
+        /I'm [A-Z]/i,
+        /my number is/i,
+        /tomorrow at/i,
+        /tomorrow works/i,
+        /[0-9]{3}.*[0-9]{3}.*[0-9]{4}/i, // Phone number pattern
+        /@.*\.(com|net|org)/i // Email pattern
+      ]
+      
+      const hasInfoCollection = infoCollectionPatterns.some(pattern => pattern.test(transcriptText))
+      
+      // Check for rep asking for info after agreement
+      const repAskingForInfo = [
+        /(just )?need your (name|phone|number|email|address)/i,
+        /what's your (name|phone|number|email|address)/i,
+        /what is your (name|phone|number|email|address)/i,
+        /can get you signed up/i,
+        /get you signed up/i,
+        /get you set up/i
+      ]
+      
+      const repAskedForInfo = repAskingForInfo.some(pattern => pattern.test(transcriptText))
+      
+      // Check for spouse approval followed by agreement
+      const spouseApprovalPattern = /(spouse|wife|husband|partner).*(said|okay|ok|fine|good).*(let's|go ahead|do it|sounds good)/i
+      const hasSpouseApproval = spouseApprovalPattern.test(transcriptText)
+      
+      // Fallback conditions: If we have close attempts OR buying signals AND info collection, mark as sale
+      if ((closeAttempts > 0 || hasBuyingSignal || repAskedForInfo) && (hasInfoCollection || hasSpouseApproval)) {
+        logger.warn('Fallback detection: Sale should be marked as closed', {
+          sessionId,
+          closeAttempts,
+          hasBuyingSignal,
+          hasInfoCollection,
+          repAskedForInfo,
+          hasSpouseApproval,
+          originalSaleClosed: saleClosed
+        })
+        
+        saleClosed = true
+        
+        // If earnings weren't calculated, set minimum
+        if (virtualEarnings === 0) {
+          const totalContractValue = dealDetails?.total_contract_value || dealDetails?.base_price || 1000
+          virtualEarnings = totalContractValue
+          
+          if (!earningsData.total_earned) {
+            earningsData = {
+              base_amount: dealDetails?.base_price || totalContractValue,
+              closed_amount: totalContractValue,
+              commission_rate: 1.0,
+              commission_earned: totalContractValue,
+              bonus_modifiers: {},
+              total_earned: totalContractValue
+            }
+          }
+        }
+      }
+    }
     
     // Final safety check: If sale is closed, earnings MUST be > 0
     if (saleClosed && virtualEarnings === 0) {
@@ -494,9 +601,6 @@ export async function POST(req: NextRequest) {
         earningsData = {
           base_amount: dealDetails?.base_price || totalContractValue,
           closed_amount: totalContractValue,
-          commission_rate: 1.0, // Full value earned
-          commission_earned: totalContractValue, // Full deal value
-          bonus_modifiers: {},
           total_earned: totalContractValue
         }
       }
@@ -529,10 +633,7 @@ export async function POST(req: NextRequest) {
       grading_version: '2.0'
     }
     
-    // Only add safety_score if column exists (it might not in all schemas)
-    if (finalScores.safety !== undefined) {
-      updateData.safety_score = Math.round(finalScores.safety)
-    }
+    // Safety score removed - no longer tracked
     
     // Merge analytics carefully - preserve voice_analysis and other existing data
     const newAnalytics = {

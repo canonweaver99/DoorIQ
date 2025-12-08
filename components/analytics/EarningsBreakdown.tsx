@@ -2,21 +2,9 @@
 
 import { motion } from 'framer-motion'
 
-interface BonusModifiers {
-  quick_close?: number
-  upsell?: number
-  retention?: number
-  same_day_start?: number
-  referral_secured?: number
-  perfect_pitch?: number
-}
-
 interface EarningsData {
   base_amount?: number
   closed_amount?: number
-  commission_rate?: number
-  commission_earned?: number
-  bonus_modifiers?: BonusModifiers
   total_earned?: number
 }
 
@@ -59,17 +47,7 @@ export default function EarningsBreakdown({
     )
   }
 
-  const bonuses = earningsData.bonus_modifiers || {}
-  const totalBonuses = Object.values(bonuses).reduce((sum, val) => sum + (val || 0), 0)
-  
-  const bonusItems = [
-    { key: 'quick_close', label: '⚡ Quick Close', description: 'Closed in under 15 min' },
-    { key: 'upsell', label: '📈 Upsell', description: 'Premium package/add-ons' },
-    { key: 'retention', label: '🔒 Retention', description: 'Annual/multi-year contract' },
-    { key: 'same_day_start', label: '🚀 Same Day', description: 'Starts today/tomorrow' },
-    { key: 'referral_secured', label: '👥 Referral', description: 'Got neighbor recommendation' },
-    { key: 'perfect_pitch', label: '⭐ Perfect Pitch', description: 'Overall score 90+' },
-  ]
+  // Bonus modifiers removed - no longer tracked
 
   return (
     <div className="space-y-6">
@@ -171,7 +149,7 @@ export default function EarningsBreakdown({
         </motion.div>
       )}
 
-      {/* Commission Breakdown */}
+      {/* Earnings Breakdown */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -186,57 +164,14 @@ export default function EarningsBreakdown({
         </h3>
         
         <div className="space-y-3">
-          {/* Deal Value (Full Amount) */}
-          {earningsData.commission_earned !== undefined && (
+          {/* Deal Value */}
+          {earningsData.closed_amount !== undefined && (
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">Deal Value</span>
-                {earningsData.commission_rate && earningsData.commission_rate >= 1.0 && (
-                  <span className="text-xs text-gray-500">
-                    (Full deal amount)
-                  </span>
-                )}
-              </div>
+              <span className="text-sm text-gray-400">Deal Value</span>
               <span className="text-sm font-medium text-white">
-                ${earningsData.commission_earned.toFixed(2)}
+                ${earningsData.closed_amount.toFixed(2)}
               </span>
             </div>
-          )}
-          
-          {/* Bonuses */}
-          {totalBonuses > 0 && (
-            <>
-              <div className="border-t border-gray-700/50 pt-3">
-                <p className="text-xs text-gray-500 mb-3">Performance Bonuses</p>
-                <div className="space-y-2">
-                  {bonusItems.map(({ key, label, description }) => {
-                    const value = bonuses[key as keyof BonusModifiers]
-                    if (!value || value === 0) return null
-                    
-                    return (
-                      <div key={key} className="flex items-center justify-between">
-                        <div>
-                          <span className="text-sm text-white">{label}</span>
-                          <p className="text-xs text-gray-500">{description}</p>
-                        </div>
-                        <span className="text-sm font-medium text-green-400">
-                          +${value.toFixed(2)}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-              
-              <div className="border-t border-gray-700/50 pt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-300">Total Bonuses</span>
-                  <span className="text-sm font-semibold text-green-400">
-                    +${totalBonuses.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </>
           )}
           
           {/* Total */}

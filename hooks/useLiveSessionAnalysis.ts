@@ -213,7 +213,12 @@ function detectClosingBehavior(text: string): { type: 'trial_close' | 'direct_cl
   const trialClosePatterns = [
     'does that make sense', 'can you see how', 'would that work', 'does that sound',
     'make sense', 'sound good', 'work for you', 'see how this helps',
-    'does this help', 'would this work', 'can you see', 'does that help'
+    'does this help', 'would this work', 'can you see', 'does that help',
+    // Additional trial close patterns
+    'are you ready to', 'are you interested in', 'want to move forward',
+    'interested in', 'ready for', 'sounds good let\'s', 'if that works for you',
+    'if that sounds good', 'does that work', 'would that work', 'can we do',
+    'should we'
   ]
   
   // Direct close patterns
@@ -221,7 +226,15 @@ function detectClosingBehavior(text: string): { type: 'trial_close' | 'direct_cl
     'can we schedule', 'let\'s get you started', 'ready to move forward',
     'let\'s set this up', 'can we get started', 'shall we proceed',
     'want to get started', 'ready to begin', 'let\'s move forward',
-    'can we book', 'schedule an appointment', 'set up installation'
+    'can we book', 'schedule an appointment', 'set up installation',
+    // Additional direct close patterns
+    'just get you signed up', 'get you signed up', 'sign you up',
+    'get you set up', 'just need your', 'need your name', 'need your phone',
+    'need your number', 'need your email', 'need your address',
+    'just need to get', 'can get you started', 'ready to get started',
+    'let\'s do this', 'let\'s do it', 'let\'s get this done',
+    'let\'s make this happen', 'I can get you', 'I\'ll get you',
+    'we can get you', 'I can just get you'
   ]
   
   // Assumptive language patterns

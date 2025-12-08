@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { sendManagerPromotionEmail } from '@/lib/email/send'
 
 export async function PATCH(
   request: NextRequest,
@@ -41,7 +42,7 @@ export async function PATCH(
     // Verify member belongs to same organization
     const { data: member } = await supabase
       .from('users')
-      .select('organization_id, role')
+      .select('organization_id, role, email, full_name')
       .eq('id', id)
       .single()
 
@@ -60,6 +61,17 @@ export async function PATCH(
       )
     }
 
+    // Check if this is a promotion to manager (from rep)
+    const isPromotionToManager = member.role === 'rep' && role === 'manager'
+
+    // Get promoter's name for email
+    const { data: promoterData } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', user.id)
+      .single()
+    const promotedBy = promoterData?.full_name || undefined
+
     // Update role
     const { error: updateError } = await supabase
       .from('users')
@@ -68,6 +80,14 @@ export async function PATCH(
 
     if (updateError) {
       throw updateError
+    }
+
+    // Send promotion email if user was promoted to manager
+    if (isPromotionToManager && member.email && member.full_name) {
+      sendManagerPromotionEmail(member.email, member.full_name, promotedBy).catch(error => {
+        console.error('Failed to send manager promotion email:', error)
+        // Don't fail the request if email fails
+      })
     }
 
     return NextResponse.json({ success: true })

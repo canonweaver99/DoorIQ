@@ -123,7 +123,6 @@ function generateAnalytics(scores) {
       improvement_notes: line.effectiveness === 'poor' ? 'Could be more engaging' : null
     })),
     scores: {
-      safety: scores.safety_score,
       introduction: scores.introduction_score,
       listening: scores.listening_score,
       speaking_pace: randomInt(70, 90),
@@ -242,7 +241,6 @@ async function createSessionForUser(userId, userEmail, sessionNumber) {
     objection_handling_score: objectionScore,
     close_effectiveness_score: closingScore,
     discovery_score: discoveryScore,
-    safety_score: safetyScore,
     introduction_score: introductionScore,
     listening_score: listeningScore,
     virtual_earnings: virtualEarnings,
@@ -253,7 +251,6 @@ async function createSessionForUser(userId, userEmail, sessionNumber) {
       discovery_score: discoveryScore,
       objection_handling_score: objectionScore,
       close_effectiveness_score: closingScore,
-      safety_score: safetyScore,
       introduction_score: introductionScore,
       listening_score: listeningScore
     })

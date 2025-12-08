@@ -305,22 +305,9 @@ const gradingResponseSchema: JsonSchema = {
       properties: {
         base_amount: { type: 'number' },
         closed_amount: { type: 'number' },
-        commission_rate: { type: 'number' },
-        commission_earned: { type: 'number' },
-        bonus_modifiers: {
-          type: 'object',
-          additionalProperties: false,
-          properties: {
-            quick_close: { type: 'number' },
-            upsell: { type: 'number' },
-            retention: { type: 'number' },
-            same_day_start: { type: 'number' },
-            referral_secured: { type: 'number' },
-            perfect_pitch: { type: 'number' }
-          }
-        },
         total_earned: { type: 'number' }
-      }
+      },
+      required: ['total_earned']
     },
     deal_details: {
       type: 'object',

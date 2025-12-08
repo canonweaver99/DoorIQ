@@ -134,13 +134,7 @@ export default function ScoresViewV2({
     { name: 'Closing', score: scores.closing, icon: HandshakeIcon, color: '#8b5cf6' }
   ]
 
-  const bonusModifiers = earningsData?.bonus_modifiers as Record<string, unknown> | undefined
-  const bonusModifierValues = Array.isArray(bonusModifiers)
-    ? bonusModifiers.filter((value): value is number => typeof value === 'number')
-    : bonusModifiers
-      ? Object.values(bonusModifiers).filter((value): value is number => typeof value === 'number')
-      : []
-  const totalBonus = bonusModifierValues.reduce((sum, value) => sum + value, 0)
+  // Bonus modifiers removed - no longer tracked
 
   const normalizedTranscript = fullTranscript.map((entry) => ({
     speaker: entry.speaker,
@@ -385,14 +379,8 @@ export default function ScoresViewV2({
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400 font-sans">Deal Value</span>
-                      <span className="text-emerald-400 font-medium font-sans">${earningsData?.commission_earned?.toFixed(2) || '0.00'}</span>
+                      <span className="text-emerald-400 font-medium font-sans">${earningsData?.closed_amount?.toFixed(2) || earningsData?.total_earned?.toFixed(2) || '0.00'}</span>
                     </div>
-                    {bonusModifierValues.length > 0 && bonusModifierValues.some((value) => value > 0) && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-400 font-sans">Bonuses</span>
-                        <span className="text-yellow-400 font-medium font-sans">${totalBonus.toFixed(2)}</span>
-                      </div>
-                    )}
                     <div className="pt-3 border-t border-emerald-500/20 flex justify-between">
                       <span className="text-white font-semibold font-space">Total Virtual Earnings</span>
                       <span className="text-emerald-400 font-bold text-lg font-space">${virtualEarnings.toFixed(2)}</span>
