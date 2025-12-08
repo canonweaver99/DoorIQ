@@ -732,18 +732,41 @@ export async function POST(req: NextRequest) {
     }
     
     const updateData: any = {
+      // Core scores (GPT finalScores)
       overall_score: finalScores.overall,
       rapport_score: Math.round(finalScores.rapport),
       discovery_score: Math.round(finalScores.discovery),
       objection_handling_score: Math.round(finalScores.objectionHandling),
       close_score: Math.round(finalScores.closing),
+      final_scores: finalScores, // Store as JSONB too
+      
+      // Sale/Deal status (GPT outputs)
       sale_closed: saleClosed,
       return_appointment: returnAppointment,
       virtual_earnings: virtualEarnings,
+      total_contract_value: dealDetails?.total_contract_value || (saleClosed ? virtualEarnings : null),
+      
+      // GPT text outputs
+      overall_assessment: deepAnalysis.overallAssessment || '',
+      top_strengths: deepAnalysis.topStrengths || [],
+      top_improvements: deepAnalysis.topImprovements || [],
+      session_highlight: deepAnalysis.sessionHighlight || deepAnalysis.feedback?.strengths?.[0] || '',
+      
+      // GPT JSONB outputs
       earnings_data: earningsData,
       deal_details: dealDetails,
+      coaching_plan: coachingPlan,
+      feedback_data: deepAnalysis.feedback || {
+        strengths: deepAnalysis.topStrengths || [],
+        improvements: deepAnalysis.topImprovements || [],
+        specific_tips: []
+      },
+      
+      // Grading metadata
       grading_status: 'complete',
-      grading_version: '2.0'
+      grading_version: '2.0',
+      graded_at: new Date().toISOString(),
+      grading_audit: gradingAudit
     }
     
     // CRITICAL: Ensure ended_at is set so the trigger can fire and update user earnings
