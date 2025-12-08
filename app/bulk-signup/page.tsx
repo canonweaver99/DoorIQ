@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AnimatedBackground } from '@/components/ui/animated-background'
@@ -12,7 +12,7 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
   </div>
 )
 
-export default function BulkSignupPage() {
+function BulkSignupPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite')
@@ -310,5 +310,17 @@ export default function BulkSignupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function BulkSignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    }>
+      <BulkSignupPageContent />
+    </Suspense>
   )
 }
