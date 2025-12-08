@@ -343,10 +343,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
     }
 
-    logger.info('Legacy /api/grade/session called - redirecting to orchestration', { sessionId })
+    logger.info('Legacy /api/grade/session called - redirecting to simple grading', { sessionId })
     
-    // Call the new orchestration endpoint internally
-    const orchestrationResponse = await fetch(`${request.nextUrl.origin}/api/grade/orchestrate`, {
+    // Call the simple grading endpoint internally
+    const gradingResponse = await fetch(`${request.nextUrl.origin}/api/grade/simple`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -354,17 +354,17 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ sessionId })
     })
     
-    if (orchestrationResponse.ok) {
-      const data = await orchestrationResponse.json()
+    if (gradingResponse.ok) {
+      const data = await gradingResponse.json()
       return NextResponse.json({
         ...data,
-        message: 'Grading completed via new orchestration system'
+        message: 'Grading completed via simple grading system'
       })
     } else {
-      const error = await orchestrationResponse.text()
-      logger.error('Orchestration failed from legacy endpoint', { sessionId, error })
+      const error = await gradingResponse.text()
+      logger.error('Simple grading failed from legacy endpoint', { sessionId, error })
       return NextResponse.json(
-        { error: 'Grading failed - please use /api/grade/orchestrate directly' },
+        { error: 'Grading failed - please use /api/grade/simple directly' },
         { status: 500 }
       )
     }

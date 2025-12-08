@@ -185,10 +185,10 @@ export async function POST(request: NextRequest) {
       return new Response('Session ID required', { status: 400 })
     }
 
-    logger.info('Legacy /api/grade/stream called - redirecting to orchestration', { sessionId })
+    logger.info('Legacy /api/grade/stream called - redirecting to simple grading', { sessionId })
     
-    // Call the new orchestration endpoint internally
-    const orchestrationResponse = await fetch(`${request.nextUrl.origin}/api/grade/orchestrate`, {
+    // Call the simple grading endpoint internally
+    const orchestrationResponse = await fetch(`${request.nextUrl.origin}/api/grade/simple`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
     } else {
       const error = await orchestrationResponse.text()
       logger.error('Orchestration failed from legacy streaming endpoint', { sessionId, error })
-      return new Response('Grading failed - please use /api/grade/orchestrate directly', { status: 500 })
+      return new Response('Grading failed - please use /api/grade/simple directly', { status: 500 })
     }
   } catch (error: any) {
     logger.error('Error in legacy streaming endpoint', error)

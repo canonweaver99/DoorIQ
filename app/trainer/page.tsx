@@ -1202,12 +1202,12 @@ function TrainerPageContent() {
   const triggerGradingAfterDoorClose = useCallback(async (sessionId: string) => {
     console.log('🎯 Triggering automatic grading for session:', sessionId)
     
-    // Wait briefly for transcript to be saved to database (reduced from 2s to 1s)
+    // Wait briefly for transcript to be saved to database
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // Fire new phased grading orchestration in background - don't wait for it
+    // Fire simple grading in background - don't wait for it
     // Grading runs in background while user provides feedback
-    fetch('/api/grade/orchestrate', {
+    fetch('/api/grade/simple', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId }),
@@ -1215,14 +1215,14 @@ function TrainerPageContent() {
       .then(async response => {
         if (response.ok) {
           const data = await response.json().catch(() => ({}))
-          console.log('✅ Phased grading orchestration started in background', data.phases)
+          console.log('✅ Simple grading started in background', data)
         } else {
           const errorData = await response.json().catch(() => ({}))
-          console.error('❌ Grading orchestration failed:', response.status, errorData)
+          console.error('❌ Simple grading failed:', response.status, errorData)
         }
       })
       .catch(error => {
-        console.error('❌ Error starting grading orchestration:', error)
+        console.error('❌ Error starting simple grading:', error)
       })
     
     // Redirect to feedback page immediately - grading runs in background
@@ -1622,7 +1622,7 @@ function TrainerPageContent() {
         // Trigger grading in background for manual ends
         if (!skipRedirect) {
           // Fire grading in background - don't wait for it
-          fetch('/api/grade/orchestrate', {
+          fetch('/api/grade/simple', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionId }),
@@ -1630,7 +1630,7 @@ function TrainerPageContent() {
             .then(async response => {
               if (response.ok) {
                 const data = await response.json().catch(() => ({}))
-                console.log('✅ Grading orchestration started in background', data.phases)
+                console.log('✅ Simple grading started in background', data)
               } else {
                 const errorData = await response.json().catch(() => ({}))
                 console.error('❌ Grading orchestration failed:', response.status, errorData)

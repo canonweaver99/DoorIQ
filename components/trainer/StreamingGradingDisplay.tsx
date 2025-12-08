@@ -228,8 +228,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       const abortController = new AbortController()
       abortControllerRef.current = abortController
       
-      // Use new orchestration endpoint
-      const response = await fetch('/api/grade/orchestrate', {
+      // Use simple grading endpoint
+      const response = await fetch('/api/grade/simple', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: currentSessionId }),
@@ -249,56 +249,13 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       }
       
       setConnectionState('connected')
-      const orchestrationData = await response.json()
+      const gradingData = await response.json()
       
-      // Handle orchestration response phases
-      // IMPORTANT: Sections must complete in sequential order
-      if (orchestrationData.phases) {
-        const initialCompletedSections = new Set<string>()
-        
-        // Phase 1: Instant Metrics - marks session_summary as complete (first in order)
-        if (orchestrationData.phases.instant?.status === 'complete') {
-          setStatus('Instant metrics calculated')
-          initialCompletedSections.add('session_summary')
-          setSections(prev => ({
-            ...prev,
-            session_summary: {
-              total_lines: orchestrationData.phases.instant?.metrics?.totalLines || 0
-            }
-          }))
-          
-          // If we have instant scores, mark scores section as complete too (second in order)
-          if (orchestrationData.phases.instant?.scores) {
-            initialCompletedSections.add('scores')
-            setSections(prev => ({
-              ...prev,
-              scores: orchestrationData.phases.instant.scores
-            }))
-          }
-        }
-        
-        // Phase 2: Key Moments - prepare data but don't mark complete yet (must wait for sequential order)
-        if (orchestrationData.phases.keyMoments?.status === 'complete') {
-          setStatus('Key moments detected, analyzing performance...')
-          setSections(prev => ({
-            ...prev,
-            key_moments: orchestrationData.phases.keyMoments.keyMoments,
-            objection_analysis: {
-              total_objections: orchestrationData.phases.keyMoments.keyMoments?.filter((m: any) => m.type === 'objection').length || 0
-            }
-          }))
-        }
-        
-        // Update completed sections and current section based on sequential order
-        setCompletedSections(initialCompletedSections)
-        const nextSection = getNextSection(initialCompletedSections)
-        setCurrentSection(nextSection)
-        
-        // Phase 3: Deep Analysis (polling) - but don't wait for it
-        setStatus('Running deep analysis...')
-        
-        // Poll for completion and track section progress
-        const pollForCompletion = async () => {
+      // Simple grading started - now poll for completion
+      setStatus('AI is analyzing your conversation...')
+      
+      // Poll for completion and track section progress
+      const pollForCompletion = async () => {
           // Add timeout to prevent infinite polling
           const MAX_POLL_TIME = 5 * 60 * 1000 // 5 minutes maximum
           const startPollTime = Date.now()
@@ -510,14 +467,7 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                   return
                 }
                 
-                // Fallback: Check if Phase 1+2 are done (for backwards compatibility)
-                const hasPhase1And2 = session.overall_score && (
-                  (newCompletedSections.has('session_summary') && newCompletedSections.has('scores')) ||
-                  session.grading_status === 'moments_complete' ||
-                  session.key_moments?.length > 0
-                )
-                
-                // Only mark complete if deep analysis is done AND sale status is determined
+                // Only mark complete if grading is done AND sale status is determined
                 if (deepAnalysisComplete || (session.grading_status === 'completed' && saleClosed !== null && saleClosed !== undefined)) {
                   setIsComplete(true)
                   setStatus('Grading complete!')
@@ -560,13 +510,11 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
                   }
                 }
                 
-                // Update status based on grading_status and section progress
-                if (session.grading_status === 'instant_complete' || newCompletedSections.has('session_summary')) {
-                  setStatus('Instant metrics ready, detecting key moments...')
-                } else if (session.grading_status === 'moments_complete' || session.key_moments?.length > 0) {
-                  setStatus('Key moments detected, running deep analysis...')
-                } else if (newCompletedSections.size > 0) {
-                  setStatus(`Analyzing ${newCompletedSections.size} of ${Object.keys(SECTION_LABELS).length} sections...`)
+                // Update status based on grading progress
+                if (newCompletedSections.size > 0) {
+                  setStatus(`Analyzing your conversation... ${newCompletedSections.size} of ${Object.keys(SECTION_LABELS).length} sections complete`)
+                } else {
+                  setStatus('AI is analyzing your conversation...')
                 }
               }
             } catch (pollError) {
@@ -595,17 +543,8 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
           }
         }
         
-        pollForCompletion()
-      } else {
-        // No phases - assume complete
-        setIsComplete(true)
-        setStatus('Grading complete!')
-        setTimeout(() => {
-          if (currentSessionId === sessionId) {
-            onComplete()
-          }
-        }, 1500)
-      }
+      // Start polling for completion (works for both simple and phased responses)
+      pollForCompletion()
 
       } catch (err: any) {
         // Ignore abort errors
