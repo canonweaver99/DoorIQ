@@ -251,6 +251,13 @@ export default function StreamingGradingDisplay({ sessionId, onComplete }: Strea
       setConnectionState('connected')
       const gradingData = await response.json()
       
+      // Log grading start for debugging
+      console.log('✅ Simple grading started', { 
+        sessionId: currentSessionId,
+        status: gradingData.status,
+        sale_closed: gradingData.sale_closed 
+      })
+      
       // Simple grading started - now poll for completion
       setStatus('AI is analyzing your conversation...')
       
