@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
-import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award, RefreshCw, Users, ArrowRight, User, DollarSign, Target, BarChart3 } from 'lucide-react'
+import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Award, RefreshCw, ArrowRight, User, DollarSign, Target, BarChart3 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 
 type LeaderboardUser = Database['public']['Tables']['users']['Row'] & {
   rank: number
@@ -101,7 +100,6 @@ export default function LeaderboardPage() {
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [userRole, setUserRole] = useState<string>('')
-  const [teamMemberCount, setTeamMemberCount] = useState<number>(0)
   const [previousLeaderboard, setPreviousLeaderboard] = useState<LeaderboardUser[]>([])
   const leaderboardRef = useRef<LeaderboardUser[]>([])
   const supabaseRef = useRef(createClient())
@@ -201,31 +199,6 @@ export default function LeaderboardPage() {
       userTeamId = userProfile?.team_id || null
       userOrgId = userProfile?.organization_id || null
       setUserRole(userProfile?.role || '')
-      
-      // Count team members if user is manager/admin
-      if (userProfile?.role === 'manager' || userProfile?.role === 'admin') {
-        if (userOrgId) {
-          // Count reps in organization
-          const { count } = await supabase
-            .from('users')
-            .select('*', { count: 'exact', head: true })
-            .eq('organization_id', userOrgId)
-            .eq('role', 'rep')
-            .eq('is_active', true)
-          
-          setTeamMemberCount(count || 0)
-        } else if (userTeamId) {
-          // Fallback to team_id if organization_id not available
-          const { count } = await supabase
-            .from('users')
-            .select('*', { count: 'exact', head: true })
-            .eq('team_id', userTeamId)
-            .eq('role', 'rep')
-            .eq('is_active', true)
-          
-          setTeamMemberCount(count || 0)
-        }
-      }
     }
 
     // Build query - filter by team if user has a team
@@ -804,39 +777,6 @@ export default function LeaderboardPage() {
             ))}
           </div>
         </motion.div>
-
-        {/* CTA for managers with single-member teams */}
-        {(userRole === 'manager' || userRole === 'admin') && teamMemberCount <= 1 && (
-          <div className="mt-4">
-            <div className="bg-gradient-to-r from-purple-600/20 to-indigo-600/20 backdrop-blur-xl border border-purple-500/50 rounded-xl p-6 shadow-xl">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-purple-500/20 rounded-lg">
-                    <Users className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white mb-1 font-space">
-                      Invite your team to activate the leaderboard
-                    </h3>
-                    <p className="text-sm text-slate-300 font-space">
-                      {teamMemberCount === 0 
-                        ? "You don't have any team members yet. Invite sales reps to see rankings and foster healthy competition."
-                        : "You only have one team member. Invite more reps to create an active leaderboard and motivate your team."
-                      }
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => router.push('/team')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold font-space whitespace-nowrap"
-                >
-                  Invite Team Members
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Practice CTA Card */}
         <motion.div

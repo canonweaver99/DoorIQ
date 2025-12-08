@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
 import { ModuleWithProgress } from '@/lib/learning/types'
 import { MarkdownContent } from './MarkdownContent'
@@ -54,7 +55,9 @@ interface ModuleDetailProps {
 }
 
 export function ModuleDetail({ module, allModules: providedModules }: ModuleDetailProps) {
+  const router = useRouter()
   const [timeSpent, setTimeSpent] = useState(0)
+  const [currentModule, setCurrentModule] = useState(module)
   // Use same logic as ModuleCard: only completed if progress exists AND completed_at is not null
   const [isCompleted, setIsCompleted] = useState(
     module.progress !== null && module.progress !== undefined && module.progress.completed_at !== null
@@ -66,10 +69,11 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
 
   // Update completion status when module prop changes
   useEffect(() => {
+    setCurrentModule(module)
     setIsCompleted(
       module.progress !== null && module.progress !== undefined && module.progress.completed_at !== null
     )
-  }, [module.progress?.completed_at])
+  }, [module.progress?.completed_at, module])
 
   // Track time spent reading
   useEffect(() => {
@@ -87,15 +91,41 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
   const handleMarkComplete = async () => {
     try {
       await markComplete(module.id, timeSpent)
+      const completedAt = new Date().toISOString()
+      
+      // Update local state immediately for instant UI feedback
       setIsCompleted(true)
-      // Refresh the page to update progress everywhere
-      window.location.reload()
+      setCurrentModule({
+        ...currentModule,
+        progress: {
+          ...currentModule.progress,
+          completed_at: completedAt,
+          time_spent_seconds: timeSpent,
+        } as any
+      })
+      
+      // Refresh Next.js router cache to update data everywhere
+      router.refresh()
+      
+      // Also refetch the module to ensure we have the latest data
+      try {
+        const response = await fetch(`/api/learning/modules/${module.slug}?_t=${Date.now()}`)
+        if (response.ok) {
+          const data = await response.json()
+          setCurrentModule(data.module)
+        }
+      } catch (fetchError) {
+        console.error('Failed to refetch module:', fetchError)
+      }
     } catch (error) {
       console.error('Failed to mark module as complete:', error)
+      // Revert on error
+      setIsCompleted(false)
     }
   }
 
-  const categoryColors = getCategoryColors(module.category)
+  const categoryColors = getCategoryColors(currentModule.category)
+  const displayTimeSpent = currentModule.progress?.time_spent_seconds || timeSpent
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-4 lg:px-0" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -115,19 +145,19 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
         >
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white font-space leading-tight pr-2">
-              {module.title}
+              {currentModule.title}
             </h1>
           </div>
           <ProgressIndicator
             completed={isCompleted}
-            timeSpent={timeSpent}
-            estimatedMinutes={module.estimated_minutes}
+            timeSpent={displayTimeSpent}
+            estimatedMinutes={currentModule.estimated_minutes}
           />
         </div>
 
         {/* Content */}
-        {module.content ? (
-          <MarkdownContent content={module.content} moduleTitle={module.title} />
+        {currentModule.content ? (
+          <MarkdownContent content={currentModule.content} moduleTitle={currentModule.title} />
         ) : (
           <div className="text-center py-12">
             <p className="text-slate-400 font-sans">Content coming soon...</p>
@@ -136,13 +166,13 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
       </div>
 
       {/* Practice Challenge */}
-      <PracticeChallenge moduleSlug={module.slug} moduleTitle={module.title} moduleCategory={module.category} />
+      <PracticeChallenge moduleSlug={currentModule.slug} moduleTitle={currentModule.title} moduleCategory={currentModule.category} />
 
       {/* Completed Button at Bottom */}
       <div className="flex justify-center mt-6 sm:mt-8 mb-4 sm:mb-6">
         <button
           onClick={handleMarkComplete}
-          disabled={progressLoading}
+          disabled={progressLoading || isCompleted}
           className={cn(
             'flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 rounded-lg font-semibold text-base sm:text-lg min-h-[48px] sm:min-h-[56px] touch-manipulation active:scale-95',
             isCompleted 
@@ -154,13 +184,13 @@ export function ModuleDetail({ module, allModules: providedModules }: ModuleDeta
           )}
         >
           <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
-          <span className="whitespace-nowrap">{isCompleted ? 'Completed' : 'Mark as Completed'}</span>
+          <span className="whitespace-nowrap">{isCompleted ? 'Completed' : progressLoading ? 'Marking...' : 'Mark as Completed'}</span>
         </button>
       </div>
 
       {/* Navigation */}
       {allModules && allModules.length > 0 && (
-        <ModuleNavigation currentModule={module} allModules={allModules} />
+        <ModuleNavigation currentModule={currentModule} allModules={allModules} />
       )}
     </div>
   )

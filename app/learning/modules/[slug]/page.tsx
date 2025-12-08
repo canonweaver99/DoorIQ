@@ -27,32 +27,51 @@ export default function ModuleDetailPage() {
   const [error, setError] = useState<Error | null>(null)
   const { modules: allModules } = useModules()
 
-  useEffect(() => {
-    async function fetchModule() {
-      if (!slug) return
+  const fetchModule = async () => {
+    if (!slug) return
 
-      try {
-        setLoading(true)
-        setError(null)
+    try {
+      setLoading(true)
+      setError(null)
 
-        const response = await fetch(`/api/learning/modules/${slug}`)
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Module not found')
-          }
-          throw new Error('Failed to fetch module')
+      // Add cache-busting timestamp to ensure fresh data
+      const response = await fetch(`/api/learning/modules/${slug}?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      })
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Module not found')
         }
-
-        const data = await response.json()
-        setModule(data.module)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'))
-      } finally {
-        setLoading(false)
+        throw new Error('Failed to fetch module')
       }
-    }
 
+      const data = await response.json()
+      setModule(data.module)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchModule()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug])
+
+  // Refetch when router refreshes (e.g., after marking complete)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Refetch when window regains focus (user might have completed module in another tab)
+      fetchModule()
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
   if (loading) {

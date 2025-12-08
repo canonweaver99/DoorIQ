@@ -48,7 +48,7 @@ export function ProgressIndicator({
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      {!completed && getStatusIcon()}
+      {getStatusIcon()}
       <span className={cn('text-sm font-medium px-2 py-1 rounded border', getStatusColor())}>
         {getStatusText()}
       </span>

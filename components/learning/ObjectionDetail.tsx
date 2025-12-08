@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { CheckCircle2 } from 'lucide-react'
 import { MarkdownContent } from './MarkdownContent'
 import { LearningObjection } from '@/lib/learning/types'
@@ -19,11 +20,19 @@ interface ObjectionDetailProps {
 }
 
 export function ObjectionDetail({ objection }: ObjectionDetailProps) {
+  const router = useRouter()
   // The description field contains the full markdown content
   const markdownContent = objection.description || ''
   const [timeSpent, setTimeSpent] = useState(0)
+  const [currentObjection, setCurrentObjection] = useState(objection)
   const [isCompleted, setIsCompleted] = useState(objection.progress?.completed_at !== null)
   const { markComplete, loading: progressLoading } = useObjectionProgress()
+
+  // Update when objection prop changes
+  useEffect(() => {
+    setCurrentObjection(objection)
+    setIsCompleted(objection.progress?.completed_at !== null)
+  }, [objection.progress?.completed_at, objection])
 
   // Track time spent reading
   useEffect(() => {
@@ -41,11 +50,36 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
   const handleMarkComplete = async () => {
     try {
       await markComplete(objection.id, timeSpent)
+      const completedAt = new Date().toISOString()
+      
+      // Update local state immediately for instant UI feedback
       setIsCompleted(true)
-      // Refresh the page to update progress everywhere
-      window.location.reload()
+      setCurrentObjection({
+        ...currentObjection,
+        progress: {
+          ...currentObjection.progress,
+          completed_at: completedAt,
+          time_spent_seconds: timeSpent,
+        } as any
+      })
+      
+      // Refresh Next.js router cache to update data everywhere
+      router.refresh()
+      
+      // Also refetch the objection to ensure we have the latest data
+      try {
+        const response = await fetch(`/api/learning/objections/${objection.slug}?_t=${Date.now()}`)
+        if (response.ok) {
+          const data = await response.json()
+          setCurrentObjection(data.objection)
+        }
+      } catch (fetchError) {
+        console.error('Failed to refetch objection:', fetchError)
+      }
     } catch (error) {
       console.error('Failed to mark objection as complete:', error)
+      // Revert on error
+      setIsCompleted(false)
     }
   }
 
@@ -67,7 +101,7 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
         >
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl sm:text-4xl font-bold text-white font-space">
-              {objection.name}
+              {currentObjection.name}
             </h1>
           </div>
         </div>
@@ -83,10 +117,10 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
       </div>
 
       {/* Example Scripts from JSONB scripts field */}
-      {objection.scripts && objection.scripts.length > 0 && (
+      {currentObjection.scripts && currentObjection.scripts.length > 0 && (
         <div className="space-y-6 mb-6">
           <h2 className="text-2xl font-bold text-white font-space">Additional Example Scripts</h2>
-          {objection.scripts.map((script, index) => (
+          {currentObjection.scripts.map((script, index) => (
             <div
               key={index}
               className="rounded-lg p-6"
@@ -127,7 +161,7 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
       <div className="flex justify-center mt-8 mb-6">
         <button
           onClick={handleMarkComplete}
-          disabled={progressLoading}
+          disabled={progressLoading || isCompleted}
           className={cn(
             'flex items-center gap-2 px-8 py-4 rounded-lg font-semibold text-lg',
             isCompleted 
@@ -139,7 +173,7 @@ export function ObjectionDetail({ objection }: ObjectionDetailProps) {
           )}
         >
           <CheckCircle2 className="w-6 h-6" />
-          {isCompleted ? 'Completed' : 'Mark as Completed'}
+          {isCompleted ? 'Completed' : progressLoading ? 'Marking...' : 'Mark as Completed'}
         </button>
       </div>
     </div>

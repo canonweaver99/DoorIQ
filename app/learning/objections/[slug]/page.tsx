@@ -15,32 +15,51 @@ export default function ObjectionDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
-    async function fetchObjection() {
-      if (!slug) return
+  const fetchObjection = async () => {
+    if (!slug) return
 
-      try {
-        setLoading(true)
-        setError(null)
+    try {
+      setLoading(true)
+      setError(null)
 
-        const response = await fetch(`/api/learning/objections/${slug}`)
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Objection not found')
-          }
-          throw new Error('Failed to fetch objection')
+      // Add cache-busting timestamp to ensure fresh data
+      const response = await fetch(`/api/learning/objections/${slug}?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      })
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Objection not found')
         }
-
-        const data = await response.json()
-        setObjection(data.objection)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error'))
-      } finally {
-        setLoading(false)
+        throw new Error('Failed to fetch objection')
       }
-    }
 
+      const data = await response.json()
+      setObjection(data.objection)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchObjection()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug])
+
+  // Refetch when router refreshes (e.g., after marking complete)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Refetch when window regains focus (user might have completed objection in another tab)
+      fetchObjection()
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
   if (loading) {

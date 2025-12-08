@@ -55,7 +55,7 @@ export function ObjectionCard({ objection, delay = 0, isLast = false, displayNum
     iconBg: '#3a3a3a40'
   }
 
-  const buttonText = isCompleted ? 'Review' : 'Start'
+  const buttonText = 'Start'
 
   return (
     <>
