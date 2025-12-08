@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import SessionFeedbackForm from '@/components/trainer/SessionFeedbackForm'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function FeedbackPage() {
   const params = useParams()
@@ -132,12 +133,43 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-start justify-center pt-16 sm:pt-20 lg:pt-24 px-3 sm:px-4 lg:px-6 pb-6">
-      <SessionFeedbackForm 
-        sessionId={sessionId} 
-        onFeedbackComplete={handleFeedbackComplete}
-      />
-    </div>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('Feedback page error:', error, errorInfo)
+        // Log to error tracking service if available
+      }}
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
+              <h2 className="text-red-400 text-xl font-bold mb-2">Error Loading Feedback Form</h2>
+              <p className="text-red-300 mb-4 text-sm">There was an error loading the feedback form. Please try refreshing the page.</p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-white transition-colors"
+                >
+                  Refresh Page
+                </button>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <div className="min-h-screen bg-black flex items-start justify-center pt-16 sm:pt-20 lg:pt-24 px-3 sm:px-4 lg:px-6 pb-6">
+        <SessionFeedbackForm 
+          sessionId={sessionId} 
+          onFeedbackComplete={handleFeedbackComplete}
+        />
+      </div>
+    </ErrorBoundary>
   )
 }
 
