@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, AlertTriangle, Clock, Lightbulb, Star } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, Clock, Lightbulb } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface CriticalMoment {
@@ -89,21 +89,12 @@ function getMomentTypeLabel(type: string): string {
   return labels[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
 
-// Convert importance (1-10) to star rating (1-5)
-function importanceToStars(importance?: number): number {
-  if (!importance) return 3 // Default to 3 stars
-  if (importance >= 9) return 5
-  if (importance >= 7) return 4
-  if (importance >= 5) return 3
-  if (importance >= 3) return 2
-  return 1
-}
-
-// Get color based on star rating
-function getRatingColor(rating: number): { border: string; bg: string } {
-  if (rating >= 4) return { border: 'border-green-500/40', bg: 'bg-green-500/10' }
-  if (rating === 3) return { border: 'border-yellow-500/40', bg: 'bg-yellow-500/10' }
-  return { border: 'border-red-500/40', bg: 'bg-red-500/10' }
+// Get color based on outcome
+function getOutcomeColor(outcome: string): { border: string; bg: string } {
+  if (outcome === 'success') return { border: 'border-green-500/40', bg: 'bg-green-500/10' }
+  if (outcome === 'failure') return { border: 'border-red-500/40', bg: 'bg-red-500/10' }
+  if (outcome === 'missed_opportunity') return { border: 'border-yellow-500/40', bg: 'bg-yellow-500/10' }
+  return { border: 'border-blue-500/40', bg: 'bg-blue-500/10' }
 }
 
 export function CriticalMomentsTimeline({ 
@@ -140,8 +131,7 @@ export function CriticalMomentsTimeline({
       
       <div className="space-y-6">
         {sortedMoments.map((moment, index) => {
-          const starRating = importanceToStars(moment.importance)
-          const ratingColors = getRatingColor(starRating)
+          const ratingColors = getOutcomeColor(moment.outcome)
           const isSuccess = moment.outcome === 'success'
           const isFailure = moment.outcome === 'failure'
           const isMissed = moment.outcome === 'missed_opportunity'
@@ -210,21 +200,6 @@ export function CriticalMomentsTimeline({
                         </span>
                       )}
                     </div>
-                    {/* Star Rating - Centered */}
-                    <div className="flex items-center justify-center sm:justify-start gap-1 mx-auto sm:mx-0 sm:ml-auto">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={cn(
-                            "w-4 h-4 sm:w-4 sm:h-4",
-                            star <= starRating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-600"
-                          )}
-                        />
-                      ))}
-                      <span className="text-xs sm:text-sm text-gray-400 ml-1">({starRating}/5)</span>
-                    </div>
                   </div>
                   
                   {/* Transcript Quote - Single quote only */}
@@ -277,29 +252,27 @@ export function CriticalMomentsTimeline({
                     )}
                   </div>
                   
-                  {/* What Worked and Try This Next Time */}
-                  {moment.analysis && (moment.analysis.whatWorked || moment.analysis.whatToImprove) && (
-                    <div className="space-y-3 mt-4">
-                      {moment.analysis.whatWorked && (
-                        <div className="flex items-start gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                          <Lightbulb className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold text-green-400 mb-1.5">What Worked</div>
-                            <p className="text-sm text-gray-200">{moment.analysis.whatWorked}</p>
-                          </div>
-                        </div>
-                      )}
-                      {moment.analysis.whatToImprove && (
-                        <div className="flex items-start gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
-                          <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <div className="text-sm font-semibold text-blue-400 mb-1.5">Try Next Time</div>
-                            <p className="text-sm text-gray-200">{moment.analysis.whatToImprove}</p>
-                          </div>
-                        </div>
-                      )}
+                  {/* What Worked and What to Try Next Time - Always shown */}
+                  <div className="space-y-3 mt-4">
+                    <div className="flex items-start gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                      <Lightbulb className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-green-400 mb-1.5">What Worked</div>
+                        <p className="text-sm text-gray-200">
+                          {moment.analysis?.whatWorked || 'This moment showed effective communication and engagement.'}
+                        </p>
+                      </div>
                     </div>
-                  )}
+                    <div className="flex items-start gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                      <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-blue-400 mb-1.5">What to Try Next Time</div>
+                        <p className="text-sm text-gray-200">
+                          {moment.analysis?.whatToImprove || 'Consider alternative approaches to enhance this moment further.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>

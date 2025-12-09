@@ -327,7 +327,7 @@ export function HeroSection({
                         <>
                           <div className="space-y-3 mb-4">
                             {dealDetails?.product_sold && (
-                              <div className="flex justify-between text-sm mb-2">
+                              <div className="flex justify-between text-base mb-2">
                                 <span className="text-slate-300 font-sans">Service</span>
                                 <span className="text-white font-medium font-sans">{dealDetails.product_sold}</span>
                               </div>
@@ -337,13 +337,13 @@ export function HeroSection({
                             {(dealDetails?.base_price || dealDetails?.monthly_value) && (
                               <div className="pt-2 border-t border-emerald-500/20 space-y-1.5">
                                 {dealDetails?.base_price && dealDetails.base_price > 0 && (
-                                  <div className="flex justify-between text-xs">
+                                  <div className="flex justify-between text-base">
                                     <span className="text-slate-300 font-sans">Initial Service</span>
                                     <span className="text-white font-medium font-sans">${dealDetails.base_price.toFixed(2)}</span>
                                   </div>
                                 )}
                                 {dealDetails?.monthly_value && dealDetails.monthly_value > 0 && dealDetails?.contract_length && dealDetails.contract_length > 0 && (
-                                  <div className="flex justify-between text-xs">
+                                  <div className="flex justify-between text-base">
                                     <span className="text-white/70 font-sans">
                                       Monthly ({dealDetails.contract_length} {dealDetails.contract_length === 1 ? 'month' : 'months'})
                                     </span>
@@ -353,7 +353,7 @@ export function HeroSection({
                                   </div>
                                 )}
                                 {dealDetails?.monthly_value && dealDetails.monthly_value > 0 && !dealDetails?.contract_length && (
-                                  <div className="flex justify-between text-xs">
+                                  <div className="flex justify-between text-base">
                                     <span className="text-white/70 font-sans">Monthly</span>
                                     <span className="text-white font-medium font-sans">${dealDetails.monthly_value.toFixed(2)}/mo</span>
                                   </div>
@@ -361,12 +361,12 @@ export function HeroSection({
                               </div>
                             )}
                             
-                            <div className="flex justify-between text-sm pt-2 border-t border-emerald-500/20">
+                            <div className="flex justify-between text-base pt-2 border-t border-emerald-500/20">
                               <span className="text-slate-300 font-sans">Total Deal Value</span>
                               <span className="text-white font-medium font-sans">${dealValue.toFixed(2)}</span>
                             </div>
                             {totalEarned > 0 && totalEarned !== dealValue && (
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between text-base">
                                 <span className="text-slate-300 font-sans">Closed Amount</span>
                                 <span className="text-emerald-300 font-medium font-sans">${totalEarned.toFixed(2)}</span>
                               </div>

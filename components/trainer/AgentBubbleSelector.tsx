@@ -1249,14 +1249,14 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-white/10">
                           {agent.hasClosed && (
                             <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/20 rounded-lg border border-green-500/30">
-                              <span className="text-[10px] sm:text-xs">✅</span>
-                              <span className="text-[10px] sm:text-xs text-green-400 font-space font-semibold">Closed</span>
+                              <span className="text-sm sm:text-base">✅</span>
+                              <span className="text-sm sm:text-base text-green-400 font-space font-semibold">Closed</span>
                             </div>
                           )}
                           {agent.bestScore !== null && agent.bestScore !== undefined && (
                             <div className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/20 rounded-lg border border-purple-500/30">
-                              <span className="text-[10px] sm:text-xs text-purple-400 font-space font-bold">
-                                {agent.bestScore}%
+                              <span className="text-sm sm:text-base text-purple-400 font-space font-bold">
+                                Best: {agent.bestScore}%
                               </span>
                             </div>
                           )}

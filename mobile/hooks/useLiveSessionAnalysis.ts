@@ -102,9 +102,12 @@ function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
   
   transcript.forEach(entry => {
     const charCount = entry.text.length
-    if (entry.speaker === 'user') {
+    // Check for 'user' or 'rep' speaker (sales rep)
+    if (entry.speaker === 'user' || entry.speaker === 'rep') {
       userCharCount += charCount
-    } else if (entry.speaker === 'homeowner') {
+    } 
+    // Check for 'homeowner' or 'agent' speaker (AI agent)
+    else if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
       homeownerCharCount += charCount
     }
   })

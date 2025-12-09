@@ -307,10 +307,10 @@ function detectMomentumShift(
   recentEntries: TranscriptEntry[],
   objectionHandled: boolean
 ): { type: 'building_rapport' | 'interest_growing' | 'losing_engagement' | 'strong_recovery'; message: string } | null {
-  if (currentEntry.speaker !== 'homeowner') return null
+  if (currentEntry.speaker !== 'homeowner' && currentEntry.speaker !== 'agent') return null
   
   const recentHomeownerEntries = recentEntries
-    .filter(e => e.speaker === 'homeowner')
+    .filter(e => e.speaker === 'homeowner' || e.speaker === 'agent')
     .slice(-5)
   
   if (recentHomeownerEntries.length < 2) return null
@@ -449,12 +449,12 @@ function calculateTalkTimeRatio(transcript: TranscriptEntry[]): number {
   
   transcript.forEach(entry => {
     const charCount = entry.text.length
-    // Explicitly check for 'user' speaker (sales rep)
-    if (entry.speaker === 'user') {
+    // Check for 'user' or 'rep' speaker (sales rep)
+    if (entry.speaker === 'user' || entry.speaker === 'rep') {
       userCharCount += charCount
     } 
-    // Explicitly check for 'homeowner' speaker (AI agent)
-    else if (entry.speaker === 'homeowner') {
+    // Check for 'homeowner' or 'agent' speaker (AI agent)
+    else if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
       homeownerCharCount += charCount
     }
     // Ignore any other speaker values to avoid counting errors
@@ -487,7 +487,7 @@ function calculateWPMFromTranscript(
   if (!transcript || transcript.length === 0 || !sessionStartTime) return 0
   
   // Filter to only user/rep entries
-  const repEntries = transcript.filter(entry => entry.speaker === 'user')
+  const repEntries = transcript.filter(entry => entry.speaker === 'user' || entry.speaker === 'rep')
   if (repEntries.length === 0) return 0
   
   // Calculate total words from all user entries
@@ -668,8 +668,8 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       const entryIndex = previousTranscriptLengthRef.current + relativeIndex
       console.log('📝 Processing entry:', { speaker: entry.speaker, text: entry.text.substring(0, 50), index: entryIndex })
       
-      // Enhanced objection detection (only for homeowner) with context awareness
-      if (entry.speaker === 'homeowner') {
+      // Enhanced objection detection (only for homeowner/agent) with context awareness
+      if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
         // Use context-aware detection
         const objection = detectEnhancedObjection(entry.text, transcript, entryIndex)
         console.log('🏠 Homeowner entry - objection check:', objection ? objection.type : 'none')
@@ -783,7 +783,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       }
       
       // Technique detection (only for user/rep)
-      if (entry.speaker === 'user') {
+      if (entry.speaker === 'user' || entry.speaker === 'rep') {
         const technique = detectTechnique(entry.text)
         console.log('👤 User entry - technique check:', technique || 'none')
         if (technique) {
@@ -1162,7 +1162,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     const newEntries = transcript.slice(previousTranscriptLengthRef.current)
     
     newEntries.forEach((entry, relativeIndex) => {
-      if (entry.speaker === 'homeowner') {
+      if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
         const entryIndex = previousTranscriptLengthRef.current + relativeIndex
         const objection = detectEnhancedObjection(entry.text, transcript, entryIndex)
         
@@ -1221,7 +1221,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
     console.log('📊 Calculating metrics for transcript length:', transcript.length)
     
     // Count objections
-    const homeownerEntries = transcript.filter(entry => entry.speaker === 'homeowner')
+    const homeownerEntries = transcript.filter(entry => entry.speaker === 'homeowner' || entry.speaker === 'agent')
     console.log('🏠 Homeowner entries:', homeownerEntries.length)
     
     const objectionCount = homeownerEntries
@@ -1235,7 +1235,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       .length
     
     // Collect unique techniques used
-    const userEntries = transcript.filter(entry => entry.speaker === 'user')
+    const userEntries = transcript.filter(entry => entry.speaker === 'user' || entry.speaker === 'rep')
     console.log('👤 User entries:', userEntries.length)
     
     const techniquesSet = new Set<string>()
