@@ -286,30 +286,84 @@ Return ONLY valid JSON matching this structure:
           })
           
           if (closestEntry) {
-            transcriptText = closestEntry.text || closestEntry.message || moment.description || ''
+            transcriptText = closestEntry.text || closestEntry.message || ''
+            // If we found an entry but it's empty, try to get surrounding context
+            if (!transcriptText && transcript.length > 0) {
+              const entryIndex = transcript.indexOf(closestEntry)
+              // Try to get a few entries around this moment for context
+              const contextStart = Math.max(0, entryIndex - 1)
+              const contextEnd = Math.min(transcript.length, entryIndex + 2)
+              const contextEntries = transcript.slice(contextStart, contextEnd)
+              const contextText = contextEntries
+                .map((e: any) => e.text || e.message || '')
+                .filter((t: string) => t.trim().length > 0)
+                .join(' ')
+              if (contextText) {
+                transcriptText = contextText
+              }
+            }
           }
         }
         
         // If still no transcript, use description or find a relevant snippet
-        if (!transcriptText) {
-          transcriptText = moment.description || ''
+        if (!transcriptText || transcriptText.trim().length === 0) {
           // Try to find entries related to the moment type
           if (transcript.length > 0) {
-            const relevantEntries = transcript.filter((entry: any) => {
-              const text = (entry.text || entry.message || '').toLowerCase()
-              const type = (moment.type || '').toLowerCase()
-              if (type.includes('objection') && (text.includes('not interested') || text.includes('too expensive') || text.includes('think about'))) {
-                return true
-              }
-              if (type.includes('close') && (text.includes('ready to') || text.includes('get started') || text.includes('sign up'))) {
-                return true
-              }
-              return false
-            })
+            const type = (moment.type || '').toLowerCase()
+            let relevantEntries: any[] = []
+            
+            // More comprehensive search based on moment type
+            if (type.includes('objection')) {
+              relevantEntries = transcript.filter((entry: any) => {
+                const text = (entry.text || entry.message || '').toLowerCase()
+                const speaker = (entry.speaker || '').toLowerCase()
+                // Look for homeowner/agent entries that might be objections
+                return (speaker === 'homeowner' || speaker === 'agent') && (
+                  text.includes('not interested') || 
+                  text.includes('too expensive') || 
+                  text.includes('think about') ||
+                  text.includes('not sure') ||
+                  text.includes('maybe') ||
+                  text.includes('later')
+                )
+              })
+            } else if (type.includes('close') || type.includes('offer')) {
+              relevantEntries = transcript.filter((entry: any) => {
+                const text = (entry.text || entry.message || '').toLowerCase()
+                return text.includes('ready to') || 
+                       text.includes('get started') || 
+                       text.includes('sign up') ||
+                       text.includes('discount') ||
+                       text.includes('special') ||
+                       text.includes('neighbor')
+              })
+            } else if (type.includes('discovery')) {
+              relevantEntries = transcript.filter((entry: any) => {
+                const text = (entry.text || entry.message || '').toLowerCase()
+                const speaker = (entry.speaker || '').toLowerCase()
+                return speaker === 'user' && (
+                  text.includes('?') ||
+                  text.startsWith('what') ||
+                  text.startsWith('how') ||
+                  text.startsWith('why')
+                )
+              })
+            }
             
             if (relevantEntries.length > 0) {
-              transcriptText = relevantEntries[0].text || relevantEntries[0].message || transcriptText
+              // Get the most relevant entry
+              transcriptText = relevantEntries[0].text || relevantEntries[0].message || ''
+            } else {
+              // Fallback: use description or get a general entry
+              transcriptText = moment.description || ''
+              if (!transcriptText && transcript.length > 0) {
+                // Get a middle entry as fallback
+                const midIndex = Math.floor(transcript.length / 2)
+                transcriptText = transcript[midIndex]?.text || transcript[midIndex]?.message || ''
+              }
             }
+          } else {
+            transcriptText = moment.description || ''
           }
         }
       }

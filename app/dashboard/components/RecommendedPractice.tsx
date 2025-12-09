@@ -425,7 +425,7 @@ export default function RecommendedPractice() {
           </div>
 
           {/* Tip */}
-          <div className="flex items-start gap-2.5 sm:gap-3 bg-white/[0.08] rounded-lg p-3 sm:p-4 md:p-5 border border-white/15 mb-3 sm:mb-4">
+          <div className="flex items-start gap-2.5 sm:gap-3 mb-3 sm:mb-4">
             <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-purple-400 flex-shrink-0 mt-0.5" />
             <p className="text-white/85 text-xs sm:text-sm md:text-base lg:text-lg leading-relaxed">
               <span className="font-medium">Tip:</span> {tip}

@@ -231,27 +231,41 @@ export function CriticalMomentsTimeline({
                   <div className="mb-4 p-3 sm:p-4 bg-slate-900/50 rounded-lg border border-slate-700/50">
                     <p className="text-sm sm:text-base text-gray-200 italic mb-2">
                       "{(() => {
-                        // Extract first meaningful quote (limit to ~80 chars for mobile)
+                        // Use transcript directly - it should already be extracted from conversation
                         let transcriptText = moment.transcript || ''
+                        
                         // Replace "homeowner:" with agent name if available (case-insensitive)
                         if (agentName && transcriptText) {
                           transcriptText = transcriptText.replace(/homeowner\s*:/gi, `${agentName}:`)
                         }
+                        
                         // Return empty string if no transcript
-                        if (!transcriptText) {
+                        if (!transcriptText || transcriptText.trim().length === 0) {
                           return 'No transcript available'
                         }
-                        // Find first quote or meaningful sentence
-                        const firstQuoteMatch = transcriptText.match(/["']([^"']{1,80})["']/)
-                        if (firstQuoteMatch) {
-                          return firstQuoteMatch[1]
+                        
+                        // Clean up the transcript text
+                        transcriptText = transcriptText.trim()
+                        
+                        // Remove any leading/trailing quotes if present
+                        transcriptText = transcriptText.replace(/^["']|["']$/g, '')
+                        
+                        // If it's a long quote, truncate to ~120 chars for better display
+                        if (transcriptText.length > 120) {
+                          // Try to truncate at a sentence boundary
+                          const truncated = transcriptText.slice(0, 120)
+                          const lastPeriod = truncated.lastIndexOf('.')
+                          const lastQuestion = truncated.lastIndexOf('?')
+                          const lastExclamation = truncated.lastIndexOf('!')
+                          const lastPunctuation = Math.max(lastPeriod, lastQuestion, lastExclamation)
+                          
+                          if (lastPunctuation > 80) {
+                            return transcriptText.slice(0, lastPunctuation + 1)
+                          }
+                          return truncated + '...'
                         }
-                        // Otherwise, take first sentence or first 80 chars
-                        const firstSentence = transcriptText.split(/[.!?]/)[0]
-                        if (firstSentence && firstSentence.length <= 80) {
-                          return firstSentence.trim()
-                        }
-                        return transcriptText.slice(0, 80).trim() + (transcriptText.length > 80 ? '...' : '')
+                        
+                        return transcriptText
                       })()}"
                     </p>
                     {/* Success Indicator - Interest Level Change */}
