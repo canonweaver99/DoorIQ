@@ -423,12 +423,10 @@ export default function AnalyticsPage() {
       }
         setLoadingStates(prev => ({ ...prev, hero: true }))
         
-        // Load insights immediately if available
-        if (data.instant_metrics) {
-          setTimeout(() => {
-            setLoadingStates(prev => ({ ...prev, insights: true }))
-          }, 500)
-        }
+        // Load insights immediately - always show performance metrics
+        setTimeout(() => {
+          setLoadingStates(prev => ({ ...prev, insights: true }))
+        }, 500)
         
         // Load moments after insights
         if (data.key_moments && Array.isArray(data.key_moments) && data.key_moments.length > 0) {
@@ -574,19 +572,17 @@ export default function AnalyticsPage() {
           <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
         )}
         
-        {/* Instant Insights Grid - Loads after hero */}
-        {session.instant_metrics ? (
-          loadingStates.insights ? (
-            <InstantInsightsGrid 
-              instantMetrics={session.instant_metrics} 
-              userName={userName}
-              transcript={(session as any).full_transcript}
-              voiceAnalysis={session.analytics?.voice_analysis}
-            />
-          ) : (
-            <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />
-          )
-        ) : null}
+        {/* Instant Insights Grid - Loads after hero - Always show if we have session data */}
+        {loadingStates.insights ? (
+          <InstantInsightsGrid 
+            instantMetrics={session.instant_metrics || {}} 
+            userName={userName}
+            transcript={(session as any).full_transcript}
+            voiceAnalysis={session.analytics?.voice_analysis}
+          />
+        ) : (
+          <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />
+        )}
         
         {/* Critical Moments Timeline - Loads after insights */}
         {session.key_moments && Array.isArray(session.key_moments) && session.key_moments.length > 0 ? (

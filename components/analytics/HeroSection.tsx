@@ -156,9 +156,19 @@ export function HeroSection({
     return 'No change'
   }
   
-  // Calculate earnings breakdown
+  // Calculate earnings breakdown - prioritize closed_amount from earnings_data
   const dealValue = dealDetails?.total_contract_value || dealDetails?.base_price || 0
-  const totalEarned = earningsData?.total_earned || earningsData?.closed_amount || 0
+  // Use closed_amount from earnings_data if available, otherwise fall back to virtualEarnings
+  const totalEarned = earningsData?.closed_amount || earningsData?.total_earned || virtualEarnings || 0
+  
+  // Calculate strengths for display in earnings card
+  const strengths = currentScores ? (() => {
+    const strengthList = []
+    if (currentScores.rapport >= 80) strengthList.push({ name: 'Rapport Building', score: currentScores.rapport, diff: currentScores.rapport - 70 })
+    if (currentScores.objection_handling >= 80) strengthList.push({ name: 'Objection Handling', score: currentScores.objection_handling, diff: currentScores.objection_handling - 70 })
+    if (currentScores.discovery >= 75) strengthList.push({ name: 'Needs Discovery', score: currentScores.discovery, diff: currentScores.discovery - 65 })
+    return strengthList
+  })() : []
   
   return (
     <motion.div
@@ -217,39 +227,6 @@ export function HeroSection({
                 </div>
               </div>
               
-              {/* Strengths and Opportunities Breakdown */}
-              {currentScores && (
-                <div className="space-y-4 mb-6">
-                  {/* Strengths */}
-                  {(() => {
-                    const strengths = []
-                    if (currentScores.rapport >= 80) strengths.push({ name: 'Rapport Building', score: currentScores.rapport, diff: currentScores.rapport - 70 })
-                    if (currentScores.objection_handling >= 80) strengths.push({ name: 'Objection Handling', score: currentScores.objection_handling, diff: currentScores.objection_handling - 70 })
-                    if (currentScores.discovery >= 75) strengths.push({ name: 'Needs Discovery', score: currentScores.discovery, diff: currentScores.discovery - 65 })
-                    
-                    if (strengths.length > 0) {
-                      return (
-                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                          <div className="flex items-center gap-2 mb-3">
-                            <TrendingUp className="w-5 h-5 text-emerald-400" />
-                            <span className="text-sm font-semibold text-emerald-400 uppercase tracking-wide">Strengths</span>
-                          </div>
-                          <div className="space-y-2">
-                            {strengths.slice(0, 2).map((strength, idx) => (
-                              <div key={idx} className="flex items-center justify-between">
-                                <span className="text-white font-medium">↑ {strength.name}: {strength.score}%</span>
-                                <span className="text-emerald-400 font-semibold">+{strength.diff}pts above team</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    }
-                    return null
-                  })()}
-
-                </div>
-              )}
 
               {/* Comparison Metrics - Increased font size */}
               <div className="space-y-3 text-base mb-6">
@@ -336,24 +313,63 @@ export function HeroSection({
                     <div className={`text-4xl font-bold text-white mb-4 font-space ${
                       !saleClosed || virtualEarnings === 0 ? 'line-through opacity-50' : ''
                     }`}>
-                      ${saleClosed && virtualEarnings > 0 ? virtualEarnings.toFixed(2) : '0.00'}
+                      ${saleClosed && virtualEarnings > 0 ? totalEarned.toFixed(2) : '0.00'}
                     </div>
 
                     <div className="flex-1 flex flex-col justify-end">
                       {saleClosed && virtualEarnings > 0 ? (
                         <>
-                          <div className="space-y-2">
+                          <div className="space-y-3 mb-4">
                             <div className="flex justify-between text-sm">
-                              <span className="text-slate-400 font-sans">Deal Value</span>
+                              <span className="text-slate-300 font-sans">Deal Value</span>
                               <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
                             </div>
-                            {totalEarned > 0 && (
+                            {totalEarned > 0 && totalEarned !== dealValue && (
                               <div className="flex justify-between text-sm">
-                                <span className="text-slate-400 font-sans">Deal Value</span>
-                                <span className="text-emerald-400 font-medium font-sans">${totalEarned.toFixed(2)}</span>
+                                <span className="text-slate-300 font-sans">Closed Amount</span>
+                                <span className="text-emerald-300 font-medium font-sans">${totalEarned.toFixed(2)}</span>
                               </div>
                             )}
                           </div>
+                          
+                          {/* Strengths inside earnings card */}
+                          {strengths.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-emerald-500/30">
+                              <div className="flex items-center gap-2 mb-3">
+                                <TrendingUp className="w-4 h-4 text-emerald-300" />
+                                <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wide">Strengths</span>
+                              </div>
+                              <div className="space-y-2">
+                                {strengths.slice(0, 2).map((strength, idx) => (
+                                  <div key={idx} className="flex items-center justify-between">
+                                    <span className="text-white/90 text-sm font-medium">↑ {strength.name}: {strength.score}%</span>
+                                    <span className="text-emerald-300 text-xs font-semibold">+{strength.diff}pts above team</span>
+                                  </div>
+                                ))}
+                                {/* Comparison metrics */}
+                                <div className="pt-2 mt-2 border-t border-emerald-500/20 space-y-1.5">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-white/70">vs Your Average</span>
+                                    <span className={cn(
+                                      "font-semibold",
+                                      vsUserAverage >= 0 ? 'text-emerald-300' : 'text-red-300'
+                                    )}>{getTrendText(vsUserAverage)}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-white/70">vs Team Average</span>
+                                    <span className={cn(
+                                      "font-semibold",
+                                      vsTeamAverage >= 0 ? 'text-emerald-300' : 'text-red-300'
+                                    )}>{getTrendText(vsTeamAverage)}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-white/70">Percentile</span>
+                                    <span className="text-white font-semibold">{percentileLabel} this week</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </>
                       ) : dealDetails?.next_step ? (
                         <div className="space-y-3">

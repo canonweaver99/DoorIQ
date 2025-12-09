@@ -125,10 +125,9 @@ export function CriticalMomentsTimeline({
     )
   }
 
-  // Sort by importance and take top 1
+  // Sort by importance - show all moments, not just top 1
   const sortedMoments = [...moments]
     .sort((a, b) => (b.importance || 0) - (a.importance || 0))
-    .slice(0, 1)
 
   return (
     <motion.div
