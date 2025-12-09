@@ -1768,17 +1768,24 @@ function TrainerPageContent() {
     
   }, [sessionActive, sessionId, handleDoorClosingSequence])
 
-  // Fallback auto-end detection for agents that don't reliably call end_call (like No Problem Nancy)
+  // Universal auto-end detection for ALL agents - ensures reliable door closing
+  // This works alongside the end_call tool to ensure all agents close doors properly
   useEffect(() => {
     if (!sessionActive || !sessionId || transcript.length === 0) return
     
+    let autoEndTriggered = false
+    
     // Only check if we haven't already triggered end_call
     const checkForAutoEnd = () => {
-      // Check last 10 transcript entries for end signals
-      const recentEntries = transcript.slice(-10)
+      if (autoEndTriggered) return
+      
+      // Check last 15 transcript entries for end signals (increased from 10)
+      const recentEntries = transcript.slice(-15)
       const lastEntry = transcript[transcript.length - 1]
       
-      // Patterns that indicate conversation should end
+      if (!lastEntry) return
+      
+      // Expanded patterns that indicate conversation should end
       const saleCompletePatterns = [
         /let'?s do it/i,
         /i'?ll take it/i,
@@ -1791,7 +1798,19 @@ function TrainerPageContent() {
         /let'?s go/i,
         /yes.*sign/i,
         /okay.*start/i,
-        /sure.*go/i
+        /sure.*go/i,
+        /i'?ll do it/i,
+        /i'?m in/i,
+        /let'?s get started/i,
+        /when can you start/i,
+        /when can we start/i,
+        /i'?d like to/i,
+        /i want to/i,
+        /i'?m interested/i,
+        /that'?s perfect/i,
+        /perfect.*let'?s/i,
+        /okay.*let'?s/i,
+        /yes.*let'?s/i
       ]
       
       const goodbyePatterns = [
@@ -1802,7 +1821,28 @@ function TrainerPageContent() {
         /take care/i,
         /see you/i,
         /nice meeting/i,
-        /appreciate.*time/i
+        /appreciate.*time/i,
+        /thanks.*coming/i,
+        /thanks.*stopping by/i,
+        /have a nice day/i,
+        /have a good one/i,
+        /thanks.*but/i,
+        /not interested.*thanks/i,
+        /no thanks.*goodbye/i,
+        /i'?m not interested.*thanks/i
+      ]
+      
+      const rejectionPatterns = [
+        /not interested/i,
+        /not today/i,
+        /maybe later/i,
+        /i'?ll think about it/i,
+        /i'?ll pass/i,
+        /no thanks/i,
+        /i'?m good/i,
+        /we'?re good/i,
+        /not right now/i,
+        /maybe another time/i
       ]
       
       const infoCollectionPatterns = [
@@ -1814,11 +1854,19 @@ function TrainerPageContent() {
         /phone number/i,
         /email address/i,
         /how would you like to pay/i,
-        /payment method/i
+        /payment method/i,
+        /what'?s your email/i,
+        /can i get your/i,
+        /what'?s the best way to/i,
+        /how can i reach you/i
       ]
       
-      // Check if homeowner said goodbye or agreed to sale
-      const homeownerEntries = recentEntries.filter(e => e.speaker === 'homeowner' || e.speaker === 'agent')
+      // Check if homeowner said goodbye, agreed to sale, or rejected
+      // Note: speaker can be 'homeowner', 'agent', 'user', or 'rep' depending on source
+      const homeownerEntries = recentEntries.filter(e => {
+        const speaker = String(e.speaker)
+        return speaker === 'homeowner' || speaker === 'agent'
+      })
       const hasSaleAgreement = homeownerEntries.some(entry => 
         saleCompletePatterns.some(pattern => pattern.test(entry.text))
       )
@@ -1827,53 +1875,87 @@ function TrainerPageContent() {
         goodbyePatterns.some(pattern => pattern.test(entry.text))
       )
       
+      const hasRejection = homeownerEntries.some(entry =>
+        rejectionPatterns.some(pattern => pattern.test(entry.text))
+      )
+      
       // Check if rep is collecting info (indicates sale closed)
-      const repEntries = recentEntries.filter(e => e.speaker === 'user' || e.speaker === 'rep')
+      const repEntries = recentEntries.filter(e => {
+        const speaker = String(e.speaker)
+        return speaker === 'user' || speaker === 'rep'
+      })
       const isCollectingInfo = repEntries.some(entry =>
         infoCollectionPatterns.some(pattern => pattern.test(entry.text))
       )
       
-      // Check if last entry was from homeowner and was a goodbye or agreement
-      const lastIsHomeowner = lastEntry && (lastEntry.speaker === 'homeowner' || lastEntry.speaker === 'agent')
+      // Check if last entry was from homeowner and was a goodbye, agreement, or rejection
+      const lastIsHomeowner = lastEntry && (() => {
+        const speaker = String(lastEntry.speaker)
+        return speaker === 'homeowner' || speaker === 'agent'
+      })()
       const lastIsGoodbyeOrAgreement = lastIsHomeowner && (
         goodbyePatterns.some(pattern => pattern.test(lastEntry.text)) ||
         saleCompletePatterns.some(pattern => pattern.test(lastEntry.text))
       )
+      const lastIsRejection = lastIsHomeowner && rejectionPatterns.some(pattern => pattern.test(lastEntry.text))
+      
+      // Calculate time since last entry
+      const timeSinceLastEntry = Date.now() - (lastEntry.timestamp instanceof Date 
+        ? lastEntry.timestamp.getTime() 
+        : typeof lastEntry.timestamp === 'string'
+          ? new Date(lastEntry.timestamp).getTime()
+          : Date.now())
       
       // Trigger auto-end if:
       // 1. Homeowner agreed to sale AND rep is collecting info, OR
-      // 2. Homeowner said goodbye AND it's been 3+ seconds since last activity, OR
-      // 3. Sale agreement detected AND it's been 5+ seconds since agreement
+      // 2. Homeowner said goodbye AND it's been 2+ seconds since last activity (reduced from 3s), OR
+      // 3. Sale agreement detected AND it's been 3+ seconds since agreement (reduced from 5s), OR
+      // 4. Homeowner rejected AND it's been 2+ seconds since rejection
       if (hasSaleAgreement && isCollectingInfo) {
-        console.log('🚪 [Auto-End] Sale complete detected - triggering auto-end')
+        console.log('🚪 [Auto-End] Sale complete detected - triggering auto-end for all agents')
+        autoEndTriggered = true
         setTimeout(() => {
           if (sessionActive && sessionId) {
             handleDoorClosingSequence('Sale completed successfully')
           }
         }, 2000) // Wait 2 seconds to let final messages come through
-      } else if (lastIsGoodbyeOrAgreement) {
-        // Wait 3 seconds after goodbye to ensure conversation is really ending
-        const timeSinceLastEntry = Date.now() - (lastEntry.timestamp instanceof Date 
-          ? lastEntry.timestamp.getTime() 
-          : typeof lastEntry.timestamp === 'string'
-            ? new Date(lastEntry.timestamp).getTime()
-            : Date.now())
-        
-        if (timeSinceLastEntry > 3000) {
-          console.log('🚪 [Auto-End] Homeowner goodbye/agreement detected - triggering auto-end')
-          setTimeout(() => {
-            if (sessionActive && sessionId) {
-              handleDoorClosingSequence('Conversation ended naturally')
-            }
-          }, 1000)
-        }
+      } else if (lastIsGoodbyeOrAgreement && timeSinceLastEntry > 2000) {
+        // Reduced wait time from 3s to 2s for faster response
+        console.log('🚪 [Auto-End] Homeowner goodbye/agreement detected - triggering auto-end for all agents')
+        autoEndTriggered = true
+        setTimeout(() => {
+          if (sessionActive && sessionId) {
+            handleDoorClosingSequence('Conversation ended naturally')
+          }
+        }, 1000)
+      } else if (hasSaleAgreement && timeSinceLastEntry > 3000) {
+        // Reduced wait time from 5s to 3s
+        console.log('🚪 [Auto-End] Sale agreement detected (delayed) - triggering auto-end for all agents')
+        autoEndTriggered = true
+        setTimeout(() => {
+          if (sessionActive && sessionId) {
+            handleDoorClosingSequence('Sale completed successfully')
+          }
+        }, 1000)
+      } else if (lastIsRejection && timeSinceLastEntry > 2000) {
+        // New: Handle rejections with auto-end
+        console.log('🚪 [Auto-End] Homeowner rejection detected - triggering auto-end for all agents')
+        autoEndTriggered = true
+        setTimeout(() => {
+          if (sessionActive && sessionId) {
+            handleDoorClosingSequence('Homeowner rejected - door closed')
+          }
+        }, 1000)
       }
     }
     
-    // Check every 2 seconds
-    const interval = setInterval(checkForAutoEnd, 2000)
+    // Check every 1.5 seconds (increased frequency from 2s for faster detection)
+    const interval = setInterval(checkForAutoEnd, 1500)
     
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      autoEndTriggered = false
+    }
   }, [sessionActive, sessionId, transcript, handleDoorClosingSequence])
 
   // Backup listener for agent:end_call event (in case callback doesn't fire)

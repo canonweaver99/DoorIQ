@@ -1,18 +1,25 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog } from 'lucide-react'
-import HeroPerformanceCard from '@/components/dashboard/HeroPerformanceCard'
-import PerformanceMetricCards from '@/components/dashboard/PerformanceMetricCards'
-import CriticalAlertsSection from '@/components/dashboard/CriticalAlertsSection'
-import RecentSessionsPreview from '@/components/dashboard/RecentSessionsPreview'
-import RecommendedActions from '@/components/dashboard/RecommendedActions'
-import TabNavigation from '@/components/dashboard/TabNavigation'
-import UploadTab from '@/components/dashboard/tabs/UploadTab'
-import TeamTab from '@/components/dashboard/tabs/TeamTab'
-import ManagerPanelTab from '@/components/dashboard/tabs/ManagerPanelTab'
+import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog, Database, Video } from 'lucide-react'
+
+// Lazy load all dashboard components for better code splitting
+const HeroPerformanceCard = lazy(() => import('@/components/dashboard/HeroPerformanceCard'))
+const PerformanceMetricCards = lazy(() => import('@/components/dashboard/PerformanceMetricCards'))
+const CriticalAlertsSection = lazy(() => import('@/components/dashboard/CriticalAlertsSection'))
+const RecentSessionsPreview = lazy(() => import('@/components/dashboard/RecentSessionsPreview'))
+const RecommendedActions = lazy(() => import('@/components/dashboard/RecommendedActions'))
+const TabNavigation = lazy(() => import('@/components/dashboard/TabNavigation'))
+const UploadTab = lazy(() => import('@/components/dashboard/tabs/UploadTab'))
+const TeamTab = lazy(() => import('@/components/dashboard/tabs/TeamTab'))
+const ManagerPanelTab = lazy(() => import('@/components/dashboard/tabs/ManagerPanelTab'))
+
+// Lazy load manager components
+const RepManagement = lazy(() => import('@/components/manager/RepManagement'))
+const KnowledgeBase = lazy(() => import('@/components/manager/KnowledgeBase'))
+const TrainingVideos = lazy(() => import('@/components/manager/TrainingVideos'))
 import type { DashboardData } from '@/app/dashboard/types'
 import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/utils'
@@ -111,7 +118,12 @@ function DashboardPageContent() {
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'upload', label: 'Upload Pitch', icon: Upload },
     { id: 'team', label: 'Team', icon: Users },
-    ...(isManager ? [{ id: 'manager', label: 'Manager Panel', icon: UserCog }] : []),
+    ...(isManager ? [
+      { id: 'manager', label: 'Manager Panel', icon: UserCog },
+      { id: 'reps', label: 'Rep Management', icon: UserCog },
+      { id: 'knowledge', label: 'Knowledge Base', icon: Database },
+      { id: 'videos', label: 'Training Videos', icon: Video },
+    ] : []),
     { id: 'settings', label: 'Settings', icon: Settings },
   ]
 
@@ -296,58 +308,110 @@ function DashboardPageContent() {
               <div className="space-y-4">
                 {/* Hero Performance Card - Prominent */}
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                  <HeroPerformanceCard
-                    userName={dashboardData.userName}
-                    currentDateTime={dashboardData.currentDateTime}
-                    session={dashboardData.session}
-                  />
+                  <Suspense fallback={<div className="h-64 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                    <HeroPerformanceCard
+                      userName={dashboardData.userName}
+                      currentDateTime={dashboardData.currentDateTime}
+                      session={dashboardData.session}
+                    />
+                  </Suspense>
                 </div>
 
                 {/* Critical Alerts */}
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                  <CriticalAlertsSection session={dashboardData.session} />
+                  <Suspense fallback={<div className="h-32 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                    <CriticalAlertsSection session={dashboardData.session} />
+                  </Suspense>
                 </div>
 
                 {/* Performance Metrics */}
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                  <PerformanceMetricCards session={dashboardData.session} />
+                  <Suspense fallback={<div className="h-48 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                    <PerformanceMetricCards session={dashboardData.session} />
+                  </Suspense>
                 </div>
 
                 {/* Recent Sessions */}
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                  <RecentSessionsPreview />
+                  <Suspense fallback={<div className="h-96 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                    <RecentSessionsPreview />
+                  </Suspense>
                 </div>
 
                 {/* Recommended Actions */}
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                  <RecommendedActions session={dashboardData.session} />
+                  <Suspense fallback={<div className="h-48 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                    <RecommendedActions session={dashboardData.session} />
+                  </Suspense>
                 </div>
               </div>
             )}
 
             {activeTab === 'upload' && (
               <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                <UploadTab />
+                <Suspense fallback={<div className="h-96 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                  <UploadTab />
+                </Suspense>
               </div>
             )}
 
             {activeTab === 'team' && (
               <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                <TeamTab
-                  leaderboard={[]}
-                  userRank={1}
-                  teamStats={{
-                    teamSize: 1,
-                    avgTeamScore: 0,
-                    yourScore: 0
-                  }}
-                />
+                <Suspense fallback={<div className="h-96 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                  <TeamTab
+                    leaderboard={[]}
+                    userRank={1}
+                    teamStats={{
+                      teamSize: 1,
+                      avgTeamScore: 0,
+                      yourScore: 0
+                    }}
+                  />
+                </Suspense>
               </div>
             )}
 
             {activeTab === 'manager' && isManager && (
               <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                <ManagerPanelTab />
+                <Suspense fallback={<div className="h-96 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                  <ManagerPanelTab />
+                </Suspense>
+              </div>
+            )}
+
+            {activeTab === 'reps' && isManager && (
+              <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                <Suspense fallback={
+                  <div className="flex items-center justify-center py-24">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                  </div>
+                }>
+                  <RepManagement />
+                </Suspense>
+              </div>
+            )}
+
+            {activeTab === 'knowledge' && isManager && (
+              <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                <Suspense fallback={
+                  <div className="flex items-center justify-center py-24">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                  </div>
+                }>
+                  <KnowledgeBase />
+                </Suspense>
+              </div>
+            )}
+
+            {activeTab === 'videos' && isManager && (
+              <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                <Suspense fallback={
+                  <div className="flex items-center justify-center py-24">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                  </div>
+                }>
+                  <TrainingVideos />
+                </Suspense>
               </div>
             )}
           </motion.div>
@@ -376,17 +440,19 @@ function DashboardPageContent() {
           </motion.div>
 
           {/* Tab Navigation */}
-          <TabNavigation
-            tabs={tabs}
-            activeTab={activeTab}
-            onChange={(tabId) => {
-              if (tabId === 'settings') {
-                router.push('/settings')
-              } else {
-                setActiveTab(tabId)
-              }
-            }}
-          />
+          <Suspense fallback={<div className="h-16 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+            <TabNavigation
+              tabs={tabs}
+              activeTab={activeTab}
+              onChange={(tabId) => {
+                if (tabId === 'settings') {
+                  router.push('/settings')
+                } else {
+                  setActiveTab(tabId)
+                }
+              }}
+            />
+          </Suspense>
 
           {/* Tab Content */}
           <motion.div
@@ -398,42 +464,90 @@ function DashboardPageContent() {
             {activeTab === 'overview' && (
               <div className="space-y-4 sm:space-y-6 md:space-y-8">
                 {/* 1. Hero Performance Card (improved) */}
-                <HeroPerformanceCard
-                  userName={dashboardData.userName}
-                  currentDateTime={dashboardData.currentDateTime}
-                  session={dashboardData.session}
-                />
+                <Suspense fallback={<div className="h-64 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                  <HeroPerformanceCard
+                    userName={dashboardData.userName}
+                    currentDateTime={dashboardData.currentDateTime}
+                    session={dashboardData.session}
+                  />
+                </Suspense>
 
                 {/* 2. Critical Alerts Section (NEW) */}
-                <CriticalAlertsSection session={dashboardData.session} />
+                <Suspense fallback={<div className="h-32 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                  <CriticalAlertsSection session={dashboardData.session} />
+                </Suspense>
 
                 {/* 3. Performance Metric Cards (enhanced) */}
-                <PerformanceMetricCards session={dashboardData.session} />
+                <Suspense fallback={<div className="h-48 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                  <PerformanceMetricCards session={dashboardData.session} />
+                </Suspense>
 
                 {/* 4. Recent Sessions Preview (NEW) */}
-                <RecentSessionsPreview />
+                <Suspense fallback={<div className="h-96 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                  <RecentSessionsPreview />
+                </Suspense>
 
                 {/* 5. Recommended Next Actions (NEW) */}
-                <RecommendedActions session={dashboardData.session} />
+                <Suspense fallback={<div className="h-48 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                  <RecommendedActions session={dashboardData.session} />
+                </Suspense>
               </div>
             )}
 
-            {activeTab === 'upload' && <UploadTab />}
+            {activeTab === 'upload' && (
+              <Suspense fallback={<div className="h-96 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                <UploadTab />
+              </Suspense>
+            )}
 
             {activeTab === 'team' && (
-              <TeamTab
-                leaderboard={[]}
-                userRank={1}
-                teamStats={{
-                  teamSize: 1,
-                  avgTeamScore: 0,
-                  yourScore: 0
-                }}
-              />
+              <Suspense fallback={<div className="h-96 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                <TeamTab
+                  leaderboard={[]}
+                  userRank={1}
+                  teamStats={{
+                    teamSize: 1,
+                    avgTeamScore: 0,
+                    yourScore: 0
+                  }}
+                />
+              </Suspense>
             )}
 
             {activeTab === 'manager' && isManager && (
-              <ManagerPanelTab />
+              <Suspense fallback={<div className="h-96 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                <ManagerPanelTab />
+              </Suspense>
+            )}
+
+            {activeTab === 'reps' && isManager && (
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-24">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                </div>
+              }>
+                <RepManagement />
+              </Suspense>
+            )}
+
+            {activeTab === 'knowledge' && isManager && (
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-24">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                </div>
+              }>
+                <KnowledgeBase />
+              </Suspense>
+            )}
+
+            {activeTab === 'videos' && isManager && (
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-24">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                </div>
+              }>
+                <TrainingVideos />
+              </Suspense>
             )}
 
           </motion.div>

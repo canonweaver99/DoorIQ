@@ -70,12 +70,13 @@ export default function HeroPerformanceCard({
         {/* Header with title and date/time */}
         <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-4 md:mb-6 gap-2">
           <div className="flex-1">
-            <h2 className="font-space text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Most Recent Session</h2>
-            {durationMinutes !== null && durationSecs !== null && (
-              <p className="font-space text-white/60 text-xs sm:text-xs font-semibold mt-0.5">
-                Duration: {durationMinutes}m {durationSecs}s
-              </p>
-            )}
+            <h2 className="font-space text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Overall Performance</h2>
+            <p className="font-space text-white/60 text-xs sm:text-xs font-semibold mt-0.5">
+              Last 20 Sessions
+              {durationMinutes !== null && durationSecs !== null && (
+                <> • Avg Duration: {durationMinutes}m {durationSecs}s</>
+              )}
+            </p>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20">
@@ -83,7 +84,7 @@ export default function HeroPerformanceCard({
             </div>
             <div className="text-right">
               <p className="font-space text-white/80 text-xs sm:text-sm md:text-base font-bold whitespace-nowrap">
-                {formattedDate} at {formattedTime}
+                Updated {formattedDate} at {formattedTime}
               </p>
             </div>
           </div>

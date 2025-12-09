@@ -31,9 +31,11 @@ const nextConfig: NextConfig = {
   
   // Experimental features for performance
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-dialog'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
     // Enable partial prerendering for better performance
     ppr: false, // Can enable when stable
+    // Optimize server components
+    serverComponentsExternalPackages: ['@supabase/supabase-js'],
   },
   // Compiler optimizations
   compiler: {

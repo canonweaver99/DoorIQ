@@ -270,18 +270,17 @@ export async function GET(request: NextRequest) {
       ? userData.full_name.split(' ')[0] 
       : userData?.email?.split('@')[0] || 'User'
 
-    // Fetch latest session with analytics
-    const { data: latestSession, error: sessionError } = await supabase
+    // Fetch past 20 sessions with analytics
+    const { data: sessions, error: sessionError } = await supabase
       .from('live_sessions')
       .select('id, overall_score, agent_name, created_at, sale_closed, analytics, duration_seconds')
       .eq('user_id', user.id)
       .not('overall_score', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+      .limit(20)
 
-    if (sessionError || !latestSession) {
-      // Return empty data if no session found
+    if (sessionError || !sessions || sessions.length === 0) {
+      // Return empty data if no sessions found
       return NextResponse.json({
         userName,
         currentDateTime: new Date().toISOString(),
@@ -289,40 +288,153 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const analytics = latestSession.analytics || {}
-    const transcript = analytics.transcript || analytics.full_transcript || []
-    const durationSeconds = latestSession.duration_seconds
+    // Aggregate metrics across all sessions
+    let totalOverallScore = 0
+    let totalConfidence = 0
+    let totalEnergy = 0
+    let totalClarity = 0
+    let totalTalkRatio = 0
+    let totalPace = 0
+    let totalClosingSuccess = 0
+    let totalClosingAttempts = 0
+    let totalDurationSeconds = 0
+    let validSessions = 0
+    const allKeyIssues: KeyIssue[] = []
+    const agentNames: string[] = []
 
-    // Extract metrics
-    const overallScore = latestSession.overall_score || 0
-    const grade = calculateGrade(overallScore)
-    
-    const voice = extractVoiceMetrics(analytics, durationSeconds)
-    const conversation = extractConversationMetrics(analytics, transcript)
-    const closing = extractClosingMetrics(latestSession.sale_closed, analytics)
-    
-    const overall: OverallMetrics = {
-      score: overallScore,
-      grade,
-      percentile: calculatePercentile(overallScore),
-      averageScore: overallScore
+    for (const session of sessions) {
+      if (session.overall_score === null) continue
+      
+      validSessions++
+      totalOverallScore += session.overall_score || 0
+      
+      const analytics = session.analytics || {}
+      const transcript = analytics.transcript || analytics.full_transcript || []
+      const durationSeconds = session.duration_seconds || 0
+      totalDurationSeconds += durationSeconds
+
+      // Extract and accumulate voice metrics
+      const voiceMetrics = extractVoiceMetrics(analytics, durationSeconds)
+      totalConfidence += voiceMetrics.confidence
+      totalEnergy += voiceMetrics.energy
+      totalClarity += voiceMetrics.clarity
+
+      // Extract and accumulate conversation metrics
+      const conversationMetrics = extractConversationMetrics(analytics, transcript)
+      totalTalkRatio += conversationMetrics.talkRatio
+      totalPace += conversationMetrics.pace
+
+      // Accumulate closing metrics
+      if (session.sale_closed === true) {
+        totalClosingSuccess++
+      }
+      totalClosingAttempts++
+
+      // Collect key issues
+      const sessionKeyIssues = extractKeyIssues(
+        session.sale_closed,
+        analytics,
+        voiceMetrics,
+        conversationMetrics
+      )
+      allKeyIssues.push(...sessionKeyIssues)
+
+      // Collect agent names
+      if (session.agent_name) {
+        agentNames.push(session.agent_name)
+      }
     }
 
-    const keyIssues = extractKeyIssues(
-      latestSession.sale_closed,
-      analytics,
-      voice,
-      conversation
-    )
+    if (validSessions === 0) {
+      return NextResponse.json({
+        userName,
+        currentDateTime: new Date().toISOString(),
+        session: null
+      })
+    }
+
+    // Calculate averages
+    const avgOverallScore = Math.round(totalOverallScore / validSessions)
+    const avgConfidence = Math.round(totalConfidence / validSessions)
+    const avgEnergy = Math.round(totalEnergy / validSessions)
+    const avgClarity = Math.round(totalClarity / validSessions)
+    const avgTalkRatio = Math.round(totalTalkRatio / validSessions)
+    const avgPace = Math.round(totalPace / validSessions)
+    const closingSuccessRate = Math.round((totalClosingSuccess / totalClosingAttempts) * 100)
+    const avgDurationSeconds = Math.round(totalDurationSeconds / validSessions)
+
+    // Get most common agent name
+    const agentCounts: Record<string, number> = {}
+    agentNames.forEach(name => {
+      agentCounts[name] = (agentCounts[name] || 0) + 1
+    })
+    const mostCommonAgent = agentNames.length > 0 && Object.keys(agentCounts).length > 0
+      ? Object.entries(agentCounts).reduce((a, b) => 
+          agentCounts[a[0]] > agentCounts[b[0]] ? a : b
+        )[0]
+      : 'Average Austin'
+
+    // Aggregate key issues - count occurrences and take most common ones
+    const issueCounts: Record<string, number> = {}
+    allKeyIssues.forEach(issue => {
+      issueCounts[issue.text] = (issueCounts[issue.text] || 0) + 1
+    })
+    const topIssues = Object.entries(issueCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([text]) => ({
+        text,
+        severity: 'warning' as const
+      }))
+
+    const grade = calculateGrade(avgOverallScore)
+    
+    const voice: VoiceMetrics = {
+      confidence: avgConfidence,
+      energy: avgEnergy,
+      clarity: avgClarity,
+      averageScore: Math.round((avgConfidence + avgEnergy + avgClarity) / 3)
+    }
+
+    // Calculate conversation average score
+    const talkRatioScore = avgTalkRatio >= 50 && avgTalkRatio <= 70 ? 80 : 
+      (avgTalkRatio >= 40 && avgTalkRatio < 50) || (avgTalkRatio > 70 && avgTalkRatio <= 80) ? 70 : 60
+    const paceScore = avgPace >= 140 && avgPace <= 160 ? 80 :
+      (avgPace >= 120 && avgPace < 140) || (avgPace > 160 && avgPace <= 180) ? 70 : 60
+    const conversationAverageScore = Math.round((talkRatioScore + paceScore) / 2)
+
+    const conversation: ConversationMetrics = {
+      talkRatio: avgTalkRatio,
+      pace: avgPace,
+      warning: avgPace > 160 ? 'Too fast' : undefined,
+      averageScore: conversationAverageScore
+    }
+
+    const closing: ClosingMetrics = {
+      success: closingSuccessRate,
+      attempts: `${totalClosingSuccess}/${totalClosingAttempts}`,
+      status: closingSuccessRate > 0 ? 'SUCCESS' : 'MISSED',
+      averageScore: closingSuccessRate
+    }
+    
+    const overall: OverallMetrics = {
+      score: avgOverallScore,
+      grade,
+      percentile: calculatePercentile(avgOverallScore),
+      averageScore: avgOverallScore
+    }
+
+    // Use the most recent session's ID and created_at for reference
+    const mostRecentSession = sessions[0]
 
     const session: SessionPerformance = {
-      id: latestSession.id,
-      overallScore,
+      id: mostRecentSession.id,
+      overallScore: avgOverallScore,
       grade,
-      agentName: latestSession.agent_name || 'Average Austin',
-      createdAt: latestSession.created_at,
-      durationSeconds: latestSession.duration_seconds || null,
-      keyIssues,
+      agentName: mostCommonAgent,
+      createdAt: mostRecentSession.created_at,
+      durationSeconds: avgDurationSeconds,
+      keyIssues: topIssues,
       voice,
       conversation,
       closing,
@@ -335,7 +447,9 @@ export async function GET(request: NextRequest) {
       session
     }, {
       headers: {
-        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=120',
+        'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600',
+        'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
       },
     })
   } catch (error: any) {

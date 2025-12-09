@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { motion } from 'framer-motion'
 import { Play, Flame, Target, TrendingUp, ArrowRight } from 'lucide-react'
-import HomepageContent from '@/app/dashboard/components/HomepageContent'
+
+// Lazy load HomepageContent for better code splitting
+const HomepageContent = lazy(() => import('@/app/dashboard/components/HomepageContent'))
 
 // Quick Stats Card Component - Desktop Style (unchanged)
 function QuickStatsCard({ streak, sessionsToday, avgScore }: { streak: number; sessionsToday: number; avgScore: number }) {
@@ -351,7 +353,19 @@ export default function HomePage() {
             transition={{ duration: 0.4, delay: 0.3 }}
             className="space-y-4"
           >
-            <HomepageContent />
+            <Suspense fallback={
+              <div className="space-y-4 sm:space-y-6 md:space-y-8">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white/[0.02] border border-white/5 rounded-lg sm:rounded-xl p-4 sm:p-6 md:p-8 animate-pulse">
+                    <div className="h-5 sm:h-6 bg-white/10 rounded-lg w-1/2 sm:w-1/3 mb-3 sm:mb-4" />
+                    <div className="h-3 sm:h-4 bg-white/10 rounded-lg w-full mb-2 sm:mb-3" />
+                    <div className="h-3 sm:h-4 bg-white/10 rounded-lg w-2/3" />
+                  </div>
+                ))}
+              </div>
+            }>
+              <HomepageContent />
+            </Suspense>
           </motion.div>
         </div>
       </div>
@@ -431,7 +445,19 @@ export default function HomePage() {
           >
             {/* Subtle divider before content */}
             <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-6"></div>
-            <HomepageContent />
+            <Suspense fallback={
+              <div className="space-y-4 sm:space-y-6 md:space-y-8">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white/[0.02] border border-white/5 rounded-lg sm:rounded-xl p-4 sm:p-6 md:p-8 animate-pulse">
+                    <div className="h-5 sm:h-6 bg-white/10 rounded-lg w-1/2 sm:w-1/3 mb-3 sm:mb-4" />
+                    <div className="h-3 sm:h-4 bg-white/10 rounded-lg w-full mb-2 sm:mb-3" />
+                    <div className="h-3 sm:h-4 bg-white/10 rounded-lg w-2/3" />
+                  </div>
+                ))}
+              </div>
+            }>
+              <HomepageContent />
+            </Suspense>
           </motion.div>
         </div>
       </div>
