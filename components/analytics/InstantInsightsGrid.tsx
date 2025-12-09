@@ -210,7 +210,31 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
   
   // Use the conversationBalance from instant_metrics (live session data)
   // This is the final % that was constantly being updated during the session
-  const balance = metrics.conversationBalance || 0
+  // If it's 0 or missing, calculate from transcript
+  let balance = metrics.conversationBalance || 0
+  
+  // Fallback: Calculate from transcript if balance is 0 or transcript is available
+  if ((balance === 0 || !balance) && transcript && Array.isArray(transcript) && transcript.length > 0) {
+    let userCharCount = 0
+    let homeownerCharCount = 0
+    
+    transcript.forEach((entry: any) => {
+      const charCount = (entry.text || '').length
+      // Check for 'user' or 'rep' speaker (sales rep)
+      if (entry.speaker === 'user' || entry.speaker === 'rep') {
+        userCharCount += charCount
+      } 
+      // Check for 'homeowner' or 'agent' speaker (AI agent)
+      else if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
+        homeownerCharCount += charCount
+      }
+    })
+    
+    const totalChars = userCharCount + homeownerCharCount
+    if (totalChars > 0) {
+      balance = Math.round((userCharCount / totalChars) * 100)
+    }
+  }
   
   // Calculate objections from transcript if not in metrics
   let objections = metrics.objectionCount || 0
