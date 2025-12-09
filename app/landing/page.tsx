@@ -40,6 +40,8 @@ const AIVoiceInput = dynamic(() => import("@/components/ui/ai-voice-input").then
   loading: () => <div className="h-[200px] bg-slate-900 rounded-lg" />,
   ssr: false,
 });
+import { MacbookPro } from "@/components/ui/macbook-pro";
+import { IPhoneMockup } from "@/components/ui/iphone-mockup";
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 import { getAgentImageStyle } from "@/lib/agents/imageStyles";
 import { createClient } from "@/lib/supabase/client";
@@ -301,7 +303,7 @@ function HeroSection() {
   }, []);
 
   return (
-    <div id="hero" className="relative bg-black overflow-hidden pt-8 sm:pt-16 md:pt-16">
+    <div id="hero" className="relative bg-black overflow-hidden pt-8 sm:pt-12 md:pt-16">
       {/* Animated grid pattern */}
       <motion.div
         animate={shouldAnimate ? {
@@ -442,25 +444,20 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Demo Video */}
-        <div className="relative w-full h-full rounded-lg overflow-hidden border border-white/5 bg-black">
-          <video
-            ref={videoRef}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-            poster="/dashboard-preview.png"
-            preload="auto"
-            style={{ display: 'block' }}
-          >
-            <source src="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4" type="video/mp4" />
-          </video>
+        {/* Demo Video in Macbook Pro */}
+        <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
+          <MacbookPro
+            width={650}
+            height={400}
+            videoSrc="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
+            videoRef={videoRef as React.RefObject<HTMLVideoElement | null>}
+            className="w-full"
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
           {/* Fallback if video doesn't load */}
           <div 
             ref={fallbackRef}
-            className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center"
+            className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center pointer-events-none"
             style={{ display: 'none' }}
           >
             <div className="text-center">
@@ -470,13 +467,11 @@ function HeroSection() {
               <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
             </div>
           </div>
-          {/* Subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-black/10 via-transparent to-black/10 pointer-events-none" />
         </div>
       </ContainerScroll>
       </div>
       
-      {/* Mobile Only - iPad Scroll Animation */}
+      {/* Mobile Only - iPhone Scroll Animation */}
       <div className="block md:hidden mt-8">
         <ContainerScroll
           titleComponent={
@@ -564,25 +559,21 @@ function HeroSection() {
             </div>
           }
         >
-          {/* Demo Video */}
-          <div className="relative w-full h-full rounded-lg overflow-hidden border border-white/5 bg-black">
-            <video
-              ref={videoRef}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-              poster="/dashboard-preview.png"
-              preload="auto"
-              style={{ display: 'block' }}
-            >
-              <source src="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4" type="video/mp4" />
-            </video>
+          {/* Demo Video in iPhone */}
+          <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
+            <IPhoneMockup
+              model="14-pro"
+              color="#5a5a5a"
+              orientation="portrait"
+              videoSrc="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
+              videoRef={videoRef as React.RefObject<HTMLVideoElement | null>}
+              scale={0.85}
+              className="w-full flex justify-center"
+            />
             {/* Fallback if video doesn't load */}
             <div 
               ref={fallbackRef}
-              className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center"
+              className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center pointer-events-none"
               style={{ display: 'none' }}
             >
               <div className="text-center">
@@ -592,8 +583,6 @@ function HeroSection() {
                 <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
               </div>
             </div>
-            {/* Subtle gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-black/10 via-transparent to-black/10 pointer-events-none" />
           </div>
         </ContainerScroll>
       </div>
