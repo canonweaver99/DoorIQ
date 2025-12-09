@@ -157,7 +157,13 @@ export function HeroSection({
   }
   
   // Calculate earnings breakdown - prioritize closed_amount from earnings_data
-  const dealValue = dealDetails?.total_contract_value || dealDetails?.base_price || 0
+  // Calculate total deal value: base_price + (monthly_value * contract_length)
+  const calculatedTotalValue = (dealDetails?.base_price || 0) + 
+    ((dealDetails?.monthly_value || 0) * (dealDetails?.contract_length || 0))
+  
+  // Use total_contract_value if provided, otherwise calculate it
+  const dealValue = dealDetails?.total_contract_value || calculatedTotalValue || 0
+  
   // Use closed_amount from earnings_data if available, otherwise fall back to virtualEarnings
   const totalEarned = earningsData?.closed_amount || earningsData?.total_earned || virtualEarnings || 0
   

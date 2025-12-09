@@ -224,10 +224,28 @@ Return ONLY valid JSON matching this structure:
     
     // Extract data
     const saleClosed = parsed.sale_closed || false
-    // Only use amounts that were actually extracted from conversation - no defaults
-    const virtualEarnings = saleClosed ? (parsed.virtual_earnings || parsed.deal_details?.total_contract_value || 0) : 0
-    const finalScores = parsed.finalScores || {}
     const dealDetails = saleClosed ? (parsed.deal_details || {}) : {}
+    
+    // Calculate total_contract_value if not provided: base_price + (monthly_value * contract_length)
+    if (saleClosed && dealDetails && !dealDetails.total_contract_value) {
+      const basePrice = dealDetails.base_price || 0
+      const monthlyValue = dealDetails.monthly_value || 0
+      const contractLength = dealDetails.contract_length || 0
+      dealDetails.total_contract_value = basePrice + (monthlyValue * contractLength)
+      console.log('📊 Calculated total_contract_value:', {
+        basePrice,
+        monthlyValue,
+        contractLength,
+        total: dealDetails.total_contract_value
+      })
+    }
+    
+    // Only use amounts that were actually extracted from conversation - no defaults
+    // Use calculated total_contract_value if virtual_earnings wasn't provided
+    const virtualEarnings = saleClosed ? (
+      parsed.virtual_earnings || dealDetails?.total_contract_value || 0
+    ) : 0
+    const finalScores = parsed.finalScores || {}
     const failureReason = !saleClosed ? (parsed.failure_reason || 'Close attempt did not result in sale') : null
     
     // Ensure earnings_data is populated if sale closed
