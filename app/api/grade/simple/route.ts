@@ -160,6 +160,13 @@ export async function POST(req: NextRequest) {
 4. failure_reason (string) - If sale_closed=false: Why did the close fail? (e.g., "Energy dropped in final 2 minutes", "Didn't ask for the close", "Talk ratio too high")
 5. finalScores (object) - {overall: 0-100, rapport: 0-100, discovery: 0-100, objectionHandling: 0-100, closing: 0-100}
    - If sale_closed=true: overall MUST be at least 80, closing MUST be 90-100
+   - If sale_closed=false, score closing based on close attempt quality:
+     * 75-89: Strong close attempt with appointment scheduled or clear next steps
+     * 60-74: Good close attempt (trial close, assumptive language, clear ask) but customer didn't commit
+     * 40-59: Weak close attempt (vague ask, permission-seeking language, unclear next steps)
+     * 20-39: Minimal close attempt (only mentioned service, no actual ask)
+     * 0-19: No close attempt detected
+   - Vary scores based on: number of attempts, confidence level, assumptive language, clarity of ask, persistence, buying signal recognition
 6. top_strengths (array) - Top 2-3 strengths with brief description
 7. top_improvements (array) - Top 2-3 areas for improvement
 8. session_highlight (string) - One highlight from the conversation
@@ -203,7 +210,7 @@ Return ONLY valid JSON matching this structure:
         { role: 'system', content: 'Sales coach. Return ONLY valid JSON, no markdown formatting.' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.2,
+      temperature: 0.4,
       max_tokens: 3000,
       response_format: { type: 'json_object' }
     })
