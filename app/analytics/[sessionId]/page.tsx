@@ -363,64 +363,42 @@ export default function AnalyticsPage() {
       
       const data = await response.json()
       
-      // Check if deep analysis is complete
-      const gradingStatus = data.grading_status
-      const saleClosed = data.sale_closed
-      const deepAnalysisComplete = gradingStatus === 'complete' && saleClosed !== null && saleClosed !== undefined
-      
-      // If grading is complete, show analytics immediately
-      if (deepAnalysisComplete) {
-        setSession(data)
-      } else {
-        // Grading not complete yet - start polling for completion
-        console.log('Grading not complete yet, polling for completion...', {
-          gradingStatus,
-          saleClosed,
-          deepAnalysisComplete
-        })
-        
-        // Poll for grading completion (up to 2 minutes)
-        let pollCount = 0
-        const maxPolls = 120 // 2 minutes at 1 second intervals
-        
-        const pollForCompletion = async () => {
-          try {
-            const pollResponse = await fetch(`/api/session?id=${sessionId}`)
-            if (pollResponse.ok) {
-              const pollData = await pollResponse.json()
-              const pollGradingStatus = pollData.grading_status
-              const pollSaleClosed = pollData.sale_closed
-              const pollComplete = pollGradingStatus === 'complete' && pollSaleClosed !== null && pollSaleClosed !== undefined
-              
-              if (pollComplete) {
-                console.log('Grading complete! Loading analytics...')
-                setSession(pollData)
-                return
-              }
-            }
-            
-            pollCount++
-            if (pollCount < maxPolls) {
-              // Continue polling
-              setTimeout(pollForCompletion, 1000)
-            } else {
-              // Timeout - show what we have (partial results)
-              console.warn('Grading timeout - showing partial results')
-              setSession(data)
-            }
-          } catch (error) {
-            console.error('Error polling for grading completion:', error)
-            // Show what we have on error
-            setSession(data)
-          }
+      // Comprehensive check for 100% complete grading
+      const isGradingComplete = (sessionData: any): boolean => {
+        // Must have grading_status as 'complete'
+        if (sessionData.grading_status !== 'complete') {
+          return false
         }
         
-        // Start polling after a short delay
-        setTimeout(pollForCompletion, 1000)
+        // Must have sale_closed determined (can be true or false, but must be set)
+        if (sessionData.sale_closed === null || sessionData.sale_closed === undefined) {
+          return false
+        }
         
-        // Show partial data while polling
-        setSession(data)
+        // Must have overall_score (required for HeroSection/overall card)
+        if (sessionData.overall_score === null || sessionData.overall_score === undefined) {
+          return false
+        }
+        
+        // Must have at least the core scores
+        if (
+          (sessionData.rapport_score === null || sessionData.rapport_score === undefined) &&
+          (sessionData.discovery_score === null || sessionData.discovery_score === undefined) &&
+          (sessionData.objection_handling_score === null || sessionData.objection_handling_score === undefined) &&
+          (sessionData.close_score === null || sessionData.close_score === undefined)
+        ) {
+          return false
+        }
+        
+        return true
       }
+      
+      // Check if grading is 100% complete
+      if (isGradingComplete(data)) {
+        console.log('Grading 100% complete - showing analytics')
+        setSession(data)
+        
+        // Set loading states after session is set
         setLoadingStates(prev => ({ ...prev, hero: true }))
         
         // Load insights immediately - always show performance metrics
@@ -453,6 +431,68 @@ export default function AnalyticsPage() {
             setLoadingStates(prev => ({ ...prev, conversationFlow: true }))
           }, 3000)
         }
+      } else {
+        // Grading not complete yet - start polling for completion
+        console.log('Grading not complete yet, polling for completion...', {
+          grading_status: data.grading_status,
+          sale_closed: data.sale_closed,
+          overall_score: data.overall_score,
+          hasScores: !!(data.rapport_score || data.discovery_score || data.objection_handling_score || data.close_score)
+        })
+        
+        // Poll for grading completion (up to 3 minutes)
+        let pollCount = 0
+        const maxPolls = 180 // 3 minutes at 1 second intervals
+        
+        const pollForCompletion = async () => {
+          try {
+            const pollResponse = await fetch(`/api/session?id=${sessionId}`)
+            if (pollResponse.ok) {
+              const pollData = await pollResponse.json()
+              
+              if (isGradingComplete(pollData)) {
+                console.log('Grading 100% complete! Loading analytics...')
+                setSession(pollData)
+                // Set loading states after session is set
+                setTimeout(() => {
+                  setLoadingStates(prev => ({ ...prev, hero: true }))
+                  setTimeout(() => {
+                    setLoadingStates(prev => ({ ...prev, insights: true }))
+                  }, 500)
+                  if (pollData.key_moments && Array.isArray(pollData.key_moments) && pollData.key_moments.length > 0) {
+                    setTimeout(() => {
+                      setLoadingStates(prev => ({ ...prev, moments: true }))
+                    }, 1000)
+                  }
+                  setTimeout(() => {
+                    setLoadingStates(prev => ({ ...prev, speech: true }))
+                  }, 2500)
+                }, 100)
+                return
+              }
+            }
+            
+            pollCount++
+            if (pollCount < maxPolls) {
+              // Continue polling
+              setTimeout(pollForCompletion, 1000)
+            } else {
+              // Timeout - redirect back to sessions page
+              console.warn('Grading timeout - redirecting to sessions page')
+              router.push('/sessions?message=Grading is still in progress. Please check back in a few moments.')
+            }
+          } catch (error) {
+            console.error('Error polling for grading completion:', error)
+            // On error, redirect to sessions page
+            router.push('/sessions?message=Unable to load analytics. Please try again later.')
+          }
+        }
+        
+        // Start polling after a short delay
+        setTimeout(pollForCompletion, 1000)
+        
+        // DO NOT show partial data - keep loading state
+      }
     } catch (error) {
       console.error('Error fetching session:', error)
     } finally {
@@ -463,9 +503,10 @@ export default function AnalyticsPage() {
     fetchSession()
   }, [sessionId, router])
   
-  // Fetch comparison data
+  // Fetch comparison data - only when grading is 100% complete
   useEffect(() => {
-    if (!session || !session.overall_score) return
+    if (!session || session.overall_score === null || session.overall_score === undefined) return
+    if (session.grading_status !== 'complete') return
     
     const fetchComparison = async () => {
       try {
@@ -487,26 +528,30 @@ export default function AnalyticsPage() {
     fetchComparison()
   }, [session, sessionId])
   
-    if (loading) {
+    if (loading || !session) {
       return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading session analysis...</p>
+          <p className="text-gray-500 mb-2">Loading session analysis...</p>
+          <p className="text-gray-600 text-sm">Waiting for grading to complete...</p>
         </div>
         </div>
       )
     }
-
-    if (!session) {
+    
+    // Double-check that we have all required data before showing the page
+    if (!session.overall_score && session.overall_score !== 0) {
       return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400 mb-4">Session not found</p>
+          <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 mb-2">Grading in progress...</p>
+          <p className="text-gray-600 text-sm">Please wait while we complete the analysis</p>
         </div>
-          </div>
-        )
-      }
+        </div>
+      )
+    }
 
   const overallScore = session.overall_score || 0
   
@@ -528,26 +573,26 @@ export default function AnalyticsPage() {
   return (
     <AnalyticsErrorBoundary>
       <div className="min-h-screen bg-black">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-4 sm:pt-6 lg:pt-16 pb-8 sm:pb-10 lg:pb-12">
-        {/* Hero Section - Loads immediately */}
-        {loadingStates.hero && comparison && (
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-6 sm:pt-8 lg:pt-20 pb-8 sm:pb-10 lg:pb-12">
+        {/* Hero Section - Only show when we have all required data */}
+        {loadingStates.hero && session.overall_score !== null && session.overall_score !== undefined && (
           <HeroSection
             overallScore={overallScore}
-            vsUserAverage={comparison.vsUserAverage.overall}
-            vsTeamAverage={comparison.vsTeamAverage.overall}
-            percentileLabel={comparison.percentileLabel}
+            vsUserAverage={comparison?.vsUserAverage?.overall || 0}
+            vsTeamAverage={comparison?.vsTeamAverage?.overall || 0}
+            percentileLabel={comparison?.percentileLabel || 'Top 50%'}
             saleClosed={session.sale_closed || false}
             virtualEarnings={session.virtual_earnings || 0}
             earningsData={session.earnings_data}
             dealDetails={session.deal_details}
-            trends={comparison.trends}
+            trends={comparison?.trends || { rapport: 0, discovery: 0, objection_handling: 0, closing: 0 }}
             currentScores={{
               rapport: session.rapport_score || 0,
               discovery: session.discovery_score || 0,
               objection_handling: session.objection_handling_score || 0,
               closing: session.close_score || 0
             }}
-            recentScores={comparison.recentScores}
+            recentScores={comparison?.recentScores}
             failureAnalysis={session.analytics?.failure_analysis}
             voiceAnalysis={session.analytics?.voice_analysis}
             instantMetrics={session.instant_metrics}
