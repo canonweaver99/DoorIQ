@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import dynamic from 'next/dynamic'
+import { AnalyticsErrorBoundary } from '@/components/analytics/AnalyticsErrorBoundary'
 
 // Dynamically import heavy analytics components to reduce initial bundle size
 const HeroSection = dynamic(() => import('@/components/analytics/HeroSection').then(mod => ({ default: mod.HeroSection })), {
@@ -307,6 +308,8 @@ export default function AnalyticsPage() {
   
   // Fetch user name and check authentication
   useEffect(() => {
+    if (!sessionId) return
+    
     const fetchUserName = async () => {
       try {
         const supabase = createClient()
@@ -347,7 +350,7 @@ export default function AnalyticsPage() {
     }
     
     fetchUserName()
-  }, [])
+  }, [sessionId, router])
 
   // Fetch session data
   useEffect(() => {
@@ -525,8 +528,9 @@ export default function AnalyticsPage() {
     : null
   
   return (
-    <div className="min-h-screen bg-black">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-4 sm:pt-6 lg:pt-16 pb-8 sm:pb-10 lg:pb-12">
+    <AnalyticsErrorBoundary>
+      <div className="min-h-screen bg-black">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-4 sm:pt-6 lg:pt-16 pb-8 sm:pb-10 lg:pb-12">
         {/* Hero Section - Loads immediately */}
         {loadingStates.hero && comparison && (
           <HeroSection
@@ -640,7 +644,8 @@ export default function AnalyticsPage() {
           )
         ) : null}
         
+        </div>
       </div>
-    </div>
+    </AnalyticsErrorBoundary>
   )
 }
