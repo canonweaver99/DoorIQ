@@ -233,10 +233,14 @@ export function CriticalMomentsTimeline({
                     <p className="text-sm sm:text-base text-gray-200 italic mb-2">
                       "{(() => {
                         // Extract first meaningful quote (limit to ~80 chars for mobile)
-                        let transcriptText = moment.transcript
+                        let transcriptText = moment.transcript || ''
                         // Replace "homeowner:" with agent name if available (case-insensitive)
-                        if (agentName) {
+                        if (agentName && transcriptText) {
                           transcriptText = transcriptText.replace(/homeowner\s*:/gi, `${agentName}:`)
+                        }
+                        // Return empty string if no transcript
+                        if (!transcriptText) {
+                          return 'No transcript available'
                         }
                         // Find first quote or meaningful sentence
                         const firstQuoteMatch = transcriptText.match(/["']([^"']{1,80})["']/)

@@ -136,13 +136,12 @@ export function useSessionRecording(sessionId: string | null) {
       
       console.log('🔗 Public URL generated:', publicUrl)
 
-      // Update the session with the audio URL and metadata
+      // Update the session with the audio URL
+      // Note: audio_duration and audio_file_size columns were removed in migration 122
       const { error: updateError } = await supabase
         .from('live_sessions')
         .update({ 
-          audio_url: publicUrl,
-          audio_duration: Math.floor(blob.size / 16000), // Rough estimate
-          audio_file_size: blob.size
+          audio_url: publicUrl
         })
         .eq('id', sessionId)
       
