@@ -184,16 +184,31 @@ function TrainerPageContent() {
     }
   }, [challengeModeEnabled])
 
+  // Reset strikes when sessionId changes from null to a new value (new session created)
+  // This ensures strikes are reset BEFORE sessionActive becomes true, preventing race conditions
+  useEffect(() => {
+    if (challengeModeEnabled && sessionId) {
+      // New session created - reset all strike-related state immediately
+      fillerWordCountRef.current = 0
+      poorHandlingCountRef.current = 0
+      processedPoorHandlingRef.current.clear()
+      setStrikes(0)
+      setStrikeCauses([])
+    }
+  }, [sessionId, challengeModeEnabled])
+
   // Reset strikes when starting a new session OR when session becomes inactive (after restart)
   useEffect(() => {
     if (challengeModeEnabled) {
-      if (sessionActive) {
-        // Reset strikes when starting a new active session
-        setStrikes(0)
-        setStrikeCauses([])
+      if (sessionActive && sessionId) {
+        // Reset strikes when starting a new active session with a new sessionId
+        // IMPORTANT: Reset refs FIRST to prevent race conditions with tracking effects
         fillerWordCountRef.current = 0
         poorHandlingCountRef.current = 0
         processedPoorHandlingRef.current.clear()
+        // Then reset state
+        setStrikes(0)
+        setStrikeCauses([])
         setShowRestartWarning(false)
         setRestartCountdown(3)
         if (restartTimeoutRef.current) {
@@ -204,17 +219,17 @@ function TrainerPageContent() {
           clearInterval(countdownIntervalRef.current)
           countdownIntervalRef.current = null
         }
-      } else {
+      } else if (!sessionActive) {
         // Also reset strikes when session becomes inactive (after restart, before knocking)
         // This ensures counter shows 0/3 before user knocks
-        setStrikes(0)
-        setStrikeCauses([])
         fillerWordCountRef.current = 0
         poorHandlingCountRef.current = 0
         processedPoorHandlingRef.current.clear()
+        setStrikes(0)
+        setStrikeCauses([])
       }
     }
-  }, [sessionActive, challengeModeEnabled])
+  }, [sessionActive, sessionId, challengeModeEnabled])
 
   // Track session start time for voice analysis
   const sessionStartTimeRef = useRef<number | null>(null)
