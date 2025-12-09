@@ -619,12 +619,12 @@ export default function AnalyticsPage() {
         
         {/* Instant Insights Grid - Loads after hero - Always show if we have session data */}
         {loadingStates.insights ? (
-          <InstantInsightsGrid 
-            instantMetrics={session.instant_metrics || {}} 
-            userName={userName}
-            transcript={(session as any).full_transcript}
-            voiceAnalysis={session.analytics?.voice_analysis}
-          />
+            <InstantInsightsGrid 
+              instantMetrics={session.instant_metrics || {}} 
+              userName={userName}
+              transcript={(session as any).full_transcript || (session as any).transcript || []}
+              voiceAnalysis={session.analytics?.voice_analysis}
+            />
         ) : (
           <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />
         )}
@@ -633,7 +633,93 @@ export default function AnalyticsPage() {
         {session.key_moments && Array.isArray(session.key_moments) && session.key_moments.length > 0 ? (
           loadingStates.moments ? (
             <CriticalMomentsTimeline 
-              moments={session.key_moments}
+              moments={session.key_moments.map((moment: any) => {
+                // If moment doesn't have transcript, try to find it from full_transcript
+                if (!moment.transcript && (session as any).full_transcript && Array.isArray((session as any).full_transcript)) {
+                  const transcript = (session as any).full_transcript
+                  
+                  // Try to find transcript by startIndex or line number first
+                  if (moment.startIndex !== undefined && transcript[moment.startIndex]) {
+                    const entry = transcript[moment.startIndex]
+                    moment.transcript = entry.text || entry.message || ''
+                  } else if (moment.line !== undefined && transcript[moment.line]) {
+                    const entry = transcript[moment.line]
+                    moment.transcript = entry.text || entry.message || ''
+                  } else if (moment.timestamp) {
+                    // Parse timestamp (format: "MM:SS" or "HH:MM:SS")
+                    const parseTimestamp = (ts: string): number => {
+                      const parts = ts.split(':').map(Number)
+                      if (parts.length === 2) return parts[0] * 60 + parts[1] // MM:SS
+                      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2] // HH:MM:SS
+                      return 0
+                    }
+                    
+                    const momentSeconds = parseTimestamp(moment.timestamp)
+                    const durationSeconds = (session as any).duration_seconds || 0
+                    
+                    if (momentSeconds > 0 && durationSeconds > 0) {
+                      // Find entry closest to the timestamp
+                      let closestEntry = null
+                      let minDiff = Infinity
+                      
+                      transcript.forEach((entry: any, idx: number) => {
+                        if (entry.timestamp) {
+                          const entryTime = typeof entry.timestamp === 'string' 
+                            ? new Date(entry.timestamp).getTime() / 1000
+                            : entry.timestamp
+                          const sessionStart = (session as any).created_at 
+                            ? new Date((session as any).created_at).getTime() / 1000
+                            : Date.now() / 1000
+                          const entrySeconds = entryTime - sessionStart
+                          const diff = Math.abs(entrySeconds - momentSeconds)
+                          
+                          if (diff < minDiff) {
+                            minDiff = diff
+                            closestEntry = entry
+                          }
+                        } else {
+                          // Estimate based on position in transcript
+                          const estimatedSeconds = (idx / transcript.length) * durationSeconds
+                          const diff = Math.abs(estimatedSeconds - momentSeconds)
+                          if (diff < minDiff && diff < 30) { // Within 30 seconds
+                            minDiff = diff
+                            closestEntry = entry
+                          }
+                        }
+                      })
+                      
+                      if (closestEntry) {
+                        moment.transcript = closestEntry.text || closestEntry.message || ''
+                      }
+                    }
+                  }
+                  
+                  // If still no transcript, try to get a relevant snippet
+                  if (!moment.transcript && transcript.length > 0) {
+                    // Try to find entries related to the moment type
+                    const relevantEntries = transcript.filter((entry: any) => {
+                      const text = (entry.text || entry.message || '').toLowerCase()
+                      if (moment.type === 'objection' && (text.includes('not interested') || text.includes('too expensive') || text.includes('think about'))) {
+                        return true
+                      }
+                      if (moment.type === 'close_attempt' && (text.includes('ready to') || text.includes('get started') || text.includes('sign up'))) {
+                        return true
+                      }
+                      return false
+                    })
+                    
+                    if (relevantEntries.length > 0) {
+                      moment.transcript = relevantEntries[0].text || relevantEntries[0].message || ''
+                    } else {
+                      // Fallback: get a middle entry
+                      const midPoint = Math.floor(transcript.length / 2)
+                      const entry = transcript[midPoint] || transcript[0]
+                      moment.transcript = entry.text || entry.message || ''
+                    }
+                  }
+                }
+                return moment
+              })}
               sessionStartTime={(session as any).created_at || (session as any).started_at}
               durationSeconds={(session as any).duration_seconds}
               agentName={(session as any).agent_name}

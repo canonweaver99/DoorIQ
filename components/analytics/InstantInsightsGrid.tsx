@@ -208,6 +208,8 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
     }
   }
   
+  // Use the conversationBalance from instant_metrics (live session data)
+  // This is the final % that was constantly being updated during the session
   const balance = metrics.conversationBalance || 0
   
   // Calculate objections from transcript if not in metrics

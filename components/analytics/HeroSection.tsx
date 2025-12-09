@@ -313,13 +313,19 @@ export function HeroSection({
                     <div className={`text-4xl font-bold text-white mb-4 font-space ${
                       !saleClosed || virtualEarnings === 0 ? 'line-through opacity-50' : ''
                     }`}>
-                      ${saleClosed && virtualEarnings > 0 ? totalEarned.toFixed(2) : '0.00'}
+                      ${saleClosed && virtualEarnings > 0 ? dealValue.toFixed(2) : '0.00'}
                     </div>
 
                     <div className="flex-1 flex flex-col justify-end">
                       {saleClosed && virtualEarnings > 0 ? (
                         <>
                           <div className="space-y-3 mb-4">
+                            {dealDetails?.product_sold && (
+                              <div className="flex justify-between text-sm mb-2">
+                                <span className="text-slate-300 font-sans">Service</span>
+                                <span className="text-white font-medium font-sans">{dealDetails.product_sold}</span>
+                              </div>
+                            )}
                             <div className="flex justify-between text-sm">
                               <span className="text-slate-300 font-sans">Deal Value</span>
                               <span className="text-white font-medium font-sans">${dealValue.toFixed(0)}</span>
@@ -331,45 +337,6 @@ export function HeroSection({
                               </div>
                             )}
                           </div>
-                          
-                          {/* Strengths inside earnings card */}
-                          {strengths.length > 0 && (
-                            <div className="mt-4 pt-4 border-t border-emerald-500/30">
-                              <div className="flex items-center gap-2 mb-3">
-                                <TrendingUp className="w-4 h-4 text-emerald-300" />
-                                <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wide">Strengths</span>
-                              </div>
-                              <div className="space-y-2">
-                                {strengths.slice(0, 2).map((strength, idx) => (
-                                  <div key={idx} className="flex items-center justify-between">
-                                    <span className="text-white/90 text-sm font-medium">↑ {strength.name}: {strength.score}%</span>
-                                    <span className="text-emerald-300 text-xs font-semibold">+{strength.diff}pts above team</span>
-                                  </div>
-                                ))}
-                                {/* Comparison metrics */}
-                                <div className="pt-2 mt-2 border-t border-emerald-500/20 space-y-1.5">
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="text-white/70">vs Your Average</span>
-                                    <span className={cn(
-                                      "font-semibold",
-                                      vsUserAverage >= 0 ? 'text-emerald-300' : 'text-red-300'
-                                    )}>{getTrendText(vsUserAverage)}</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="text-white/70">vs Team Average</span>
-                                    <span className={cn(
-                                      "font-semibold",
-                                      vsTeamAverage >= 0 ? 'text-emerald-300' : 'text-red-300'
-                                    )}>{getTrendText(vsTeamAverage)}</span>
-                                  </div>
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="text-white/70">Percentile</span>
-                                    <span className="text-white font-semibold">{percentileLabel} this week</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
                         </>
                       ) : dealDetails?.next_step ? (
                         <div className="space-y-3">
