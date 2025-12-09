@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
     const prompt = `Analyze this door-to-door sales conversation transcript and return JSON with ONLY these fields:
 
 1. sale_closed (boolean) - Did the customer commit to service? Look for: customer agreement + info collection, scheduling, payment discussion, or rep collecting customer info after discussing service.
-2. virtual_earnings (number) - Deal value if closed (extract price from conversation or use $1000 default), 0 if not closed
+2. virtual_earnings (number) - Deal value if closed (MUST extract exact price mentioned in conversation - look for dollar amounts, pricing discussions, service costs. Do NOT use defaults. If no price mentioned, return 0), 0 if not closed
 3. deal_details (object) - If sale_closed=true: {product_sold, service_type, base_price, monthly_value, contract_length, total_contract_value, payment_method, add_ons, start_date}
 4. failure_reason (string) - If sale_closed=false: Why did the close fail? (e.g., "Energy dropped in final 2 minutes", "Didn't ask for the close", "Talk ratio too high")
 5. finalScores (object) - {overall: 0-100, rapport: 0-100, discovery: 0-100, objectionHandling: 0-100, closing: 0-100}
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
 6. top_strengths (array) - Top 2-3 strengths with brief description
 7. top_improvements (array) - Top 2-3 areas for improvement
 8. session_highlight (string) - One highlight from the conversation
-9. key_moments (array) - Important moments: [{time: "MM:SS", type: "string", description: "string"}]
+9. key_moments (array) - Important moments: [{time: "MM:SS", type: "string", description: "string", transcript: "actual quote from conversation"}]
 
 CRITICAL SALE DETECTION RULES:
 - Sale is CLOSED if customer agreed AND (info was collected OR scheduling happened OR payment discussed)
@@ -191,7 +191,7 @@ Return ONLY valid JSON matching this structure:
   "top_strengths": ["string"],
   "top_improvements": ["string"],
   "session_highlight": "string",
-  "key_moments": [{"time": "MM:SS", "type": "string", "description": "string"}]
+  "key_moments": [{"time": "MM:SS", "type": "string", "description": "string", "transcript": "actual quote from conversation"}]
 }`
 
     logger.info('🤖 Starting simple grading', { sessionId, transcriptLength: transcript.length })
@@ -224,7 +224,8 @@ Return ONLY valid JSON matching this structure:
     
     // Extract data
     const saleClosed = parsed.sale_closed || false
-    const virtualEarnings = saleClosed ? (parsed.virtual_earnings || parsed.deal_details?.total_contract_value || 1000) : 0
+    // Only use amounts that were actually extracted from conversation - no defaults
+    const virtualEarnings = saleClosed ? (parsed.virtual_earnings || parsed.deal_details?.total_contract_value || 0) : 0
     const finalScores = parsed.finalScores || {}
     const dealDetails = saleClosed ? (parsed.deal_details || {}) : {}
     const failureReason = !saleClosed ? (parsed.failure_reason || 'Close attempt did not result in sale') : null
@@ -236,13 +237,97 @@ Return ONLY valid JSON matching this structure:
       total_earned: virtualEarnings
     } : {}
     
-    // Format key moments with timestamps
-    const keyMoments = (parsed.key_moments || []).map((moment: any) => ({
-      ...moment,
-      timestamp: moment.time || '00:00',
-      type: moment.type || 'general',
-      description: moment.description || ''
-    }))
+    // Format key moments with timestamps and transcript
+    const keyMoments = (parsed.key_moments || []).map((moment: any) => {
+      // Try to find transcript snippet for this moment
+      let transcriptText = moment.transcript || moment.description || ''
+      
+      // If no transcript provided, try to find it from the full transcript by timestamp
+      if (!transcriptText && moment.time && transcript && Array.isArray(transcript)) {
+        const parseTimestamp = (ts: string): number => {
+          const parts = ts.split(':').map(Number)
+          if (parts.length === 2) return parts[0] * 60 + parts[1] // MM:SS
+          if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2] // HH:MM:SS
+          return 0
+        }
+        
+        const momentSeconds = parseTimestamp(moment.time)
+        const durationSeconds = session.duration_seconds || 0
+        
+        if (momentSeconds > 0 && durationSeconds > 0) {
+          // Find entry closest to the timestamp
+          let closestEntry = null
+          let minDiff = Infinity
+          
+          transcript.forEach((entry: any, idx: number) => {
+            if (entry.timestamp) {
+              const entryTime = typeof entry.timestamp === 'string' 
+                ? new Date(entry.timestamp).getTime() / 1000
+                : entry.timestamp
+              const sessionStart = session.created_at 
+                ? new Date(session.created_at).getTime() / 1000
+                : Date.now() / 1000
+              const entrySeconds = entryTime - sessionStart
+              const diff = Math.abs(entrySeconds - momentSeconds)
+              
+              if (diff < minDiff) {
+                minDiff = diff
+                closestEntry = entry
+              }
+            } else {
+              // Estimate based on position in transcript
+              const estimatedSeconds = (idx / transcript.length) * durationSeconds
+              const diff = Math.abs(estimatedSeconds - momentSeconds)
+              if (diff < minDiff && diff < 30) { // Within 30 seconds
+                minDiff = diff
+                closestEntry = entry
+              }
+            }
+          })
+          
+          if (closestEntry) {
+            transcriptText = closestEntry.text || closestEntry.message || moment.description || ''
+          }
+        }
+        
+        // If still no transcript, use description or find a relevant snippet
+        if (!transcriptText) {
+          transcriptText = moment.description || ''
+          // Try to find entries related to the moment type
+          if (transcript.length > 0) {
+            const relevantEntries = transcript.filter((entry: any) => {
+              const text = (entry.text || entry.message || '').toLowerCase()
+              const type = (moment.type || '').toLowerCase()
+              if (type.includes('objection') && (text.includes('not interested') || text.includes('too expensive') || text.includes('think about'))) {
+                return true
+              }
+              if (type.includes('close') && (text.includes('ready to') || text.includes('get started') || text.includes('sign up'))) {
+                return true
+              }
+              return false
+            })
+            
+            if (relevantEntries.length > 0) {
+              transcriptText = relevantEntries[0].text || relevantEntries[0].message || transcriptText
+            }
+          }
+        }
+      }
+      
+      return {
+        ...moment,
+        id: moment.id || `moment-${moment.time || Date.now()}`,
+        timestamp: moment.time || '00:00',
+        type: moment.type || 'general',
+        description: moment.description || '',
+        transcript: transcriptText,
+        importance: moment.importance || 5,
+        outcome: moment.outcome || 'neutral'
+      }
+    })
+    
+    // Preserve existing instant_metrics (especially conversationBalance from live session)
+    const existingInstantMetrics = session.instant_metrics || {}
     
     // Build update object
     const updateData: any = {
@@ -286,6 +371,12 @@ Return ONLY valid JSON matching this structure:
     // Ensure ended_at is set
     if (!session.ended_at) {
       updateData.ended_at = new Date().toISOString()
+    }
+    
+    // Preserve instant_metrics if they exist (especially conversationBalance from live session)
+    // Only update instant_metrics if we're not overwriting existing data
+    if (Object.keys(existingInstantMetrics).length > 0) {
+      updateData.instant_metrics = existingInstantMetrics
     }
     
     // Update database

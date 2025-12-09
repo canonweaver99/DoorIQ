@@ -9,12 +9,12 @@ interface SessionFeedbackFormProps {
   onFeedbackComplete: () => void
 }
 
-const IMPROVEMENT_OPTIONS = [
-  'Agent responses were too generic',
-  'Agent didn\'t respond naturally',
-  'Agent missed key conversation cues',
-  'Agent objections were unrealistic',
-  'Agent personality didn\'t match scenario',
+const SESSION_DESCRIPTION_OPTIONS = [
+  'Great! I closed the deal',
+  'Good session, but didn\'t close',
+  'Challenging but learned a lot',
+  'Too easy, need more challenge',
+  'Agent was unrealistic',
   'Other'
 ]
 
@@ -122,13 +122,13 @@ export default function SessionFeedbackForm({ sessionId, onFeedbackComplete }: S
             )}
           </div>
 
-          {/* Improvement Area Section */}
+          {/* Session Description Section */}
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-slate-300 mb-3 sm:mb-4 font-space">
-              What improvements should be made to the AI agent?
+              Which best describes how your session went?
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-              {IMPROVEMENT_OPTIONS.map((option) => (
+              {SESSION_DESCRIPTION_OPTIONS.map((option) => (
                 <button
                   key={option}
                   type="button"
