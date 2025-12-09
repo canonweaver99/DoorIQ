@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { FeedbackItem } from '@/lib/trainer/types'
-import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp, Flag, Trophy, Sparkles } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Lightbulb, AlertTriangle, Mic, TrendingUp, Flag, Trophy, Sparkles, Crown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface LiveFeedbackFeedProps {
@@ -137,7 +137,7 @@ const getFeedbackConfig = (item: FeedbackItem) => {
       }
     case 'deal_closed':
       return {
-        icon: Trophy,
+        icon: Crown,
         badgeVariant: 'default' as const,
         badgeText: 'DEAL CLOSED',
         iconBg: 'bg-gradient-to-br from-yellow-400/30 to-amber-500/30',

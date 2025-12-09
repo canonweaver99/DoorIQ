@@ -670,6 +670,56 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       
       // Enhanced objection detection (only for homeowner/agent) with context awareness
       if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
+        // IMMEDIATE DEAL CLOSED DETECTION - Check for strong buying signals first
+        const strongBuyingSignals = [
+          /let'?s do it/i,
+          /I'?ll take it/i,
+          /count me in/i,
+          /sign me up/i,
+          /I'?m ready/i,
+          /sounds good/i,
+          /that works/i,
+          /go ahead/i,
+          /let'?s go/i,
+          /yes.*sign/i,
+          /yes.*start/i,
+          /yes.*do it/i,
+          /okay.*sign/i,
+          /okay.*start/i,
+          /sure.*sign/i,
+          /sure.*start/i,
+          /I.*want.*it/i,
+          /I.*need.*it/i,
+          /where.*sign/i,
+          /how.*sign/i,
+          /when.*start/i
+        ]
+        
+        const hasStrongBuyingSignal = strongBuyingSignals.some(pattern => pattern.test(entry.text))
+        
+        if (hasStrongBuyingSignal) {
+          // Check if we've already shown deal_closed feedback (avoid duplicates)
+          setFeedbackItems(prev => {
+            const hasDealClosed = prev.some(item => item.type === 'deal_closed')
+            if (hasDealClosed) return prev
+            
+            // Add the deal_closed feedback item immediately
+            const dealValue = Math.floor(Math.random() * 500) + 500 // Estimate $500-$1000
+            const newItem: FeedbackItem = {
+              id: `deal-closed-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              timestamp: new Date(),
+              type: 'deal_closed',
+              message: `🎉 DEAL CLOSED! You've secured this sale. Estimated value: $${dealValue.toLocaleString()}`,
+              severity: 'good',
+              metadata: {
+                commitmentLevel: 'buying'
+              }
+            }
+            console.log('🎉 Adding DEAL CLOSED feedback (immediate detection):', newItem.message)
+            return [...prev, newItem].slice(-50) // Keep max 50 items
+          })
+        }
+        
         // Use context-aware detection
         const objection = detectEnhancedObjection(entry.text, transcript, entryIndex)
         console.log('🏠 Homeowner entry - objection check:', objection ? objection.type : 'none')
