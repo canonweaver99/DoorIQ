@@ -1768,7 +1768,113 @@ function TrainerPageContent() {
     
   }, [sessionActive, sessionId, handleDoorClosingSequence])
 
-  // Auto-end feature disabled - manual session ending only
+  // Fallback auto-end detection for agents that don't reliably call end_call (like No Problem Nancy)
+  useEffect(() => {
+    if (!sessionActive || !sessionId || transcript.length === 0) return
+    
+    // Only check if we haven't already triggered end_call
+    const checkForAutoEnd = () => {
+      // Check last 10 transcript entries for end signals
+      const recentEntries = transcript.slice(-10)
+      const lastEntry = transcript[transcript.length - 1]
+      
+      // Patterns that indicate conversation should end
+      const saleCompletePatterns = [
+        /let'?s do it/i,
+        /i'?ll take it/i,
+        /count me in/i,
+        /sign me up/i,
+        /i'?m ready/i,
+        /sounds good/i,
+        /that works/i,
+        /go ahead/i,
+        /let'?s go/i,
+        /yes.*sign/i,
+        /okay.*start/i,
+        /sure.*go/i
+      ]
+      
+      const goodbyePatterns = [
+        /have a good day/i,
+        /thanks.*stopping/i,
+        /goodbye/i,
+        /thanks anyway/i,
+        /take care/i,
+        /see you/i,
+        /nice meeting/i,
+        /appreciate.*time/i
+      ]
+      
+      const infoCollectionPatterns = [
+        /what'?s your name/i,
+        /what is your name/i,
+        /what'?s your address/i,
+        /what is your address/i,
+        /what'?s your phone/i,
+        /phone number/i,
+        /email address/i,
+        /how would you like to pay/i,
+        /payment method/i
+      ]
+      
+      // Check if homeowner said goodbye or agreed to sale
+      const homeownerEntries = recentEntries.filter(e => e.speaker === 'homeowner' || e.speaker === 'agent')
+      const hasSaleAgreement = homeownerEntries.some(entry => 
+        saleCompletePatterns.some(pattern => pattern.test(entry.text))
+      )
+      
+      const hasGoodbye = homeownerEntries.some(entry =>
+        goodbyePatterns.some(pattern => pattern.test(entry.text))
+      )
+      
+      // Check if rep is collecting info (indicates sale closed)
+      const repEntries = recentEntries.filter(e => e.speaker === 'user' || e.speaker === 'rep')
+      const isCollectingInfo = repEntries.some(entry =>
+        infoCollectionPatterns.some(pattern => pattern.test(entry.text))
+      )
+      
+      // Check if last entry was from homeowner and was a goodbye or agreement
+      const lastIsHomeowner = lastEntry && (lastEntry.speaker === 'homeowner' || lastEntry.speaker === 'agent')
+      const lastIsGoodbyeOrAgreement = lastIsHomeowner && (
+        goodbyePatterns.some(pattern => pattern.test(lastEntry.text)) ||
+        saleCompletePatterns.some(pattern => pattern.test(lastEntry.text))
+      )
+      
+      // Trigger auto-end if:
+      // 1. Homeowner agreed to sale AND rep is collecting info, OR
+      // 2. Homeowner said goodbye AND it's been 3+ seconds since last activity, OR
+      // 3. Sale agreement detected AND it's been 5+ seconds since agreement
+      if (hasSaleAgreement && isCollectingInfo) {
+        console.log('🚪 [Auto-End] Sale complete detected - triggering auto-end')
+        setTimeout(() => {
+          if (sessionActive && sessionId) {
+            handleDoorClosingSequence('Sale completed successfully')
+          }
+        }, 2000) // Wait 2 seconds to let final messages come through
+      } else if (lastIsGoodbyeOrAgreement) {
+        // Wait 3 seconds after goodbye to ensure conversation is really ending
+        const timeSinceLastEntry = Date.now() - (lastEntry.timestamp instanceof Date 
+          ? lastEntry.timestamp.getTime() 
+          : typeof lastEntry.timestamp === 'string'
+            ? new Date(lastEntry.timestamp).getTime()
+            : Date.now())
+        
+        if (timeSinceLastEntry > 3000) {
+          console.log('🚪 [Auto-End] Homeowner goodbye/agreement detected - triggering auto-end')
+          setTimeout(() => {
+            if (sessionActive && sessionId) {
+              handleDoorClosingSequence('Conversation ended naturally')
+            }
+          }, 1000)
+        }
+      }
+    }
+    
+    // Check every 2 seconds
+    const interval = setInterval(checkForAutoEnd, 2000)
+    
+    return () => clearInterval(interval)
+  }, [sessionActive, sessionId, transcript, handleDoorClosingSequence])
 
   // Backup listener for agent:end_call event (in case callback doesn't fire)
   useEffect(() => {
