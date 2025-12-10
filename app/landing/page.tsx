@@ -42,6 +42,7 @@ const AIVoiceInput = dynamic(() => import("@/components/ui/ai-voice-input").then
 });
 import { MacbookPro } from "@/components/ui/macbook-pro";
 import { IPhoneMockup } from "@/components/ui/iphone-mockup";
+import { Mac } from "@/components/ui/mac";
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 import { getAgentImageStyle } from "@/lib/agents/imageStyles";
 import { createClient } from "@/lib/supabase/client";
@@ -303,7 +304,7 @@ function HeroSection() {
   }, []);
 
   return (
-    <div id="hero" className="relative bg-black overflow-hidden pt-8 sm:pt-12 md:pt-16">
+    <div id="hero" className="relative bg-black overflow-hidden pt-16 sm:pt-20 md:pt-24 lg:pt-28 xl:pt-32 2xl:pt-36">
       {/* Animated grid pattern */}
       <motion.div
         animate={shouldAnimate ? {
@@ -356,8 +357,8 @@ function HeroSection() {
         style={{ transform: 'translateZ(0)', willChange: 'transform' }}
       />
 
-      {/* Desktop Hero Section - Hidden on Mobile */}
-      <div className="hidden md:block">
+      {/* Desktop Hero Section - Laptop (md to 2xl) */}
+      <div className="hidden md:block 2xl:hidden">
         <ContainerScroll
         titleComponent={
           <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-16 sm:pt-16 md:pt-12 px-0 sm:px-4 w-full">
@@ -453,6 +454,121 @@ function HeroSection() {
             videoRef={videoRef as React.RefObject<HTMLVideoElement | null>}
             className="w-full"
             style={{ maxWidth: '100%', height: 'auto' }}
+          />
+          {/* Fallback if video doesn't load */}
+          <div 
+            ref={fallbackRef}
+            className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center pointer-events-none"
+            style={{ display: 'none' }}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                <BarChart3 className="w-8 h-8 text-white/40" />
+              </div>
+              <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
+            </div>
+          </div>
+        </div>
+      </ContainerScroll>
+      </div>
+
+      {/* Large Monitor Hero Section - 2xl and above */}
+      <div className="hidden 2xl:block 2xl:pt-24">
+        <ContainerScroll
+        titleComponent={
+          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-32 sm:pt-36 md:pt-40 lg:pt-44 xl:pt-48 px-0 sm:px-4 w-full">
+            {/* Badge */}
+            <motion.div
+              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+              transition={shouldAnimate ? { delay: 0.18, duration: 0.54 } : {}}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
+            >
+              <span className="text-white/80 text-xs sm:text-sm md:text-base font-medium tracking-wider uppercase font-space">
+                Enterprise D2D Sales Training Platform
+              </span>
+            </motion.div>
+
+            {/* Headline */}
+            <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
+              <AnimatedText
+                text="Unlimited AI Practice for"
+                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                underlineClassName="hidden"
+                duration={0.036}
+                delay={0.014}
+              />
+              <AnimatedText
+                text="DOOR-TO-DOOR SALES"
+                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
+                underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
+                underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
+                underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
+                animationType="fade"
+                underlineFirst={true}
+                startDelay={1.17}
+              />
+            </div>
+
+            {/* Subheadline */}
+            <motion.p
+              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+              transition={shouldAnimate ? { delay: 0.45, duration: 0.54 } : {}}
+              className="font-sans text-lg sm:text-lg md:text-lg lg:text-xl xl:text-2xl text-white/80 w-full max-w-full md:max-w-4xl text-center leading-relaxed font-light px-4"
+            >
+              Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
+            </motion.p>
+
+            {/* CTA Button */}
+            <motion.div
+              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+              transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
+              className="flex justify-center mt-2"
+            >
+              <Link
+                href="/book-demo"
+                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Book a Demo
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </motion.div>
+
+            {/* See it in action label */}
+            <motion.div
+              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+              transition={shouldAnimate ? { delay: 0.585, duration: 0.54 } : {}}
+              className="text-center mt-2 sm:mt-6 md:mt-8 mb-4 md:mb-6 lg:mb-8 xl:mb-10 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
+            >
+              <span className="text-white/80 text-lg sm:text-xl md:text-2xl lg:text-4xl xl:text-5xl font-medium tracking-wider uppercase font-space">
+                See it in action
+              </span>
+              <motion.div
+                animate={shouldAnimate ? { y: [0, 8, 0] } : { y: 0 }}
+                transition={shouldAnimate ? { 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                } : {}}
+              >
+                <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white/80" />
+              </motion.div>
+            </motion.div>
+          </div>
+        }
+      >
+        {/* Demo Video in Mac Monitor */}
+        <div className="relative w-full flex items-center justify-center overflow-visible pb-8">
+          <Mac
+            width={2400}
+            height={1800}
+            videoSrc="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
+            videoRef={videoRef as React.RefObject<HTMLVideoElement | null>}
+            className="w-full"
+            style={{ maxWidth: 'min(95vw, 2400px)', height: 'auto', width: 'auto' }}
           />
           {/* Fallback if video doesn't load */}
           <div 

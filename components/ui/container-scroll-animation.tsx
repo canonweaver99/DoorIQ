@@ -45,7 +45,7 @@ export const ContainerScroll = ({
       ref={containerRef}
     >
       <div
-        className={`${isMobile ? 'py-8' : 'py-8 md:py-40 md:pt-60 md:pb-80'} w-full relative overflow-visible`}
+        className={`${isMobile ? 'py-8' : 'py-8 md:py-40 md:pt-60 md:pb-80 xl:pt-48 xl:pb-96 2xl:pt-56 2xl:pb-[28rem]'} w-full relative overflow-visible`}
         style={shouldAnimate ? {
           perspective: "1000px",
         } : {}}
