@@ -307,6 +307,13 @@ function DashboardPageContent() {
           >
             {activeTab === 'overview' && (
               <div className="space-y-4">
+                {/* Last 20 Sessions Breakdown */}
+                <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                  <Suspense fallback={<div className="h-96 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                    <Last20SessionsBreakdown />
+                  </Suspense>
+                </div>
+
                 {/* Hero Performance Card - Prominent */}
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
                   <Suspense fallback={<div className="h-64 bg-white/[0.02] rounded-lg animate-pulse" />}>
@@ -329,13 +336,6 @@ function DashboardPageContent() {
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
                   <Suspense fallback={<div className="h-48 bg-white/[0.02] rounded-lg animate-pulse" />}>
                     <PerformanceMetricCards session={dashboardData.session} />
-                  </Suspense>
-                </div>
-
-                {/* Last 20 Sessions Breakdown */}
-                <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                  <Suspense fallback={<div className="h-96 bg-white/[0.02] rounded-lg animate-pulse" />}>
-                    <Last20SessionsBreakdown />
                   </Suspense>
                 </div>
 
@@ -471,7 +471,12 @@ function DashboardPageContent() {
           >
             {activeTab === 'overview' && (
               <div className="space-y-4 sm:space-y-6 md:space-y-8">
-                {/* 1. Hero Performance Card (improved) */}
+                {/* 1. Last 20 Sessions Breakdown */}
+                <Suspense fallback={<div className="h-96 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                  <Last20SessionsBreakdown />
+                </Suspense>
+
+                {/* 2. Hero Performance Card (improved) */}
                 <Suspense fallback={<div className="h-64 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
                   <HeroPerformanceCard
                     userName={dashboardData.userName}
@@ -480,19 +485,14 @@ function DashboardPageContent() {
                   />
                 </Suspense>
 
-                {/* 2. Critical Alerts Section (NEW) */}
+                {/* 3. Critical Alerts Section (NEW) */}
                 <Suspense fallback={<div className="h-32 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
                   <CriticalAlertsSection session={dashboardData.session} />
                 </Suspense>
 
-                {/* 3. Performance Metric Cards (enhanced) */}
+                {/* 4. Performance Metric Cards (enhanced) */}
                 <Suspense fallback={<div className="h-48 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
                   <PerformanceMetricCards session={dashboardData.session} />
-                </Suspense>
-
-                {/* 4. Last 20 Sessions Breakdown */}
-                <Suspense fallback={<div className="h-96 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
-                  <Last20SessionsBreakdown />
                 </Suspense>
 
                 {/* 5. Recent Sessions Preview (NEW) */}

@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, DollarSign, Target, Calendar, ArrowRight, Award, XCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, Target, Calendar, ArrowRight, Award, XCircle, Clock, Eye, RotateCcw, CheckCircle2 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
+import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/personas'
 
 interface SessionBreakdown {
   id: string
@@ -32,21 +34,106 @@ export default function Last20SessionsBreakdown() {
   const [totalEarnings, setTotalEarnings] = useState(0)
   const [closedDeals, setClosedDeals] = useState(0)
   const [avgDuration, setAvgDuration] = useState<number | null>(null)
+  const [bestScore, setBestScore] = useState<number | null>(null)
+  const [highestEarnings, setHighestEarnings] = useState(0)
+  const [topSessions, setTopSessions] = useState<SessionBreakdown[]>([])
 
   useEffect(() => {
     fetchSessionsData()
   }, [])
+
+  const generateFakeData = (): SessionBreakdown[] => {
+    // Use Average Austin for all fake sessions
+    const fakeSessions: SessionBreakdown[] = []
+    
+    for (let i = 0; i < 20; i++) {
+      const daysAgo = i
+      const startedAt = new Date()
+      startedAt.setDate(startedAt.getDate() - daysAgo)
+      startedAt.setHours(10 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 60))
+      
+      const duration = 300 + Math.floor(Math.random() * 600) // 5-15 minutes
+      const endedAt = new Date(startedAt.getTime() + duration * 1000)
+      
+      const overallScore = 50 + Math.floor(Math.random() * 50) // 50-100
+      const rapportScore = overallScore + Math.floor(Math.random() * 20) - 10
+      const discoveryScore = overallScore + Math.floor(Math.random() * 20) - 10
+      const objectionScore = overallScore + Math.floor(Math.random() * 20) - 10
+      const closeScore = overallScore + Math.floor(Math.random() * 20) - 10
+      
+      const saleClosed = Math.random() > 0.6
+      const virtualEarnings = saleClosed ? Math.floor(Math.random() * 5000) + 1000 : 0
+      
+      fakeSessions.push({
+        id: `fake-${i}`,
+        agentName: 'Average Austin', // Always use Average Austin for fake data
+        overallScore: Math.max(0, Math.min(100, overallScore)),
+        rapportScore: Math.max(0, Math.min(100, rapportScore)),
+        discoveryScore: Math.max(0, Math.min(100, discoveryScore)),
+        objectionHandlingScore: Math.max(0, Math.min(100, objectionScore)),
+        closeScore: Math.max(0, Math.min(100, closeScore)),
+        virtualEarnings,
+        saleClosed,
+        returnAppointment: !saleClosed && Math.random() > 0.7,
+        startedAt: startedAt.toISOString(),
+        endedAt: endedAt.toISOString(),
+        durationSeconds: duration
+      })
+    }
+    
+    return fakeSessions.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+  }
 
   const fetchSessionsData = async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       
+      // Use fake data for guests/local development
       if (!user) {
+        const fakeSessions = generateFakeData()
+        setSessions(fakeSessions)
+        
+        // Calculate averages and totals
+        const scores = fakeSessions.map(s => s.overallScore).filter((s): s is number => s !== null)
+        const avg = scores.length > 0 ? scores.reduce((sum, s) => sum + s, 0) / scores.length : null
+        setAvgScore(avg)
+        
+        const total = fakeSessions.reduce((sum, s) => sum + s.virtualEarnings, 0)
+        setTotalEarnings(total)
+        
+        const highest = fakeSessions.length > 0 
+          ? Math.max(...fakeSessions.map(s => s.virtualEarnings))
+          : 0
+        setHighestEarnings(highest)
+        
+        const closed = fakeSessions.filter(s => s.saleClosed).length
+        setClosedDeals(closed)
+        
+        const durations = fakeSessions.map(s => s.durationSeconds).filter((d): d is number => d !== null)
+        const avgDur = durations.length > 0 ? Math.round(durations.reduce((sum, d) => sum + d, 0) / durations.length) : null
+        setAvgDuration(avgDur)
+        
+        // Get top 2 sessions (or all available if less than 2)
+        const sessionsWithScores = fakeSessions.filter(s => s.overallScore !== null)
+        const topTwo = sessionsWithScores.length >= 2
+          ? [...sessionsWithScores]
+              .sort((a, b) => {
+                const scoreDiff = (b.overallScore || 0) - (a.overallScore || 0)
+                if (scoreDiff !== 0) return scoreDiff
+                return b.virtualEarnings - a.virtualEarnings
+              })
+              .slice(0, 2)
+          : sessionsWithScores.length === 1
+          ? [sessionsWithScores[0]]
+          : []
+        setTopSessions(topTwo)
+        
         setLoading(false)
         return
       }
 
+      // Fetch all sessions (up to 20) - if user has less than 20, we'll use all available
       const { data: sessionsData, error } = await supabase
         .from('live_sessions')
         .select('id, agent_name, overall_score, rapport_score, discovery_score, objection_handling_score, close_score, virtual_earnings, sale_closed, return_appointment, started_at, ended_at, duration_seconds')
@@ -83,15 +170,39 @@ export default function Last20SessionsBreakdown() {
       const avg = scores.length > 0 ? scores.reduce((sum, s) => sum + s, 0) / scores.length : null
       setAvgScore(avg)
       
+      const best = scores.length > 0 ? Math.max(...scores) : null
+      setBestScore(best)
+      
       const total = formattedSessions.reduce((sum, s) => sum + s.virtualEarnings, 0)
       setTotalEarnings(total)
+      
+      const highest = formattedSessions.length > 0 
+        ? Math.max(...formattedSessions.map(s => s.virtualEarnings))
+        : 0
+      setHighestEarnings(highest)
       
       const closed = formattedSessions.filter(s => s.saleClosed).length
       setClosedDeals(closed)
       
       const durations = formattedSessions.map(s => s.durationSeconds).filter((d): d is number => d !== null)
-      const avgDur = durations.length > 0 ? durations.reduce((sum, d) => sum + d, 0) / durations.length : null
+      const avgDur = durations.length > 0 ? Math.round(durations.reduce((sum, d) => sum + d, 0) / durations.length) : null
       setAvgDuration(avgDur)
+      
+      // Get top 2 sessions (by score, then by earnings if tied)
+      // Only show top sessions if we have sessions with scores
+      const sessionsWithScores = formattedSessions.filter(s => s.overallScore !== null)
+      const topTwo = sessionsWithScores.length >= 2
+        ? [...sessionsWithScores]
+            .sort((a, b) => {
+              const scoreDiff = (b.overallScore || 0) - (a.overallScore || 0)
+              if (scoreDiff !== 0) return scoreDiff
+              return b.virtualEarnings - a.virtualEarnings
+            })
+            .slice(0, 2)
+        : sessionsWithScores.length === 1
+        ? [sessionsWithScores[0]]
+        : []
+      setTopSessions(topTwo)
       
       setLoading(false)
     } catch (error) {
@@ -130,6 +241,14 @@ export default function Last20SessionsBreakdown() {
     if (score >= 70) return 'C'
     if (score >= 60) return 'D'
     return 'F'
+  }
+
+  const getGradeColor = (grade: string) => {
+    if (grade === 'A') return 'text-green-400'
+    if (grade === 'B') return 'text-blue-400'
+    if (grade === 'C') return 'text-yellow-400'
+    if (grade === 'D') return 'text-orange-400'
+    return 'text-red-400'
   }
 
   const getScoreBadgeColor = (score: number | null) => {
@@ -174,7 +293,7 @@ export default function Last20SessionsBreakdown() {
       <div className="flex items-start justify-between mb-4 sm:mb-6">
         <div className="flex-1">
           <h2 className="font-space text-white text-lg sm:text-xl md:text-2xl font-bold tracking-tight mb-1">
-            Last 20 Sessions Breakdown
+            {sessions.length >= 20 ? 'Last 20 Sessions Breakdown' : `Last ${sessions.length} Session${sessions.length !== 1 ? 's' : ''} Breakdown`}
           </h2>
           <p className="font-space text-white/60 text-xs sm:text-sm font-semibold">
             Scores, Earnings & Performance Metrics
@@ -188,7 +307,7 @@ export default function Last20SessionsBreakdown() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
           <p className="text-white/60 text-xs sm:text-sm font-semibold mb-1 font-space">Avg Score</p>
           <div className="flex items-center gap-2">
@@ -203,9 +322,28 @@ export default function Last20SessionsBreakdown() {
           </div>
         </div>
         <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+          <p className="text-white/60 text-xs sm:text-sm font-semibold mb-1 font-space">Best Score</p>
+          <div className="flex items-center gap-2">
+            <p className={cn("text-xl sm:text-2xl md:text-3xl font-bold font-space", getScoreColor(bestScore))}>
+              {bestScore !== null ? bestScore : 'N/A'}
+            </p>
+            {bestScore !== null && (
+              <span className={cn("px-2 py-0.5 text-xs font-bold rounded border", getScoreBadgeColor(bestScore))}>
+                {getScoreGrade(bestScore)}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
           <p className="text-white/60 text-xs sm:text-sm font-semibold mb-1 font-space">Total Earnings</p>
           <p className="text-green-400 text-xl sm:text-2xl md:text-3xl font-bold font-space">
             {formatCurrency(totalEarnings)}
+          </p>
+        </div>
+        <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
+          <p className="text-white/60 text-xs sm:text-sm font-semibold mb-1 font-space">Highest Earnings</p>
+          <p className="text-green-400 text-xl sm:text-2xl md:text-3xl font-bold font-space">
+            {formatCurrency(highestEarnings)}
           </p>
         </div>
         <div className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4">
@@ -222,138 +360,156 @@ export default function Last20SessionsBreakdown() {
         </div>
       </div>
 
-      {/* Sessions List */}
-      <div className="space-y-2 max-h-[500px] overflow-y-auto">
-        {sessions.map((session, index) => {
-          const hasScore = session.overallScore !== null
-          
-          return (
-            <motion.div
-              key={session.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.03 }}
-              className="bg-white/[0.05] border border-white/10 rounded-lg p-3 sm:p-4 hover:bg-white/[0.08] hover:border-white/20 transition-all cursor-pointer group"
-              onClick={() => router.push(`/analytics/${session.id}`)}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                {/* Left side - Session info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <p className="text-white font-semibold text-sm sm:text-base font-space truncate">
-                      {session.agentName}
-                    </p>
-                    {session.saleClosed && (
-                      <span className="px-2 py-0.5 bg-green-500/20 text-green-300 text-xs font-semibold rounded border border-green-500/30 flex-shrink-0 flex items-center gap-1">
-                        <Award className="w-3 h-3" />
-                        Closed
-                      </span>
-                    )}
-                    {!session.saleClosed && session.returnAppointment && (
-                      <span className="px-2 py-0.5 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded border border-blue-500/30 flex-shrink-0">
-                        Return Scheduled
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Score breakdown */}
-                  {hasScore && (
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <div className="flex items-center gap-1">
-                        <span className="text-white/60 text-xs font-space">Overall:</span>
-                        <span className={cn("text-xs font-bold font-space", getScoreColor(session.overallScore))}>
-                          {session.overallScore}/100
-                        </span>
+      {/* Top Sessions */}
+      {topSessions.length > 0 && (
+        <>
+          <div className="mb-5">
+            <h3 className="text-white font-semibold text-base sm:text-lg font-space">Top Sessions</h3>
+            <p className="text-white/60 text-xs font-sans">Your best performing sessions from the last 20</p>
+          </div>
+          <div className="space-y-5">
+            {topSessions.map((session, index) => {
+              const hasScore = session.overallScore !== null
+              const sessionDate = new Date(session.startedAt)
+              const isToday = format(sessionDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+              const isYesterday = format(sessionDate, 'yyyy-MM-dd') === format(new Date(Date.now() - 86400000), 'yyyy-MM-dd')
+              
+              let dateLabel = ''
+              if (isToday) {
+                dateLabel = `Today, ${format(sessionDate, 'h:mm a')}`
+              } else if (isYesterday) {
+                dateLabel = `Yesterday, ${format(sessionDate, 'h:mm a')}`
+              } else {
+                dateLabel = format(sessionDate, 'MMM d, h:mm a')
+              }
+
+              const grade = hasScore ? getScoreGrade(session.overallScore) : 'N/A'
+              
+              return (
+                <motion.div
+                  key={session.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white/[0.02] border-2 border-white/5 rounded-lg p-5 md:p-6 hover:border-white/20 hover:bg-white/[0.025] transition-all duration-300"
+                >
+                  <div className="flex flex-col md:flex-row gap-5">
+                    {/* Left: Session Info */}
+                    <div className="flex-1 space-y-2">
+                      <div>
+                        <div className="flex items-center gap-3 mb-1.5">
+                          {/* Agent Avatar */}
+                          {PERSONA_METADATA[session.agentName as AllowedAgentName]?.bubble?.image ? (
+                            <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border border-white/20 flex-shrink-0">
+                              <Image
+                                src={PERSONA_METADATA[session.agentName as AllowedAgentName]!.bubble!.image}
+                                alt={session.agentName}
+                                fill
+                                className="object-cover"
+                                sizes="96px"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.src = '/agents/default.png'
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-white font-bold text-lg md:text-xl rounded-full border border-white/20 flex-shrink-0">
+                              {session.agentName.charAt(0)}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-space text-white text-lg md:text-xl font-bold tracking-tight">{session.agentName}</p>
+                            <p className="font-space text-white/80 text-sm md:text-base font-bold flex items-center gap-2 mt-0.5">
+                              <Clock className="w-3 h-3" />
+                              {dateLabel} • {formatDuration(session.durationSeconds)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      {session.rapportScore !== null && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-white/60 text-xs font-space">Rapport:</span>
-                          <span className={cn("text-xs font-bold font-space", getScoreColor(session.rapportScore))}>
-                            {session.rapportScore}
-                          </span>
-                        </div>
-                      )}
-                      {session.discoveryScore !== null && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-white/60 text-xs font-space">Discovery:</span>
-                          <span className={cn("text-xs font-bold font-space", getScoreColor(session.discoveryScore))}>
-                            {session.discoveryScore}
-                          </span>
-                        </div>
-                      )}
-                      {session.objectionHandlingScore !== null && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-white/60 text-xs font-space">Objection:</span>
-                          <span className={cn("text-xs font-bold font-space", getScoreColor(session.objectionHandlingScore))}>
-                            {session.objectionHandlingScore}
-                          </span>
-                        </div>
-                      )}
-                      {session.closeScore !== null && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-white/60 text-xs font-space">Close:</span>
-                          <span className={cn("text-xs font-bold font-space", getScoreColor(session.closeScore))}>
-                            {session.closeScore}
-                          </span>
-                        </div>
-                      )}
+
+                      {/* Status badges */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {session.saleClosed && (
+                          <div className="flex items-center gap-1.5 font-space text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Sale Closed
+                          </div>
+                        )}
+                        {!session.saleClosed && session.returnAppointment && (
+                          <div className="flex items-center gap-1.5 font-space text-xs font-bold text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Return Scheduled
+                          </div>
+                        )}
+                        {session.virtualEarnings > 0 && (
+                          <div className="flex items-center gap-1.5 font-space text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">
+                            <DollarSign className="w-3 h-3" />
+                            {formatCurrency(session.virtualEarnings)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  
-                  {/* Time and duration */}
-                  <div className="flex items-center gap-3 text-xs text-white/60 flex-wrap">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      <span className="font-sans">
-                        {session.endedAt 
-                          ? formatDistanceToNow(new Date(session.endedAt), { addSuffix: true })
-                          : formatDistanceToNow(new Date(session.startedAt), { addSuffix: true })
-                        }
-                      </span>
+
+                    {/* Right: Score + Actions */}
+                    <div className="flex flex-col md:flex-row items-center md:items-center gap-5 flex-shrink-0">
+                      {/* Score Display */}
+                      {hasScore && (
+                        <div className="flex items-baseline gap-2.5 justify-center md:justify-start">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className={cn("font-space text-4xl md:text-5xl font-bold tracking-tight", getScoreColor(session.overallScore))}>
+                              {session.overallScore}
+                            </span>
+                            <span className="font-space text-base md:text-lg font-bold text-white/80">/100</span>
+                          </div>
+                          <span className={cn("font-space text-3xl md:text-4xl font-bold tracking-tight", getGradeColor(grade))}>
+                            {grade}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex flex-col gap-2.5">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            if (!session.id.startsWith('fake-')) {
+                              router.push(`/analytics/${session.id}`)
+                            }
+                          }}
+                          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-black font-space font-bold rounded-md text-sm md:text-base tracking-tight hover:bg-white/95 transition-all"
+                        >
+                          View Details
+                          <Eye className="w-4 h-4" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          onClick={() => router.push('/trainer')}
+                          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-space font-bold rounded-md text-sm md:text-base tracking-tight transition-all shadow-md shadow-purple-500/15"
+                        >
+                          Practice Again
+                          <RotateCcw className="w-4 h-4" />
+                        </motion.button>
+                      </div>
                     </div>
-                    {session.durationSeconds !== null && (
-                      <span className="font-sans">
-                        Duration: {formatDuration(session.durationSeconds)}
-                      </span>
-                    )}
                   </div>
-                </div>
-                
-                {/* Right side - Earnings and score badge */}
-                <div className="flex flex-col sm:items-end gap-2 flex-shrink-0">
-                  {session.virtualEarnings > 0 && (
-                    <p className="text-green-400 text-lg sm:text-xl font-bold font-space">
-                      {formatCurrency(session.virtualEarnings)}
-                    </p>
-                  )}
-                  {hasScore && (
-                    <div className="flex items-center gap-2">
-                      <span className={cn("px-2 py-1 text-sm font-bold rounded border", getScoreBadgeColor(session.overallScore))}>
-                        {session.overallScore}/100 ({getScoreGrade(session.overallScore)})
-                      </span>
-                    </div>
-                  )}
-                  {!hasScore && (
-                    <span className="px-2 py-1 text-sm font-bold rounded border bg-white/10 border-white/20 text-white/60">
-                      No Score
-                    </span>
-                  )}
-                  <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors" />
-                </div>
-              </div>
-            </motion.div>
-          )
-        })}
-      </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        </>
+      )}
 
       {/* View All Link */}
-      {sessions.length >= 20 && (
+      {sessions.length > 0 && (
         <div className="mt-4 pt-4 border-t border-white/10">
           <button
             onClick={() => router.push('/sessions')}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/80 hover:text-white text-sm font-semibold transition-all font-space"
           >
-            View All Sessions
+            View All Sessions ({sessions.length})
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
