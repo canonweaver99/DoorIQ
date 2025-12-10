@@ -128,12 +128,13 @@ export default function ElevenLabsConversation({
       return
     }
 
-    // Check if we're on the trainer page (basic check)
+    // Check if we're on an allowed page (trainer page or test page)
     if (typeof window !== 'undefined') {
-      const isTrainerPage = window.location.pathname.includes('/trainer')
-      if (!isTrainerPage) {
-        console.error('❌ Not on trainer page - refusing to start conversation')
-        setErrorMessage('Conversation can only start on trainer page')
+      const currentPath = window.location.pathname
+      const isAllowedPage = currentPath.includes('/trainer') || currentPath.includes('/eleven-labs-test')
+      if (!isAllowedPage) {
+        console.error('❌ Not on allowed page - refusing to start conversation')
+        setErrorMessage('Conversation can only start on trainer page or test page')
         setStatus('error')
         dispatchStatus('error')
         return
@@ -439,19 +440,26 @@ export default function ElevenLabsConversation({
             return
           }
           
-          // Check if we're still on the trainer page
+          // Check if we're still on an allowed page
           // Only check if we have a valid pathname (dev tools opening can cause temporary pathname issues)
-          if (typeof window !== 'undefined' && window.location.pathname && !window.location.pathname.includes('/trainer')) {
-            console.warn('⚠️ Received message but not on trainer page - ignoring message')
-            // Don't stop conversation immediately - might be a temporary navigation issue
-            // Only stop if we're definitely on a different page (not just pathname check failure)
+          if (typeof window !== 'undefined' && window.location.pathname) {
             const currentPath = window.location.pathname
-            if (currentPath && currentPath.length > 0 && !currentPath.includes('/trainer') && !currentPath.includes('/feedback') && !currentPath.includes('/loading')) {
-              if (conversationRef.current) {
-                console.log('🛑 Stopping conversation - no longer on trainer page')
-                conversationRef.current.endSession().catch(() => {})
+            const isAllowedPage = currentPath.includes('/trainer') || 
+                                  currentPath.includes('/eleven-labs-test') ||
+                                  currentPath.includes('/feedback') || 
+                                  currentPath.includes('/loading')
+            
+            if (!isAllowedPage) {
+              console.warn('⚠️ Received message but not on allowed page - ignoring message')
+              // Don't stop conversation immediately - might be a temporary navigation issue
+              // Only stop if we're definitely on a different page
+              if (currentPath && currentPath.length > 0) {
+                if (conversationRef.current) {
+                  console.log('🛑 Stopping conversation - no longer on allowed page')
+                  conversationRef.current.endSession().catch(() => {})
+                }
+                return
               }
-              return
             }
           }
           
