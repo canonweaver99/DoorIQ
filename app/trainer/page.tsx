@@ -548,15 +548,51 @@ function TrainerPageContent() {
   const sessionLimit = useSessionLimit()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const isDemoMode = searchParams.get('demo') === 'true'
+  const demoTimeLimitRef = useRef<number>(180) // 3 minutes
+  const demoTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     fetchAgents()
     fetchUserAvatar()
     return () => {
       if (durationInterval.current) clearInterval(durationInterval.current)
+      if (demoTimerRef.current) clearInterval(demoTimerRef.current)
       signedUrlAbortRef.current?.abort()
     }
   }, [])
+
+  // Demo mode: Enforce time limit
+  useEffect(() => {
+    if (isDemoMode && sessionActive && sessionId) {
+      let timeRemaining = demoTimeLimitRef.current
+      
+      demoTimerRef.current = setInterval(() => {
+        timeRemaining--
+        demoTimeLimitRef.current = timeRemaining
+        
+        if (timeRemaining <= 0) {
+          if (demoTimerRef.current) {
+            clearInterval(demoTimerRef.current)
+            demoTimerRef.current = null
+          }
+          // Time's up - end session
+          if (handleDoorClosingSequenceRef.current) {
+            handleDoorClosingSequenceRef.current('Demo time limit reached')
+          } else {
+            endSession('Demo time limit reached')
+          }
+        }
+      }, 1000)
+    }
+
+    return () => {
+      if (demoTimerRef.current) {
+        clearInterval(demoTimerRef.current)
+        demoTimerRef.current = null
+      }
+    }
+  }, [isDemoMode, sessionActive, sessionId])
 
   // Preload agent images and videos when agent is selected
   useEffect(() => {
@@ -1007,6 +1043,16 @@ function TrainerPageContent() {
       // Filter out Tanya & Tom (temporarily disabled)
       const availableAgents = agents?.filter((agent: Agent) => agent.name !== 'Tag Team Tanya & Tom') || []
 
+      // Demo mode: Always use Average Austin
+      if (isDemoMode) {
+        const averageAustin = availableAgents.find((agent: Agent) => agent.name === 'Average Austin')
+        if (averageAustin) {
+          console.log('🎯 Demo mode: Selected Average Austin')
+          setSelectedAgent(averageAustin)
+          return
+        }
+      }
+
       if (agentParam) {
         const match = availableAgents.find((agent: Agent) => agent.eleven_agent_id === agentParam)
         // If trying to select Tanya & Tom, redirect to select-homeowner page
@@ -1141,27 +1187,33 @@ function TrainerPageContent() {
       const isAnonymous = !user
       let isFreeDemo = false
       
-      // ARCHIVED: All paywall checks removed - software is now free for signed-in users
-      // Check for anonymous free demo usage via localStorage
-      if (isAnonymous) {
-        const usedFreeDemo = localStorage.getItem('used_free_demo') === 'true'
-        if (usedFreeDemo) {
-          // Anonymous users still need to sign in for unlimited access
-          router.push(`/auth/login?redirect=/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`)
-          setLoading(false)
-          return
-        } else {
-          // Mark as used in localStorage
-          localStorage.setItem('used_free_demo', 'true')
-          localStorage.setItem('free_demo_used_at', new Date().toISOString())
-          isFreeDemo = true
-          console.log('✅ Anonymous free demo session granted')
-          // Continue with session start (will create anonymous session)
-        }
+      // Demo mode: Always create as free demo session
+      if (isDemoMode) {
+        isFreeDemo = true
+        console.log('🎯 Demo mode: Creating free demo session')
       } else {
-        // Authenticated user - FREE ACCESS (all paywalls archived)
-        console.log('✅ Authenticated user - free access granted')
-        // Continue with session start - no subscription checks needed
+        // ARCHIVED: All paywall checks removed - software is now free for signed-in users
+        // Check for anonymous free demo usage via localStorage
+        if (isAnonymous) {
+          const usedFreeDemo = localStorage.getItem('used_free_demo') === 'true'
+          if (usedFreeDemo) {
+            // Anonymous users still need to sign in for unlimited access
+            router.push(`/auth/login?redirect=/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`)
+            setLoading(false)
+            return
+          } else {
+            // Mark as used in localStorage
+            localStorage.setItem('used_free_demo', 'true')
+            localStorage.setItem('free_demo_used_at', new Date().toISOString())
+            isFreeDemo = true
+            console.log('✅ Anonymous free demo session granted')
+            // Continue with session start (will create anonymous session)
+          }
+        } else {
+          // Authenticated user - FREE ACCESS (all paywalls archived)
+          console.log('✅ Authenticated user - free access granted')
+          // Continue with session start - no subscription checks needed
+        }
       }
 
       const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id, isFreeDemo)
@@ -1735,8 +1787,10 @@ function TrainerPageContent() {
         
         // Now redirect after save completes (unless skipRedirect is true)
         if (!skipRedirect) {
-          // Redirect to feedback page immediately - grading runs in background
-          const redirectUrl = `/trainer/feedback/${sessionId}`
+          // Demo mode: Redirect to demo feedback page
+          const redirectUrl = isDemoMode 
+            ? `/demo/feedback/${sessionId}`
+            : `/trainer/feedback/${sessionId}`
           console.log('🚀 Redirecting to feedback page (grading running in background):', redirectUrl)
           
           // Use window.location.href for reliable redirect (blocking)
@@ -1756,7 +1810,10 @@ function TrainerPageContent() {
         logger.error('Error ending session', error)
         console.error('❌ Error in endSession, attempting redirect anyway:', error)
         // Still try to redirect even if there's an error
-        window.location.href = `/trainer/feedback/${sessionId}`
+        const redirectUrl = isDemoMode 
+          ? `/demo/feedback/${sessionId}`
+          : `/trainer/feedback/${sessionId}`
+        window.location.href = redirectUrl
       }
     } else {
       console.log('⚠️ No sessionId, redirecting to trainer page')
@@ -1778,36 +1835,43 @@ function TrainerPageContent() {
     setSessionState('door-closing')
     doorClosingReasonRef.current = reason
     
-    // Check if agent has closing video
-    const hasClosingVideo = agentHasVideos(selectedAgent?.name)
-    const videoPaths = hasClosingVideo ? getAgentVideoPaths(selectedAgent?.name) : null
-    
-    if (hasClosingVideo && videoPaths?.closing) {
-      // Show closing video - it will handle redirect when it ends
-      console.log('🎬 Playing closing video:', videoPaths.closing)
-      setShowDoorCloseAnimation(true)
-      setVideoMode('closing')
+      // Demo mode: Skip closing video and redirect immediately
+      if (isDemoMode) {
+        console.log('🎯 Demo mode: Skipping closing video, redirecting immediately')
+        await endSession(reason, false)
+        return
+      }
+
+      // Check if agent has closing video
+      const hasClosingVideo = agentHasVideos(selectedAgent?.name)
+      const videoPaths = hasClosingVideo ? getAgentVideoPaths(selectedAgent?.name) : null
       
-      // Force video to play immediately - trigger a reflow to ensure visibility
-      requestAnimationFrame(() => {
+      if (hasClosingVideo && videoPaths?.closing) {
+        // Show closing video - it will handle redirect when it ends
+        console.log('🎬 Playing closing video:', videoPaths.closing)
+        setShowDoorCloseAnimation(true)
+        setVideoMode('closing')
+        
+        // Force video to play immediately - trigger a reflow to ensure visibility
         requestAnimationFrame(() => {
-          if (agentVideoRef.current) {
-            const video = agentVideoRef.current
-            console.log('🎬 Force playing closing video after viewport check')
-            video.loop = false
-            video.load()
-            
-            // Try to play immediately
-            const playPromise = video.play()
-            if (playPromise !== undefined) {
-              playPromise.catch((err) => {
-                console.warn('⚠️ Initial play failed, will retry on canplay:', err)
-                // Will be handled by onCanPlay handler
-              })
+          requestAnimationFrame(() => {
+            if (agentVideoRef.current) {
+              const video = agentVideoRef.current
+              console.log('🎬 Force playing closing video after viewport check')
+              video.loop = false
+              video.load()
+              
+              // Try to play immediately
+              const playPromise = video.play()
+              if (playPromise !== undefined) {
+                playPromise.catch((err) => {
+                  console.warn('⚠️ Initial play failed, will retry on canplay:', err)
+                  // Will be handled by onCanPlay handler
+                })
+              }
             }
-          }
+          })
         })
-      })
     } else {
       // No video - redirect immediately
       console.log('⚠️ No closing video, redirecting immediately')

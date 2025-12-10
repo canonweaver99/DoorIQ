@@ -64,7 +64,9 @@ import {
   Mail,
   Phone,
   MapPin,
+  Play,
 } from "lucide-react";
+import { DemoSessionModal } from "@/components/landing/DemoSessionModal";
 
 // Animated Counter Component
 function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffix?: string; prefix?: string }) {
@@ -233,6 +235,7 @@ function HeroSection() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
   const shouldAnimate = !isMobile && !prefersReducedMotion;
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -520,13 +523,20 @@ function HeroSection() {
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
             </motion.p>
 
-            {/* CTA Button */}
+            {/* CTA Buttons */}
             <motion.div
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
               transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
-              className="flex justify-center mt-2"
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
             >
+              <button
+                onClick={() => setShowDemoModal(true)}
+                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-600 hover:to-purple-600 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                Try Instant Demo
+              </button>
               <Link
                 href="/book-demo"
                 className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
@@ -635,13 +645,20 @@ function HeroSection() {
                 Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
               </motion.p>
 
-              {/* CTA Button */}
+              {/* CTA Buttons */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.54, duration: 0.54 }}
-                className="flex justify-center mt-2"
+                className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
               >
+                <button
+                  onClick={() => setShowDemoModal(true)}
+                  className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-600 hover:to-purple-600 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Try Instant Demo
+                </button>
                 <Link
                   href="/book-demo"
                   className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
@@ -702,6 +719,12 @@ function HeroSection() {
           </div>
         </ContainerScroll>
       </div>
+
+      {/* Demo Modal */}
+      <DemoSessionModal
+        isOpen={showDemoModal}
+        onClose={() => setShowDemoModal(false)}
+      />
     </div>
   );
 }
