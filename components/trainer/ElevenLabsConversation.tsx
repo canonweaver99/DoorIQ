@@ -736,11 +736,15 @@ export default function ElevenLabsConversation({
           
           // Suppress harmless WebRTC timing errors
           // These occur when ICE candidates are sent before connection is fully ready
+          // Also suppress DataChannel lossy errors (benign WebRTC errors)
           const isHarmlessError = (
             errStr.includes('cannot send signal request before connected') ||
             errStr.includes('trickle') ||
             errStr.includes('ice candidate') ||
-            (errStr.includes('before connected') && errStr.includes('signal'))
+            (errStr.includes('before connected') && errStr.includes('signal')) ||
+            errStr.includes('datachannel') && errStr.includes('lossy') ||
+            errStr.includes('unknown datachannel error') ||
+            errStr.includes('datachannel error on lossy')
           )
           
           if (isHarmlessError) {
