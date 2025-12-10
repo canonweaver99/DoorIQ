@@ -32,7 +32,8 @@ import { StrikeCounter } from '@/components/trainer/StrikeCounter'
 import { LeverSwitch } from '@/components/ui/lever-switch'
 
 // Dynamic imports for heavy components - only load when needed
-// ElevenLabs connection removed
+const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { ssr: false })
+import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
 
 interface Agent {
@@ -130,6 +131,10 @@ function TrainerPageContent() {
   const webcamPIPRef = useRef<WebcamPIPRef | null>(null)
   const conversationRef = useRef<any>(null) // Ref to ElevenLabs conversation instance
   const handleCallEndRef = useRef<((reason: string) => void) | null>(null) // Ref for handleCallEnd callback
+  
+  // ElevenLabs conversation state
+  const [conversationToken, setConversationToken] = useState<string | null>(null)
+  const [conversationStatus, setConversationStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
   const handleDoorClosingSequenceRef = useRef<((reason: string) => Promise<void>) | null>(null) // Ref for handleDoorClosingSequence callback
   
   // Challenge mode state
@@ -1212,10 +1217,41 @@ function TrainerPageContent() {
       
       setShowDoorOpeningVideo(false)
 
-      // Create session record (Eleven Labs connection removed)
+      // Create session record
       const newId = await createSessionRecord(isFreeDemo)
       if (!newId) {
         throw new Error('Failed to create session')
+      }
+      
+      // Fetch ElevenLabs conversation token
+      console.log('🎟️ Fetching ElevenLabs conversation token...')
+      try {
+        const tokenResponse = await fetch('/api/eleven/conversation-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agentId: selectedAgent.eleven_agent_id,
+            is_free_demo: isFreeDemo
+          })
+        })
+        
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json().catch(() => ({}))
+          throw new Error(errorData.error || `Token request failed: ${tokenResponse.status}`)
+        }
+        
+        const tokenData = await tokenResponse.json()
+        const token = tokenData.conversation_token || tokenData.token
+        
+        if (!token) {
+          throw new Error('No conversation token received from server')
+        }
+        
+        console.log('✅ Got conversation token:', token.substring(0, 30) + '...')
+        setConversationToken(token)
+      } catch (tokenError: any) {
+        console.error('❌ Failed to get conversation token:', tokenError)
+        throw new Error(`Failed to connect to AI agent: ${tokenError.message}`)
       }
       
       setSessionId(newId)
@@ -1252,13 +1288,6 @@ function TrainerPageContent() {
       durationInterval.current = setInterval(() => {
         setDuration(prev => prev + 1)
       }, 1000)
-
-      // Eleven Labs connection removed
-      // window.dispatchEvent(new CustomEvent('trainer:start-conversation', {
-      //   detail: {
-      //     agentId: selectedAgent.eleven_agent_id,
-      //   },
-      // }))
     } catch (error: any) {
       logger.error('Error starting session', error)
       alert(`Failed to start session: ${error?.message || 'Unknown error'}`)
@@ -1353,7 +1382,7 @@ function TrainerPageContent() {
         // Clear session state without redirecting
         setSessionActive(false)
         setSessionState('active') // Reset session state
-        // setConversationToken removed
+        setConversationToken(null) // Clear conversation token
         setTranscript([])
         setDuration(0)
         setShowDoorOpeningVideo(false) // Reset door opening video so door needs to be knocked again
@@ -2537,6 +2566,21 @@ function TrainerPageContent() {
     ) : null
   }
 
+  // Handle agent end call from ElevenLabs
+  const handleAgentEndCallFromElevenLabs = useCallback((reason: EndCallReason) => {
+    console.log('🚪 Agent end call received from ElevenLabs:', reason)
+    
+    const reasonMap: Record<string, string> = {
+      rejection: 'Homeowner rejected - door closed',
+      sale_complete: 'Sale completed successfully',
+      goodbye: 'Conversation ended naturally',
+      hostile: 'Homeowner became hostile'
+    }
+    
+    const endReason = reasonMap[reason] || 'Agent ended conversation'
+    handleDoorClosingSequence(endReason)
+  }, [handleDoorClosingSequence])
+
   return (
     shouldAnimate ? (
       <motion.div
@@ -2545,6 +2589,19 @@ function TrainerPageContent() {
         transition={{ duration: 0.3 }}
         className="min-h-screen bg-black font-sans w-full"
       >
+      {/* ElevenLabs WebRTC Conversation - invisible component that manages the voice connection */}
+      {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && (
+        <ElevenLabsConversation
+          agentId={selectedAgent.eleven_agent_id}
+          conversationToken={conversationToken}
+          sessionId={sessionId}
+          sessionActive={sessionActive}
+          autostart={true}
+          onAgentEndCall={handleAgentEndCallFromElevenLabs}
+          onStatusChange={setConversationStatus}
+        />
+      )}
+      
       {/* Full Screen Session Container */}
       <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden" style={{ width: '100vw', maxWidth: '100vw' }}>
         
@@ -4183,8 +4240,8 @@ function TrainerPageContent() {
           </nav>
         )}
 
-      {/* Hidden ElevenLabs Component */}
-      {/* ElevenLabs Component Removed */}
+      {/* Hidden WebRTC Connection Manager */}
+      {/* ElevenLabs WebRTC connection is now rendered at the top of the component */}
         
         {/* Hidden WebcamRecorder for recording functionality */}
         {sessionActive && (

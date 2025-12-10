@@ -354,13 +354,17 @@ export default function RootLayout({
               // Catch all variations: "Unknown DataChannel error on lossy", "DataChannel error on lossy", etc.
               const isDataChannelError = (
                 // Any combination of datachannel + lossy
+                errorStr.includes('datachannel') ||
                 (errorStr.includes('datachannel') && errorStr.includes('lossy')) ||
                 // Or just "lossy" errors (common WebRTC benign error)
                 (errorStr.includes('lossy') && (
                   errorStr.includes('error') || 
                   errorStr.includes('unknown') ||
                   errorStr.includes('datachannel')
-                ))
+                )) ||
+                // Specific "Unknown DataChannel error on lossy {}" format
+                errorStr.includes('unknown datachannel error') ||
+                (errorStr.includes('unknown') && errorStr.includes('error') && errorStr.includes('lossy'))
               );
               
               // Check for peer connection errors
@@ -383,7 +387,20 @@ export default function RootLayout({
                 errorStr.includes('abort connection attempt')
               );
               
-              return isDataChannelError || isPeerConnectionError || isRTCEngineError || isTransientWebSocketError;
+              // Suppress reconnect warnings (these are handled by retry logic)
+              const isReconnectWarning = (
+                errorStr.includes('already attempting reconnect') ||
+                errorStr.includes('returning early')
+              );
+              
+              // Suppress benign WebRTC signaling errors (SDK handles retries)
+              const isBenignSignalingError = (
+                errorStr.includes('cannot send signal request before connected') ||
+                (errorStr.includes('signal') && errorStr.includes('before connected')) ||
+                (errorStr.includes('trickle') && errorStr.includes('before connected'))
+              );
+              
+              return isDataChannelError || isPeerConnectionError || isRTCEngineError || isTransientWebSocketError || isReconnectWarning || isBenignSignalingError;
             };
             
             console.error = function(...args) {
@@ -415,11 +432,16 @@ export default function RootLayout({
                   msgLower.includes('syntaxerror') ||
                   msgLower.includes('appendchild') ||
                   // Catch all DataChannel lossy errors (benign WebRTC errors)
-                  ((msgLower.includes('datachannel') && msgLower.includes('lossy')) ||
-                   (msgLower.includes('lossy') && (msgLower.includes('error') || msgLower.includes('unknown')))) ||
+                  msgLower.includes('datachannel') ||
+                  (msgLower.includes('lossy') && (msgLower.includes('error') || msgLower.includes('unknown'))) ||
+                  msgLower.includes('unknown datachannel error') ||
                   msgLower.includes('rteengine') ||
                   msgLower.includes('closed peer connection') ||
-                  (msgLower.includes('createoffer') && msgLower.includes('closed'));
+                  (msgLower.includes('createoffer') && msgLower.includes('closed')) ||
+                  msgLower.includes('already attempting reconnect') ||
+                  msgLower.includes('returning early') ||
+                  msgLower.includes('cannot send signal request before connected') ||
+                  (msgLower.includes('signal') && msgLower.includes('before connected'));
                 
                 if (isNonCritical) {
                   // Suppress but don't log to reduce console noise
@@ -481,11 +503,16 @@ export default function RootLayout({
                   msgLower.includes('unexpected token') ||
                   msgLower.includes('syntaxerror') ||
                   // Catch all DataChannel lossy errors (benign WebRTC errors)
-                  ((msgLower.includes('datachannel') && msgLower.includes('lossy')) ||
-                   (msgLower.includes('lossy') && (msgLower.includes('error') || msgLower.includes('unknown')))) ||
+                  msgLower.includes('datachannel') ||
+                  (msgLower.includes('lossy') && (msgLower.includes('error') || msgLower.includes('unknown'))) ||
+                  msgLower.includes('unknown datachannel error') ||
                   msgLower.includes('rteengine') ||
                   msgLower.includes('closed peer connection') ||
-                  (msgLower.includes('createoffer') && msgLower.includes('closed'))
+                  (msgLower.includes('createoffer') && msgLower.includes('closed')) ||
+                  msgLower.includes('already attempting reconnect') ||
+                  msgLower.includes('returning early') ||
+                  msgLower.includes('cannot send signal request before connected') ||
+                  (msgLower.includes('signal') && msgLower.includes('before connected'))
                 ) {
                   e.preventDefault(); // Suppress
                 }

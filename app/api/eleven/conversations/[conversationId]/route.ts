@@ -4,22 +4,24 @@ import { NextRequest } from 'next/server';
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io';
 
 /**
- * GET /api/eleven/signed-url?agent_id=xxx
- * Simple proxy to ElevenLabs signed URL endpoint
+ * GET /api/eleven/conversations/[conversationId]
+ * Simple proxy to get conversation details
  */
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ conversationId: string }> }
+) {
   const apiKey = process.env.ELEVEN_LABS_API_KEY || process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
   }
 
-  const { searchParams } = new URL(request.url);
-  const agentId = searchParams.get('agent_id');
-  if (!agentId) {
-    return NextResponse.json({ error: 'agent_id is required' }, { status: 400 });
+  const { conversationId } = await params;
+  if (!conversationId) {
+    return NextResponse.json({ error: 'conversation_id is required' }, { status: 400 });
   }
 
-  const url = `${ELEVENLABS_API_BASE}/v1/convai/conversation/get-signed-url?agent_id=${agentId}`;
+  const url = `${ELEVENLABS_API_BASE}/v1/convai/conversations/${conversationId}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'xi-api-key': apiKey },
@@ -35,24 +37,26 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/eleven/signed-url
- * Accepts agentId in body
+ * DELETE /api/eleven/conversations/[conversationId]
+ * Simple proxy to delete conversation
  */
-export async function POST(request: Request) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ conversationId: string }> }
+) {
   const apiKey = process.env.ELEVEN_LABS_API_KEY || process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
   }
 
-  const body = await request.json().catch(() => ({}));
-  const agentId = (body as any)?.agentId || (body as any)?.agent_id;
-  if (!agentId) {
-    return NextResponse.json({ error: 'agent_id is required' }, { status: 400 });
+  const { conversationId } = await params;
+  if (!conversationId) {
+    return NextResponse.json({ error: 'conversation_id is required' }, { status: 400 });
   }
 
-  const url = `${ELEVENLABS_API_BASE}/v1/convai/conversation/get-signed-url?agent_id=${agentId}`;
+  const url = `${ELEVENLABS_API_BASE}/v1/convai/conversations/${conversationId}`;
   const response = await fetch(url, {
-    method: 'GET',
+    method: 'DELETE',
     headers: { 'xi-api-key': apiKey },
   });
 
@@ -61,6 +65,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errorText }, { status: response.status });
   }
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
   return NextResponse.json(data);
 }
