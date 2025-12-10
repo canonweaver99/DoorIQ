@@ -917,6 +917,84 @@ function TrainerPageContent() {
     }
   }, [videoMode, sessionActive, showDoorCloseAnimation])
 
+  // Force video to play when door closing animation is triggered
+  useEffect(() => {
+    if (showDoorCloseAnimation && agentVideoRef.current) {
+      const video = agentVideoRef.current
+      console.log('🎬 Door closing animation triggered, forcing video play')
+      
+      // Ensure video is visible
+      video.style.display = 'block'
+      video.style.visibility = 'visible'
+      video.style.opacity = '1'
+      
+      // Force a reflow to ensure visibility
+      void video.offsetHeight
+      
+      // Set source if not already set
+      const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+      if (videoPaths?.closing && video.src !== videoPaths.closing && !video.currentSrc.includes(videoPaths.closing)) {
+        video.src = videoPaths.closing
+        video.load()
+      }
+      
+      // Ensure loop is disabled
+      video.loop = false
+      
+      // Try to play with multiple attempts
+      const attemptPlay = (attempt = 0) => {
+        if (attempt > 3) {
+          console.error('❌ Failed to play after 3 attempts')
+          return
+        }
+        
+        const playPromise = video.play()
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('✅ Door closing video started playing')
+            })
+            .catch((err) => {
+              console.warn(`⚠️ Play attempt ${attempt + 1} failed:`, err)
+              if (attempt < 2) {
+                // Try muted on second attempt
+                video.muted = true
+                setTimeout(() => attemptPlay(attempt + 1), 100)
+              } else if (attempt === 2) {
+                // Try unmuted again on third attempt
+                video.muted = false
+                setTimeout(() => attemptPlay(attempt + 1), 100)
+              }
+            })
+        }
+      }
+      
+      // Wait for video to be ready
+      if (video.readyState >= 2) {
+        // Video is ready, try to play immediately
+        requestAnimationFrame(() => {
+          attemptPlay()
+        })
+      } else {
+        // Wait for video to load
+        const handleCanPlay = () => {
+          video.removeEventListener('canplay', handleCanPlay)
+          requestAnimationFrame(() => {
+            attemptPlay()
+          })
+        }
+        video.addEventListener('canplay', handleCanPlay)
+        
+        // Also try after a short delay as backup
+        setTimeout(() => {
+          if (video.readyState >= 2) {
+            attemptPlay()
+          }
+        }, 200)
+      }
+    }
+  }, [showDoorCloseAnimation, selectedAgent])
+
   const fetchAgents = async () => {
     try {
       const agentParam = searchParams.get('agent')
@@ -1698,6 +1776,7 @@ function TrainerPageContent() {
     // Stop session immediately to prevent reconnection
     setSessionActive(false)
     setSessionState('door-closing')
+    doorClosingReasonRef.current = reason
     
     // Check if agent has closing video
     const hasClosingVideo = agentHasVideos(selectedAgent?.name)
@@ -1708,6 +1787,27 @@ function TrainerPageContent() {
       console.log('🎬 Playing closing video:', videoPaths.closing)
       setShowDoorCloseAnimation(true)
       setVideoMode('closing')
+      
+      // Force video to play immediately - trigger a reflow to ensure visibility
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (agentVideoRef.current) {
+            const video = agentVideoRef.current
+            console.log('🎬 Force playing closing video after viewport check')
+            video.loop = false
+            video.load()
+            
+            // Try to play immediately
+            const playPromise = video.play()
+            if (playPromise !== undefined) {
+              playPromise.catch((err) => {
+                console.warn('⚠️ Initial play failed, will retry on canplay:', err)
+                // Will be handled by onCanPlay handler
+              })
+            }
+          }
+        })
+      })
     } else {
       // No video - redirect immediately
       console.log('⚠️ No closing video, redirecting immediately')
@@ -2285,8 +2385,36 @@ function TrainerPageContent() {
               if (showDoorCloseAnimation || videoMode === 'closing') {
                 console.log('🎬 Video can play, forcing play for closing animation')
                 agentVideoRef.current.loop = false // Ensure closing video doesn't loop
-                agentVideoRef.current.play().catch((err) => {
-                  console.warn('Video force play failed:', err)
+                
+                // Force visibility and ensure video is ready
+                agentVideoRef.current.style.display = 'block'
+                agentVideoRef.current.style.visibility = 'visible'
+                
+                // Use requestAnimationFrame to ensure DOM is ready
+                requestAnimationFrame(() => {
+                  const playPromise = agentVideoRef.current?.play()
+                  if (playPromise !== undefined) {
+                    playPromise
+                      .then(() => {
+                        console.log('✅ Closing video started playing')
+                      })
+                      .catch((err) => {
+                        console.warn('⚠️ Video force play failed, trying muted:', err)
+                        // Try muted as fallback
+                        if (agentVideoRef.current) {
+                          agentVideoRef.current.muted = true
+                          agentVideoRef.current.play()
+                            .then(() => {
+                              if (agentVideoRef.current) {
+                                agentVideoRef.current.muted = false
+                              }
+                            })
+                            .catch((mutedErr) => {
+                              console.error('❌ Failed to play even when muted:', mutedErr)
+                            })
+                        }
+                      })
+                  }
                 })
               }
             }
@@ -2534,8 +2662,36 @@ function TrainerPageContent() {
                                 if (showDoorCloseAnimation || videoMode === 'closing') {
                                   console.log('🎬 Video can play, forcing play for closing animation')
                                   agentVideoRef.current.loop = false // Ensure closing video doesn't loop
-                                  agentVideoRef.current.play().catch((err) => {
-                                    console.warn('Video force play failed:', err)
+                                  
+                                  // Force visibility and ensure video is ready
+                                  agentVideoRef.current.style.display = 'block'
+                                  agentVideoRef.current.style.visibility = 'visible'
+                                  
+                                  // Use requestAnimationFrame to ensure DOM is ready
+                                  requestAnimationFrame(() => {
+                                    const playPromise = agentVideoRef.current?.play()
+                                    if (playPromise !== undefined) {
+                                      playPromise
+                                        .then(() => {
+                                          console.log('✅ Closing video started playing')
+                                        })
+                                        .catch((err) => {
+                                          console.warn('⚠️ Video force play failed, trying muted:', err)
+                                          // Try muted as fallback
+                                          if (agentVideoRef.current) {
+                                            agentVideoRef.current.muted = true
+                                            agentVideoRef.current.play()
+                                              .then(() => {
+                                                if (agentVideoRef.current) {
+                                                  agentVideoRef.current.muted = false
+                                                }
+                                              })
+                                              .catch((mutedErr) => {
+                                                console.error('❌ Failed to play even when muted:', mutedErr)
+                                              })
+                                          }
+                                        })
+                                    }
                                   })
                                 }
                               }
