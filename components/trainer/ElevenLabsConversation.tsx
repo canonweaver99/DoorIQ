@@ -48,6 +48,7 @@ export default function ElevenLabsConversation({
   // Track recording state with refs for reliable cleanup
   const audioRecordingActiveRef = useRef(false)
   const wasConnectedRef = useRef(false) // Track if we were ever connected to detect actual disconnects
+  const audioStreamRef = useRef<MediaStream | null>(null) // Track audio stream for cleanup
   
   // Connection health monitoring
   const lastMessageTimeRef = useRef<number>(Date.now())
@@ -188,8 +189,28 @@ export default function ElevenLabsConversation({
 
     try {
       console.log('🎤 Requesting microphone permission...')
-      await navigator.mediaDevices.getUserMedia({ audio: true })
-      console.log('✅ Microphone permission granted')
+      let audioStream: MediaStream | null = null
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          }
+        })
+        audioStreamRef.current = audioStream // Store for cleanup (SDK will use its own stream)
+        console.log('✅ Microphone permission granted:', {
+          tracks: audioStream.getTracks().length,
+          audioTrack: audioStream.getAudioTracks()[0]?.label,
+          trackEnabled: audioStream.getAudioTracks()[0]?.enabled,
+        })
+      } catch (micError: any) {
+        console.error('❌ Microphone access denied:', micError.name, micError.message)
+        setErrorMessage('Microphone access is required for conversations')
+        setStatus('error')
+        dispatchStatus('error')
+        return
+      }
 
       setStatus('connecting')
       dispatchStatus('connecting')
@@ -197,6 +218,8 @@ export default function ElevenLabsConversation({
 
       console.log('🚀 Calling Conversation.startSession with WebRTC...')
       
+      // Note: ElevenLabs SDK will request its own audio stream, but we've already
+      // requested permission above to ensure it's granted before starting
       const conversation = await Conversation.startSession({
         conversationToken: currentToken,
         connectionType: 'webrtc',
@@ -301,6 +324,15 @@ export default function ElevenLabsConversation({
           stopHealthMonitoringFn()
           
           const hasActiveSession = !!sessionIdRef.current
+          
+          // Clean up audio stream
+          if (audioStreamRef.current) {
+            audioStreamRef.current.getTracks().forEach(track => {
+              console.log('🛑 Stopping audio track:', track.label)
+              track.stop()
+            })
+            audioStreamRef.current = null
+          }
           
           // If end_call was triggered, the door close is already being handled
           // Just clean up without trying to trigger door close again
@@ -971,6 +1003,15 @@ export default function ElevenLabsConversation({
         audioRecordingActiveRef.current = false
       }
       
+      // Clean up audio stream
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => {
+          console.log('🛑 Stopping audio track from stop():', track.label)
+          track.stop()
+        })
+        audioStreamRef.current = null
+      }
+      
       if (conversationRef.current) {
         await conversationRef.current.endSession()
         conversationRef.current = null
@@ -1204,6 +1245,15 @@ export default function ElevenLabsConversation({
         console.log('🛑 Stopping audio recording on unmount')
         stopAudioRecording()
         audioRecordingActiveRef.current = false
+      }
+      
+      // Clean up audio stream on unmount
+      if (audioStreamRef.current) {
+        console.log('🛑 Stopping audio stream on unmount')
+        audioStreamRef.current.getTracks().forEach(track => {
+          track.stop()
+        })
+        audioStreamRef.current = null
       }
       
       if (conversationRef.current) {
