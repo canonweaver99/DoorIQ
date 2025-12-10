@@ -400,6 +400,7 @@ function HeroSection() {
                 // Redirect to demo feedback
                 window.location.href = `/demo/feedback/${sessionId}`
               }}
+              onStartDemo={() => setShowDemoModal(true)}
             />
           </MacbookPro>
         </div>
@@ -514,6 +515,7 @@ function HeroSection() {
               onSessionEnd={(sessionId) => {
                 window.location.href = `/demo/feedback/${sessionId}`
               }}
+              onStartDemo={() => setShowDemoModal(true)}
             />
           </Mac>
         </div>
@@ -629,6 +631,7 @@ function HeroSection() {
                 onSessionEnd={(sessionId) => {
                   window.location.href = `/demo/feedback/${sessionId}`
                 }}
+                onStartDemo={() => setShowDemoModal(true)}
               />
             </IPhoneMockup>
           </div>
