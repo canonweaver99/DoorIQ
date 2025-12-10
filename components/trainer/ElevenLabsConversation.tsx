@@ -291,10 +291,12 @@ export default function ElevenLabsConversation({
             reconnectAttempts: reconnectAttemptsRef.current,
             timeSinceLastMessage: Date.now() - lastMessageTimeRef.current,
             timeSinceLastPing: Date.now() - lastPingTimeRef.current,
-            status: status
+            status: status,
+            currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown'
           }
           console.log('🔌 Disconnected:', reason)
           console.log('📊 Disconnect context:', disconnectDetails)
+          console.log('🔍 Was connected:', wasConnectedRef.current, '| Has session:', !!sessionIdRef.current, '| Session active:', sessionActiveRef.current)
           
           // Dispatch disconnect event with full details for debugging
           safeDispatchEvent('agent:disconnect', disconnectDetails)

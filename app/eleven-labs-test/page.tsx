@@ -12,16 +12,26 @@ export default function ElevenLabsTestPage() {
   // Austin's agent ID
   const AUSTIN_AGENT_ID = 'agent_7001k5jqfjmtejvs77jvhjf254tz'
   
-  // Listen for connection status events
+  // Listen for connection status events and disconnect events
   useEffect(() => {
     const handleStatus = (e: CustomEvent) => {
-      setConnectionStatus(e.detail as any)
+      const status = e.detail as any
+      console.log('📡 Connection status event:', status)
+      setConnectionStatus(status)
+    }
+    
+    const handleDisconnect = (e: CustomEvent) => {
+      const details = e.detail
+      console.log('🔌 Disconnect event received:', details)
+      // Don't immediately set to disconnected - let the status event handle it
     }
     
     window.addEventListener('connection:status', handleStatus as EventListener)
+    window.addEventListener('agent:disconnect', handleDisconnect as EventListener)
     
     return () => {
       window.removeEventListener('connection:status', handleStatus as EventListener)
+      window.removeEventListener('agent:disconnect', handleDisconnect as EventListener)
     }
   }, [])
   
