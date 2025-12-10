@@ -174,6 +174,7 @@ export default function ElevenLabsConversation({
       setErrorMessage('')
 
       console.log('🚀 Calling Conversation.startSession with WebRTC...')
+      console.log('🔊 Audio should play automatically through browser audio output')
       
       const conversation = await Conversation.startSession({
         conversationToken: currentToken,
@@ -226,6 +227,44 @@ export default function ElevenLabsConversation({
           wasConnectedRef.current = true // Mark that we were connected
           dispatchStatus('connected')
           setErrorMessage('')
+          
+          // CRITICAL: Ensure audio can play - resume any suspended audio contexts
+          // This handles browser autoplay policies that suspend audio
+          if (typeof window !== 'undefined') {
+            // Resume any existing audio contexts
+            if (window.AudioContext || (window as any).webkitAudioContext) {
+              try {
+                const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+                const testContext = new AudioContextClass()
+                if (testContext.state === 'suspended') {
+                  console.log('🔊 Audio context suspended, attempting to resume...')
+                  testContext.resume().then(() => {
+                    console.log('✅ Audio context resumed successfully')
+                    testContext.close().catch(() => {})
+                  }).catch((err) => {
+                    console.warn('⚠️ Could not resume audio context (may need user interaction):', err)
+                    testContext.close().catch(() => {})
+                  })
+                } else {
+                  console.log('✅ Audio context is active')
+                  testContext.close().catch(() => {})
+                }
+              } catch (err) {
+                console.warn('⚠️ Audio context check failed:', err)
+              }
+            }
+            
+            // Log audio output device info for debugging
+            if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+              navigator.mediaDevices.enumerateDevices().then(devices => {
+                const audioOutputs = devices.filter(d => d.kind === 'audiooutput')
+                console.log('🔊 Available audio output devices:', audioOutputs.length)
+                if (audioOutputs.length === 0) {
+                  console.warn('⚠️ No audio output devices detected - audio may not play')
+                }
+              }).catch(() => {})
+            }
+          }
           
           // Reset reconnection state on successful connection
           reconnectAttemptsRef.current = 0
