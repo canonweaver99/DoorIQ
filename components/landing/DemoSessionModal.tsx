@@ -2,19 +2,18 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
 import { DemoOnboarding } from './DemoOnboarding'
 
 interface DemoSessionModalProps {
   isOpen: boolean
   onClose: () => void
+  onStartDemo: (sessionId: string) => void
 }
 
-export function DemoSessionModal({ isOpen, onClose }: DemoSessionModalProps) {
+export function DemoSessionModal({ isOpen, onClose, onStartDemo }: DemoSessionModalProps) {
   const [showOnboarding, setShowOnboarding] = useState(true)
-  const router = useRouter()
 
-  const handleStartDemo = () => {
+  const handleStartDemo = async () => {
     setShowOnboarding(false)
     
     // Track demo start
@@ -24,9 +23,29 @@ export function DemoSessionModal({ isOpen, onClose }: DemoSessionModalProps) {
       body: JSON.stringify({ action: 'started' })
     }).catch(() => {})
 
-    // Navigate to trainer page with demo mode
-    router.push('/trainer?demo=true&agent=agent_7001k5jqfjmtejvs77jvhjf254tz&name=Average%20Austin')
-    onClose()
+    // Create demo session
+    try {
+      const response = await fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_name: 'Average Austin',
+          agent_id: 'agent_7001k5jqfjmtejvs77jvhjf254tz',
+          is_free_demo: true
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        onStartDemo(data.id)
+        onClose() // Close modal, demo will show in laptop
+      } else {
+        alert('Failed to start demo. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error creating demo session:', error)
+      alert('Failed to start demo. Please try again.')
+    }
   }
 
   const handleSkipOnboarding = () => {

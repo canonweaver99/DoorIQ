@@ -67,6 +67,7 @@ import {
   Play,
 } from "lucide-react";
 import { DemoSessionModal } from "@/components/landing/DemoSessionModal";
+import { EmbeddedDemo } from "@/components/landing/EmbeddedDemo";
 
 // Animated Counter Component
 function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffix?: string; prefix?: string }) {
@@ -236,6 +237,7 @@ function HeroSection() {
   const fallbackRef = useRef<HTMLDivElement>(null);
   const shouldAnimate = !isMobile && !prefersReducedMotion;
   const [showDemoModal, setShowDemoModal] = useState(false);
+  const [demoSessionId, setDemoSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -455,16 +457,26 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Demo Video in Macbook Pro */}
+        {/* Demo Video or Embedded Demo in Macbook Pro */}
         <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
           <MacbookPro
             width={650}
             height={400}
-            videoSrc="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
-            videoRef={videoRef as React.RefObject<HTMLVideoElement | null>}
+            videoSrc={demoSessionId ? undefined : "https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"}
+            videoRef={demoSessionId ? undefined : videoRef as React.RefObject<HTMLVideoElement | null>}
             className="w-full"
             style={{ maxWidth: '100%', height: 'auto' }}
-          />
+          >
+            {demoSessionId && (
+              <EmbeddedDemo 
+                sessionId={demoSessionId}
+                onSessionEnd={(sessionId) => {
+                  // Redirect to demo feedback
+                  window.location.href = `/demo/feedback/${sessionId}`
+                }}
+              />
+            )}
+          </MacbookPro>
           {/* Fallback if video doesn't load */}
           <div 
             ref={fallbackRef}
@@ -577,16 +589,25 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Demo Video in Mac Monitor */}
+        {/* Demo Video or Embedded Demo in Mac Monitor */}
         <div className="relative w-full flex items-center justify-center overflow-visible pb-8">
           <Mac
             width={2400}
             height={1800}
-            videoSrc="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
-            videoRef={videoRef as React.RefObject<HTMLVideoElement | null>}
+            videoSrc={demoSessionId ? undefined : "https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"}
+            videoRef={demoSessionId ? undefined : videoRef as React.RefObject<HTMLVideoElement | null>}
             className="w-full"
             style={{ maxWidth: 'min(95vw, 2400px)', height: 'auto', width: 'auto' }}
-          />
+          >
+            {demoSessionId && (
+              <EmbeddedDemo 
+                sessionId={demoSessionId}
+                onSessionEnd={(sessionId) => {
+                  window.location.href = `/demo/feedback/${sessionId}`
+                }}
+              />
+            )}
+          </Mac>
           {/* Fallback if video doesn't load */}
           <div 
             ref={fallbackRef}
@@ -699,17 +720,26 @@ function HeroSection() {
             </div>
           }
         >
-          {/* Demo Video in iPhone */}
+          {/* Demo Video or Embedded Demo in iPhone */}
           <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
             <IPhoneMockup
               model="14-pro"
               color="#5a5a5a"
               orientation="portrait"
-              videoSrc="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
-              videoRef={videoRef as React.RefObject<HTMLVideoElement | null>}
+              videoSrc={demoSessionId ? undefined : "https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"}
+              videoRef={demoSessionId ? undefined : videoRef as React.RefObject<HTMLVideoElement | null>}
               scale={0.85}
               className="w-full flex justify-center translate-x-2 md:translate-x-0"
-            />
+            >
+              {demoSessionId && (
+                <EmbeddedDemo 
+                  sessionId={demoSessionId}
+                  onSessionEnd={(sessionId) => {
+                    window.location.href = `/demo/feedback/${sessionId}`
+                  }}
+                />
+              )}
+            </IPhoneMockup>
             {/* Fallback if video doesn't load */}
             <div 
               ref={fallbackRef}
@@ -731,6 +761,10 @@ function HeroSection() {
       <DemoSessionModal
         isOpen={showDemoModal}
         onClose={() => setShowDemoModal(false)}
+        onStartDemo={(sessionId) => {
+          setDemoSessionId(sessionId)
+          setShowDemoModal(false)
+        }}
       />
     </div>
   );
