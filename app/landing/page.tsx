@@ -693,14 +693,15 @@ function HeroSection() {
           }
         >
           {/* Demo Video in iPhone */}
-          <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
-            <IPhoneMockup
-              model="14-pro"
-              color="#5a5a5a"
-              orientation="portrait"
-              scale={0.85}
-              className="w-full flex justify-center translate-x-2 md:translate-x-0"
-            >
+          <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20 px-0">
+            <div className="md:mx-auto" style={{ marginLeft: 'clamp(2.75rem, 7.5vw, 5.5rem)' }}>
+              <IPhoneMockup
+                model="14-pro"
+                color="#5a5a5a"
+                orientation="portrait"
+                scale={0.85}
+                className="mx-auto md:mx-0"
+              >
               <video
                 autoPlay
                 loop
@@ -713,6 +714,7 @@ function HeroSection() {
                 <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
               </video>
             </IPhoneMockup>
+            </div>
           </div>
         </ContainerScroll>
       </div>
