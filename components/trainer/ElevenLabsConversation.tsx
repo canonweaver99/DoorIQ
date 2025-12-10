@@ -374,19 +374,25 @@ export default function ElevenLabsConversation({
                               !reasonStr.includes('conversation ended') &&
                               !reasonStr.includes('call ended')
           
-          // Only attempt reconnection if we DON'T have an active session (connection error outside session)
+          // Attempt reconnection for unexpected disconnects (even with active session for test page)
+          // This allows the test page to retry connections
+          const isTestPage = typeof window !== 'undefined' && window.location.pathname.includes('/eleven-labs-test')
           if (isUnexpected && !isReconnectingRef.current) {
-            console.warn('⚠️ Unexpected disconnect detected (no active session), attempting reconnection...')
+            console.warn('⚠️ Unexpected disconnect detected, attempting reconnection...')
             // Only attempt reconnect if we haven't exceeded max attempts
             if (reconnectAttemptsRef.current < maxReconnectAttempts) {
-              attemptReconnect()
-              // Stop audio recording during reconnection attempt
-              if (audioRecordingActiveRef.current) {
-                console.log('🛑 Stopping audio recording during reconnection attempt')
-                stopAudioRecording()
-                audioRecordingActiveRef.current = false
+              // For test page, always attempt reconnection
+              // For trainer page, only reconnect if no active session
+              if (isTestPage || !hasActiveSession) {
+                attemptReconnect()
+                // Stop audio recording during reconnection attempt
+                if (audioRecordingActiveRef.current) {
+                  console.log('🛑 Stopping audio recording during reconnection attempt')
+                  stopAudioRecording()
+                  audioRecordingActiveRef.current = false
+                }
+                return
               }
-              return
             } else {
               console.error('❌ Max reconnection attempts reached')
             }
@@ -739,6 +745,7 @@ export default function ElevenLabsConversation({
           // Suppress harmless WebRTC timing errors
           // These occur when ICE candidates are sent before connection is fully ready
           // Also suppress DataChannel lossy errors (benign WebRTC errors)
+          // Suppress WebSocket connection errors that are handled by reconnection logic
           const isHarmlessError = (
             errStr.includes('cannot send signal request before connected') ||
             errStr.includes('trickle') ||
@@ -746,12 +753,21 @@ export default function ElevenLabsConversation({
             (errStr.includes('before connected') && errStr.includes('signal')) ||
             errStr.includes('datachannel') && errStr.includes('lossy') ||
             errStr.includes('unknown datachannel error') ||
-            errStr.includes('datachannel error on lossy')
+            errStr.includes('datachannel error on lossy') ||
+            errStr.includes('websocket got closed') ||
+            errStr.includes('websocket connection') && errStr.includes('failed') ||
+            errStr.includes('encountered unknown websocket error')
           )
           
           if (isHarmlessError) {
-            console.log('ℹ️ Suppressing harmless WebRTC timing warning:', errMsg)
-            return // Don't treat as error - connection will continue
+            // Log WebSocket errors for debugging but don't treat as fatal
+            if (errStr.includes('websocket')) {
+              console.warn('⚠️ WebSocket connection issue (will retry):', errMsg)
+              // Don't return - let reconnection logic handle it
+            } else {
+              console.log('ℹ️ Suppressing harmless WebRTC timing warning:', errMsg)
+              return // Don't treat as error - connection will continue
+            }
           }
           
           console.error('❌ WebRTC Error:', err, {
