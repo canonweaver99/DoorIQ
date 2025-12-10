@@ -731,6 +731,23 @@ export default function ElevenLabsConversation({
         },
         
         onError: (err: any) => {
+          const errMsg = err?.message || err?.error || err?.detail || 'Connection error'
+          const errStr = String(errMsg).toLowerCase()
+          
+          // Suppress harmless WebRTC timing errors
+          // These occur when ICE candidates are sent before connection is fully ready
+          const isHarmlessError = (
+            errStr.includes('cannot send signal request before connected') ||
+            errStr.includes('trickle') ||
+            errStr.includes('ice candidate') ||
+            (errStr.includes('before connected') && errStr.includes('signal'))
+          )
+          
+          if (isHarmlessError) {
+            console.log('ℹ️ Suppressing harmless WebRTC timing warning:', errMsg)
+            return // Don't treat as error - connection will continue
+          }
+          
           console.error('❌ WebRTC Error:', err, {
             errorType: err?.type,
             errorCode: err?.code,
@@ -743,7 +760,7 @@ export default function ElevenLabsConversation({
             reconnectAttempts: reconnectAttemptsRef.current,
             fullError: JSON.stringify(err, Object.getOwnPropertyNames(err))
           })
-          const errMsg = err?.message || err?.error || err?.detail || 'Connection error'
+          
           setErrorMessage(errMsg)
           setStatus('error')
           dispatchStatus('error')
