@@ -206,19 +206,27 @@ export default function RepManagement() {
   }, [])
 
   const toggleSelectAll = useCallback(() => {
+    if (!filteredReps || filteredReps.length === 0) {
+      setSelectedReps([])
+      return
+    }
     setSelectedReps(selectedReps.length === filteredReps.length ? [] : filteredReps.map(r => r.id))
   }, [selectedReps.length, filteredReps])
 
   // Filter and sort reps - memoized for performance
   const filteredReps = useMemo(() => {
+    if (!reps || reps.length === 0) {
+      return []
+    }
     return reps
       .filter(rep => {
+        if (!rep || !rep.name) return false
         // Search filter
         if (searchQuery && !rep.name.toLowerCase().includes(searchQuery.toLowerCase())) {
           return false
         }
         // Status filter
-        if (statusFilter !== 'all' && rep.status.toLowerCase().replace(' ', '') !== statusFilter) {
+        if (statusFilter !== 'all' && rep.status && rep.status.toLowerCase().replace(' ', '') !== statusFilter) {
           return false
         }
         return true
@@ -226,11 +234,11 @@ export default function RepManagement() {
       .sort((a, b) => {
         switch (sortBy) {
           case 'score':
-            return b.score - a.score
+            return (b.score || 0) - (a.score || 0)
           case 'name':
-            return a.name.localeCompare(b.name)
+            return (a.name || '').localeCompare(b.name || '')
           case 'sessions':
-            return b.sessionsWeek - a.sessionsWeek
+            return (b.sessionsWeek || 0) - (a.sessionsWeek || 0)
           case 'lastActive':
             return 0 // Could implement time-based sorting
           default:
@@ -247,12 +255,22 @@ export default function RepManagement() {
     )
   }
 
-  if (reps.length === 0) {
+  if (!loading && reps.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <UserCheck className="w-16 h-16 text-slate-600 mb-4" />
         <h3 className="text-xl font-semibold text-white mb-2 font-space">No Team Members Yet</h3>
-        <p className="text-slate-400 font-sans">Invite team members to get started</p>
+        <p className="text-slate-400 font-sans mb-6">Invite team members to get started with DoorIQ</p>
+        <button
+          onClick={() => {
+            // Navigate to team/invite page or open invite modal
+            window.location.href = '/settings?tab=team'
+          }}
+          className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-all flex items-center gap-2 font-space"
+        >
+          <UserCheck className="w-5 h-5" />
+          Invite Team Members
+        </button>
       </div>
     )
   }
@@ -476,10 +494,17 @@ export default function RepManagement() {
       )}
 
       {/* Rep List - Mobile Cards or Desktop Table */}
-      <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>
-        {isMobile ? (
-          <div className="space-y-3">
-            {filteredReps.map((rep, index) => {
+      {filteredReps && filteredReps.length === 0 && reps.length > 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Search className="w-12 h-12 text-slate-600 mb-4" />
+          <h3 className="text-lg font-semibold text-white mb-2 font-space">No Reps Found</h3>
+          <p className="text-slate-400 font-sans">Try adjusting your search or filters</p>
+        </div>
+      ) : (
+        <PullToRefresh onRefresh={handleRefresh} enabled={isMobile}>
+          {isMobile ? (
+            <div className="space-y-3">
+              {filteredReps && filteredReps.map((rep, index) => {
               const cardRef = useRef<HTMLDivElement>(null)
               
               useEffect(() => {
@@ -599,7 +624,7 @@ export default function RepManagement() {
                 <div className="col-span-1">
                   <input
                     type="checkbox"
-                    checked={selectedReps.length === filteredReps.length && filteredReps.length > 0}
+                    checked={filteredReps && filteredReps.length > 0 && selectedReps.length === filteredReps.length}
                     onChange={toggleSelectAll}
                     className="custom-checkbox"
                   />
@@ -766,6 +791,7 @@ export default function RepManagement() {
           </motion.div>
         )}
       </PullToRefresh>
+      )}
 
       {/* Rep Profile Modal */}
       <AnimatePresence>
