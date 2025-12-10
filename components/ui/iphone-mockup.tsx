@@ -365,7 +365,7 @@ export const IPhoneMockup: React.FC<IPhoneMockupProps> = ({
           )}
 
           {/* Screen content */}
-          <div style={contentStyle}>
+          <div style={{ ...contentStyle, pointerEvents: 'auto' }}>
             {children}
           </div>
 

@@ -88,12 +88,13 @@ export function MacbookPro({
           clipPath="url(#roundedCorners)"
         />
       ) : children ? (
-        <foreignObject x="74.52" y="21.32" width="501.22" height="323.85">
+        <foreignObject x="74.52" y="21.32" width="501.22" height="323.85" style={{ pointerEvents: 'auto' }}>
           <div style={{ 
             width: '100%', 
             height: '100%', 
             borderRadius: '5px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            pointerEvents: 'auto'
           }}>
             {children}
           </div>

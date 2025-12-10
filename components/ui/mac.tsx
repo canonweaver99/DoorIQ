@@ -113,12 +113,13 @@ export function Mac({ width = 600, height = 500, src, videoSrc, videoRef, childr
           clipPath="url(#roundedCorners)"
         />
       ) : children ? (
-        <foreignObject x="29.12" y="25.02" width="541.76" height="305.06">
+        <foreignObject x="29.12" y="25.02" width="541.76" height="305.06" style={{ pointerEvents: 'auto' }}>
           <div style={{ 
             width: '100%', 
             height: '100%', 
             borderRadius: '0.44px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            pointerEvents: 'auto'
           }}>
             {children}
           </div>
