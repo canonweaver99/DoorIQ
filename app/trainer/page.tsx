@@ -4037,7 +4037,7 @@ function TrainerPageContent() {
                     </div>
                     
                     {/* Webcam - Right Side */}
-                    {sessionActive && !isCameraOff && (
+                    {sessionActive && !isCameraOff && !isEmbedded && (
                       <div className="relative flex-1 bg-black overflow-hidden">
                         <WebcamPIP ref={webcamPIPRef} className="w-full h-full" />
                       </div>
@@ -4132,7 +4132,7 @@ function TrainerPageContent() {
                 "hidden md:block absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
                 isCameraOff && "hidden"
               )}>
-                <WebcamPIP ref={webcamPIPRef} />
+                {!isEmbedded && <WebcamPIP ref={webcamPIPRef} />}
               </div>
             )}
             
