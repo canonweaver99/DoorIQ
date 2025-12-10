@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+import { Play } from 'lucide-react'
 import { EmbeddedTrainerDemo } from './EmbeddedTrainerDemo'
 
 interface EmbeddedDemoProps {
@@ -7,11 +9,6 @@ interface EmbeddedDemoProps {
   onSessionEnd: (sessionId: string) => void
   onStartDemo?: () => void
 }
-
-'use client'
-
-import Image from 'next/image'
-import { Play } from 'lucide-react'
 
 interface EmbeddedDemoPreviewProps {
   onStartDemo: () => void
