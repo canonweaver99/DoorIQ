@@ -9,7 +9,7 @@ import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog, Data
 const HeroPerformanceCard = lazy(() => import('@/components/dashboard/HeroPerformanceCard'))
 const PerformanceMetricCards = lazy(() => import('@/components/dashboard/PerformanceMetricCards'))
 const CriticalAlertsSection = lazy(() => import('@/components/dashboard/CriticalAlertsSection'))
-const EarningsBreakdownCard = lazy(() => import('@/components/dashboard/EarningsBreakdownCard'))
+const Last20SessionsBreakdown = lazy(() => import('@/components/dashboard/Last20SessionsBreakdown'))
 const RecentSessionsPreview = lazy(() => import('@/components/dashboard/RecentSessionsPreview'))
 const RecommendedActions = lazy(() => import('@/components/dashboard/RecommendedActions'))
 const TabNavigation = lazy(() => import('@/components/dashboard/TabNavigation'))
@@ -332,10 +332,10 @@ function DashboardPageContent() {
                   </Suspense>
                 </div>
 
-                {/* Earnings Breakdown */}
+                {/* Last 20 Sessions Breakdown */}
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
                   <Suspense fallback={<div className="h-96 bg-white/[0.02] rounded-lg animate-pulse" />}>
-                    <EarningsBreakdownCard />
+                    <Last20SessionsBreakdown />
                   </Suspense>
                 </div>
 
@@ -490,12 +490,17 @@ function DashboardPageContent() {
                   <PerformanceMetricCards session={dashboardData.session} />
                 </Suspense>
 
-                {/* 4. Recent Sessions Preview (NEW) */}
+                {/* 4. Last 20 Sessions Breakdown */}
+                <Suspense fallback={<div className="h-96 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
+                  <Last20SessionsBreakdown />
+                </Suspense>
+
+                {/* 5. Recent Sessions Preview (NEW) */}
                 <Suspense fallback={<div className="h-96 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
                   <RecentSessionsPreview />
                 </Suspense>
 
-                {/* 5. Recommended Next Actions (NEW) */}
+                {/* 6. Recommended Next Actions (NEW) */}
                 <Suspense fallback={<div className="h-48 bg-white/[0.02] border border-white/10 rounded-lg animate-pulse" />}>
                   <RecommendedActions session={dashboardData.session} />
                 </Suspense>
