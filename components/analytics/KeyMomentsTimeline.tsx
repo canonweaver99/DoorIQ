@@ -98,22 +98,22 @@ export function KeyMomentsTimeline({ moments }: KeyMomentsTimelineProps) {
             <div className="ml-6 flex-1">
               <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 shadow-lg hover:border-slate-600/50 transition-colors">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-medium text-slate-400">
+                    <Clock className="w-5 h-5 text-slate-400" />
+                    <span className="text-base sm:text-lg font-medium text-slate-400">
                       {formatTimestamp(moment.timestamp) || `Moment ${index + 1}`}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`
-                      px-3 py-1 text-xs font-semibold rounded-full border
+                      px-3 py-1.5 text-sm sm:text-base font-semibold rounded-full border
                       ${getMomentTypeColor(moment.type)}
                     `}>
                       {moment.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </span>
                     {moment.importance >= 8 && (
-                      <span className="px-2 py-1 text-xs font-semibold bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30">
+                      <span className="px-3 py-1.5 text-sm sm:text-base font-semibold bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30">
                         High Impact
                       </span>
                     )}
@@ -121,8 +121,8 @@ export function KeyMomentsTimeline({ moments }: KeyMomentsTimelineProps) {
                 </div>
                 
                 {/* Transcript snippet */}
-                <div className="mb-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                  <p className="text-sm text-slate-300 italic leading-relaxed">
+                <div className="mb-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                  <p className="text-base sm:text-lg text-slate-300 italic leading-relaxed">
                     "{moment.transcript.length > 200 ? moment.transcript.slice(0, 200) + '...' : moment.transcript}"
                   </p>
                 </div>

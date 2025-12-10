@@ -129,8 +129,7 @@ export function MobileBottomNav() {
       // Leaderboard - Always visible for signed-in users
       { name: 'Leaderboard', href: '/leaderboard', icon: BarChart2, show: isSignedIn },
       
-      // Manager Panel - Show for managers and admins
-      { name: 'Manager Panel', href: '/manager', icon: Users, show: isManager || isAdmin },
+      // Manager Panel removed - managers now see extra tabs in dashboard
       
       // Learning
       { name: 'Learning', href: '/learning', icon: BookOpen, show: isSignedIn },

@@ -386,7 +386,7 @@ export default function TeamOverview() {
               </ul>
 
               <Link 
-                href="/manager?tab=reps"
+                href="/dashboard?tab=reps"
                 className="block w-full mt-6 py-2 text-sm text-center text-slate-400 hover:text-white transition-colors"
               >
                 <span className="font-sans">View All Reps →</span>
@@ -411,7 +411,7 @@ export default function TeamOverview() {
         transition={{ duration: 0.4, delay: 0.7 }}
         className="quick-actions"
       >
-        <Link href="/manager?tab=messages" className="action-card">
+        <Link href="/dashboard?tab=reps" className="action-card">
           <Mail className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
           <p className="text-sm font-medium text-white font-space">Send Team Message</p>
         </Link>
@@ -421,7 +421,7 @@ export default function TeamOverview() {
           <p className="text-sm font-medium text-white font-space">Invite a Sales Rep</p>
         </Link>
 
-        <Link href="/manager?tab=analytics" className="action-card">
+        <Link href="/dashboard?tab=manager" className="action-card">
           <Trophy className="w-5 h-5 text-slate-400 mb-3 mx-auto" />
           <p className="text-sm font-medium text-white font-space">View Analytics</p>
         </Link>

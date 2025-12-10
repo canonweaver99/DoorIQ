@@ -177,25 +177,25 @@ export function CriticalMomentsTimeline({
                   {/* Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4">
                     <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                      <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
-                      <span className="text-sm sm:text-base font-medium text-gray-300">
+                      <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 flex-shrink-0" />
+                      <span className="text-base sm:text-lg font-medium text-gray-300">
                         {formatTimestamp(moment.timestamp, sessionStartTime, durationSeconds)}
                       </span>
-                      <span className="text-sm sm:text-base font-semibold text-white">
+                      <span className="text-base sm:text-lg font-semibold text-white">
                         - {getMomentTypeLabel(moment.type)}
                       </span>
                       {isSuccess && (
-                        <span className="px-2 py-1 text-xs sm:text-sm font-semibold bg-green-500/20 text-green-400 rounded-full">
+                        <span className="px-3 py-1.5 text-sm sm:text-base font-semibold bg-green-500/20 text-green-400 rounded-full">
                           Success
                         </span>
                       )}
                       {isFailure && (
-                        <span className="px-2 py-1 text-xs sm:text-sm font-semibold bg-red-500/20 text-red-400 rounded-full">
+                        <span className="px-3 py-1.5 text-sm sm:text-base font-semibold bg-red-500/20 text-red-400 rounded-full">
                           Critical Failure
                         </span>
                       )}
                       {isMissed && (
-                        <span className="px-2 py-1 text-xs sm:text-sm font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">
+                        <span className="px-3 py-1.5 text-sm sm:text-base font-semibold bg-yellow-500/20 text-yellow-400 rounded-full">
                           Missed Opportunity
                         </span>
                       )}
@@ -203,8 +203,8 @@ export function CriticalMomentsTimeline({
                   </div>
                   
                   {/* Transcript Quote - Single quote only */}
-                  <div className="mb-4 p-3 sm:p-4 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                    <p className="text-sm sm:text-base text-gray-200 italic mb-2">
+                  <div className="mb-4 p-4 sm:p-5 bg-slate-900/50 rounded-lg border border-slate-700/50">
+                    <p className="text-base sm:text-lg text-gray-200 italic mb-2">
                       "{(() => {
                         // Use transcript directly - it should already be extracted from conversation
                         let transcriptText = moment.transcript || ''
@@ -245,7 +245,7 @@ export function CriticalMomentsTimeline({
                     </p>
                     {/* Success Indicator - Interest Level Change */}
                     {interestChange && interestChange > 0 && (
-                      <div className="mt-2 flex items-center gap-2 text-green-400 text-sm font-semibold">
+                      <div className="mt-2 flex items-center gap-2 text-green-400 text-base sm:text-lg font-semibold">
                         <span>📈</span>
                         <span>Interest Level: +{interestChange}% (They engaged!)</span>
                       </div>
@@ -254,20 +254,20 @@ export function CriticalMomentsTimeline({
                   
                   {/* What Worked and What to Try Next Time - Always shown */}
                   <div className="space-y-3 mt-4">
-                    <div className="flex items-start gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                      <Lightbulb className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex items-start gap-3 p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                      <Lightbulb className="w-6 h-6 text-green-400 mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
-                        <div className="text-sm font-semibold text-green-400 mb-1.5">What Worked</div>
-                        <p className="text-sm text-gray-200">
+                        <div className="text-base sm:text-lg font-semibold text-green-400 mb-2">What Worked</div>
+                        <p className="text-base sm:text-lg text-gray-200 leading-relaxed">
                           {moment.analysis?.whatWorked || 'This moment showed effective communication and engagement.'}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
-                      <Lightbulb className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex items-start gap-3 p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                      <Lightbulb className="w-6 h-6 text-blue-400 mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
-                        <div className="text-sm font-semibold text-blue-400 mb-1.5">What to Try Next Time</div>
-                        <p className="text-sm text-gray-200">
+                        <div className="text-base sm:text-lg font-semibold text-blue-400 mb-2">What to Try Next Time</div>
+                        <p className="text-base sm:text-lg text-gray-200 leading-relaxed">
                           {moment.analysis?.whatToImprove || 'Consider alternative approaches to enhance this moment further.'}
                         </p>
                       </div>

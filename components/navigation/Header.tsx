@@ -281,10 +281,8 @@ function HeaderContent() {
       navItems.push({ name: 'Sessions', href: '/sessions', icon: FileText })
     }
 
-    // Dashboard/Manager - Show appropriate dashboard based on role
-    if (userRole === 'manager') {
-      navItems.push({ name: 'Dashboard', href: '/manager', icon: LayoutDashboard })
-    } else if (userRole === 'rep' || userRole === 'admin') {
+    // Dashboard - All users go to /dashboard (managers see extra tabs)
+    if (userRole === 'rep' || userRole === 'manager' || userRole === 'admin') {
       navItems.push({ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard })
     }
 
@@ -328,9 +326,8 @@ function HeaderContent() {
           { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, repOnly: true, desktopOnly: true },
           ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, repOnly: true, desktopOnly: true }]),
           ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen, desktopOnly: true }] : []),
-          { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true, desktopOnly: true },
           { name: 'Admin Panel', href: '/admin', icon: Users, adminOnly: true, desktopOnly: true },
-          { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true, desktopOnly: true },
+          { name: 'Add Knowledge Base', href: '/dashboard?tab=knowledge', icon: DatabaseIcon, managerOnly: true, desktopOnly: true },
         ],
       },
       {
@@ -382,9 +379,8 @@ function HeaderContent() {
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, repOnly: true },
       ...(isIndividualPlan ? [] : [{ name: 'Analytics', href: '/dashboard?tab=performance', icon: BarChart3, repOnly: true }]),
       ...(hasLearningPageAccess ? [{ name: 'Learning', href: '/learning', icon: NotebookPen }] : []),
-      { name: 'Manager Panel', href: '/manager', icon: Users, managerOnly: true },
       { name: 'Admin Panel', href: '/admin', icon: Users, adminOnly: true },
-      { name: 'Add Knowledge Base', href: '/manager?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
+      { name: 'Add Knowledge Base', href: '/dashboard?tab=knowledge', icon: DatabaseIcon, managerOnly: true },
       { name: 'Team', href: '/team', icon: Users },
       // Archived: { name: 'Documentation', href: '/documentation', icon: BookOpen },
       // Archived: { name: 'Support', href: '/support', icon: LifeBuoy },
@@ -416,9 +412,9 @@ function HeaderContent() {
   const isActive = useCallback((href: string) => {
     if (href === '/') return pathname === '/'
 
-    if (href.startsWith('/manager?tab=')) {
+    if (href.startsWith('/dashboard?tab=')) {
       const targetTab = href.split('tab=')[1]
-      return pathname === '/manager' && searchParams?.get('tab') === targetTab
+      return pathname === '/dashboard' && searchParams?.get('tab') === targetTab
     }
 
     const [basePath] = href.split('?')

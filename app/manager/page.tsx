@@ -1,14 +1,7 @@
 'use client'
 
-import { useState, useEffect, Suspense, lazy } from 'react'
+import { useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Database, BarChart3, Settings, UserCog, BookOpen, Video } from 'lucide-react'
-import { useIsMobile } from '@/hooks/useIsMobile'
-import { IOSSegmentedControl } from '@/components/ui/ios-segmented-control'
-import { PullToRefresh } from '@/components/ui/pull-to-refresh'
-import { useHaptic } from '@/hooks/useHaptic'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Lazy load tab components for better performance with error handling
 const RepManagement = lazy(() => 
@@ -46,6 +39,38 @@ const tabs = [
   { id: 'settings' as Tab, name: 'Settings', icon: Settings },
 ]
 
+export default function ManagerPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  // Redirect to dashboard - managers now use dashboard with extra tabs
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    
+    // Map old manager tabs to new dashboard tabs
+    const tabMap: Record<string, string> = {
+      'analytics': 'manager', // Analytics goes to Manager Panel tab
+      'reps': 'reps',
+      'knowledge': 'knowledge',
+      'videos': 'videos',
+      'settings': 'settings'
+    }
+    
+    const dashboardTab = tabParam && tabMap[tabParam] ? tabMap[tabParam] : 'manager'
+    
+    // Redirect to dashboard - tabs are handled by state, not URL params
+    router.replace('/dashboard')
+  }, [router])
+  
+  // Show loading while redirecting
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
+    </div>
+  )
+}
+
+// Legacy component kept for reference but not used
 function ManagerPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -350,14 +375,3 @@ function ManagerPageContent() {
   )
 }
 
-export default function ManagerPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#0f0f1e] to-[#1a1a2e] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-      </div>
-    }>
-      <ManagerPageContent />
-    </Suspense>
-  )
-}
