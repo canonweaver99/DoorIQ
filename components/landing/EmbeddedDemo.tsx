@@ -1,18 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
-
-// Dynamically import trainer components to avoid loading them until needed
-const TrainerInterface = dynamic(() => import('./EmbeddedTrainerInterface'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full bg-black flex items-center justify-center">
-      <div className="text-white text-sm">Loading demo...</div>
-    </div>
-  )
-})
-
 interface EmbeddedDemoProps {
   sessionId: string | null
   onSessionEnd: (sessionId: string) => void
