@@ -440,34 +440,41 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Demo Video */}
-        <div className="relative w-full h-full rounded-lg overflow-hidden border border-white/5 bg-black">
-          <video
-            ref={videoRef}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-            poster="/dashboard-preview.png"
-            preload="auto"
-            style={{ display: 'block' }}
+        {/* Demo Video in MacBook Pro */}
+        <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
+          <MacbookPro
+            width={650}
+            height={400}
+            className="w-full"
+            style={{ maxWidth: '100%', height: 'auto' }}
           >
-            <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
-          </video>
-          {/* Fallback if video doesn't load */}
-          <div 
-            ref={fallbackRef}
-            className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center"
-            style={{ display: 'none' }}
-          >
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                <BarChart3 className="w-8 h-8 text-white/40" />
+            <video
+              ref={videoRef}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+              poster="/dashboard-preview.png"
+              preload="auto"
+              style={{ display: 'block' }}
+            >
+              <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
+            </video>
+            {/* Fallback if video doesn't load */}
+            <div 
+              ref={fallbackRef}
+              className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center"
+              style={{ display: 'none' }}
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                  <BarChart3 className="w-8 h-8 text-white/40" />
+                </div>
+                <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
               </div>
-              <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
             </div>
-          </div>
+          </MacbookPro>
         </div>
       </ContainerScroll>
       </div>
@@ -560,7 +567,7 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Dashboard Preview in Mac Monitor */}
+        {/* Demo Video in Mac Monitor */}
         <div className="relative w-full flex items-center justify-center overflow-visible pb-8">
           <Mac
             width={2400}
@@ -568,13 +575,18 @@ function HeroSection() {
             className="w-full"
             style={{ maxWidth: 'min(95vw, 2400px)', height: 'auto', width: 'auto' }}
           >
-            <Image 
-              src="/website image 1.png" 
-              alt="DoorIQ Dashboard Preview" 
-              fill 
-              className="object-cover"
-              priority
-            />
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+              poster="/dashboard-preview.png"
+              preload="auto"
+              style={{ display: 'block' }}
+            >
+              <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
+            </video>
           </Mac>
         </div>
       </ContainerScroll>
@@ -668,7 +680,7 @@ function HeroSection() {
             </div>
           }
         >
-          {/* Dashboard Preview in iPhone */}
+          {/* Demo Video in iPhone */}
           <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
             <IPhoneMockup
               model="14-pro"
@@ -677,13 +689,18 @@ function HeroSection() {
               scale={0.85}
               className="w-full flex justify-center translate-x-2 md:translate-x-0"
             >
-              <Image 
-                src="/website image 1.png" 
-                alt="DoorIQ Dashboard Preview" 
-                fill 
-                className="object-cover"
-                priority
-              />
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+                poster="/dashboard-preview.png"
+                preload="auto"
+                style={{ display: 'block' }}
+              >
+                <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
+              </video>
             </IPhoneMockup>
           </div>
         </ContainerScroll>
