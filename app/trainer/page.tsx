@@ -549,6 +549,7 @@ function TrainerPageContent() {
   const searchParams = useSearchParams()
   const supabase = createClient()
   const isDemoMode = searchParams.get('demo') === 'true'
+  const isEmbedded = searchParams.get('embedded') === 'true'
   const demoTimeLimitRef = useRef<number>(180) // 3 minutes
   const demoTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -2937,7 +2938,7 @@ function TrainerPageContent() {
                       "absolute bottom-24 right-3 z-20 w-28 h-21 shadow-2xl rounded-lg overflow-hidden",
                       isCameraOff && "hidden"
                     )}>
-                      <WebcamPIP ref={webcamPIPRef} />
+                      {!isEmbedded && <WebcamPIP ref={webcamPIPRef} />}
                     </div>
                   )}
                   
@@ -3313,7 +3314,7 @@ function TrainerPageContent() {
                         "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
                         isCameraOff && "hidden"
                       )}>
-                        <WebcamPIP ref={webcamPIPRef} />
+                        {!isEmbedded && <WebcamPIP ref={webcamPIPRef} />}
                       </div>
                     )}
                     
@@ -3741,7 +3742,7 @@ function TrainerPageContent() {
                         "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
                         isCameraOff && "hidden"
                       )}>
-                        <WebcamPIP ref={webcamPIPRef} />
+                        {!isEmbedded && <WebcamPIP ref={webcamPIPRef} />}
                       </div>
                     )}
                   </div>

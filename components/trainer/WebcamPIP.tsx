@@ -242,9 +242,16 @@ export const WebcamPIP = React.forwardRef<WebcamPIPRef, WebcamPIPProps>(({ class
           }, 5000)
         })
       } else {
-        throw new Error('Video element not available')
+        // In embedded mode or when video element isn't available, fail gracefully
+        console.warn('⚠️ Video element not available - webcam disabled (may be in embedded mode)')
+        return
       }
     } catch (err: any) {
+      // Don't log as error if it's just missing video element in embedded mode
+      if (err.message === 'Video element not available') {
+        console.warn('⚠️ Webcam not available - continuing without webcam')
+        return
+      }
       console.error('❌ Error accessing webcam:', err)
       
       if (connectionTimeoutRef.current) {
