@@ -457,25 +457,21 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Demo Video or Embedded Demo in Macbook Pro */}
+        {/* Embedded Demo in Macbook Pro */}
         <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
           <MacbookPro
             width={650}
             height={400}
-            videoSrc={demoSessionId ? undefined : "https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"}
-            videoRef={demoSessionId ? undefined : videoRef as React.RefObject<HTMLVideoElement | null>}
             className="w-full"
             style={{ maxWidth: '100%', height: 'auto' }}
           >
-            {demoSessionId && (
-              <EmbeddedDemo 
-                sessionId={demoSessionId}
-                onSessionEnd={(sessionId) => {
-                  // Redirect to demo feedback
-                  window.location.href = `/demo/feedback/${sessionId}`
-                }}
-              />
-            )}
+            <EmbeddedDemo 
+              sessionId={demoSessionId}
+              onSessionEnd={(sessionId) => {
+                // Redirect to demo feedback
+                window.location.href = `/demo/feedback/${sessionId}`
+              }}
+            />
           </MacbookPro>
           {/* Fallback if video doesn't load */}
           <div 
@@ -589,24 +585,20 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Demo Video or Embedded Demo in Mac Monitor */}
+        {/* Embedded Demo in Mac Monitor */}
         <div className="relative w-full flex items-center justify-center overflow-visible pb-8">
           <Mac
             width={2400}
             height={1800}
-            videoSrc={demoSessionId ? undefined : "https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"}
-            videoRef={demoSessionId ? undefined : videoRef as React.RefObject<HTMLVideoElement | null>}
             className="w-full"
             style={{ maxWidth: 'min(95vw, 2400px)', height: 'auto', width: 'auto' }}
           >
-            {demoSessionId && (
-              <EmbeddedDemo 
-                sessionId={demoSessionId}
-                onSessionEnd={(sessionId) => {
-                  window.location.href = `/demo/feedback/${sessionId}`
-                }}
-              />
-            )}
+            <EmbeddedDemo 
+              sessionId={demoSessionId}
+              onSessionEnd={(sessionId) => {
+                window.location.href = `/demo/feedback/${sessionId}`
+              }}
+            />
           </Mac>
           {/* Fallback if video doesn't load */}
           <div 
@@ -720,25 +712,21 @@ function HeroSection() {
             </div>
           }
         >
-          {/* Demo Video or Embedded Demo in iPhone */}
+          {/* Embedded Demo in iPhone */}
           <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
             <IPhoneMockup
               model="14-pro"
               color="#5a5a5a"
               orientation="portrait"
-              videoSrc={demoSessionId ? undefined : "https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"}
-              videoRef={demoSessionId ? undefined : videoRef as React.RefObject<HTMLVideoElement | null>}
               scale={0.85}
               className="w-full flex justify-center translate-x-2 md:translate-x-0"
             >
-              {demoSessionId && (
-                <EmbeddedDemo 
-                  sessionId={demoSessionId}
-                  onSessionEnd={(sessionId) => {
-                    window.location.href = `/demo/feedback/${sessionId}`
-                  }}
-                />
-              )}
+              <EmbeddedDemo 
+                sessionId={demoSessionId}
+                onSessionEnd={(sessionId) => {
+                  window.location.href = `/demo/feedback/${sessionId}`
+                }}
+              />
             </IPhoneMockup>
             {/* Fallback if video doesn't load */}
             <div 
