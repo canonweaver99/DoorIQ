@@ -84,9 +84,14 @@ export default function ElevenLabsConversation({
     }
   }
 
-  // Save transcript directly to database
+  // Save transcript directly to database - non-blocking, never throws
   const saveTranscriptToDatabase = useCallback(async (sessionId: string, speaker: 'user' | 'homeowner', text: string) => {
+    // Don't block the conversation flow - save in background
     try {
+      // Use AbortController for timeout on mobile networks
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+      
       const response = await fetch('/api/session/transcript', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,19 +99,28 @@ export default function ElevenLabsConversation({
           sessionId,
           speaker,
           text
-        })
+        }),
+        signal: controller.signal
       })
+      
+      clearTimeout(timeoutId)
       
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(error.error || 'Failed to save transcript')
+        console.warn('⚠️ Transcript save failed (non-blocking):', error.error || 'Unknown error')
+        return // Don't throw - just log and continue
       }
       
       const result = await response.json()
       console.log('✅ Transcript saved:', { entryId: result.entryId, transcriptLength: result.transcriptLength })
-    } catch (error) {
-      console.error('❌ Error saving transcript:', error)
-      throw error
+    } catch (error: any) {
+      // Never throw - just log errors silently
+      if (error.name === 'AbortError') {
+        console.warn('⚠️ Transcript save timeout (mobile network slow) - continuing anyway')
+      } else {
+        console.warn('⚠️ Transcript save error (non-blocking):', error?.message || 'Unknown error')
+      }
+      // Don't throw - conversation should continue even if transcript save fails
     }
   }, [])
 
@@ -136,8 +150,11 @@ export default function ElevenLabsConversation({
     if (typeof window !== 'undefined') {
       const pathname = window.location.pathname
       const isAllowedPage = pathname.includes('/trainer') || pathname.includes('/eleven-labs-test')
+      
+      console.log('📍 Path check:', { pathname, isAllowedPage, userAgent: navigator.userAgent?.substring(0, 50) })
+      
       if (!isAllowedPage) {
-        console.error('❌ Not on allowed page - refusing to start conversation')
+        console.error('❌ Not on allowed page - refusing to start conversation', { pathname })
         setErrorMessage('Conversation can only start on trainer page')
         setStatus('error')
         dispatchStatus('error')
@@ -428,7 +445,11 @@ export default function ElevenLabsConversation({
             const isAllowedPath = currentPath.includes('/trainer') || currentPath.includes('/eleven-labs-test') || currentPath.includes('/feedback') || currentPath.includes('/loading')
             
             if (!isAllowedPath) {
-              console.warn('⚠️ Received message but not on allowed page - stopping conversation')
+              console.warn('⚠️ Received message but not on allowed page - stopping conversation', { 
+                currentPath, 
+                isAllowedPath,
+                userAgent: navigator.userAgent?.substring(0, 50)
+              })
               if (conversationRef.current) {
                 console.log('🛑 Stopping conversation - no longer on allowed page')
                 conversationRef.current.endSession().catch(() => {})
