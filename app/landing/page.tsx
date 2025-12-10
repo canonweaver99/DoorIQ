@@ -40,9 +40,23 @@ const AIVoiceInput = dynamic(() => import("@/components/ui/ai-voice-input").then
   loading: () => <div className="h-[200px] bg-slate-900 rounded-lg" />,
   ssr: false,
 });
-import { MacbookPro } from "@/components/ui/macbook-pro";
-import { IPhoneMockup } from "@/components/ui/iphone-mockup";
-import { Mac } from "@/components/ui/mac";
+
+// Lazy load device mockup components - they're only used in hero section
+const MacbookPro = dynamic(() => import("@/components/ui/macbook-pro").then(mod => ({ default: mod.MacbookPro })), {
+  loading: () => <div className="w-full h-[400px] bg-slate-900/50 rounded-lg animate-pulse" />,
+  ssr: false,
+});
+
+const IPhoneMockup = dynamic(() => import("@/components/ui/iphone-mockup").then(mod => ({ default: mod.IPhoneMockup })), {
+  loading: () => <div className="w-[200px] h-[400px] bg-slate-900/50 rounded-3xl animate-pulse mx-auto" />,
+  ssr: false,
+});
+
+const Mac = dynamic(() => import("@/components/ui/mac").then(mod => ({ default: mod.Mac })), {
+  loading: () => <div className="w-full h-[600px] bg-slate-900/50 rounded-lg animate-pulse" />,
+  ssr: false,
+});
+
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from "@/components/trainer/personas";
 import { getAgentImageStyle } from "@/lib/agents/imageStyles";
 import { createClient } from "@/lib/supabase/client";
@@ -455,8 +469,8 @@ function HeroSection() {
               muted
               playsInline
               className="w-full h-full object-cover"
-              poster="/dashboard-preview.png"
-              preload="auto"
+              poster="/website image 1.png"
+              preload="metadata"
               style={{ display: 'block' }}
             >
               <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
@@ -581,8 +595,8 @@ function HeroSection() {
               muted
               playsInline
               className="w-full h-full object-cover"
-              poster="/dashboard-preview.png"
-              preload="auto"
+              poster="/website image 1.png"
+              preload="none"
               style={{ display: 'block' }}
             >
               <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
@@ -695,8 +709,8 @@ function HeroSection() {
                 muted
                 playsInline
                 className="w-full h-full object-cover"
-                poster="/dashboard-preview.png"
-                preload="auto"
+                poster="/website image 1.png"
+                preload="none"
                 style={{ display: 'block' }}
               >
                 <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />

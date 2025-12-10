@@ -5,8 +5,14 @@ import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { BookOpen, Sparkles, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { ModuleCard } from '@/components/learning/ModuleCard'
+import dynamic from 'next/dynamic'
 import { useModules } from '@/hooks/learning/useModules'
+
+// Lazy load module cards for better performance
+const ModuleCard = dynamic(() => import('@/components/learning/ModuleCard').then(mod => ({ default: mod.ModuleCard })), {
+  loading: () => <div className="h-32 bg-slate-900/50 rounded-2xl animate-pulse" />,
+  ssr: false
+})
 import { ModuleCategory } from '@/lib/learning/types'
 
 const categoryOrder: ModuleCategory[] = ['approach', 'pitch', 'overcome', 'close', 'objections', 'communication']

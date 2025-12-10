@@ -5,7 +5,13 @@ import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BookOpen } from 'lucide-react'
 import Link from 'next/link'
-import { ModuleDetail } from '@/components/learning/ModuleDetail'
+import dynamic from 'next/dynamic'
+
+// Lazy load heavy component
+const ModuleDetail = dynamic(() => import('@/components/learning/ModuleDetail').then(mod => ({ default: mod.ModuleDetail })), {
+  loading: () => <div className="h-96 bg-slate-900/50 rounded-3xl animate-pulse" />,
+  ssr: false
+})
 import { ModuleWithProgress, ModuleCategory } from '@/lib/learning/types'
 import { useModules } from '@/hooks/learning/useModules'
 
