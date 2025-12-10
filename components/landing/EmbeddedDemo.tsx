@@ -22,8 +22,8 @@ function EmbeddedDemoPreview({ onStartDemo }: EmbeddedDemoPreviewProps) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.1)_0%,_transparent_70%)]"></div>
       
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-        <div className="text-center space-y-6 w-full max-w-sm">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 relative" style={{ zIndex: 10 }}>
+        <div className="text-center space-y-6 w-full max-w-sm" style={{ pointerEvents: 'auto' }}>
           {/* Austin's Avatar - Larger and more prominent */}
           <div className="relative mx-auto mb-4">
             <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-500/60 shadow-2xl shadow-indigo-500/30 ring-4 ring-indigo-500/20">
@@ -58,14 +58,24 @@ function EmbeddedDemoPreview({ onStartDemo }: EmbeddedDemoPreviewProps) {
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
+                console.log('Button clicked!')
                 onStartDemo()
               }}
-              className="group relative w-full px-6 py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 text-white font-bold rounded-lg hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-600 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/40 flex items-center justify-center gap-2 cursor-pointer z-50"
-              style={{ pointerEvents: 'auto' }}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              className="group relative w-full px-6 py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 text-white font-bold rounded-lg hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-600 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/40 flex items-center justify-center gap-2 cursor-pointer"
+              style={{ 
+                pointerEvents: 'auto',
+                zIndex: 9999,
+                position: 'relative'
+              }}
+              type="button"
             >
               <Play className="w-5 h-5" />
               <span className="text-base">Try Instant Demo</span>
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
             </button>
 
             {/* Info Badge */}
