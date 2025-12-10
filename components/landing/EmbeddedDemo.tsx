@@ -16,72 +16,81 @@ interface EmbeddedDemoPreviewProps {
 
 function EmbeddedDemoPreview({ onStartDemo }: EmbeddedDemoPreviewProps) {
   return (
-    <div className="w-full h-full bg-black flex flex-col overflow-hidden relative" style={{ height: '100%', minHeight: '400px' }}>
+    <div 
+      className="w-full h-full bg-black flex flex-col overflow-hidden relative" 
+      style={{ 
+        height: '100%', 
+        minHeight: '400px',
+        pointerEvents: 'auto'
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Background with subtle gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-black to-slate-950"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.1)_0%,_transparent_70%)]"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-black to-slate-950 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.15)_0%,_transparent_70%)] pointer-events-none"></div>
       
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative" style={{ zIndex: 10 }}>
-        <div className="text-center space-y-6 w-full max-w-sm" style={{ pointerEvents: 'auto' }}>
+      <div 
+        className="flex-1 flex flex-col items-center justify-center p-6 relative" 
+        style={{ zIndex: 10, pointerEvents: 'auto' }}
+      >
+        <div className="text-center space-y-6 w-full max-w-sm">
           {/* Austin's Avatar - Larger and more prominent */}
-          <div className="relative mx-auto mb-4">
-            <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-500/60 shadow-2xl shadow-indigo-500/30 ring-4 ring-indigo-500/20">
+          <div className="relative mx-auto mb-2">
+            <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-indigo-500/70 shadow-2xl shadow-indigo-500/40 ring-4 ring-indigo-500/30">
               <Image
                 src="/Austin Boss.png"
                 alt="Average Austin"
-                width={112}
-                height={112}
+                width={144}
+                height={144}
                 className="w-full h-full object-cover"
                 priority
               />
             </div>
             {/* Animated glow effect */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/40 to-purple-500/40 blur-2xl animate-pulse"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/50 to-purple-500/50 blur-2xl animate-pulse"></div>
           </div>
 
           {/* Name and Description */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <h2 className="text-white text-3xl font-bold font-space tracking-tight">Average Austin</h2>
-            <p className="text-white/50 text-sm font-sans">Skeptical but fair homeowner</p>
+            <p className="text-white/60 text-sm font-sans">Skeptical but fair homeowner</p>
           </div>
           
           {/* Divider */}
-          <div className="h-px w-24 mx-auto bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          <div className="h-px w-20 mx-auto bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
 
           {/* CTA Section */}
-          <div className="space-y-4 pt-2">
-            <h3 className="text-white text-lg font-semibold font-space">Ready to Practice?</h3>
+          <div className="space-y-5 pt-1">
+            <h3 className="text-white text-xl font-semibold font-space">Ready to Practice?</h3>
             
-            {/* Interactive Button - Make sure it's clickable */}
+            {/* Interactive Button */}
             <button
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                console.log('Button clicked!')
-                onStartDemo()
+                console.log('Demo button clicked!')
+                if (onStartDemo) {
+                  onStartDemo()
+                }
               }}
-              onMouseDown={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-              }}
-              className="group relative w-full px-6 py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 text-white font-bold rounded-lg hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-600 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/40 flex items-center justify-center gap-2 cursor-pointer"
+              className="group relative w-full px-8 py-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 text-white font-bold rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-600 transition-all transform hover:scale-[1.03] active:scale-[0.97] shadow-xl shadow-indigo-500/50 flex items-center justify-center gap-3 cursor-pointer border-2 border-indigo-400/30 hover:border-indigo-400/50"
               style={{ 
                 pointerEvents: 'auto',
-                zIndex: 9999,
+                zIndex: 10000,
                 position: 'relative'
               }}
               type="button"
             >
-              <Play className="w-5 h-5" />
-              <span className="text-base">Try Instant Demo</span>
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+              <Play className="w-6 h-6" />
+              <span className="text-lg">Try Instant Demo</span>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
             </button>
 
             {/* Info Badge */}
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white/40 text-xs font-sans">3-minute demo • No signup required</span>
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-white/50 text-xs font-sans">3-minute demo • No signup required</span>
             </div>
           </div>
         </div>
