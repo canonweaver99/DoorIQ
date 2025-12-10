@@ -2591,15 +2591,20 @@ function TrainerPageContent() {
       >
       {/* ElevenLabs WebRTC Conversation - invisible component that manages the voice connection */}
       {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && (
-        <ElevenLabsConversation
-          agentId={selectedAgent.eleven_agent_id}
-          conversationToken={conversationToken}
-          sessionId={sessionId}
-          sessionActive={sessionActive}
-          autostart={true}
-          onAgentEndCall={handleAgentEndCallFromElevenLabs}
-          onStatusChange={setConversationStatus}
-        />
+        <div className="hidden">
+          <ElevenLabsConversation
+            agentId={selectedAgent.eleven_agent_id}
+            conversationToken={conversationToken}
+            sessionId={sessionId}
+            sessionActive={sessionActive}
+            autostart={true}
+            onAgentEndCall={handleAgentEndCallFromElevenLabs}
+            onStatusChange={(status) => {
+              console.log('📱 Mobile conversation status:', status)
+              setConversationStatus(status)
+            }}
+          />
+        </div>
       )}
       
       {/* Full Screen Session Container */}
@@ -4097,6 +4102,46 @@ function TrainerPageContent() {
                   }}
                 >
                   <div className="space-y-4 px-2 py-4">
+                    {/* Mobile Connection Status Indicator - Help debug agent issues */}
+                    {sessionActive && (
+                      <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-3 border border-slate-800/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-slate-300 font-space">Connection Status:</span>
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "w-2 h-2 rounded-full",
+                              conversationStatus === 'connected' && "bg-green-500 animate-pulse",
+                              conversationStatus === 'connecting' && "bg-yellow-500 animate-pulse",
+                              conversationStatus === 'error' && "bg-red-500",
+                              conversationStatus === 'disconnected' && "bg-slate-500"
+                            )} />
+                            <span className={cn(
+                              "text-xs font-medium font-space",
+                              conversationStatus === 'connected' && "text-green-400",
+                              conversationStatus === 'connecting' && "text-yellow-400",
+                              conversationStatus === 'error' && "text-red-400",
+                              conversationStatus === 'disconnected' && "text-slate-400"
+                            )}>
+                              {conversationStatus === 'connected' && 'Connected'}
+                              {conversationStatus === 'connecting' && 'Connecting...'}
+                              {conversationStatus === 'error' && 'Error'}
+                              {conversationStatus === 'disconnected' && 'Disconnected'}
+                            </span>
+                          </div>
+                        </div>
+                        {conversationStatus === 'error' && (
+                          <p className="text-xs text-red-400 mt-2">
+                            Check microphone permissions and try refreshing
+                          </p>
+                        )}
+                        {!conversationToken && sessionActive && (
+                          <p className="text-xs text-yellow-400 mt-2">
+                            Waiting for conversation token...
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Mobile Metrics Panel - Simplified */}
                     {sessionActive && (
                       <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
@@ -4111,6 +4156,27 @@ function TrainerPageContent() {
                             strikes={strikes}
                             strikeCauses={strikeCauses}
                             challengeModeEnabled={challengeModeEnabled}
+                          />
+                        </Suspense>
+                      </div>
+                    )}
+
+                    {/* Mobile Live Transcript - Added back to help debug agent issues */}
+                    {sessionActive && (
+                      <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
+                        <div className="mb-3 flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-white font-space">Live Transcript</h3>
+                          <span className="text-xs text-slate-400 font-space">
+                            {transcript.length} {transcript.length === 1 ? 'message' : 'messages'}
+                          </span>
+                        </div>
+                        <Suspense fallback={<div className="h-48 bg-slate-800/50 rounded" />}>
+                          <LiveTranscript 
+                            transcript={transcript} 
+                            agentName={selectedAgent?.name}
+                            agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                            userAvatarUrl={userAvatarUrl}
+                            sessionActive={sessionActive}
                           />
                         </Suspense>
                       </div>

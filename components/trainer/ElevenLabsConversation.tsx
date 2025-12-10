@@ -188,25 +188,36 @@ export default function ElevenLabsConversation({
     endCallTriggeredRef.current = false
 
     try {
-      console.log('🎤 Requesting microphone permission...')
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (typeof window !== 'undefined' && window.innerWidth < 768)
+      
+      console.log('🎤 Requesting microphone permission...', { isMobile, userAgent: navigator.userAgent?.substring(0, 50) })
       let audioStream: MediaStream | null = null
       try {
-        audioStream = await navigator.mediaDevices.getUserMedia({ 
+        // On mobile, use simpler constraints to avoid issues
+        const audioConstraints = isMobile ? {
+          audio: true // Simple constraint for mobile
+        } : {
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: true,
           }
-        })
+        }
+        
+        audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints)
         audioStreamRef.current = audioStream // Store for cleanup (SDK will use its own stream)
         console.log('✅ Microphone permission granted:', {
           tracks: audioStream.getTracks().length,
           audioTrack: audioStream.getAudioTracks()[0]?.label,
           trackEnabled: audioStream.getAudioTracks()[0]?.enabled,
+          isMobile
         })
       } catch (micError: any) {
-        console.error('❌ Microphone access denied:', micError.name, micError.message)
-        setErrorMessage('Microphone access is required for conversations')
+        console.error('❌ Microphone access denied:', micError.name, micError.message, { isMobile })
+        setErrorMessage(isMobile 
+          ? 'Microphone access denied. Please allow microphone access in your browser settings and refresh.'
+          : 'Microphone access is required for conversations')
         setStatus('error')
         dispatchStatus('error')
         return
@@ -1107,20 +1118,30 @@ export default function ElevenLabsConversation({
   useEffect(() => {
     // Only autostart if we have a sessionId (active session)
     if (autostart && sessionId) {
-      console.log('🎬 Autostart enabled with sessionId, starting in 100ms...')
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (typeof window !== 'undefined' && window.innerWidth < 768)
+      const delay = isMobile ? 500 : 100 // Longer delay on mobile to ensure everything is ready
+      
+      console.log(`🎬 Autostart enabled with sessionId, starting in ${delay}ms... (mobile: ${isMobile})`)
       const id = setTimeout(() => {
         // Double-check sessionId still exists before starting
         if (sessionId) {
+          console.log('🚀 Starting conversation...', {
+            sessionId,
+            agentId,
+            hasToken: !!currentToken,
+            isMobile
+          })
           start()
         } else {
           console.warn('⚠️ sessionId no longer exists, aborting autostart')
         }
-      }, 100)
+      }, delay)
       return () => clearTimeout(id)
     } else if (autostart && !sessionId) {
       console.warn('⚠️ Autostart enabled but no sessionId - refusing to start conversation')
     }
-  }, [autostart, start, sessionId])
+  }, [autostart, start, sessionId, agentId, currentToken])
 
   // Update token when prop changes
   useEffect(() => {
