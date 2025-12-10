@@ -230,7 +230,73 @@ function Navigation() {
 function HeroSection() {
   const isMobile = useIsMobile();
   const prefersReducedMotion = useReducedMotion();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
   const shouldAnimate = !isMobile && !prefersReducedMotion;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const fallback = fallbackRef.current;
+
+    if (video && fallback) {
+      const handleCanPlay = () => {
+        fallback.style.display = 'none';
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            console.log('Video autoplay prevented, but video is ready');
+          });
+        }
+      };
+
+      const handleError = () => {
+        fallback.style.display = 'flex';
+      };
+
+      const handleLoadedData = () => {
+        fallback.style.display = 'none';
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            console.log('Video autoplay prevented');
+          });
+        }
+      };
+
+      video.addEventListener('canplay', handleCanPlay);
+      video.addEventListener('loadeddata', handleLoadedData);
+      video.addEventListener('error', handleError);
+
+      const timeoutId = setTimeout(() => {
+        if (video.readyState >= 2) {
+          fallback.style.display = 'none';
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {
+              console.log('Video autoplay prevented');
+            });
+          }
+        }
+      }, 500);
+
+      if (video.readyState >= 2) {
+        fallback.style.display = 'none';
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            console.log('Video autoplay prevented');
+          });
+        }
+      }
+
+      return () => {
+        clearTimeout(timeoutId);
+        video.removeEventListener('canplay', handleCanPlay);
+        video.removeEventListener('loadeddata', handleLoadedData);
+        video.removeEventListener('error', handleError);
+      };
+    }
+  }, []);
 
   return (
     <div id="hero" className="relative bg-black overflow-hidden pt-16 sm:pt-20 md:pt-24 lg:pt-28 xl:pt-32 2xl:pt-36">
@@ -374,22 +440,34 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Dashboard Preview in Macbook Pro */}
-        <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
-          <MacbookPro
-            width={650}
-            height={400}
-            className="w-full"
-            style={{ maxWidth: '100%', height: 'auto' }}
+        {/* Demo Video */}
+        <div className="relative w-full h-full rounded-lg overflow-hidden border border-white/5 bg-black">
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            poster="/dashboard-preview.png"
+            preload="auto"
+            style={{ display: 'block' }}
           >
-            <Image 
-              src="/website image 1.png" 
-              alt="DoorIQ Dashboard Preview" 
-              fill 
-              className="object-cover"
-              priority
-            />
-          </MacbookPro>
+            <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
+          </video>
+          {/* Fallback if video doesn't load */}
+          <div 
+            ref={fallbackRef}
+            className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center"
+            style={{ display: 'none' }}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                <BarChart3 className="w-8 h-8 text-white/40" />
+              </div>
+              <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
+            </div>
+          </div>
         </div>
       </ContainerScroll>
       </div>

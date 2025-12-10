@@ -14,6 +14,7 @@ type ElevenLabsConversationProps = {
   sessionId?: string | null
   sessionActive?: boolean  // Track if session is still active (prevents reconnect during ending)
   onAgentEndCall?: (reason: EndCallReason) => void  // Callback when AI ends the call
+  onStatusChange?: (status: 'disconnected' | 'connecting' | 'connected' | 'error') => void  // Optional status callback
 }
 
 export default function ElevenLabsConversation({ 
@@ -22,7 +23,8 @@ export default function ElevenLabsConversation({
   autostart = true, 
   sessionId = null,
   sessionActive = true,
-  onAgentEndCall
+  onAgentEndCall,
+  onStatusChange
 }: ElevenLabsConversationProps) {
   const conversationRef = useRef<any>(null)
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
@@ -111,6 +113,8 @@ export default function ElevenLabsConversation({
   const dispatchStatus = (s: 'disconnected' | 'connecting' | 'connected' | 'error') => {
     // Dispatch the status exactly as passed (don't map disconnected to 'idle')
     safeDispatchEvent('connection:status', s)
+    // Also call the callback if provided
+    onStatusChange?.(s)
   }
 
   const start = useCallback(async () => {
@@ -128,11 +132,12 @@ export default function ElevenLabsConversation({
       return
     }
 
-    // Check if we're on the trainer page (basic check)
+    // Check if we're on an allowed page (trainer or test page)
     if (typeof window !== 'undefined') {
-      const isTrainerPage = window.location.pathname.includes('/trainer')
-      if (!isTrainerPage) {
-        console.error('❌ Not on trainer page - refusing to start conversation')
+      const pathname = window.location.pathname
+      const isAllowedPage = pathname.includes('/trainer') || pathname.includes('/eleven-labs-test')
+      if (!isAllowedPage) {
+        console.error('❌ Not on allowed page - refusing to start conversation')
         setErrorMessage('Conversation can only start on trainer page')
         setStatus('error')
         dispatchStatus('error')
