@@ -290,24 +290,41 @@ export const WebcamPIP = React.forwardRef<WebcamPIPRef, WebcamPIPProps>(({ class
   useEffect(() => {
     // Start webcam after a brief delay to ensure component is mounted
     // Video element is always rendered now, so ref should be available
+    // Use longer delay on mobile to ensure DOM is ready
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (typeof window !== 'undefined' && window.innerWidth < 768)
+    const delay = isMobile ? 500 : 100
+    
+    let retryTimer: NodeJS.Timeout | null = null
+    
     const initTimer = setTimeout(() => {
       if (videoRef.current) {
         console.log('✅ Starting webcam initialization')
         startWebcam()
       } else {
-        console.error('❌ Video element ref not available')
-        setError({
-          type: 'unknown',
-          message: 'Video element not available',
-          userMessage: 'Camera initialization failed - please refresh the page',
-          canRetry: true
-        })
-        setConnectionState(VideoConnectionState.FAILED)
+        // Retry once more after a longer delay (mobile might need more time)
+        console.warn('⚠️ Video element ref not available, retrying...')
+        retryTimer = setTimeout(() => {
+          if (videoRef.current) {
+            console.log('✅ Video element available on retry, starting webcam')
+            startWebcam()
+          } else {
+            console.error('❌ Video element ref still not available after retry')
+            setError({
+              type: 'unknown',
+              message: 'Video element not available',
+              userMessage: 'Camera initialization failed - please refresh the page',
+              canRetry: true
+            })
+            setConnectionState(VideoConnectionState.FAILED)
+          }
+        }, isMobile ? 1000 : 500)
       }
-    }, 100)
+    }, delay)
 
     return () => {
       clearTimeout(initTimer)
+      if (retryTimer) clearTimeout(retryTimer)
       stopWebcam()
       if (connectionTimeoutRef.current) {
         clearTimeout(connectionTimeoutRef.current)

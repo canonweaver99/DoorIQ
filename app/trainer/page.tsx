@@ -4029,12 +4029,13 @@ function TrainerPageContent() {
                       {renderAgentVideo()}
                     </div>
                     
-                    {/* Webcam - Right Side */}
-                    {sessionActive && !isCameraOff && !isEmbedded && (
-                      <div className="relative flex-1 bg-black overflow-hidden">
-                        <WebcamPIP ref={webcamPIPRef} className="w-full h-full" />
-                      </div>
-                    )}
+                    {/* Webcam - Right Side - Always render but conditionally show */}
+                    <div className={cn(
+                      "relative flex-1 bg-black overflow-hidden",
+                      (!sessionActive || isCameraOff || isEmbedded) && "hidden"
+                    )}>
+                      <WebcamPIP ref={webcamPIPRef} className="w-full h-full" />
+                    </div>
                   </div>
                   
                   {/* Challenge Mode Toggle - Below Videos */}
