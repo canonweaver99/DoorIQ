@@ -222,11 +222,33 @@ export default function ElevenLabsConversation({
         
         onConnect: () => {
           console.log('✅ WebRTC Connected!')
-          console.log('🔊 ElevenLabs audio should play automatically through WebRTC')
           setStatus('connected')
           wasConnectedRef.current = true // Mark that we were connected
           dispatchStatus('connected')
           setErrorMessage('')
+          
+          // CRITICAL: Ensure audio can play by resuming audio context if suspended
+          // This must happen AFTER user interaction (which getUserMedia provides)
+          if (typeof window !== 'undefined' && window.AudioContext) {
+            // Create a temporary audio context to resume any suspended contexts
+            // This unlocks browser audio after user interaction
+            try {
+              const audioContext = new AudioContext()
+              if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                  console.log('🔊 Audio context resumed - audio should now play')
+                  audioContext.close()
+                }).catch(() => {
+                  audioContext.close()
+                })
+              } else {
+                console.log('🔊 Audio context already active')
+                audioContext.close()
+              }
+            } catch (e) {
+              console.warn('⚠️ Could not check audio context:', e)
+            }
+          }
           
           // Reset reconnection state on successful connection
           reconnectAttemptsRef.current = 0
