@@ -38,6 +38,9 @@ export default function DemoFeedbackPage() {
                 body: JSON.stringify({ action: 'completed', sessionId })
               }).catch(() => {})
               
+              // Mark demo as used when results are viewed
+              markDemoAsUsed()
+              
               return
             }
           }
@@ -52,12 +55,37 @@ export default function DemoFeedbackPage() {
         if (response.ok) {
           const data = await response.json()
           setSessionData(data)
+          
+          // Mark demo as used even if grading isn't complete (they viewed results)
+          markDemoAsUsed()
         }
         setLoading(false)
       } catch (err) {
         console.error('Error fetching session:', err)
         setError('Failed to load session data')
         setLoading(false)
+      }
+    }
+
+    const markDemoAsUsed = async () => {
+      try {
+        // Mark in localStorage (for anonymous users)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('dooriq_demo_used', 'true')
+          localStorage.setItem('dooriq_demo_used_at', new Date().toISOString())
+        }
+        
+        // Mark in database (for authenticated users)
+        await fetch('/api/demo/check-usage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        }).catch(() => {
+          // Non-blocking - if API fails, localStorage is enough for anonymous users
+        })
+      } catch (error) {
+        console.error('Error marking demo as used:', error)
+        // Non-blocking - continue even if marking fails
       }
     }
 

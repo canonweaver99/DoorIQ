@@ -29,14 +29,10 @@ import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
 import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
 import { StrikeCounter } from '@/components/trainer/StrikeCounter'
-import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 import { LeverSwitch } from '@/components/ui/lever-switch'
 
 // Dynamic imports for heavy components - only load when needed
-const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
-  ssr: false,
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>
-})
+// ElevenLabs connection removed
 const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
 
 interface Agent {
@@ -120,7 +116,6 @@ function TrainerPageContent() {
   const [duration, setDuration] = useState(0)
   const [loading, setLoading] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
-  const [conversationToken, setConversationToken] = useState<string | null>(null)
   const [videoMode, setVideoMode] = useState<'opening' | 'loop' | 'closing'>('loop') // Track video state for agents with videos
   const [showDoorCloseAnimation, setShowDoorCloseAnimation] = useState(false) // Direct state trigger for door closing animation
   const doorClosingReasonRef = useRef<string>('User ended conversation') // Store reason for door closing
@@ -1123,44 +1118,9 @@ function TrainerPageContent() {
 
   // Moved to after endSession definition
 
-  // Auto-scroll transcript to bottom when new messages arrive
-  useEffect(() => {
-    if (transcriptEndRef.current) {
-      transcriptEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
-    }
-  }, [transcript])
+  // Auto-scroll is now handled by LiveTranscript component internally
+  // Removed to prevent page-level scrolling
 
-  const fetchConversationToken = async (agentId: string, isFreeDemo: boolean = false): Promise<{ conversationToken: string | null; canProceed: boolean; error?: string }> => {
-    signedUrlAbortRef.current?.abort()
-    const controller = new AbortController()
-    signedUrlAbortRef.current = controller
-
-    try {
-      const response = await fetch('/api/eleven/conversation-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId, is_free_demo: isFreeDemo }),
-        signal: controller.signal,
-      })
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Failed to get conversation token' }))
-        return { conversationToken: null, canProceed: false, error: error?.error || 'Failed to get conversation token' }
-      }
-
-      const payload = await response.json()
-      if (!payload?.conversation_token) {
-        return { conversationToken: null, canProceed: false, error: 'No token received' }
-      }
-      
-      return { conversationToken: payload.conversation_token, canProceed: true }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        return { conversationToken: null, canProceed: false, error: 'Request cancelled' }
-      }
-      return { conversationToken: null, canProceed: false, error: error?.message || 'Network error' }
-    }
-  }
 
   const startSession = async (skipCreditCheck = false) => {
     if (!selectedAgent?.eleven_agent_id) {
@@ -1217,8 +1177,6 @@ function TrainerPageContent() {
         }
       }
 
-      const tokenPromise = fetchConversationToken(selectedAgent.eleven_agent_id, isFreeDemo)
-
       // Play knock sound when starting session
       playSound('/sounds/knock.mp3', 0.95)
 
@@ -1254,18 +1212,7 @@ function TrainerPageContent() {
       
       setShowDoorOpeningVideo(false)
 
-      const result = await tokenPromise
-      
-      if (!result.canProceed) {
-        throw new Error(result.error || 'Failed to initialize connection')
-      }
-      
-      if (result.conversationToken) {
-        setConversationToken(result.conversationToken)
-      } else {
-        throw new Error('No conversation token received')
-      }
-      
+      // Create session record (Eleven Labs connection removed)
       const newId = await createSessionRecord(isFreeDemo)
       if (!newId) {
         throw new Error('Failed to create session')
@@ -1306,17 +1253,16 @@ function TrainerPageContent() {
         setDuration(prev => prev + 1)
       }, 1000)
 
-      window.dispatchEvent(new CustomEvent('trainer:start-conversation', {
-        detail: {
-          agentId: selectedAgent.eleven_agent_id,
-          conversationToken: result.conversationToken,
-        },
-      }))
+      // Eleven Labs connection removed
+      // window.dispatchEvent(new CustomEvent('trainer:start-conversation', {
+      //   detail: {
+      //     agentId: selectedAgent.eleven_agent_id,
+      //   },
+      // }))
     } catch (error: any) {
       logger.error('Error starting session', error)
       alert(`Failed to start session: ${error?.message || 'Unknown error'}`)
       setLoading(false)
-      setConversationToken(null)
       setSessionActive(false)
       setShowDoorOpeningVideo(false)
     }
@@ -1407,7 +1353,7 @@ function TrainerPageContent() {
         // Clear session state without redirecting
         setSessionActive(false)
         setSessionState('active') // Reset session state
-        setConversationToken(null)
+        // setConversationToken removed
         setTranscript([])
         setDuration(0)
         setShowDoorOpeningVideo(false) // Reset door opening video so door needs to be knocked again
@@ -1593,7 +1539,7 @@ function TrainerPageContent() {
     setSessionActive(false)
     setReconnectingStatus(null) // Clear reconnection status
     // Don't change sessionState for manual end - we're redirecting immediately
-    setConversationToken(null)
+    // setConversationToken removed
     // Don't reset videoMode if we're showing closing animation - let it finish
     if (videoMode !== 'closing' && !showDoorCloseAnimation) {
       setVideoMode('loop') // Reset video mode for next session
@@ -1903,7 +1849,7 @@ function TrainerPageContent() {
   }, [handleDoorClosingSequence])
 
   // Handler for when AI agent explicitly ends the call via end_call tool
-  const handleAgentEndCall = useCallback((reason: EndCallReason) => {
+  const handleAgentEndCall = useCallback((reason: string) => {
     console.log('🚪 ========================================')
     console.log('🚪 handleAgentEndCall TRIGGERED!')
     console.log('🚪 Reason:', reason)
@@ -1917,7 +1863,7 @@ function TrainerPageContent() {
     }
     
     // Map the reason to a human-readable string for the session record
-    const reasonMap: Record<EndCallReason, string> = {
+    const reasonMap: Record<string, string> = {
       rejection: 'Homeowner rejected - door closed',
       sale_complete: 'Sale completed successfully',
       goodbye: 'Conversation ended naturally',
@@ -3480,17 +3426,7 @@ function TrainerPageContent() {
         </nav>
       )}
 
-      {/* Hidden ElevenLabs Component */}
-      {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && (
-        <ElevenLabsConversation 
-          agentId={selectedAgent.eleven_agent_id} 
-          conversationToken={conversationToken} 
-          sessionId={sessionId}
-          sessionActive={sessionActive}
-          autostart
-          onAgentEndCall={handleAgentEndCall}
-        />
-      )}
+      {/* ElevenLabs Component Removed */}
       
       {/* Hidden WebcamRecorder for recording functionality */}
       {sessionActive && (
@@ -4248,16 +4184,7 @@ function TrainerPageContent() {
         )}
 
       {/* Hidden ElevenLabs Component */}
-        {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && (
-          <ElevenLabsConversation 
-            agentId={selectedAgent.eleven_agent_id} 
-            conversationToken={conversationToken} 
-            sessionId={sessionId}
-            sessionActive={sessionActive}
-            autostart
-            onAgentEndCall={handleAgentEndCall}
-          />
-        )}
+      {/* ElevenLabs Component Removed */}
         
         {/* Hidden WebcamRecorder for recording functionality */}
         {sessionActive && (

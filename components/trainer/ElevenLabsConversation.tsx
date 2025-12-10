@@ -128,18 +128,6 @@ export default function ElevenLabsConversation({
       return
     }
 
-    // Check if we're on the trainer page (basic check)
-    if (typeof window !== 'undefined') {
-      const isTrainerPage = window.location.pathname.includes('/trainer')
-      if (!isTrainerPage) {
-        console.error('❌ Not on trainer page - refusing to start conversation')
-        setErrorMessage('Conversation can only start on trainer page')
-        setStatus('error')
-        dispatchStatus('error')
-        return
-      }
-    }
-
     if (!agentId) {
       console.error('❌ No agent ID provided')
       setErrorMessage('No agent ID provided')
@@ -416,19 +404,27 @@ export default function ElevenLabsConversation({
             return
           }
           
-          // Check if we're still on the trainer page
+          // Check if we're on an allowed page (trainer page or landing page for demo)
           // Only check if we have a valid pathname (dev tools opening can cause temporary pathname issues)
-          if (typeof window !== 'undefined' && window.location.pathname && !window.location.pathname.includes('/trainer')) {
-            console.warn('⚠️ Received message but not on trainer page - ignoring message')
-            // Don't stop conversation immediately - might be a temporary navigation issue
-            // Only stop if we're definitely on a different page (not just pathname check failure)
+          if (typeof window !== 'undefined' && window.location.pathname) {
             const currentPath = window.location.pathname
-            if (currentPath && currentPath.length > 0 && !currentPath.includes('/trainer') && !currentPath.includes('/feedback') && !currentPath.includes('/loading')) {
-              if (conversationRef.current) {
-                console.log('🛑 Stopping conversation - no longer on trainer page')
-                conversationRef.current.endSession().catch(() => {})
+            const isAllowedPage = currentPath.includes('/trainer') || 
+                                  currentPath.includes('/landing') || 
+                                  currentPath.includes('/feedback') || 
+                                  currentPath.includes('/loading') ||
+                                  currentPath.includes('/demo')
+            
+            if (!isAllowedPage) {
+              console.warn('⚠️ Received message but not on allowed page - ignoring message')
+              // Don't stop conversation immediately - might be a temporary navigation issue
+              // Only stop if we're definitely on a different page
+              if (currentPath && currentPath.length > 0) {
+                if (conversationRef.current) {
+                  console.log('🛑 Stopping conversation - no longer on allowed page')
+                  conversationRef.current.endSession().catch(() => {})
+                }
+                return
               }
-              return
             }
           }
           

@@ -265,9 +265,44 @@ export default function RootLayout({
         {/* ElevenLabs - used for voice conversations */}
         <link rel="dns-prefetch" href="https://api.elevenlabs.io" />
         <link rel="preconnect" href="https://api.elevenlabs.io" />
+        {/* CRITICAL: Override console.error IMMEDIATELY, before Next.js devtools loads */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              (function() {
+                // Override console.error/warn BEFORE anything else loads
+                const originalError = console.error;
+                const originalWarn = console.warn;
+                
+                const shouldSuppress = function(...args) {
+                  const str = args.map(a => {
+                    if (typeof a === 'string') return a;
+                    if (a && typeof a === 'object') {
+                      try { return JSON.stringify(a); } catch { return String(a); }
+                    }
+                    return String(a);
+                  }).join(' ').toLowerCase();
+                  
+                  return (
+                    (str.includes('datachannel') && (str.includes('lossy') || str.includes('unknown') || str.includes('on lossy'))) ||
+                    str.includes('closed peer connection') ||
+                    (str.includes('createoffer') && str.includes('closed')) ||
+                    str.includes('rteengine') ||
+                    str.includes('handle data error')
+                  );
+                };
+                
+                console.error = function(...args) {
+                  if (shouldSuppress(...args)) return;
+                  originalError.apply(console, args);
+                };
+                
+                console.warn = function(...args) {
+                  if (shouldSuppress(...args)) return;
+                  originalWarn.apply(console, args);
+                };
+              })();
+              
               (function() {
                 try {
                   const storedTheme = localStorage.getItem('theme');
@@ -279,7 +314,7 @@ export default function RootLayout({
                   document.documentElement.classList.add('dark');
                 }
               })();
-            `,
+`,
           }}
         />
       </head>
@@ -294,21 +329,97 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
         {/* Enhanced error handler to prevent share-modal.js and other script errors from blocking execution */}
+        {/* CRITICAL: This must run before any other scripts to catch SDK errors */}
         <Script id="error-handler" strategy="beforeInteractive">
           {`(function(){
+            // CRITICAL: Override console.error BEFORE Next.js devtools intercepts it
+            // This must run before Next.js loads to catch LiveKit/WebRTC errors
+            const originalConsoleError = console.error;
+            const originalConsoleWarn = console.warn;
+            
+            const shouldSuppressError = function(...args) {
+              const errorStr = args.map(arg => {
+                if (typeof arg === 'string') return arg;
+                if (arg && typeof arg === 'object') {
+                  try {
+                    return JSON.stringify(arg);
+                  } catch {
+                    return String(arg);
+                  }
+                }
+                return String(arg);
+              }).join(' ').toLowerCase();
+              
+              // Check for DataChannel errors (benign WebRTC errors)
+              // Catch all variations: "Unknown DataChannel error on lossy", "DataChannel error on lossy", etc.
+              const isDataChannelError = (
+                // Any combination of datachannel + lossy
+                (errorStr.includes('datachannel') && errorStr.includes('lossy')) ||
+                // Or just "lossy" errors (common WebRTC benign error)
+                (errorStr.includes('lossy') && (
+                  errorStr.includes('error') || 
+                  errorStr.includes('unknown') ||
+                  errorStr.includes('datachannel')
+                ))
+              );
+              
+              // Check for peer connection errors
+              const isPeerConnectionError = (
+                errorStr.includes('closed peer connection') ||
+                (errorStr.includes('createoffer') && errorStr.includes('closed'))
+              );
+              
+              // Check for RTCEngine errors (from LiveKit client)
+              const isRTCEngineError = (
+                errorStr.includes('rteengine') ||
+                errorStr.includes('handle data error')
+              );
+              
+              // Suppress transient WebSocket errors
+              const isTransientWebSocketError = (
+                errorStr.includes('websocket closed') ||
+                errorStr.includes('signal disconnected') ||
+                errorStr.includes('reconnect disconnected') ||
+                errorStr.includes('abort connection attempt')
+              );
+              
+              return isDataChannelError || isPeerConnectionError || isRTCEngineError || isTransientWebSocketError;
+            };
+            
+            console.error = function(...args) {
+              if (shouldSuppressError(...args)) {
+                return; // Silently suppress
+              }
+              originalConsoleError.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+              if (shouldSuppressError(...args)) {
+                return; // Silently suppress
+              }
+              originalConsoleWarn.apply(console, args);
+            };
+            
             // Suppress known non-critical errors
             const originalError = window.onerror;
             window.onerror = function(msg, url, line, col, error) {
               if (typeof msg === 'string') {
+                const msgLower = msg.toLowerCase();
                 const isNonCritical = 
-                  msg.includes('addEventListener') ||
-                  msg.includes('null') ||
-                  msg.includes('share-modal') ||
-                  msg.includes('Cannot access') ||
-                  msg.includes('Cannot read properties') ||
-                  msg.includes('Unexpected token') ||
-                  msg.includes('SyntaxError') ||
-                  msg.includes('appendChild');
+                  msgLower.includes('addeventlistener') ||
+                  msgLower.includes('null') ||
+                  msgLower.includes('share-modal') ||
+                  msgLower.includes('cannot access') ||
+                  msgLower.includes('cannot read properties') ||
+                  msgLower.includes('unexpected token') ||
+                  msgLower.includes('syntaxerror') ||
+                  msgLower.includes('appendchild') ||
+                  // Catch all DataChannel lossy errors (benign WebRTC errors)
+                  ((msgLower.includes('datachannel') && msgLower.includes('lossy')) ||
+                   (msgLower.includes('lossy') && (msgLower.includes('error') || msgLower.includes('unknown')))) ||
+                  msgLower.includes('rteengine') ||
+                  msgLower.includes('closed peer connection') ||
+                  (msgLower.includes('createoffer') && msgLower.includes('closed'));
                 
                 if (isNonCritical) {
                   // Suppress but don't log to reduce console noise
@@ -356,21 +467,33 @@ export default function RootLayout({
             
             // Suppress unhandled promise rejections for known errors
             window.addEventListener('unhandledrejection', function(e) {
-              if (e.reason && typeof e.reason === 'object' && e.reason.message) {
-                const msg = e.reason.message;
+              if (e.reason) {
+                const msg = typeof e.reason === 'string' 
+                  ? e.reason 
+                  : (e.reason.message || e.reason.toString() || '');
+                const msgLower = msg.toLowerCase();
                 if (
-                  msg.includes('addEventListener') ||
-                  msg.includes('null') ||
-                  msg.includes('share-modal') ||
-                  msg.includes('Cannot access') ||
-                  msg.includes('Cannot read properties') ||
-                  msg.includes('Unexpected token') ||
-                  msg.includes('SyntaxError')
+                  msgLower.includes('addeventlistener') ||
+                  msgLower.includes('null') ||
+                  msgLower.includes('share-modal') ||
+                  msgLower.includes('cannot access') ||
+                  msgLower.includes('cannot read properties') ||
+                  msgLower.includes('unexpected token') ||
+                  msgLower.includes('syntaxerror') ||
+                  // Catch all DataChannel lossy errors (benign WebRTC errors)
+                  ((msgLower.includes('datachannel') && msgLower.includes('lossy')) ||
+                   (msgLower.includes('lossy') && (msgLower.includes('error') || msgLower.includes('unknown')))) ||
+                  msgLower.includes('rteengine') ||
+                  msgLower.includes('closed peer connection') ||
+                  (msgLower.includes('createoffer') && msgLower.includes('closed'))
                 ) {
                   e.preventDefault(); // Suppress
                 }
               }
             });
+            
+            // Note: console.error and console.warn are already overridden above
+            // This ensures they run before Next.js devtools intercepts them
           })();`}
         </Script>
         <ThemeProvider>

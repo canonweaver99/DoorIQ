@@ -484,10 +484,38 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
     }
     
-    // Check authentication - require signed-in user
+    // Check authentication (optional for free demo sessions)
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
+    const serviceSupabase = await createServiceSupabaseClient()
+    
+    // First, fetch the session to check if it's a free demo
+    const { data: sessionData, error: sessionError } = await (serviceSupabase as any)
+      .from('live_sessions')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (sessionError || !sessionData) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    }
+    
+    // Allow anonymous access for free demo sessions
+    const isFreeDemo = sessionData.is_free_demo === true
+    const isAnonymousSession = sessionData.user_id === null
+    
+    if (isFreeDemo && isAnonymousSession) {
+      // Allow anonymous access to free demo sessions
+      console.log('✅ Allowing anonymous access to free demo session:', id)
+      return NextResponse.json(sessionData, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        },
+      })
+    }
+    
+    // For non-demo sessions, require authentication
     if (authError || !user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -501,22 +529,12 @@ export async function GET(req: Request) {
     
     const isAdmin = userData?.role === 'admin'
     
-    const serviceSupabase = await createServiceSupabaseClient()
-    let query = (serviceSupabase as any)
-      .from('live_sessions')
-      .select('*')
-      .eq('id', id)
-    
     // If not admin, only allow access to own sessions
-    if (!isAdmin) {
-      query = query.eq('user_id', user.id)
-    }
-    
-    const { data, error } = await query.single()
-    
-    if (error || !data) {
+    if (!isAdmin && sessionData.user_id !== user.id) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
+    
+    const data = sessionData
     
     // Debug logging for voice_analysis
     console.log('🔍 GET: Session data retrieved', {

@@ -103,7 +103,8 @@ export function useSessionRecording(sessionId: string | null) {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        console.error('❌ No user found for audio upload')
+        // Demo sessions don't have authenticated users - skip upload gracefully
+        console.log('ℹ️ No user found for audio upload (demo session) - skipping upload')
         return null
       }
       

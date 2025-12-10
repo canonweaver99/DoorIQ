@@ -68,6 +68,7 @@ import {
 } from "lucide-react";
 import { DemoSessionModal } from "@/components/landing/DemoSessionModal";
 import { EmbeddedDemo } from "@/components/landing/EmbeddedDemo";
+import { LiveAgentBubble } from "@/components/landing/LiveAgentBubble";
 
 // Animated Counter Component
 function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffix?: string; prefix?: string }) {
@@ -348,7 +349,7 @@ function HeroSection() {
             >
               <button
                 onClick={() => setShowDemoModal(true)}
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-600 hover:to-purple-600 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-r from-indigo-950 via-purple-950 to-pink-950 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-900 hover:via-purple-900 hover:to-pink-900 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Play className="w-4 h-4 sm:w-5 sm:h-5" />
                 Try Instant Demo
@@ -464,7 +465,7 @@ function HeroSection() {
             >
               <button
                 onClick={() => setShowDemoModal(true)}
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-600 hover:to-purple-600 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-r from-indigo-950 via-purple-950 to-pink-950 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-900 hover:via-purple-900 hover:to-pink-900 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Play className="w-4 h-4 sm:w-5 sm:h-5" />
                 Try Instant Demo

@@ -152,17 +152,20 @@ export const LiveTranscript = memo(function LiveTranscript({ transcript, agentNa
   // Get session start time from first transcript entry - memoized
   const sessionStartTime = useMemo(() => transcript.length > 0 ? transcript[0].timestamp : null, [transcript])
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive - only scroll within container
   useEffect(() => {
-    if (scrollContainerRef.current && transcriptEndRef.current) {
+    if (scrollContainerRef.current && transcript.length > 0) {
       const container = scrollContainerRef.current
       // Always scroll to bottom when new transcript entries are added
       // Use requestAnimationFrame to ensure DOM has updated
+      // Only scroll the container, not the whole page
       requestAnimationFrame(() => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth'
-        })
+        if (container) {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth'
+          })
+        }
       })
     }
   }, [transcript.length])
@@ -181,9 +184,10 @@ export const LiveTranscript = memo(function LiveTranscript({ transcript, agentNa
         className="flex-1 overflow-y-auto px-2.5 sm:px-3 lg:px-4 pt-2.5 sm:pt-3 lg:pt-4 pb-1 custom-scrollbar space-y-2 sm:space-y-2.5 min-h-0 will-change-scroll"
         style={{ 
           WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'none',
+          overscrollBehavior: 'contain', // Prevent scrolling from affecting parent page
           transform: 'translateZ(0)',
-          WebkitTransform: 'translateZ(0)'
+          WebkitTransform: 'translateZ(0)',
+          scrollBehavior: 'smooth'
         }}
       >
         {transcript.length === 0 ? (
