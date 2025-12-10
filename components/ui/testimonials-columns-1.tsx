@@ -20,9 +20,9 @@ export const testimonialsData: Testimonials = [
     role: "Sales Rep",
   },
   {
-    text: "This is amazing. Sometimes I forget I'm even practicing.",
+    text: "10/10, Loved No Problem Nancy",
     image: "",
-    name: "Xander Bushman",
+    name: "Malakai Christensen",
     role: "Sales Rep",
   },
   {

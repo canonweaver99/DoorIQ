@@ -16,7 +16,7 @@ const extendedTestimonials = [
   {
     ...testimonialsData[1],
     stars: 5,
-    fullText: "This is amazing. Sometimes I forget I'm even practicing. The conversations flow so naturally."
+    fullText: "10/10, Loved No Problem Nancy"
   },
   {
     ...testimonialsData[2],

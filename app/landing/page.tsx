@@ -568,7 +568,7 @@ function HeroSection() {
               videoSrc="https://fzhtqmbaxznikmxdglyl.supabase.co/storage/v1/object/public/Demo-Assets/public/demo-video-home.mp4"
               videoRef={videoRef as React.RefObject<HTMLVideoElement | null>}
               scale={0.85}
-              className="w-full flex justify-center"
+              className="w-full flex justify-center translate-x-2 md:translate-x-0"
             />
             {/* Fallback if video doesn't load */}
             <div 
