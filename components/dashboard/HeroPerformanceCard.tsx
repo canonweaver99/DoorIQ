@@ -70,11 +70,12 @@ export default function HeroPerformanceCard({
         {/* Header with title and date/time */}
         <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-4 md:mb-6 gap-2">
           <div className="flex-1">
-            <h2 className="font-space text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Overall Performance</h2>
+            <h2 className="font-space text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Most Recent Session</h2>
             <p className="font-space text-white/60 text-xs sm:text-xs font-semibold mt-0.5">
-              Last 20 Sessions
-              {durationMinutes !== null && durationSecs !== null && (
-                <> • Avg Duration: {durationMinutes}m {durationSecs}s</>
+              {durationMinutes !== null && durationSecs !== null ? (
+                <>Duration: {durationMinutes}m {durationSecs}s</>
+              ) : (
+                'Session details'
               )}
             </p>
           </div>

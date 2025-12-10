@@ -9,6 +9,7 @@ import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog, Data
 const HeroPerformanceCard = lazy(() => import('@/components/dashboard/HeroPerformanceCard'))
 const PerformanceMetricCards = lazy(() => import('@/components/dashboard/PerformanceMetricCards'))
 const CriticalAlertsSection = lazy(() => import('@/components/dashboard/CriticalAlertsSection'))
+const EarningsBreakdownCard = lazy(() => import('@/components/dashboard/EarningsBreakdownCard'))
 const RecentSessionsPreview = lazy(() => import('@/components/dashboard/RecentSessionsPreview'))
 const RecommendedActions = lazy(() => import('@/components/dashboard/RecommendedActions'))
 const TabNavigation = lazy(() => import('@/components/dashboard/TabNavigation'))
@@ -328,6 +329,13 @@ function DashboardPageContent() {
                 <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
                   <Suspense fallback={<div className="h-48 bg-white/[0.02] rounded-lg animate-pulse" />}>
                     <PerformanceMetricCards session={dashboardData.session} />
+                  </Suspense>
+                </div>
+
+                {/* Earnings Breakdown */}
+                <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
+                  <Suspense fallback={<div className="h-96 bg-white/[0.02] rounded-lg animate-pulse" />}>
+                    <EarningsBreakdownCard />
                   </Suspense>
                 </div>
 
