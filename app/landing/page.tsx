@@ -219,13 +219,13 @@ function Navigation() {
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/auth/login"
-              className="px-5 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 text-white font-medium rounded-md text-sm sm:text-sm md:text-base tracking-tight transition-all hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              className="px-4 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 text-white font-medium rounded-md text-sm sm:text-sm md:text-base tracking-tight transition-all hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap touch-target"
             >
               Log In
             </Link>
             <Link
               href="/book-demo"
-              className="group relative px-5 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 bg-white text-black font-bold rounded-md text-sm sm:text-sm tracking-tight transition-all hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              className="group relative px-4 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 bg-white text-black font-bold rounded-md text-sm sm:text-sm tracking-tight transition-all hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap touch-target"
             >
               <span className="relative z-10 flex items-center gap-1 sm:gap-2">
                 <span className="hidden sm:inline">Book a Demo</span>
@@ -387,14 +387,14 @@ function HeroSection() {
             <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
               <AnimatedText
                 text="Unlimited AI Practice for"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                textClassName="font-space text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
                 underlineClassName="hidden"
                 duration={0.036}
                 delay={0.014}
               />
               <AnimatedText
                 text="DOOR-TO-DOOR SALES"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
+                textClassName="font-space text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full sm:whitespace-nowrap break-words sm:break-normal"
                 underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                 underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
                 underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
@@ -423,7 +423,7 @@ function HeroSection() {
             >
               <Link
                 href="/book-demo"
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                className="group px-6 sm:px-8 py-3 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] touch-target"
               >
                 Book a Demo
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -513,14 +513,14 @@ function HeroSection() {
             <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
               <AnimatedText
                 text="Unlimited AI Practice for"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                textClassName="font-space text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
                 underlineClassName="hidden"
                 duration={0.036}
                 delay={0.014}
               />
               <AnimatedText
                 text="DOOR-TO-DOOR SALES"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
+                textClassName="font-space text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full sm:whitespace-nowrap break-words sm:break-normal"
                 underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                 underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
                 underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
@@ -549,7 +549,7 @@ function HeroSection() {
             >
               <Link
                 href="/book-demo"
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                className="group px-6 sm:px-8 py-3 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] touch-target"
               >
                 Book a Demo
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -632,7 +632,7 @@ function HeroSection() {
                 />
                 <AnimatedText
                   text="DOOR-TO-DOOR SALES"
-                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
+                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full sm:whitespace-nowrap break-words sm:break-normal"
                   underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                   underlineHeight="h-[2px] sm:h-[2px]"
                   underlineOffset="-bottom-1 sm:-bottom-2"
@@ -693,14 +693,14 @@ function HeroSection() {
           }
         >
           {/* Demo Video in iPhone */}
-          <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20 px-0">
-            <div className="md:mx-auto" style={{ marginLeft: 'clamp(2.75rem, 7.5vw, 5.5rem)' }}>
+          <div className="relative w-full flex items-center justify-center overflow-hidden py-8 -mt-16 md:-mt-20 px-4 max-w-full">
+            <div className="md:mx-auto w-full max-w-[280px] sm:max-w-[320px] sm:ml-auto" style={{ marginLeft: 'clamp(1rem, 8vw, 2rem)', marginRight: 'auto' }}>
               <IPhoneMockup
                 model="14-pro"
                 color="#5a5a5a"
                 orientation="portrait"
                 scale={0.85}
-                className="mx-auto md:mx-0"
+                className="mx-auto md:mx-0 w-full h-auto"
               >
               <video
                 autoPlay
@@ -951,10 +951,10 @@ function SolutionSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Solution
           </span>
-          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4 break-words">
             How DoorIQ Works
           </h2>
-          <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4 break-words">
             Transform your sales team into a closing machine.
           </p>
         </motion.div>
@@ -986,11 +986,11 @@ function FeaturesSection() {
             Features
           </span>
           <div className="mb-4 sm:mb-6">
-            <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[1.1] px-4">
+            <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[1.1] px-4 break-words">
               Everything You Need <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">To Win</span>
             </h2>
           </div>
-          <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4 break-words">
             Everything you need to practice, improve, and dominate.
           </p>
         </motion.div>
@@ -1308,7 +1308,7 @@ function StatsSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Results
           </span>
-          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] px-4 break-words">
             Real Numbers.
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Real Results.</span>
@@ -1441,7 +1441,7 @@ function CTASection() {
           viewport={{ once: true }}
         >
           {/* Headline */}
-          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4 break-words">
             Ready to
             <br />
             Transform
@@ -1450,7 +1450,7 @@ function CTASection() {
           </h2>
 
           {/* Description */}
-          <p className="font-sans text-white/80 mt-4 sm:mt-6 text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed font-light px-4">
+          <p className="font-sans text-white/80 mt-4 sm:mt-6 text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed font-light px-4 break-words">
             Join 500+ companies training reps to dominate their markets.
           </p>
 
@@ -1458,7 +1458,7 @@ function CTASection() {
           <div className="mt-6 sm:mt-8">
             <Link
               href="/book-demo"
-              className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-white text-black font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-white text-black font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all hover:scale-[1.02] active:scale-[0.98] touch-target"
             >
               Book Your Demo Today
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -1622,7 +1622,7 @@ function LandingFooter() {
             <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4 leading-none">Get Started</h3>
             <Link
               href="/book-demo"
-              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black font-semibold rounded-md text-sm tracking-tight hover:bg-white/95 transition-all ml-auto sm:ml-0 lg:ml-0"
+              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-2.5 bg-white text-black font-semibold rounded-md text-sm tracking-tight hover:bg-white/95 transition-all ml-auto sm:ml-0 lg:ml-0 touch-target"
             >
               Book a Demo
               <ArrowRight className="w-4 h-4" />

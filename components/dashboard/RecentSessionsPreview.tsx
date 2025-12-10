@@ -44,15 +44,19 @@ export default function RecentSessionsPreview() {
 
       const { data: sessionsData, error } = await supabase
         .from('live_sessions')
-        .select('id, agent_name, overall_score, started_at, duration_seconds, analytics, opening_introduction_score, objection_handling_score, closing_score, rapport_score')
+        .select('id, agent_name, overall_score, started_at, created_at, duration_seconds, analytics, opening_introduction_score, objection_handling_score, closing_score, rapport_score')
         .eq('user_id', user.id)
         .not('overall_score', 'is', null)
-        .order('started_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(3)
 
       if (error) {
-        console.error('Error fetching sessions:', error)
+        // Don't log 400 errors as they're likely RLS/permission issues
+        if (error.code !== 'PGRST116' && error.status !== 400) {
+          console.error('Error fetching sessions:', error)
+        }
         setLoading(false)
+        setSessions([])
         return
       }
 
@@ -116,7 +120,7 @@ export default function RecentSessionsPreview() {
           agentName: session.agent_name || 'Unknown',
           score,
           grade,
-          startedAt: session.started_at,
+          startedAt: session.started_at || session.created_at,
           durationSeconds: session.duration_seconds,
           voiceScore,
           conversationScore,
