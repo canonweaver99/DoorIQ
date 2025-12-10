@@ -233,80 +233,9 @@ function Navigation() {
 function HeroSection() {
   const isMobile = useIsMobile();
   const prefersReducedMotion = useReducedMotion();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const fallbackRef = useRef<HTMLDivElement>(null);
   const shouldAnimate = !isMobile && !prefersReducedMotion;
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [demoSessionId, setDemoSessionId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    const fallback = fallbackRef.current;
-
-    if (video && fallback) {
-      const handleCanPlay = () => {
-        fallback.style.display = 'none';
-        // Ensure video plays
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            // Autoplay was prevented, but video is ready
-            console.log('Video autoplay prevented, but video is ready');
-          });
-        }
-      };
-
-      const handleError = () => {
-        fallback.style.display = 'flex';
-      };
-
-      const handleLoadedData = () => {
-        fallback.style.display = 'none';
-        // Try to play when data is loaded
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            console.log('Video autoplay prevented');
-          });
-        }
-      };
-
-      video.addEventListener('canplay', handleCanPlay);
-      video.addEventListener('loadeddata', handleLoadedData);
-      video.addEventListener('error', handleError);
-
-      // Try to play after a short delay to ensure element is ready
-      const timeoutId = setTimeout(() => {
-        if (video.readyState >= 2) {
-          fallback.style.display = 'none';
-          const playPromise = video.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(() => {
-              console.log('Video autoplay prevented');
-            });
-          }
-        }
-      }, 500);
-
-      // Check if video can play immediately
-      if (video.readyState >= 2) {
-        fallback.style.display = 'none';
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            console.log('Video autoplay prevented');
-          });
-        }
-      }
-
-      return () => {
-        clearTimeout(timeoutId);
-        video.removeEventListener('canplay', handleCanPlay);
-        video.removeEventListener('loadeddata', handleLoadedData);
-        video.removeEventListener('error', handleError);
-      };
-    }
-  }, []);
 
   return (
     <div id="hero" className="relative bg-black overflow-hidden pt-16 sm:pt-20 md:pt-24 lg:pt-28 xl:pt-32 2xl:pt-36">
@@ -473,19 +402,6 @@ function HeroSection() {
               }}
             />
           </MacbookPro>
-          {/* Fallback if video doesn't load */}
-          <div 
-            ref={fallbackRef}
-            className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center pointer-events-none"
-            style={{ display: 'none' }}
-          >
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                <BarChart3 className="w-8 h-8 text-white/40" />
-              </div>
-              <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
-            </div>
-          </div>
         </div>
       </ContainerScroll>
       </div>
@@ -600,19 +516,6 @@ function HeroSection() {
               }}
             />
           </Mac>
-          {/* Fallback if video doesn't load */}
-          <div 
-            ref={fallbackRef}
-            className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center pointer-events-none"
-            style={{ display: 'none' }}
-          >
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                <BarChart3 className="w-8 h-8 text-white/40" />
-              </div>
-              <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
-            </div>
-          </div>
         </div>
       </ContainerScroll>
       </div>
@@ -728,19 +631,6 @@ function HeroSection() {
                 }}
               />
             </IPhoneMockup>
-            {/* Fallback if video doesn't load */}
-            <div 
-              ref={fallbackRef}
-              className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black flex items-center justify-center pointer-events-none"
-              style={{ display: 'none' }}
-            >
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                  <BarChart3 className="w-8 h-8 text-white/40" />
-                </div>
-                <p className="text-white/30 font-sans text-sm">Dashboard Preview</p>
-              </div>
-            </div>
           </div>
         </ContainerScroll>
       </div>
