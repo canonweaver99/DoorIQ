@@ -33,7 +33,10 @@ export default function ElevenLabsTestPage() {
       const response = await fetch('/api/eleven/conversation-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId: AUSTIN_AGENT_ID }),
+        body: JSON.stringify({ 
+          agentId: AUSTIN_AGENT_ID,
+          is_free_demo: true // Allow test without authentication
+        }),
       })
       
       if (!response.ok) {
