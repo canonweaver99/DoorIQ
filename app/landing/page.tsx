@@ -64,11 +64,7 @@ import {
   Mail,
   Phone,
   MapPin,
-  Play,
 } from "lucide-react";
-import { DemoSessionModal } from "@/components/landing/DemoSessionModal";
-import { EmbeddedDemo } from "@/components/landing/EmbeddedDemo";
-import { LiveAgentBubble } from "@/components/landing/LiveAgentBubble";
 
 // Animated Counter Component
 function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffix?: string; prefix?: string }) {
@@ -235,8 +231,6 @@ function HeroSection() {
   const isMobile = useIsMobile();
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = !isMobile && !prefersReducedMotion;
-  const [showDemoModal, setShowDemoModal] = useState(false);
-  const [demoSessionId, setDemoSessionId] = useState<string | null>(null);
 
   return (
     <div id="hero" className="relative bg-black overflow-hidden pt-16 sm:pt-20 md:pt-24 lg:pt-28 xl:pt-32 2xl:pt-36">
@@ -340,20 +334,13 @@ function HeroSection() {
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
             </motion.p>
 
-            {/* CTA Buttons */}
+            {/* CTA Button */}
             <motion.div
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
               transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
               className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
             >
-              <button
-                onClick={() => setShowDemoModal(true)}
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-r from-indigo-950 via-purple-950 to-pink-950 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-900 hover:via-purple-900 hover:to-pink-900 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-                Try Instant Demo
-              </button>
               <Link
                 href="/book-demo"
                 className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
@@ -387,7 +374,7 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Embedded Demo in Macbook Pro */}
+        {/* Dashboard Preview in Macbook Pro */}
         <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
           <MacbookPro
             width={650}
@@ -395,13 +382,12 @@ function HeroSection() {
             className="w-full"
             style={{ maxWidth: '100%', height: 'auto' }}
           >
-            <EmbeddedDemo 
-              sessionId={demoSessionId}
-              onSessionEnd={(sessionId) => {
-                // Redirect to demo feedback
-                window.location.href = `/demo/feedback/${sessionId}`
-              }}
-              onStartDemo={() => setShowDemoModal(true)}
+            <Image 
+              src="/website image 1.png" 
+              alt="DoorIQ Dashboard Preview" 
+              fill 
+              className="object-cover"
+              priority
             />
           </MacbookPro>
         </div>
@@ -456,20 +442,13 @@ function HeroSection() {
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
             </motion.p>
 
-            {/* CTA Buttons */}
+            {/* CTA Button */}
             <motion.div
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
               transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
               className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
             >
-              <button
-                onClick={() => setShowDemoModal(true)}
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-to-r from-indigo-950 via-purple-950 to-pink-950 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-900 hover:via-purple-900 hover:to-pink-900 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-                Try Instant Demo
-              </button>
               <Link
                 href="/book-demo"
                 className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
@@ -503,7 +482,7 @@ function HeroSection() {
           </div>
         }
       >
-        {/* Embedded Demo in Mac Monitor */}
+        {/* Dashboard Preview in Mac Monitor */}
         <div className="relative w-full flex items-center justify-center overflow-visible pb-8">
           <Mac
             width={2400}
@@ -511,12 +490,12 @@ function HeroSection() {
             className="w-full"
             style={{ maxWidth: 'min(95vw, 2400px)', height: 'auto', width: 'auto' }}
           >
-            <EmbeddedDemo 
-              sessionId={demoSessionId}
-              onSessionEnd={(sessionId) => {
-                window.location.href = `/demo/feedback/${sessionId}`
-              }}
-              onStartDemo={() => setShowDemoModal(true)}
+            <Image 
+              src="/website image 1.png" 
+              alt="DoorIQ Dashboard Preview" 
+              fill 
+              className="object-cover"
+              priority
             />
           </Mac>
         </div>
@@ -571,20 +550,13 @@ function HeroSection() {
                 Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
               </motion.p>
 
-              {/* CTA Buttons */}
+              {/* CTA Button */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.54, duration: 0.54 }}
                 className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
               >
-                <button
-                  onClick={() => setShowDemoModal(true)}
-                  className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-md text-sm sm:text-base tracking-tight hover:from-indigo-600 hover:to-purple-600 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-                  Try Instant Demo
-                </button>
                 <Link
                   href="/book-demo"
                   className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
@@ -618,7 +590,7 @@ function HeroSection() {
             </div>
           }
         >
-          {/* Embedded Demo in iPhone */}
+          {/* Dashboard Preview in iPhone */}
           <div className="relative w-full flex items-center justify-center overflow-visible py-8 -mt-16 md:-mt-20">
             <IPhoneMockup
               model="14-pro"
@@ -627,27 +599,17 @@ function HeroSection() {
               scale={0.85}
               className="w-full flex justify-center translate-x-2 md:translate-x-0"
             >
-              <EmbeddedDemo 
-                sessionId={demoSessionId}
-                onSessionEnd={(sessionId) => {
-                  window.location.href = `/demo/feedback/${sessionId}`
-                }}
-                onStartDemo={() => setShowDemoModal(true)}
+              <Image 
+                src="/website image 1.png" 
+                alt="DoorIQ Dashboard Preview" 
+                fill 
+                className="object-cover"
+                priority
               />
             </IPhoneMockup>
           </div>
         </ContainerScroll>
       </div>
-
-      {/* Demo Modal */}
-      <DemoSessionModal
-        isOpen={showDemoModal}
-        onClose={() => setShowDemoModal(false)}
-        onStartDemo={(sessionId) => {
-          setDemoSessionId(sessionId)
-          setShowDemoModal(false)
-        }}
-      />
     </div>
   );
 }
