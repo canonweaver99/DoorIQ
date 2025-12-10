@@ -469,9 +469,8 @@ function HeroSection() {
               muted
               playsInline
               className="w-full h-full object-cover"
-              poster="/website image 1.png"
               preload="metadata"
-              style={{ display: 'block' }}
+              style={{ display: 'block', backgroundColor: '#000' }}
             >
               <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
             </video>
@@ -595,9 +594,8 @@ function HeroSection() {
               muted
               playsInline
               className="w-full h-full object-cover"
-              poster="/website image 1.png"
               preload="none"
-              style={{ display: 'block' }}
+              style={{ display: 'block', backgroundColor: '#000' }}
             >
               <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
             </video>
@@ -709,9 +707,8 @@ function HeroSection() {
                 muted
                 playsInline
                 className="w-full h-full object-cover"
-                poster="/website image 1.png"
                 preload="none"
-                style={{ display: 'block' }}
+                style={{ display: 'block', backgroundColor: '#000' }}
               >
                 <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
               </video>

@@ -29,13 +29,13 @@ const nextConfig: NextConfig = {
   // Note: swcMinify is enabled by default in Next.js 15, no need to specify
   // Note: optimizeCss requires critters package - removed to avoid build errors
   
+  // Server external packages (moved from experimental in Next.js 15)
+  serverExternalPackages: ['@supabase/supabase-js'],
   // Experimental features for performance
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
     // Enable partial prerendering for better performance
     ppr: false, // Can enable when stable
-    // Optimize server components
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
   },
   // Compiler optimizations
   compiler: {
