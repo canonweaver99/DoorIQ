@@ -175,10 +175,15 @@ video:fullscreen {
 
   /* Mobile Performance Optimizations */
   @media (max-width: 768px) {
-    /* Reduce animations on mobile for better performance */
+    /* Disable pulse animations on mobile - they cause janky loading */
+    .animate-pulse {
+      animation: none !important;
+    }
+
+    /* Prevent layout shifts during loading - smooth rendering */
     * {
-      animation-duration: 0.15s !important;
-      transition-duration: 0.15s !important;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
 
     /* Disable heavy animations on mobile */
@@ -189,13 +194,11 @@ video:fullscreen {
       }
     }
 
-    /* Optimize transforms for mobile - GPU acceleration */
+    /* Optimize transforms for mobile - GPU acceleration (but don't force will-change) */
     .transform-gpu,
-    [style*="transform"],
-    [class*="motion"] {
+    [style*="transform"] {
       transform: translateZ(0);
       -webkit-transform: translateZ(0);
-      will-change: transform;
     }
 
     /* Reduce blur effects on mobile */

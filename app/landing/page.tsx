@@ -43,17 +43,17 @@ const AIVoiceInput = dynamic(() => import("@/components/ui/ai-voice-input").then
 
 // Lazy load device mockup components - they're only used in hero section
 const MacbookPro = dynamic(() => import("@/components/ui/macbook-pro").then(mod => ({ default: mod.MacbookPro })), {
-  loading: () => <div className="w-full h-[400px] bg-slate-900/50 rounded-lg animate-pulse" />,
+  loading: () => <div className="w-full h-[400px] bg-slate-900/50 rounded-lg" />,
   ssr: false,
 });
 
 const IPhoneMockup = dynamic(() => import("@/components/ui/iphone-mockup").then(mod => ({ default: mod.IPhoneMockup })), {
-  loading: () => <div className="w-[200px] h-[400px] bg-slate-900/50 rounded-3xl animate-pulse mx-auto" />,
+  loading: () => <div className="w-[200px] h-[400px] bg-slate-900/50 rounded-3xl mx-auto" />,
   ssr: false,
 });
 
 const Mac = dynamic(() => import("@/components/ui/mac").then(mod => ({ default: mod.Mac })), {
-  loading: () => <div className="w-full h-[600px] bg-slate-900/50 rounded-lg animate-pulse" />,
+  loading: () => <div className="w-full h-[600px] bg-slate-900/50 rounded-lg" />,
   ssr: false,
 });
 
@@ -610,16 +610,11 @@ function HeroSection() {
           titleComponent={
             <div className="flex flex-col items-center gap-3 sm:gap-4 pb-4 sm:pb-5 pt-4 sm:pt-8 px-4 w-full">
               {/* Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.18, duration: 0.54 }}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
-              >
+              <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm">
                 <span className="text-white/80 text-xs sm:text-sm font-medium tracking-wider uppercase font-space">
                   Enterprise D2D Sales Training Platform
                 </span>
-              </motion.div>
+              </div>
 
               {/* Headline */}
               <div className="flex flex-col items-center gap-2 sm:gap-3 w-full max-w-full pb-2 px-4 sm:px-0">
@@ -643,22 +638,12 @@ function HeroSection() {
               </div>
 
               {/* Subheadline */}
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, duration: 0.54 }}
-                className="font-sans text-xl sm:text-2xl text-white/80 w-full max-w-full text-center leading-relaxed font-light px-4"
-              >
+              <p className="font-sans text-xl sm:text-2xl text-white/80 w-full max-w-full text-center leading-relaxed font-light px-4">
                 Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
-              </motion.p>
+              </p>
 
               {/* CTA Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.54, duration: 0.54 }}
-                className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
-              >
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2">
                 <Link
                   href="/book-demo"
                   className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
@@ -666,29 +651,15 @@ function HeroSection() {
                   Book a Demo
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
-              </motion.div>
+              </div>
 
               {/* See it in action label */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.65, duration: 0.6 }}
-                className="text-center mt-2 sm:mt-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
-              >
+              <div className="text-center mt-2 sm:mt-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
                 <span className="text-white/80 text-lg sm:text-xl font-medium tracking-wider uppercase font-space">
                   See it in action
                 </span>
-                <motion.div
-                  animate={{ y: [0, 8, 0] }}
-                  transition={{ 
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
-                </motion.div>
-              </motion.div>
+                <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 text-white/80" />
+              </div>
             </div>
           }
         >
