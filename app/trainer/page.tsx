@@ -32,7 +32,11 @@ import { StrikeCounter } from '@/components/trainer/StrikeCounter'
 import { LeverSwitch } from '@/components/ui/lever-switch'
 
 // Dynamic imports for heavy components - only load when needed
-const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { ssr: false })
+// CRITICAL: Load immediately on mobile to ensure connection works
+const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
+  ssr: false,
+  loading: () => null // Don't show loading state, component is hidden anyway
+})
 import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
 
@@ -2590,8 +2594,9 @@ function TrainerPageContent() {
         className="min-h-screen bg-black font-sans w-full"
       >
       {/* ElevenLabs WebRTC Conversation - invisible component that manages the voice connection */}
+      {/* CRITICAL: Always render when conditions are met - don't hide on mobile */}
       {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && (
-        <div className="hidden">
+        <div className="hidden" key={`eleven-labs-${sessionId}-${conversationToken.substring(0, 10)}`}>
           <ElevenLabsConversation
             agentId={selectedAgent.eleven_agent_id}
             conversationToken={conversationToken}
@@ -2600,7 +2605,11 @@ function TrainerPageContent() {
             autostart={true}
             onAgentEndCall={handleAgentEndCallFromElevenLabs}
             onStatusChange={(status) => {
-              console.log('📱 Mobile conversation status:', status)
+              console.log('📱 Conversation status changed:', status, { 
+                isMobile: typeof window !== 'undefined' && window.innerWidth < 768,
+                sessionId,
+                hasToken: !!conversationToken 
+              })
               setConversationStatus(status)
             }}
           />

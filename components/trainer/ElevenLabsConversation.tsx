@@ -30,6 +30,21 @@ export default function ElevenLabsConversation({
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected')
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [currentToken, setCurrentToken] = useState(conversationToken)
+  
+  // Debug: Log component mount and props on mobile
+  useEffect(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+    console.log('🎯 ElevenLabsConversation component mounted/updated', {
+      isMobile,
+      windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A',
+      hasAgentId: !!agentId,
+      hasToken: !!conversationToken,
+      hasSessionId: !!sessionId,
+      sessionActive,
+      autostart,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent?.substring(0, 50) : 'N/A'
+    })
+  }, [agentId, conversationToken, sessionId, sessionActive, autostart])
   const sessionIdRef = useRef<string | null>(sessionId) // Track sessionId with ref for callbacks
   const sessionActiveRef = useRef<boolean>(sessionActive) // Track sessionActive with ref for callbacks
   
@@ -1117,27 +1132,47 @@ export default function ElevenLabsConversation({
 
   useEffect(() => {
     // Only autostart if we have a sessionId (active session)
-    if (autostart && sessionId) {
+    if (autostart && sessionId && currentToken && agentId) {
       // Use same delay for both desktop and mobile to ensure consistency
-      const delay = 200
+      // Slightly longer delay to ensure all props are fully set
+      const delay = 300
       
-      console.log(`🎬 Autostart enabled with sessionId, starting in ${delay}ms...`)
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+      console.log(`🎬 Autostart enabled with sessionId, starting in ${delay}ms...`, {
+        sessionId,
+        hasToken: !!currentToken,
+        hasAgentId: !!agentId,
+        isMobile,
+        windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A'
+      })
+      
       const id = setTimeout(() => {
-        // Double-check sessionId still exists before starting
-        if (sessionId) {
+        // Double-check all required props still exist before starting
+        if (sessionId && currentToken && agentId) {
           console.log('🚀 Starting conversation...', {
             sessionId,
             agentId,
             hasToken: !!currentToken,
+            tokenPreview: currentToken.substring(0, 30) + '...',
+            isMobile,
+            windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A'
           })
           start()
         } else {
-          console.warn('⚠️ sessionId no longer exists, aborting autostart')
+          console.warn('⚠️ Required props missing, aborting autostart', {
+            hasSessionId: !!sessionId,
+            hasToken: !!currentToken,
+            hasAgentId: !!agentId
+          })
         }
       }, delay)
       return () => clearTimeout(id)
-    } else if (autostart && !sessionId) {
-      console.warn('⚠️ Autostart enabled but no sessionId - refusing to start conversation')
+    } else if (autostart && (!sessionId || !currentToken || !agentId)) {
+      console.warn('⚠️ Autostart enabled but missing required props:', {
+        hasSessionId: !!sessionId,
+        hasToken: !!currentToken,
+        hasAgentId: !!agentId
+      })
     }
   }, [autostart, start, sessionId, agentId, currentToken])
 
