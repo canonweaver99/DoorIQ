@@ -30,6 +30,8 @@ import { VideoControls } from '@/components/trainer/VideoControls'
 import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
 import { StrikeCounter } from '@/components/trainer/StrikeCounter'
 import { LeverSwitch } from '@/components/ui/lever-switch'
+import { RotatingCardView } from '@/components/trainer/RotatingCardView'
+import { useSentimentScore } from '@/hooks/useSentimentScore'
 
 // Dynamic imports for heavy components - only load when needed
 // CRITICAL: Load immediately on mobile to ensure connection works
@@ -367,6 +369,34 @@ function TrainerPageContent() {
     ...transcriptMetrics,
     voiceMetrics: voiceMetrics
   }
+
+  // Calculate sentiment score for rotating cards
+  const sessionStartTime = transcript.length > 0 
+    ? (transcript[0].timestamp instanceof Date 
+        ? transcript[0].timestamp.getTime()
+        : typeof transcript[0].timestamp === 'string'
+          ? new Date(transcript[0].timestamp).getTime()
+          : Date.now())
+    : Date.now()
+
+  const { sentimentScore } = useSentimentScore({
+    sessionId,
+    enabled: sessionActive,
+    transcript,
+    sessionStartTime,
+    updateInterval: 2000,
+    startingSentiment: 5
+  })
+
+  // Get speech analysis data for rotating cards
+  const voiceAnalysisData = sessionActive ? getVoiceAnalysisData() : null
+  const speechAnalysis = voiceAnalysisData ? {
+    wpm: voiceAnalysisData.avgWPM,
+    totalFillerWords: voiceAnalysisData.totalFillerWords,
+    fillerWordsPerMin: voiceAnalysisData.fillerWordsPerMinute,
+    pitchVariation: voiceAnalysisData.pitchVariation,
+    avgVolume: voiceAnalysisData.avgVolume
+  } : null
 
   // Track filler words for challenge mode - increment strike for each filler word
   useEffect(() => {
@@ -3349,8 +3379,8 @@ function TrainerPageContent() {
             {/* Webcam - Full height of quadrant */}
             <div className="relative bg-slate-900 rounded-lg sm:rounded-xl lg:rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 h-[35vh] sm:h-[40vh] lg:h-full flex-shrink-0">
               {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
-              {sessionActive && !challengeModeEnabled && (
-                <div className="absolute top-1.5 left-1.5 z-30">
+              {sessionActive && (
+                <div className="absolute top-1.5 left-1.5 z-30 flex flex-col gap-2">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -3394,6 +3424,18 @@ function TrainerPageContent() {
                       className="scale-75"
                     />
                   </motion.div>
+                  {/* Strike Counter - Show when challenge mode is enabled */}
+                  {challengeModeEnabled && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="scale-75 origin-top-left"
+                    >
+                      <StrikeCounter strikes={strikes} maxStrikes={3} />
+                    </motion.div>
+                  )}
                 </div>
               )}
               
@@ -3769,7 +3811,7 @@ function TrainerPageContent() {
                     
                     {/* Challenge Mode Toggle */}
                     {sessionActive && (
-                      <div className="absolute top-3 left-3 z-30">
+                      <div className="absolute top-3 left-3 z-30 flex flex-col gap-2">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -3812,6 +3854,17 @@ function TrainerPageContent() {
                             className="scale-75"
                           />
                         </motion.div>
+                        {/* Strike Counter - Show when challenge mode is enabled */}
+                        {challengeModeEnabled && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <StrikeCounter strikes={strikes} maxStrikes={3} />
+                          </motion.div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -3903,18 +3956,34 @@ function TrainerPageContent() {
                 <div className="grid grid-cols-2 h-[35vh]">
                   {/* Left - Transcript */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm border-r border-slate-800/50">
-                    <LiveTranscript 
-                      transcript={transcript} 
-                      agentName={selectedAgent?.name}
-                      agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                      userAvatarUrl={userAvatarUrl}
-                      sessionActive={sessionActive}
-                    />
+                    <RotatingCardView
+                      sentimentScore={sentimentScore}
+                      talkTimeRatio={metrics.talkTimeRatio || 0}
+                      speechAnalysis={speechAnalysis}
+                      objectionCount={metrics.objectionCount || 0}
+                      techniquesUsed={metrics.techniquesUsed || []}
+                    >
+                      <LiveTranscript 
+                        transcript={transcript} 
+                        agentName={selectedAgent?.name}
+                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                        userAvatarUrl={userAvatarUrl}
+                        sessionActive={sessionActive}
+                      />
+                    </RotatingCardView>
                   </div>
 
                   {/* Right - Feedback Feed */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm">
-                    <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                    <RotatingCardView
+                      sentimentScore={sentimentScore}
+                      talkTimeRatio={metrics.talkTimeRatio || 0}
+                      speechAnalysis={speechAnalysis}
+                      objectionCount={metrics.objectionCount || 0}
+                      techniquesUsed={metrics.techniquesUsed || []}
+                    >
+                      <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                    </RotatingCardView>
                   </div>
                 </div>
               </div>
@@ -4153,7 +4222,7 @@ function TrainerPageContent() {
                     
                     {/* Challenge Mode Toggle */}
                     {sessionActive && (
-                      <div className="absolute top-2 left-2 z-30">
+                      <div className="absolute top-2 left-2 z-30 flex flex-col gap-2">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -4196,6 +4265,18 @@ function TrainerPageContent() {
                             className="scale-75"
                           />
                         </motion.div>
+                        {/* Strike Counter - Show when challenge mode is enabled */}
+                        {challengeModeEnabled && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="scale-75 origin-top-left"
+                          >
+                            <StrikeCounter strikes={strikes} maxStrikes={3} />
+                          </motion.div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -4287,18 +4368,30 @@ function TrainerPageContent() {
                   <div className="grid grid-cols-2 h-[35vh]">
                     {/* Left - Transcript */}
                     <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm border-r border-slate-800/50">
-                      <LiveTranscript 
-                        transcript={transcript} 
-                        agentName={selectedAgent?.name}
-                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                        userAvatarUrl={userAvatarUrl}
-                        sessionActive={sessionActive}
-                      />
+                      <RotatingCardView
+                        sentimentScore={sentimentScore}
+                        talkTimeRatio={metrics.talkTimeRatio || 0}
+                        speechAnalysis={speechAnalysis}
+                      >
+                        <LiveTranscript 
+                          transcript={transcript} 
+                          agentName={selectedAgent?.name}
+                          agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                          userAvatarUrl={userAvatarUrl}
+                          sessionActive={sessionActive}
+                        />
+                      </RotatingCardView>
                     </div>
 
                     {/* Right - Feedback Feed */}
                     <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm">
-                      <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                      <RotatingCardView
+                        sentimentScore={sentimentScore}
+                        talkTimeRatio={metrics.talkTimeRatio || 0}
+                        speechAnalysis={speechAnalysis}
+                      >
+                        <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                      </RotatingCardView>
                     </div>
                   </div>
                 </div>
@@ -4349,7 +4442,7 @@ function TrainerPageContent() {
                   </div>
                   
                   {/* Challenge Mode Toggle - Below Videos */}
-                  <div className="w-full px-2 py-2 bg-black/50 flex-shrink-0">
+                  <div className="w-full px-2 py-2 bg-black/50 flex-shrink-0 flex flex-col gap-2">
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -4392,6 +4485,18 @@ function TrainerPageContent() {
                         }}
                       />
                     </motion.div>
+                    {/* Strike Counter - Show when challenge mode is enabled */}
+                    {challengeModeEnabled && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="px-3"
+                      >
+                        <StrikeCounter strikes={strikes} maxStrikes={3} />
+                      </motion.div>
+                    )}
                   </div>
                 </div>
 
@@ -4452,7 +4557,7 @@ function TrainerPageContent() {
                   </div>
                   
                   {/* Challenge Mode Toggle - Below Videos */}
-                  <div className="w-full px-2 py-2 bg-black/50 flex-shrink-0">
+                  <div className="w-full px-2 py-2 bg-black/50 flex-shrink-0 flex flex-col gap-2">
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -4495,6 +4600,18 @@ function TrainerPageContent() {
                         }}
                       />
                     </motion.div>
+                    {/* Strike Counter - Show when challenge mode is enabled */}
+                    {challengeModeEnabled && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="px-3"
+                      >
+                        <StrikeCounter strikes={strikes} maxStrikes={3} />
+                      </motion.div>
+                    )}
                   </div>
                 </div>
 
