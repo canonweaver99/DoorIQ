@@ -37,7 +37,16 @@ import { useSentimentScore } from '@/hooks/useSentimentScore'
 // CRITICAL: Load immediately on mobile to ensure connection works
 const ElevenLabsConversation = dynamicImport(() => import('@/components/trainer/ElevenLabsConversation'), { 
   ssr: false,
-  loading: () => null // Don't show loading state, component is hidden anyway
+  loading: () => {
+    // Log when component is loading (especially important on mobile)
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 768
+      if (isMobile) {
+        console.log('📱 Loading ElevenLabsConversation component on mobile...')
+      }
+    }
+    return null // Don't show loading state, component is hidden anyway
+  }
 })
 import type { EndCallReason } from '@/components/trainer/ElevenLabsConversation'
 const WebcamRecorder = dynamicImport(() => import('@/components/trainer/WebcamRecorder'), { ssr: false })
@@ -397,6 +406,31 @@ function TrainerPageContent() {
     pitchVariation: voiceAnalysisData.pitchVariation,
     avgVolume: voiceAnalysisData.avgVolume
   } : null
+
+  // Debug: Log when ElevenLabsConversation should render but doesn't (mobile debugging)
+  useEffect(() => {
+    if (sessionActive) {
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+      const shouldRender = !!(conversationToken && selectedAgent?.eleven_agent_id && sessionId)
+      
+      if (!shouldRender && isMobile) {
+        console.warn('⚠️ [MOBILE] ElevenLabsConversation not rendering - missing:', {
+          hasToken: !!conversationToken,
+          hasAgentId: !!selectedAgent?.eleven_agent_id,
+          hasSessionId: !!sessionId,
+          sessionActive,
+          windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A'
+        })
+      } else if (shouldRender && isMobile) {
+        console.log('✅ [MOBILE] ElevenLabsConversation should render:', {
+          hasToken: !!conversationToken,
+          hasAgentId: !!selectedAgent?.eleven_agent_id,
+          hasSessionId: !!sessionId,
+          tokenPreview: conversationToken?.substring(0, 30) + '...'
+        })
+      }
+    }
+  }, [sessionActive, conversationToken, selectedAgent?.eleven_agent_id, sessionId])
 
   // Track filler words for challenge mode - increment strike for each filler word
   useEffect(() => {
@@ -1281,7 +1315,12 @@ function TrainerPageContent() {
           throw new Error('No conversation token received from server')
         }
         
-        console.log('✅ Got conversation token:', token.substring(0, 30) + '...')
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+        console.log('✅ Got conversation token:', token.substring(0, 30) + '...', {
+          isMobile,
+          windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A',
+          tokenLength: token.length
+        })
         setConversationToken(token)
       } catch (tokenError: any) {
         console.error('❌ Failed to get conversation token:', tokenError)
@@ -2626,30 +2665,35 @@ function TrainerPageContent() {
       {/* ElevenLabs WebRTC Conversation - invisible component that manages the voice connection */}
       {/* CRITICAL: Always render when conditions are met - don't hide on mobile */}
       {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && (
-        <div className="hidden" key={`eleven-labs-${sessionId}-${conversationToken.substring(0, 10)}`}>
-          <ElevenLabsConversation
-            agentId={selectedAgent.eleven_agent_id}
-            conversationToken={conversationToken}
-            sessionId={sessionId}
-            sessionActive={sessionActive}
-            autostart={true}
-            onAgentEndCall={handleAgentEndCallFromElevenLabs}
-            onStatusChange={(status) => {
-              console.log('📱 Conversation status changed:', status, { 
-                sessionId,
-                hasToken: !!conversationToken 
-              })
-              setConversationStatus(status)
-            }}
-          />
-        </div>
+        <Suspense fallback={null}>
+          <div className="hidden" key={`eleven-labs-${sessionId}-${conversationToken.substring(0, 10)}`}>
+            <ElevenLabsConversation
+              agentId={selectedAgent.eleven_agent_id}
+              conversationToken={conversationToken}
+              sessionId={sessionId}
+              sessionActive={sessionActive}
+              autostart={true}
+              onAgentEndCall={handleAgentEndCallFromElevenLabs}
+              onStatusChange={(status) => {
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+                console.log('📱 Conversation status changed:', status, { 
+                  sessionId,
+                  hasToken: !!conversationToken,
+                  isMobile,
+                  windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A'
+                })
+                setConversationStatus(status)
+              }}
+            />
+          </div>
+        </Suspense>
       )}
       
       {/* Full Screen Session Container */}
       <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden" style={{ width: '100vw', maxWidth: '100vw' }}>
         
-        {/* Header */}
-        <div className="flex items-center justify-between px-2 sm:px-4 lg:px-8 py-2 sm:py-3 lg:py-4 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98 w-full">
+        {/* Header - Mobile only */}
+        <div className="flex md:hidden items-center justify-between px-2 sm:px-4 py-2 sm:py-3 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98 w-full">
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="text-xs sm:text-sm font-semibold text-white font-space truncate">
               {sessionActive ? `Session - ${selectedAgent?.name || 'Training'}` : 'Training Session'}
@@ -4039,10 +4083,10 @@ function TrainerPageContent() {
           )}
         </div>
 
-      {/* Mobile Bottom Navigation - DISABLED - Using desktop layout for all screen sizes */}
+      {/* Mobile Bottom Navigation - Show on mobile, hide on laptop */}
       {sessionActive && (
         <nav 
-          className="hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800/50 h-[68px] flex items-center justify-around px-2"
+          className="flex md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800/50 h-[68px] items-center justify-around px-2"
           style={{ 
             paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
             WebkitBackdropFilter: 'blur(20px)',
@@ -4194,9 +4238,9 @@ function TrainerPageContent() {
         {/* Full Screen Session Container */}
         <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">
           
-          {/* Header - iOS Optimized */}
+          {/* Header - iOS Optimized - Mobile only */}
           <div 
-            className="flex items-center justify-between px-4 py-3 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98"
+            className="flex md:hidden items-center justify-between px-4 py-3 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98"
             style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}
           >
             <div className="flex items-center gap-2">
@@ -4848,9 +4892,9 @@ function TrainerPageContent() {
             )}
           </div>
 
-          {/* Mobile Bottom Navigation - Only show during active session */}
+          {/* Mobile Bottom Navigation - Show on mobile, hide on laptop */}
           {sessionActive && (
-            <nav className="hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 h-[64px] flex items-center justify-around px-2 safe-area-bottom" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+            <nav className="flex md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 h-[64px] items-center justify-around px-2 safe-area-bottom" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
               <Link
                 href="/dashboard"
                 className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"

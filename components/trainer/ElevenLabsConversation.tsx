@@ -242,10 +242,16 @@ export default function ElevenLabsConversation({
       dispatchStatus('connecting')
       setErrorMessage('')
 
-      console.log('🚀 Calling Conversation.startSession with WebRTC...')
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+      console.log('🚀 Calling Conversation.startSession with WebRTC...', {
+        isMobile,
+        userAgent: navigator.userAgent?.substring(0, 50),
+        windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A'
+      })
       
       // Note: ElevenLabs SDK will request its own audio stream, but we've already
       // requested permission above to ensure it's granted before starting
+      // CRITICAL: Use WebRTC for both desktop and mobile (mobile WebRTC should work in modern browsers)
       const conversation = await Conversation.startSession({
         conversationToken: currentToken,
         connectionType: 'webrtc',
