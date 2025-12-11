@@ -3352,20 +3352,36 @@ function TrainerPageContent() {
             {/* Card 3: Transcript - Scrollable (below fold) */}
             {sessionActive && (
               <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
-                <LiveTranscript 
-                  transcript={transcript} 
-                  agentName={selectedAgent?.name}
-                  agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                  userAvatarUrl={userAvatarUrl}
-                  sessionActive={sessionActive}
-                />
+                <RotatingCardView
+                  sentimentScore={sentimentScore}
+                  talkTimeRatio={metrics.talkTimeRatio || 0}
+                  speechAnalysis={speechAnalysis}
+                  objectionCount={metrics.objectionCount || 0}
+                  techniquesUsed={metrics.techniquesUsed || []}
+                >
+                  <LiveTranscript 
+                    transcript={transcript} 
+                    agentName={selectedAgent?.name}
+                    agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                    userAvatarUrl={userAvatarUrl}
+                    sessionActive={sessionActive}
+                  />
+                </RotatingCardView>
               </div>
             )}
 
             {/* Card 4: Feedback Feed - Scrollable (below fold) */}
             {sessionActive && (
               <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
-                <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                <RotatingCardView
+                  sentimentScore={sentimentScore}
+                  talkTimeRatio={metrics.talkTimeRatio || 0}
+                  speechAnalysis={speechAnalysis}
+                  objectionCount={metrics.objectionCount || 0}
+                  techniquesUsed={metrics.techniquesUsed || []}
+                >
+                  <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                </RotatingCardView>
               </div>
             )}
           </div>
@@ -3783,18 +3799,34 @@ function TrainerPageContent() {
 
           {/* BOTTOM LEFT QUADRANT - Transcript - NOW USED FOR ALL SCREEN SIZES */}
           <div className="flex w-full h-full flex-col overflow-hidden">
-            <LiveTranscript 
-              transcript={transcript} 
-              agentName={selectedAgent?.name}
-              agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-              userAvatarUrl={userAvatarUrl}
-              sessionActive={sessionActive}
-            />
+            <RotatingCardView
+              sentimentScore={sentimentScore}
+              talkTimeRatio={metrics.talkTimeRatio || 0}
+              speechAnalysis={speechAnalysis}
+              objectionCount={metrics.objectionCount || 0}
+              techniquesUsed={metrics.techniquesUsed || []}
+            >
+              <LiveTranscript 
+                transcript={transcript} 
+                agentName={selectedAgent?.name}
+                agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                userAvatarUrl={userAvatarUrl}
+                sessionActive={sessionActive}
+              />
+            </RotatingCardView>
           </div>
 
           {/* BOTTOM RIGHT QUADRANT - Feedback Feed - NOW USED FOR ALL SCREEN SIZES */}
           <div className="w-full h-full flex flex-col overflow-hidden">
-            <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+            <RotatingCardView
+              sentimentScore={sentimentScore}
+              talkTimeRatio={metrics.talkTimeRatio || 0}
+              speechAnalysis={speechAnalysis}
+              objectionCount={metrics.objectionCount || 0}
+              techniquesUsed={metrics.techniquesUsed || []}
+            >
+              <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+            </RotatingCardView>
           </div>
         </div>
         )}
@@ -3886,18 +3918,34 @@ function TrainerPageContent() {
 
                   {/* BOTTOM LEFT - Transcript */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
-                    <LiveTranscript 
-                      transcript={transcript} 
-                      agentName={selectedAgent?.name}
-                      agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                      userAvatarUrl={userAvatarUrl}
-                      sessionActive={sessionActive}
-                    />
+                    <RotatingCardView
+                      sentimentScore={sentimentScore}
+                      talkTimeRatio={metrics.talkTimeRatio || 0}
+                      speechAnalysis={speechAnalysis}
+                      objectionCount={metrics.objectionCount || 0}
+                      techniquesUsed={metrics.techniquesUsed || []}
+                    >
+                      <LiveTranscript 
+                        transcript={transcript} 
+                        agentName={selectedAgent?.name}
+                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                        userAvatarUrl={userAvatarUrl}
+                        sessionActive={sessionActive}
+                      />
+                    </RotatingCardView>
                   </div>
 
                   {/* BOTTOM RIGHT - Feedback Feed */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
-                    <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                    <RotatingCardView
+                      sentimentScore={sentimentScore}
+                      talkTimeRatio={metrics.talkTimeRatio || 0}
+                      speechAnalysis={speechAnalysis}
+                      objectionCount={metrics.objectionCount || 0}
+                      techniquesUsed={metrics.techniquesUsed || []}
+                    >
+                      <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                    </RotatingCardView>
                   </div>
                 </div>
               </div>
@@ -4298,18 +4346,34 @@ function TrainerPageContent() {
 
                   {/* BOTTOM LEFT - Transcript */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
-                    <LiveTranscript 
-                      transcript={transcript} 
-                      agentName={selectedAgent?.name}
-                      agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                      userAvatarUrl={userAvatarUrl}
-                      sessionActive={sessionActive}
-                    />
+                    <RotatingCardView
+                      sentimentScore={sentimentScore}
+                      talkTimeRatio={metrics.talkTimeRatio || 0}
+                      speechAnalysis={speechAnalysis}
+                      objectionCount={metrics.objectionCount || 0}
+                      techniquesUsed={metrics.techniquesUsed || []}
+                    >
+                      <LiveTranscript 
+                        transcript={transcript} 
+                        agentName={selectedAgent?.name}
+                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                        userAvatarUrl={userAvatarUrl}
+                        sessionActive={sessionActive}
+                      />
+                    </RotatingCardView>
                   </div>
 
                   {/* BOTTOM RIGHT - Feedback Feed */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
-                    <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                    <RotatingCardView
+                      sentimentScore={sentimentScore}
+                      talkTimeRatio={metrics.talkTimeRatio || 0}
+                      speechAnalysis={speechAnalysis}
+                      objectionCount={metrics.objectionCount || 0}
+                      techniquesUsed={metrics.techniquesUsed || []}
+                    >
+                      <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+                    </RotatingCardView>
                   </div>
                 </div>
               </div>
@@ -4372,6 +4436,8 @@ function TrainerPageContent() {
                         sentimentScore={sentimentScore}
                         talkTimeRatio={metrics.talkTimeRatio || 0}
                         speechAnalysis={speechAnalysis}
+                        objectionCount={metrics.objectionCount || 0}
+                        techniquesUsed={metrics.techniquesUsed || []}
                       >
                         <LiveTranscript 
                           transcript={transcript} 
@@ -4389,6 +4455,8 @@ function TrainerPageContent() {
                         sentimentScore={sentimentScore}
                         talkTimeRatio={metrics.talkTimeRatio || 0}
                         speechAnalysis={speechAnalysis}
+                        objectionCount={metrics.objectionCount || 0}
+                        techniquesUsed={metrics.techniquesUsed || []}
                       >
                         <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                       </RotatingCardView>
