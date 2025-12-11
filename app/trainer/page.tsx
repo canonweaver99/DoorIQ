@@ -3020,20 +3020,7 @@ function TrainerPageContent() {
                 </div>
               )}
 
-              {/* Mobile Transcript - Simplified */}
-              {sessionActive && (
-                <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
-                  <Suspense fallback={<div className="h-48 bg-slate-800/50 rounded animate-pulse" />}>
-                    <LiveTranscript 
-                      transcript={transcript} 
-                      agentName={selectedAgent?.name}
-                      agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                      userAvatarUrl={userAvatarUrl}
-                      sessionActive={sessionActive}
-                    />
-                  </Suspense>
-                </div>
-              )}
+              {/* Mobile Transcript - Removed from mobile view */}
 
             </div>
           </div>
@@ -4170,26 +4157,7 @@ function TrainerPageContent() {
                       </div>
                     )}
 
-                    {/* Mobile Live Transcript - Added back to help debug agent issues */}
-                    {sessionActive && (
-                      <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
-                        <div className="mb-3 flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-white font-space">Live Transcript</h3>
-                          <span className="text-xs text-slate-400 font-space">
-                            {transcript.length} {transcript.length === 1 ? 'message' : 'messages'}
-                          </span>
-                        </div>
-                        <Suspense fallback={<div className="h-48 bg-slate-800/50 rounded" />}>
-                          <LiveTranscript 
-                            transcript={transcript} 
-                            agentName={selectedAgent?.name}
-                            agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                            userAvatarUrl={userAvatarUrl}
-                            sessionActive={sessionActive}
-                          />
-                        </Suspense>
-                      </div>
-                    )}
+                    {/* Mobile Live Transcript - Removed from mobile view */}
                   </div>
                 </div>
               </div>

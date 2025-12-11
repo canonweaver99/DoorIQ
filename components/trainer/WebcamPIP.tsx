@@ -140,14 +140,28 @@ export const WebcamPIP = React.forwardRef<WebcamPIPRef, WebcamPIPProps>(({ class
 
       setConnectionState(VideoConnectionState.CONNECTING)
 
-      // Request camera and audio
+      // CRITICAL: On mobile, only request video to avoid mic conflict with Eleven Labs
+      // Eleven Labs needs exclusive mic access for voice conversations
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (typeof window !== 'undefined' && window.innerWidth < 768)
+      
+      console.log('📹 WebcamPIP: Requesting media stream', { isMobile, requestingAudio: !isMobile })
+      
+      // Request camera (and audio only on desktop to avoid mobile conflicts)
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'user',
           width: { ideal: 640 },
           height: { ideal: 480 }
         },
-        audio: true
+        // Only request audio on desktop - Eleven Labs needs exclusive mic access on mobile
+        audio: !isMobile
+      })
+      
+      console.log('✅ WebcamPIP: Stream obtained', { 
+        hasVideo: stream.getVideoTracks().length > 0,
+        hasAudio: stream.getAudioTracks().length > 0,
+        isMobile 
       })
 
       // Clear timeout on success
@@ -389,6 +403,8 @@ export const WebcamPIP = React.forwardRef<WebcamPIPRef, WebcamPIPProps>(({ class
   }
 
   // Toggle mic on/off
+  // Note: On mobile, WebcamPIP doesn't request audio (Eleven Labs needs exclusive mic access)
+  // So this toggle only works on desktop
   const toggleMic = () => {
     if (streamRef.current) {
       const audioTracks = streamRef.current.getAudioTracks()
@@ -398,6 +414,9 @@ export const WebcamPIP = React.forwardRef<WebcamPIPRef, WebcamPIPProps>(({ class
           track.enabled = newState
         })
         setIsMicEnabled(newState)
+      } else {
+        // No audio tracks (mobile) - mic is controlled by Eleven Labs
+        console.log('📱 WebcamPIP: No audio tracks (mobile - mic controlled by Eleven Labs)')
       }
     }
   }
@@ -412,11 +431,13 @@ export const WebcamPIP = React.forwardRef<WebcamPIPRef, WebcamPIPProps>(({ class
   }
 
   // Get mic state
+  // Note: On mobile, always returns false since WebcamPIP doesn't request audio
   const isMicOn = () => {
     if (streamRef.current) {
       const audioTracks = streamRef.current.getAudioTracks()
       return audioTracks.length > 0 && audioTracks[0].enabled
     }
+    // On mobile, mic is controlled by Eleven Labs, not WebcamPIP
     return false
   }
 

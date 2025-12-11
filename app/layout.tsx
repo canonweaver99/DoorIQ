@@ -112,12 +112,6 @@ export const metadata: Metadata = {
     ],
     shortcut: '/favicon.ico',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   openGraph: {
     title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
     description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
@@ -161,6 +155,14 @@ export const metadata: Metadata = {
     'preconnect': 'https://r.wdfl.co',
   },
 };
+
+// Next.js 13+ requires viewport to be exported separately
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+}
 
 // Removed force-dynamic to allow static optimization where possible
 // Use 'force-dynamic' only on pages that truly need it
@@ -460,6 +462,7 @@ export default function RootLayout({
                   msgLower.includes('unexpected token') ||
                   msgLower.includes('syntaxerror') ||
                   msgLower.includes('appendchild') ||
+                  msgLower.includes('unexpected identifier') ||
                   // Catch all DataChannel lossy errors (benign WebRTC errors)
                   msgLower.includes('datachannel') ||
                   (msgLower.includes('lossy') && (msgLower.includes('error') || msgLower.includes('unknown'))) ||
@@ -481,7 +484,6 @@ export default function RootLayout({
             };
             
             // Safe addEventListener wrapper - CRITICAL: Must wrap before any scripts load
-            use it
             const originalAddEventListener = Element.prototype.addEventListener;
             const originalQuerySelector = Document.prototype.querySelector;
             const originalQuerySelectorAll = Document.prototype.querySelectorAll;
@@ -589,6 +591,7 @@ export default function RootLayout({
                   msgLower.includes('cannot read properties') ||
                   msgLower.includes('unexpected token') ||
                   msgLower.includes('syntaxerror') ||
+                  msgLower.includes('unexpected identifier') ||
                   // Catch all DataChannel lossy errors (benign WebRTC errors)
                   msgLower.includes('datachannel') ||
                   (msgLower.includes('lossy') && (msgLower.includes('error') || msgLower.includes('unknown'))) ||
@@ -607,6 +610,7 @@ export default function RootLayout({
                 }
               }
             }, true); // Use capture phase to catch early
+            
             
             // CRITICAL: Wrap all DOM operations in try-catch to prevent blocking
             // This ensures share-modal errors don't prevent Eleven Labs connection

@@ -152,8 +152,18 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
           isUnlimited: false, // Everyone has 75 limit
           loading: false
         })
+      } else if (response.status === 401) {
+        // 401 is expected when user is not logged in - silently handle
+        setData({
+          canStartSession: true,
+          sessionsRemaining: 75,
+          sessionsUsed: 0,
+          sessionsLimit: 75,
+          isUnlimited: false,
+          loading: false
+        })
       } else {
-        // Fallback to default
+        // Other errors - fallback to default
         setData({
           canStartSession: true,
           sessionsRemaining: 75,
@@ -163,7 +173,20 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
           loading: false
         })
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Suppress 401 errors (expected when not logged in)
+      if (error?.message?.includes('401') || error?.status === 401) {
+        setData({
+          canStartSession: true,
+          sessionsRemaining: 75,
+          sessionsUsed: 0,
+          sessionsLimit: 75,
+          isUnlimited: false,
+          loading: false
+        })
+        return
+      }
+      // Only log non-401 errors
       console.error('Error fetching session limit:', error)
       // Fallback to default
       setData({
