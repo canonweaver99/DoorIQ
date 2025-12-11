@@ -3026,8 +3026,300 @@ function TrainerPageContent() {
           </div>
         </div>
 
-        {/* Desktop Layout - 2x2 Grid (4 Quadrants) - NOW USED FOR ALL SCREEN SIZES */}
-        <div className="grid flex-1 grid-cols-2 grid-rows-2 overflow-hidden min-h-0 gap-2 p-2 sm:p-3 lg:p-8 pt-4 sm:pt-5 lg:pt-10">
+        {/* Mobile Layout - Stacked Cards (4 cards vertical, equal size, scrollable) */}
+        <div className="md:hidden flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex flex-col gap-2 p-2">
+            {/* Card 1: Agent Video - Always visible */}
+            <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 relative bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
+              {/* Agent Video Content - Same as desktop */}
+              <div className="absolute inset-0">
+                {loading ? (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
+                    <div className="text-white text-center pointer-events-none">
+                      <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-white mx-auto mb-4"></div>
+                      <p className="text-sm">Connecting...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full h-full overflow-hidden">
+                    <div className="relative w-full h-full">
+                      {(() => {
+                        const shouldUseVideo = agentHasVideos(selectedAgent?.name) && (sessionActive || videoMode === 'closing' || showDoorCloseAnimation)
+                        
+                        if (shouldUseVideo) {
+                          const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                          if (!videoPaths) return null
+                          
+                          const videoSrcRaw = (showDoorCloseAnimation || videoMode === 'closing') && videoPaths.closing
+                            ? videoPaths.closing
+                            : videoMode === 'opening' && videoPaths.opening
+                            ? videoPaths.opening
+                            : videoMode === 'loop'
+                            ? videoPaths.loop
+                            : videoPaths.closing
+                          
+                          const videoSrc = videoSrcRaw && (videoSrcRaw.includes(' ') || videoSrcRaw.includes('&'))
+                            ? videoSrcRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                            : videoSrcRaw
+                          
+                          return (
+                            <video
+                              key={`${selectedAgent?.name}-${videoMode}-${videoSrc}`}
+                              ref={agentVideoRef}
+                              src={videoSrc}
+                              className="w-full h-full object-cover"
+                              style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                              autoPlay
+                              muted
+                              loop={false}
+                              playsInline
+                              disablePictureInPicture
+                              controls={false}
+                              controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+                              onLoadedData={() => {
+                                if (agentVideoRef.current) {
+                                  agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+                                  if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                    document.exitFullscreen().catch(() => {})
+                                  }
+                                  agentVideoRef.current.play().catch((err) => {
+                                    console.warn('Video autoplay failed:', err)
+                                  })
+                                }
+                              }}
+                              onCanPlay={() => {
+                                if (agentVideoRef.current) {
+                                  agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+                                  if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                    document.exitFullscreen().catch(() => {})
+                                  }
+                                  if (showDoorCloseAnimation || videoMode === 'closing') {
+                                    agentVideoRef.current.loop = false
+                                    agentVideoRef.current.play().catch((err) => {
+                                      console.warn('Video force play failed:', err)
+                                    })
+                                  }
+                                }
+                              }}
+                              onPlay={() => {
+                                if (agentVideoRef.current) {
+                                  if (document.fullscreenElement === agentVideoRef.current || document.fullscreenElement) {
+                                    document.exitFullscreen().catch(() => {
+                                      if ((document as any).webkitExitFullscreen) {
+                                        (document as any).webkitExitFullscreen().catch(() => {})
+                                      }
+                                    })
+                                  }
+                                  agentVideoRef.current.loop = (videoMode === 'loop' && !showDoorCloseAnimation)
+                                }
+                              }}
+                              onEnded={() => {
+                                if (agentVideoRef.current && (videoMode === 'closing' || showDoorCloseAnimation)) {
+                                  agentVideoRef.current.pause()
+                                  agentVideoRef.current.loop = false
+                                  if (document.fullscreenElement) {
+                                    document.exitFullscreen().catch(() => {})
+                                  }
+                                  
+                                  if (sessionId) {
+                                    endSession(doorClosingReasonRef.current || 'User ended conversation', true)
+                                      .then(() => triggerGradingAfterDoorClose(sessionId))
+                                      .then(() => {
+                                        window.location.href = `/trainer/feedback/${sessionId}`
+                                      })
+                                      .catch((error) => {
+                                        console.error('❌ Error:', error)
+                                        window.location.href = `/trainer/feedback/${sessionId}`
+                                      })
+                                  }
+                                }
+                              }}
+                              onError={(e) => {
+                                console.error('❌ Video failed to load:', videoSrcRaw)
+                                e.stopPropagation()
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {})
+                                }
+                                
+                                if ((videoMode === 'closing' || showDoorCloseAnimation) && sessionId) {
+                                  console.log('❌ Closing video failed to load, redirecting immediately')
+                                  endSession(doorClosingReasonRef.current || 'User ended conversation', true)
+                                    .then(() => triggerGradingAfterDoorClose(sessionId))
+                                    .then(() => {
+                                      window.location.href = `/trainer/feedback/${sessionId}`
+                                    })
+                                    .catch((error) => {
+                                      console.error('❌ Error:', error)
+                                      window.location.href = `/trainer/feedback/${sessionId}`
+                                    })
+                                }
+                              }}
+                              onDoubleClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {
+                                    if ((document as any).webkitExitFullscreen) {
+                                      (document as any).webkitExitFullscreen().catch(() => {})
+                                    }
+                                  })
+                                }
+                              }}
+                              onContextMenu={(e) => {
+                                e.preventDefault()
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen().catch(() => {})
+                                }
+                              }}
+                            />
+                          )
+                        }
+                        
+                        const src = resolveAgentImage(selectedAgent, sessionActive)
+                        const imageSrc = src && (src.includes(' ') || src.includes('&'))
+                          ? src.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                          : src
+                        
+                        return imageSrc ? (
+                          <Image
+                            src={imageSrc}
+                            alt={selectedAgent?.name || 'Agent'}
+                            fill
+                            sizes="100vw"
+                            className="object-cover"
+                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                            priority
+                            unoptimized={src?.includes(' ') || src?.includes('&')}
+                            onError={(e) => {
+                              console.error('❌ Image failed to load:', src)
+                              e.stopPropagation()
+                            }}
+                            placeholder="blur"
+                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                          />
+                        ) : null
+                      })()}
+                      
+                      {/* Session progress bar */}
+                      {sessionActive && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-900/80 z-10">
+                          <div 
+                            className="h-full bg-slate-600 transition-all duration-1000"
+                            style={{ width: `${Math.min((duration / 600) * 100, 100)}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Door Opening Video Overlay */}
+                    {showDoorOpeningVideo && (() => {
+                      const videoPaths = getAgentVideoPaths(selectedAgent?.name)
+                      const videoPathRaw = videoPaths?.opening || '/DIY DAVE OPENIG DOOR.mp4'
+                      const videoPath = videoPathRaw.includes(' ') || videoPathRaw.includes('&')
+                        ? videoPathRaw.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                        : videoPathRaw
+                      
+                      return (
+                        <div className="absolute inset-0 z-50 bg-black">
+                          <video
+                            ref={doorOpeningVideoRef}
+                            src={videoPath}
+                            className="w-full h-full object-cover"
+                            style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                            autoPlay
+                            muted
+                            playsInline
+                            onError={(e) => {
+                              console.error('❌ Door opening video failed to load:', videoPathRaw)
+                              setShowDoorOpeningVideo(false)
+                            }}
+                          />
+                        </div>
+                      )
+                    })()}
+                    
+                    {/* Knock Button Overlay */}
+                    {!sessionActive && !loading && selectedAgent && !showDoorOpeningVideo && !showDoorCloseAnimation && sessionState !== 'door-closing' && videoMode !== 'closing' && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10 gap-4">
+                        <button
+                          onClick={() => startSession()}
+                          className="relative px-6 py-4 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-space font-bold text-base rounded-lg transition-all duration-300 active:scale-95 border border-slate-700/80 hover:border-slate-600 min-h-[48px] touch-manipulation z-20 overflow-hidden group shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
+                        >
+                          <span className="relative z-10 flex items-center gap-2">
+                            <span>Knock</span>
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Challenge Mode Strike Counter */}
+                    {sessionActive && challengeModeEnabled && (
+                      <div className="absolute top-2 left-2 z-30">
+                        <StrikeCounter strikes={strikes} maxStrikes={3} />
+                      </div>
+                    )}
+                    
+                    {/* Video Controls Overlay */}
+                    {sessionActive && (
+                      <VideoControls
+                        duration={duration}
+                        onMuteToggle={handleMuteToggle}
+                        onCameraToggle={handleCameraToggle}
+                        onEndSession={() => handleDoorClosingSequence('User ended session')}
+                        onRestartSession={restartSession}
+                        isMuted={isMuted}
+                        isCameraOff={isCameraOff}
+                        personaName={selectedAgent?.name}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Card 2: Metrics Panel - Always visible */}
+            {sessionActive && (
+              <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
+                <Suspense fallback={<div className="h-full bg-slate-800/50 rounded animate-pulse" />}>
+                  <LiveMetricsPanel 
+                    metrics={metrics} 
+                    getVoiceAnalysisData={getVoiceAnalysisData}
+                    transcript={transcript}
+                    sessionId={sessionId}
+                    sessionActive={sessionActive}
+                    agentName={selectedAgent?.name}
+                    strikes={strikes}
+                    strikeCauses={strikeCauses}
+                    challengeModeEnabled={challengeModeEnabled}
+                  />
+                </Suspense>
+              </div>
+            )}
+
+            {/* Card 3: Transcript - Scrollable (below fold) */}
+            {sessionActive && (
+              <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
+                <LiveTranscript 
+                  transcript={transcript} 
+                  agentName={selectedAgent?.name}
+                  agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                  userAvatarUrl={userAvatarUrl}
+                  sessionActive={sessionActive}
+                />
+              </div>
+            )}
+
+            {/* Card 4: Feedback Feed - Scrollable (below fold) */}
+            {sessionActive && (
+              <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
+                <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Layout - 2x2 Grid (4 Quadrants) */}
+        <div className="hidden md:grid flex-1 grid-cols-2 grid-rows-2 overflow-hidden min-h-0 gap-2 p-2 sm:p-3 lg:p-8 pt-4 sm:pt-5 lg:pt-10">
           {/* TOP LEFT QUADRANT - Agent Video */}
           <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Webcam - Full height of quadrant */}
