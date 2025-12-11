@@ -188,16 +188,12 @@ export default function ElevenLabsConversation({
     endCallTriggeredRef.current = false
 
     try {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-        (typeof window !== 'undefined' && window.innerWidth < 768)
-      
-      console.log('🎤 Requesting microphone permission...', { isMobile, userAgent: navigator.userAgent?.substring(0, 50) })
+      console.log('🎤 Requesting microphone permission...', { userAgent: navigator.userAgent?.substring(0, 50) })
       let audioStream: MediaStream | null = null
       try {
-        // On mobile, use simpler constraints to avoid issues
-        const audioConstraints = isMobile ? {
-          audio: true // Simple constraint for mobile
-        } : {
+        // Use same audio constraints for both desktop and mobile
+        // Try advanced constraints first, fall back to simple if not supported
+        const audioConstraints = {
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
@@ -205,19 +201,23 @@ export default function ElevenLabsConversation({
           }
         }
         
-        audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints)
+        try {
+          audioStream = await navigator.mediaDevices.getUserMedia(audioConstraints)
+        } catch (advancedError: any) {
+          // If advanced constraints fail, try simple constraints (fallback for older browsers)
+          console.warn('⚠️ Advanced audio constraints not supported, trying simple constraints:', advancedError.message)
+          audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        }
+        
         audioStreamRef.current = audioStream // Store for cleanup (SDK will use its own stream)
         console.log('✅ Microphone permission granted:', {
           tracks: audioStream.getTracks().length,
           audioTrack: audioStream.getAudioTracks()[0]?.label,
           trackEnabled: audioStream.getAudioTracks()[0]?.enabled,
-          isMobile
         })
       } catch (micError: any) {
-        console.error('❌ Microphone access denied:', micError.name, micError.message, { isMobile })
-        setErrorMessage(isMobile 
-          ? 'Microphone access denied. Please allow microphone access in your browser settings and refresh.'
-          : 'Microphone access is required for conversations')
+        console.error('❌ Microphone access denied:', micError.name, micError.message)
+        setErrorMessage('Microphone access is required for conversations. Please allow microphone access in your browser settings and refresh.')
         setStatus('error')
         dispatchStatus('error')
         return
@@ -1118,11 +1118,10 @@ export default function ElevenLabsConversation({
   useEffect(() => {
     // Only autostart if we have a sessionId (active session)
     if (autostart && sessionId) {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-        (typeof window !== 'undefined' && window.innerWidth < 768)
-      const delay = isMobile ? 500 : 100 // Longer delay on mobile to ensure everything is ready
+      // Use same delay for both desktop and mobile to ensure consistency
+      const delay = 200
       
-      console.log(`🎬 Autostart enabled with sessionId, starting in ${delay}ms... (mobile: ${isMobile})`)
+      console.log(`🎬 Autostart enabled with sessionId, starting in ${delay}ms...`)
       const id = setTimeout(() => {
         // Double-check sessionId still exists before starting
         if (sessionId) {
@@ -1130,7 +1129,6 @@ export default function ElevenLabsConversation({
             sessionId,
             agentId,
             hasToken: !!currentToken,
-            isMobile
           })
           start()
         } else {
