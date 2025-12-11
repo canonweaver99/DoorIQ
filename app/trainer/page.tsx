@@ -2391,8 +2391,8 @@ function TrainerPageContent() {
           ref={agentVideoRef}
           src={videoSrc}
           preload="auto"
-          className="w-full h-full object-cover object-[center_center]"
-          style={{ objectFit: 'cover', objectPosition: 'center center', transform: 'scale(0.75)' }}
+          className="w-full h-full object-cover"
+          style={{ objectFit: 'cover', objectPosition: 'center center' }}
           autoPlay
           muted
           loop={false}
@@ -2555,9 +2555,9 @@ function TrainerPageContent() {
         src={imageSrc}
         alt={selectedAgent?.name || 'Agent'}
         fill
-        sizes="(max-width: 768px) 100vw, 50vw"
-        className="object-cover object-[center_center]"
-        style={{ objectFit: 'cover', objectPosition: 'center center', transform: 'scale(0.75)' }}
+        sizes="100vw"
+        className="object-cover"
+        style={{ objectFit: 'cover', objectPosition: 'center center', width: '100%', height: '100%' }}
         priority
         unoptimized={src?.includes(' ') || src?.includes('&')}
         onError={(e) => {
@@ -3759,101 +3759,79 @@ function TrainerPageContent() {
 
         {/* Clean Layout - Matching Mobile Design - Shows when selectedAgent exists */}
         <div className="flex-1 overflow-hidden relative flex">
-          {sessionActive ? (
-            <div className="flex h-full w-full gap-3 p-3">
-              {/* Main Content Area - Full Width (No Metrics Sidebar) */}
-              <div className="flex-1 flex flex-col gap-3 overflow-hidden w-full">
-                {/* Top - Agent Video */}
-                <div className="relative flex-1 bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl min-h-0">
-                  {renderAgentVideo()}
-                  
-                  {/* Challenge Mode Toggle - Always visible during session */}
-                  {sessionActive && (
-                    <div className="absolute top-3 left-3 z-30">
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
-                        className={cn(
-                          "flex items-center gap-1.5 backdrop-blur-sm px-2 py-1.5 rounded-lg border shadow-lg",
-                          challengeModeEnabled 
-                            ? "bg-orange-900/80 border-orange-700/50" 
-                            : "bg-slate-900/80 border-slate-700/50"
-                        )}
-                      >
-                        <label htmlFor="challenge-mode-agent-video-clean" className={cn(
-                          "text-xs cursor-pointer font-space font-medium",
-                          challengeModeEnabled ? "text-orange-200" : "text-slate-300"
-                        )}>
-                          Challenge Mode
-                        </label>
-                        <LeverSwitch
-                          checked={challengeModeEnabled}
-                          onChange={(enabled) => {
-                            setChallengeModeEnabled(enabled)
-                            if (enabled) {
-                              setStrikes(0)
-                              fillerWordCountRef.current = 0
-                              poorHandlingCountRef.current = 0
-                              processedPoorHandlingRef.current.clear()
-                              setShowRestartWarning(false)
-                              setRestartCountdown(3)
-                              if (restartTimeoutRef.current) {
-                                clearTimeout(restartTimeoutRef.current)
-                                restartTimeoutRef.current = null
-                              }
-                              if (countdownIntervalRef.current) {
-                                clearInterval(countdownIntervalRef.current)
-                                countdownIntervalRef.current = null
-                              }
-                            }
-                          }}
-                          className="scale-75"
-                        />
-                      </motion.div>
-                    </div>
-                  )}
-                  
-                  {/* End Session and Restart Buttons - Desktop */}
-                  {sessionActive && (
-                    <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
-                      {restartSession && (
-                        <button
-                          onClick={restartSession}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all bg-slate-700/90 hover:bg-slate-600 text-white backdrop-blur-sm border border-slate-600/50 shadow-lg"
-                          aria-label="Restart session"
+            {sessionActive ? (
+              <div className="flex h-full w-full gap-3 p-3">
+                {/* 2x2 Grid Layout */}
+                <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-3 overflow-hidden w-full">
+                  {/* TOP LEFT - Agent Video (50% width) */}
+                  <div className="relative bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl">
+                    {renderAgentVideo()}
+                    
+                    {/* Challenge Mode Toggle */}
+                    {sessionActive && (
+                      <div className="absolute top-3 left-3 z-30">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.2 }}
+                          className={cn(
+                            "flex items-center gap-1.5 backdrop-blur-sm px-2 py-1.5 rounded-lg border shadow-lg",
+                            challengeModeEnabled 
+                              ? "bg-orange-900/80 border-orange-700/50" 
+                              : "bg-slate-900/80 border-slate-700/50"
+                          )}
                         >
-                          <RotateCcw className="w-4 h-4" />
-                          <span className="text-xs font-semibold hidden sm:inline">Restart</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDoorClosingSequence('User ended session')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all backdrop-blur-sm border border-red-500/50 shadow-lg"
-                        aria-label="End session"
-                      >
-                        <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span className="hidden sm:inline">End Session</span>
-                        <span className="sm:hidden">End</span>
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* PIP Webcam Overlay */}
-                  {sessionActive && (
-                    <div className={cn(
-                      "hidden md:block absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
-                      isCameraOff && "hidden"
-                    )}>
-                      {!isEmbedded && <WebcamPIP ref={webcamPIPRef} />}
-                    </div>
-                  )}
-                </div>
+                          <label htmlFor="challenge-mode-agent-video-clean" className={cn(
+                            "text-xs cursor-pointer font-space font-medium",
+                            challengeModeEnabled ? "text-orange-200" : "text-slate-300"
+                          )}>
+                            Challenge Mode
+                          </label>
+                          <LeverSwitch
+                            checked={challengeModeEnabled}
+                            onChange={(enabled) => {
+                              setChallengeModeEnabled(enabled)
+                              if (enabled) {
+                                setStrikes(0)
+                                fillerWordCountRef.current = 0
+                                poorHandlingCountRef.current = 0
+                                processedPoorHandlingRef.current.clear()
+                                setShowRestartWarning(false)
+                                setRestartCountdown(3)
+                                if (restartTimeoutRef.current) {
+                                  clearTimeout(restartTimeoutRef.current)
+                                  restartTimeoutRef.current = null
+                                }
+                                if (countdownIntervalRef.current) {
+                                  clearInterval(countdownIntervalRef.current)
+                                  countdownIntervalRef.current = null
+                                }
+                              }
+                            }}
+                            className="scale-75"
+                          />
+                        </motion.div>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Bottom - Transcript and Feedback Split */}
-                <div className="grid grid-cols-2 gap-3 h-[40%] min-h-[300px]">
-                  {/* Left - Transcript */}
+                  {/* TOP RIGHT - Webcam (50% width) */}
+                  <div className="relative bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl">
+                    {sessionActive && !isCameraOff && !isEmbedded && (
+                      <WebcamPIP ref={webcamPIPRef} className="w-full h-full" />
+                    )}
+                    {sessionActive && (isCameraOff || isEmbedded) && (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-900/50">
+                        <div className="text-center text-slate-500 text-sm">
+                          <VideoOff className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p>Camera Off</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* BOTTOM LEFT - Transcript */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
                     <LiveTranscript 
                       transcript={transcript} 
@@ -3864,25 +3842,22 @@ function TrainerPageContent() {
                     />
                   </div>
 
-                  {/* Right - Feedback Feed */}
+                  {/* BOTTOM RIGHT - Feedback Feed */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
                     <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
+            ) : (
             /* Pre-Session Layout - Clean Design - Matching Mobile Look */
-            <div className="flex h-full w-full gap-3 p-3">
+            <div className="flex h-full w-full p-0 m-0">
               {/* Main Content Area - Full Width (No Metrics Sidebar) - Matching Mobile Design */}
-              <div className="flex-1 flex flex-col gap-3 overflow-hidden w-full">
-                {/* Top - Hero Section with CTA Overlay - 50% of vertical screen */}
-                <div className="relative bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl h-[50vh] min-h-[300px] group">
-                  {/* Image Container with proper positioning to show full body */}
-                  <div className="absolute inset-0">
-                    <div className="w-full h-full [&>img]:object-[center_center] [&>img]:scale-75 [&>video]:object-[center_center] [&>video]:scale-75">
-                      {renderAgentVideo()}
-                    </div>
+              <div className="flex-1 flex flex-col overflow-hidden w-full p-0 m-0">
+                {/* Top - Hero Section with CTA Overlay - Expanded to show more of agent's face, edge-to-edge, no box styling */}
+                <div className="relative bg-black overflow-hidden h-[65vh] w-full group -mx-0">
+                  {/* Image Container - Expanded view, fills entire container edge-to-edge */}
+                  <div className="absolute inset-0 w-full h-full m-0 p-0 pre-session-hero-image">
+                    {renderAgentVideo()}
                   </div>
                   
                   {/* Gradient overlay for better text readability */}
@@ -3924,10 +3899,10 @@ function TrainerPageContent() {
                   )}
                 </div>
 
-                {/* Bottom - Transcript and Feedback Split - Balanced Size */}
-                <div className="grid grid-cols-2 gap-3 flex-1 min-h-[280px]">
+                {/* Bottom - Transcript and Feedback Split - Adjusted height to match expanded hero section */}
+                <div className="grid grid-cols-2 h-[35vh]">
                   {/* Left - Transcript */}
-                  <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
+                  <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm border-r border-slate-800/50">
                     <LiveTranscript 
                       transcript={transcript} 
                       agentName={selectedAgent?.name}
@@ -3938,7 +3913,7 @@ function TrainerPageContent() {
                   </div>
 
                   {/* Right - Feedback Feed */}
-                  <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
+                  <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm">
                     <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                   </div>
                 </div>
@@ -4056,6 +4031,11 @@ function TrainerPageContent() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(148, 163, 184, 0.5);
         }
+        /* Pre-session hero image positioning - show more of agent's face */
+        .pre-session-hero-image img,
+        .pre-session-hero-image video {
+          object-position: center 30% !important;
+        }
         * {
           transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
           transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -4162,17 +4142,17 @@ function TrainerPageContent() {
 
           {/* Main Content Area - Desktop Sidebar + Main / Mobile Stack */}
           <div className="flex-1 overflow-hidden relative flex">
-            {/* Desktop Layout - Clean Design - Matching Mobile Look */}
+            {/* Desktop Layout - 2x2 Grid Layout */}
             {sessionActive ? (
               <div className="flex h-full w-full gap-3 p-3">
-                {/* Main Content Area - Full Width (No Metrics Sidebar) */}
-                <div className="flex-1 flex flex-col gap-3 overflow-hidden w-full">
-                  {/* Top - Agent Video */}
-                  <div className="relative w-full flex-1 bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl min-h-0">
+                {/* 2x2 Grid Layout */}
+                <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-3 overflow-hidden w-full">
+                  {/* TOP LEFT - Agent Video (50% width) */}
+                  <div className="relative bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl">
                     {renderAgentVideo()}
                     
-                    {/* Challenge Mode Toggle - Top Left Corner of Agent Video */}
-                    {sessionActive && !challengeModeEnabled && (
+                    {/* Challenge Mode Toggle */}
+                    {sessionActive && (
                       <div className="absolute top-2 left-2 z-30">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
@@ -4196,7 +4176,6 @@ function TrainerPageContent() {
                             checked={challengeModeEnabled}
                             onChange={(enabled) => {
                               setChallengeModeEnabled(enabled)
-                              // Reset strikes when enabling challenge mode mid-session
                               if (enabled) {
                                 setStrikes(0)
                                 fillerWordCountRef.current = 0
@@ -4219,50 +4198,50 @@ function TrainerPageContent() {
                         </motion.div>
                       </div>
                     )}
-                    
-                    {/* PIP Webcam Overlay - TEMPORARILY HIDDEN ON MOBILE */}
-                    {sessionActive && (
-                      <div className={cn(
-                        "hidden md:block absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
-                        isCameraOff && "hidden"
-                      )}>
-                        {!isEmbedded && <WebcamPIP ref={webcamPIPRef} />}
+                  </div>
+
+                  {/* TOP RIGHT - Webcam (50% width) */}
+                  <div className="relative bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl">
+                    {sessionActive && !isCameraOff && !isEmbedded && (
+                      <WebcamPIP ref={webcamPIPRef} className="w-full h-full" />
+                    )}
+                    {sessionActive && (isCameraOff || isEmbedded) && (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-900/50">
+                        <div className="text-center text-slate-500 text-sm">
+                          <VideoOff className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p>Camera Off</p>
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Bottom - Transcript and Feedback Split */}
-                  <div className="grid grid-cols-2 gap-3 h-[40%] min-h-[300px]">
-                    {/* Left - Transcript */}
-                    <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
-                      <LiveTranscript 
-                        transcript={transcript} 
-                        agentName={selectedAgent?.name}
-                        agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
-                        userAvatarUrl={userAvatarUrl}
-                        sessionActive={sessionActive}
-                      />
-                    </div>
+                  {/* BOTTOM LEFT - Transcript */}
+                  <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
+                    <LiveTranscript 
+                      transcript={transcript} 
+                      agentName={selectedAgent?.name}
+                      agentImageUrl={selectedAgent ? resolveAgentImage(selectedAgent, sessionActive) : null}
+                      userAvatarUrl={userAvatarUrl}
+                      sessionActive={sessionActive}
+                    />
+                  </div>
 
-                    {/* Right - Feedback Feed */}
-                    <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
-                      <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
-                    </div>
+                  {/* BOTTOM RIGHT - Feedback Feed */}
+                  <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
+                    <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                   </div>
                 </div>
               </div>
             ) : (
               /* Pre-Session Layout - Clean Design - Matching Mobile Look */
-              <div className="flex h-full w-full gap-3 p-3">
+              <div className="flex h-full w-full p-0 m-0">
                 {/* Main Content Area - Full Width (No Metrics Sidebar) - Matching Mobile Design */}
-                <div className="flex-1 flex flex-col gap-3 overflow-hidden w-full">
-                  {/* Top - Hero Section with CTA Overlay - 50% of vertical screen */}
-                  <div className="relative bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl h-[50vh] min-h-[300px] group">
-                    {/* Image Container with proper positioning to show full body */}
-                    <div className="absolute inset-0">
-                      <div className="w-full h-full [&>img]:object-[center_center] [&>img]:scale-75 [&>video]:object-[center_center] [&>video]:scale-75">
-                        {renderAgentVideo()}
-                      </div>
+                <div className="flex-1 flex flex-col overflow-hidden w-full p-0 m-0">
+                  {/* Top - Hero Section with CTA Overlay - Expanded to show more of agent's face, edge-to-edge, no box styling */}
+                  <div className="relative bg-black overflow-hidden h-[65vh] w-full group -mx-0">
+                    {/* Image Container - Expanded view, fills entire container edge-to-edge */}
+                    <div className="absolute inset-0 w-full h-full m-0 p-0 pre-session-hero-image">
+                      {renderAgentVideo()}
                     </div>
                     
                     {/* Gradient overlay for better text readability */}
@@ -4304,10 +4283,10 @@ function TrainerPageContent() {
                     )}
                   </div>
 
-                  {/* Bottom - Transcript and Feedback Split - Balanced Size */}
-                  <div className="grid grid-cols-2 gap-3 flex-1 min-h-[280px]">
+                  {/* Bottom - Transcript and Feedback Split - Adjusted height to match expanded hero section */}
+                  <div className="grid grid-cols-2 h-[35vh]">
                     {/* Left - Transcript */}
-                    <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
+                    <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm border-r border-slate-800/50">
                       <LiveTranscript 
                         transcript={transcript} 
                         agentName={selectedAgent?.name}
@@ -4318,7 +4297,7 @@ function TrainerPageContent() {
                     </div>
 
                     {/* Right - Feedback Feed */}
-                    <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800/50 shadow-lg">
+                    <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm">
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </div>
                   </div>
@@ -4782,6 +4761,11 @@ function TrainerPageContent() {
           }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: rgba(148, 163, 184, 0.5);
+          }
+          /* Pre-session hero image positioning - show more of agent's face */
+          .pre-session-hero-image img,
+          .pre-session-hero-image video {
+            object-position: center 30% !important;
           }
           * {
             transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
