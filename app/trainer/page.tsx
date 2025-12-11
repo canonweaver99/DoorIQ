@@ -2949,10 +2949,10 @@ function TrainerPageContent() {
                     </div>
                   )}
                   
-                  {/* PIP Webcam Overlay - iOS Optimized Size */}
+                  {/* PIP Webcam Overlay - iOS Optimized Size - TEMPORARILY HIDDEN ON MOBILE */}
                   {sessionActive && (
                     <div className={cn(
-                      "absolute bottom-24 right-3 z-20 w-28 h-21 shadow-2xl rounded-lg overflow-hidden",
+                      "hidden md:block absolute bottom-24 right-3 z-20 w-28 h-21 shadow-2xl rounded-lg overflow-hidden",
                       isCameraOff && "hidden"
                     )}>
                       {!isEmbedded && <WebcamPIP ref={webcamPIPRef} />}
@@ -3001,9 +3001,9 @@ function TrainerPageContent() {
             }}
           >
             <div className="space-y-4 p-4">
-              {/* Mobile Metrics Panel - Simplified */}
+              {/* Mobile Metrics Panel - TEMPORARILY HIDDEN ON MOBILE */}
               {sessionActive && (
-                <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
+                <div className="hidden md:block bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
                   <Suspense fallback={<div className="h-24 bg-slate-800/50 rounded animate-pulse" />}>
                     <LiveMetricsPanel 
                       metrics={metrics} 
@@ -3730,10 +3730,10 @@ function TrainerPageContent() {
                       </div>
                     )}
                     
-                    {/* PIP Webcam Overlay */}
+                    {/* PIP Webcam Overlay - TEMPORARILY HIDDEN ON MOBILE */}
                     {sessionActive && (
                       <div className={cn(
-                        "absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
+                        "hidden md:block absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
                         isCameraOff && "hidden"
                       )}>
                         {!isEmbedded && <WebcamPIP ref={webcamPIPRef} />}
@@ -3995,8 +3995,8 @@ function TrainerPageContent() {
                   }}
                 >
                   <div className="space-y-4 px-2 py-4">
-                    {/* Mobile Metrics Panel - Simplified */}
-                    <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
+                    {/* Mobile Metrics Panel - TEMPORARILY HIDDEN ON MOBILE */}
+                    <div className="hidden md:block bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
                       <Suspense fallback={<div className="h-24 bg-slate-800/50 rounded animate-pulse" />}>
                         <LiveMetricsPanel 
                           metrics={metrics} 
@@ -4032,7 +4032,7 @@ function TrainerPageContent() {
                     
                     {/* Webcam - Right Side - Always render but conditionally show */}
                     <div className={cn(
-                      "relative flex-1 bg-black overflow-hidden",
+                      "hidden md:block relative flex-1 bg-black overflow-hidden",
                       (!sessionActive || isCameraOff || isEmbedded) && "hidden"
                     )}>
                       <WebcamPIP ref={webcamPIPRef} className="w-full h-full" />
@@ -4138,9 +4138,9 @@ function TrainerPageContent() {
                       </div>
                     )}
 
-                    {/* Mobile Metrics Panel - Simplified */}
+                    {/* Mobile Metrics Panel - TEMPORARILY HIDDEN ON MOBILE */}
                     {sessionActive && (
-                      <div className="bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
+                      <div className="hidden md:block bg-slate-900/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-800/50">
                         <Suspense fallback={<div className="h-24 bg-slate-800/50 rounded animate-pulse" />}>
                           <LiveMetricsPanel 
                             metrics={metrics} 
@@ -4164,6 +4164,7 @@ function TrainerPageContent() {
             )}
             
             {/* PIP Webcam Overlay - Bottom Right (above controls) - Desktop only */}
+            {/* Webcam - TEMPORARILY HIDDEN ON MOBILE */}
             {sessionActive && (
               <div className={cn(
                 "hidden md:block absolute bottom-20 sm:bottom-24 lg:bottom-32 right-2 sm:right-3 lg:right-6 z-20 w-24 h-18 sm:w-32 sm:h-24 lg:w-[211px] lg:h-[158px] shadow-2xl rounded-md sm:rounded-lg overflow-hidden transition-opacity duration-200",
