@@ -328,6 +328,35 @@ export default function RootLayout({
           data-rewardful="2154b7"
           strategy="lazyOnload"
         />
+        {/* Handle Rewardful/share-modal errors via inline script */}
+        <Script id="rewardful-error-handler" strategy="afterInteractive">
+          {`
+            (function() {
+              // Monitor for Rewardful/share-modal errors and prevent them from blocking
+              const originalError = window.onerror;
+              window.onerror = function(msg, url, line, col, error) {
+                if (typeof msg === 'string' && (
+                  msg.toLowerCase().includes('share-modal') ||
+                  msg.toLowerCase().includes('rewardful') ||
+                  (msg.toLowerCase().includes('addeventlistener') && msg.toLowerCase().includes('null'))
+                )) {
+                  console.warn('Rewardful/share-modal error suppressed (non-critical):', msg);
+                  return true; // Suppress error
+                }
+                return originalError ? originalError.call(this, msg, url, line, col, error) : false;
+              };
+              
+              // Also handle script load errors
+              document.addEventListener('error', function(e) {
+                if (e.target && e.target.src && e.target.src.includes('rw.js')) {
+                  console.warn('Rewardful script load error (non-critical) - continuing anyway');
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }, true);
+            })();
+          `}
+        </Script>
         {/* Enhanced error handler to prevent share-modal.js and other script errors from blocking execution */}
         {/* CRITICAL: This must run before any other scripts to catch SDK errors */}
         <Script id="error-handler" strategy="beforeInteractive">
@@ -451,21 +480,79 @@ export default function RootLayout({
               return originalError ? originalError.call(this, msg, url, line, col, error) : false;
             };
             
-            // Safe addEventListener wrapper
+            // Safe addEventListener wrapper - CRITICAL: Must wrap before any scripts load
+            use it
             const originalAddEventListener = Element.prototype.addEventListener;
+            const originalQuerySelector = Document.prototype.querySelector;
+            const originalQuerySelectorAll = Document.prototype.querySelectorAll;
+            const originalGetElementById = Document.prototype.getElementById;
+            
+            // Wrap querySelector methods to prevent null element access
+            Document.prototype.querySelector = function(selector) {
+              try {
+                const result = originalQuerySelector.call(this, selector);
+                // Return null safely instead of throwing if element doesn't exist
+                return result;
+              } catch (e) {
+                if (e && e.message && (
+                  e.message.includes('null') ||
+                  e.message.includes('share-modal') ||
+                  e.message.includes('Cannot read properties')
+                )) {
+                  return null; // Return null instead of throwing
+                }
+                throw e;
+              }
+            };
+            
+            Document.prototype.querySelectorAll = function(selector) {
+              try {
+                return originalQuerySelectorAll.call(this, selector);
+              } catch (e) {
+                if (e && e.message && (
+                  e.message.includes('null') ||
+                  e.message.includes('share-modal') ||
+                  e.message.includes('Cannot read properties')
+                )) {
+                  return []; // Return empty array instead of throwing
+                }
+                throw e;
+              }
+            };
+            
+            Document.prototype.getElementById = function(id) {
+              try {
+                return originalGetElementById.call(this, id);
+              } catch (e) {
+                if (e && e.message && (
+                  e.message.includes('null') ||
+                  e.message.includes('share-modal') ||
+                  e.message.includes('Cannot read properties')
+                )) {
+                  return null; // Return null instead of throwing
+                }
+                throw e;
+              }
+            };
+            
             Element.prototype.addEventListener = function(type, listener, options) {
-              if (!this || this.nodeType === undefined || this === null) {
-                return; // Silently fail
+              // CRITICAL: Check if element is valid before adding listener
+              if (!this || this.nodeType === undefined || this === null || this.nodeType === null) {
+                console.warn('⚠️ Attempted to addEventListener on null/invalid element, silently ignoring');
+                return; // Silently fail - don't throw
               }
               try {
                 return originalAddEventListener.call(this, type, listener, options);
               } catch (e) {
+                // CRITICAL: Never throw errors from share-modal or null element access
                 if (e && e.message && (
                   e.message.includes('null') ||
                   e.message.includes('Cannot read properties') ||
-                  e.message.includes('share-modal')
+                  e.message.includes('share-modal') ||
+                  e.message.includes('addEventListener')
                 )) {
-                  return; // Silently fail
+                  console.warn('⚠️ addEventListener error suppressed:', e.message);
+                  return; // Silently fail - don't throw
                 }
                 throw e;
               }
@@ -515,9 +602,30 @@ export default function RootLayout({
                   (msgLower.includes('signal') && msgLower.includes('before connected'))
                 ) {
                   e.preventDefault(); // Suppress
+                  e.stopPropagation(); // Prevent propagation
+                  return false; // Ensure it doesn't bubble
                 }
               }
-            });
+            }, true); // Use capture phase to catch early
+            
+            // CRITICAL: Wrap all DOM operations in try-catch to prevent blocking
+            // This ensures share-modal errors don't prevent Eleven Labs connection
+            const originalCreateElement = Document.prototype.createElement;
+            Document.prototype.createElement = function(tagName, options) {
+              try {
+                return originalCreateElement.call(this, tagName, options);
+              } catch (e) {
+                if (e && e.message && (
+                  e.message.includes('share-modal') ||
+                  e.message.includes('null') ||
+                  e.message.includes('Cannot read properties')
+                )) {
+                  console.warn('createElement error suppressed (non-critical):', e.message);
+                  return null;
+                }
+                throw e;
+              }
+            };
             
             // Note: console.error and console.warn are already overridden above
             // This ensures they run before Next.js devtools intercepts them

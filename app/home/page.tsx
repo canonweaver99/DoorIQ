@@ -63,7 +63,7 @@ function MobileQuickStatsCard({ streak, sessionsToday, avgScore }: { streak: num
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 + index * 0.1, type: 'spring', stiffness: 200 }}
-            className={`${stat.bgColor} rounded-3xl p-5 shadow-xl border border-white/12`}
+            className={`${stat.bgColor} rounded-3xl p-5 shadow-xl`}
           >
             <div className="flex items-center justify-between gap-2 flex-nowrap">
               <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
