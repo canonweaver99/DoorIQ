@@ -2391,8 +2391,8 @@ function TrainerPageContent() {
           ref={agentVideoRef}
           src={videoSrc}
           preload="auto"
-          className="w-full h-full object-cover object-[center_25%]"
-          style={{ objectFit: 'cover', objectPosition: 'center 25%' }}
+          className="w-full h-full object-cover object-[center_center]"
+          style={{ objectFit: 'cover', objectPosition: 'center center', transform: 'scale(0.75)' }}
           autoPlay
           muted
           loop={false}
@@ -2556,8 +2556,8 @@ function TrainerPageContent() {
         alt={selectedAgent?.name || 'Agent'}
         fill
         sizes="(max-width: 768px) 100vw, 50vw"
-        className="object-cover object-[center_25%]"
-        style={{ objectFit: 'cover', objectPosition: 'center 25%' }}
+        className="object-cover object-[center_center]"
+        style={{ objectFit: 'cover', objectPosition: 'center center', transform: 'scale(0.75)' }}
         priority
         unoptimized={src?.includes(' ') || src?.includes('&')}
         onError={(e) => {
@@ -2627,28 +2627,51 @@ function TrainerPageContent() {
           </div>
             {/* Mobile: Restart and End Session Buttons - iOS Optimized */}
             {sessionActive && (
-              <div className="sm:hidden flex items-center gap-3">
-                {restartSession && (
+              <>
+                <div className="sm:hidden flex items-center gap-3">
+                  {restartSession && (
+                    <button
+                      onClick={restartSession}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl transition-all bg-slate-700/90 text-white min-h-[44px] touch-manipulation active:scale-[0.96]"
+                      style={{ WebkitTapHighlightColor: 'transparent' }}
+                      aria-label="Restart session"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span className="text-sm font-semibold">Restart</span>
+                    </button>
+                  )}
                   <button
-                    onClick={restartSession}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl transition-all bg-slate-700/90 text-white min-h-[44px] touch-manipulation active:scale-[0.96]"
+                    onClick={() => handleDoorClosingSequence('User ended session')}
+                    className="flex items-center gap-1.5 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl min-h-[44px] touch-manipulation active:scale-[0.96] transition-transform"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
-                    aria-label="Restart session"
+                    aria-label="End session"
                   >
-                    <RotateCcw className="w-4 h-4" />
-                    <span className="text-sm font-semibold">Restart</span>
+                    <PhoneOff className="w-4 h-4 flex-shrink-0" />
+                    <span>End</span>
                   </button>
-                )}
-                <button
-                  onClick={() => handleDoorClosingSequence('User ended session')}
-                  className="flex items-center gap-1.5 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl min-h-[44px] touch-manipulation active:scale-[0.96] transition-transform"
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
-                  aria-label="End session"
-                >
-                  <PhoneOff className="w-4 h-4 flex-shrink-0" />
-                  <span>End</span>
-                </button>
-              </div>
+                </div>
+                {/* Desktop: Restart and End Session Buttons */}
+                <div className="hidden sm:flex items-center gap-3">
+                  {restartSession && (
+                    <button
+                      onClick={restartSession}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all bg-slate-700/90 hover:bg-slate-600 text-white"
+                      aria-label="Restart session"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span className="text-xs font-medium">Restart</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDoorClosingSequence('User ended session')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all"
+                    aria-label="End session"
+                  >
+                    <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="font-medium">End Session</span>
+                  </button>
+                </div>
+              </>
             )}
         </div>
 
@@ -3744,8 +3767,8 @@ function TrainerPageContent() {
                 <div className="relative flex-1 bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl min-h-0">
                   {renderAgentVideo()}
                   
-                  {/* Challenge Mode Toggle */}
-                  {sessionActive && !challengeModeEnabled && (
+                  {/* Challenge Mode Toggle - Always visible during session */}
+                  {sessionActive && (
                     <div className="absolute top-3 left-3 z-30">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -3792,6 +3815,31 @@ function TrainerPageContent() {
                     </div>
                   )}
                   
+                  {/* End Session and Restart Buttons - Desktop */}
+                  {sessionActive && (
+                    <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
+                      {restartSession && (
+                        <button
+                          onClick={restartSession}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all bg-slate-700/90 hover:bg-slate-600 text-white backdrop-blur-sm border border-slate-600/50 shadow-lg"
+                          aria-label="Restart session"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          <span className="text-xs font-semibold hidden sm:inline">Restart</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDoorClosingSequence('User ended session')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-all backdrop-blur-sm border border-red-500/50 shadow-lg"
+                        aria-label="End session"
+                      >
+                        <PhoneOff className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="hidden sm:inline">End Session</span>
+                        <span className="sm:hidden">End</span>
+                      </button>
+                    </div>
+                  )}
+                  
                   {/* PIP Webcam Overlay */}
                   {sessionActive && (
                     <div className={cn(
@@ -3830,9 +3878,9 @@ function TrainerPageContent() {
               <div className="flex-1 flex flex-col gap-3 overflow-hidden w-full">
                 {/* Top - Hero Section with CTA Overlay - 50% of vertical screen */}
                 <div className="relative bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl h-[50vh] min-h-[300px] group">
-                  {/* Image Container with proper positioning to show head */}
-                  <div className="absolute inset-0 -top-8 -bottom-4">
-                    <div className="w-full h-full [&>img]:object-[center_25%] [&>video]:object-[center_25%]">
+                  {/* Image Container with proper positioning to show full body */}
+                  <div className="absolute inset-0">
+                    <div className="w-full h-full [&>img]:object-[center_center] [&>img]:scale-75 [&>video]:object-[center_center] [&>video]:scale-75">
                       {renderAgentVideo()}
                     </div>
                   </div>
@@ -4210,9 +4258,9 @@ function TrainerPageContent() {
                 <div className="flex-1 flex flex-col gap-3 overflow-hidden w-full">
                   {/* Top - Hero Section with CTA Overlay - 50% of vertical screen */}
                   <div className="relative bg-black rounded-xl overflow-hidden border border-slate-800/50 shadow-xl h-[50vh] min-h-[300px] group">
-                    {/* Image Container with proper positioning to show head */}
-                    <div className="absolute inset-0 -top-8 -bottom-4">
-                      <div className="w-full h-full [&>img]:object-[center_25%] [&>video]:object-[center_25%]">
+                    {/* Image Container with proper positioning to show full body */}
+                    <div className="absolute inset-0">
+                      <div className="w-full h-full [&>img]:object-[center_center] [&>img]:scale-75 [&>video]:object-[center_center] [&>video]:scale-75">
                         {renderAgentVideo()}
                       </div>
                     </div>
