@@ -4235,6 +4235,32 @@ function TrainerPageContent() {
       </motion.div>
     ) : (
       <div className="min-h-screen bg-black font-sans">
+      {/* ElevenLabs WebRTC Conversation - invisible component that manages the voice connection */}
+      {/* CRITICAL: Always render when conditions are met - identical to desktop version */}
+      {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && (
+        <Suspense fallback={null}>
+          <div className="hidden" key={`eleven-labs-${sessionId}-${conversationToken.substring(0, 10)}`}>
+            <ElevenLabsConversation
+              agentId={selectedAgent.eleven_agent_id}
+              conversationToken={conversationToken}
+              sessionId={sessionId}
+              sessionActive={sessionActive}
+              autostart={true}
+              onAgentEndCall={handleAgentEndCallFromElevenLabs}
+              onStatusChange={(status) => {
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+                console.log('📱 Conversation status changed:', status, { 
+                  sessionId,
+                  hasToken: !!conversationToken,
+                  isMobile,
+                  windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A'
+                })
+                setConversationStatus(status)
+              }}
+            />
+          </div>
+        </Suspense>
+      )}
         {/* Full Screen Session Container */}
         <div className="relative w-full h-screen flex flex-col bg-black overflow-hidden">
           
