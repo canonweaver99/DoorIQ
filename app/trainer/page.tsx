@@ -2606,7 +2606,6 @@ function TrainerPageContent() {
             onAgentEndCall={handleAgentEndCallFromElevenLabs}
             onStatusChange={(status) => {
               console.log('📱 Conversation status changed:', status, { 
-                isMobile: typeof window !== 'undefined' && window.innerWidth < 768,
                 sessionId,
                 hasToken: !!conversationToken 
               })
@@ -2653,9 +2652,10 @@ function TrainerPageContent() {
             )}
         </div>
 
-        {/* Mobile Layout - iOS Optimized */}
+        {/* TEMPORARILY REMOVED: Mobile Layout - Using desktop layout for all screen sizes */}
+        {/* Mobile Layout - iOS Optimized - DISABLED TO USE DESKTOP LAYOUT */}
         <div 
-          className="md:hidden flex-1 flex flex-col overflow-hidden min-h-0" 
+          className="hidden flex-1 flex flex-col overflow-hidden min-h-0" 
           style={{ 
             paddingTop: 'env(safe-area-inset-top)',
             WebkitOverflowScrolling: 'touch',
@@ -3026,8 +3026,8 @@ function TrainerPageContent() {
           </div>
         </div>
 
-        {/* Desktop Layout - 2x2 Grid (4 Quadrants) */}
-        <div className="hidden md:grid flex-1 grid-cols-2 grid-rows-2 overflow-hidden min-h-0 gap-2 p-2 sm:p-3 lg:p-8 pt-4 sm:pt-5 lg:pt-10">
+        {/* Desktop Layout - 2x2 Grid (4 Quadrants) - NOW USED FOR ALL SCREEN SIZES */}
+        <div className="grid flex-1 grid-cols-2 grid-rows-2 overflow-hidden min-h-0 gap-2 p-2 sm:p-3 lg:p-8 pt-4 sm:pt-5 lg:pt-10">
           {/* TOP LEFT QUADRANT - Agent Video */}
           <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Webcam - Full height of quadrant */}
@@ -3423,8 +3423,8 @@ function TrainerPageContent() {
             </div>
           </div>
 
-          {/* BOTTOM LEFT QUADRANT - Transcript */}
-          <div className="hidden md:flex w-full h-full flex-col overflow-hidden">
+          {/* BOTTOM LEFT QUADRANT - Transcript - NOW USED FOR ALL SCREEN SIZES */}
+          <div className="flex w-full h-full flex-col overflow-hidden">
             <LiveTranscript 
               transcript={transcript} 
               agentName={selectedAgent?.name}
@@ -3434,16 +3434,16 @@ function TrainerPageContent() {
             />
           </div>
 
-          {/* BOTTOM RIGHT QUADRANT - Feedback Feed */}
+          {/* BOTTOM RIGHT QUADRANT - Feedback Feed - NOW USED FOR ALL SCREEN SIZES */}
           <div className="w-full h-full flex flex-col overflow-hidden">
             <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
           </div>
         </div>
 
-      {/* Mobile Bottom Navigation - iOS Optimized */}
+      {/* Mobile Bottom Navigation - DISABLED - Using desktop layout for all screen sizes */}
       {sessionActive && (
         <nav 
-          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800/50 h-[68px] flex items-center justify-around px-2"
+          className="hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-xl border-t border-slate-800/50 h-[68px] flex items-center justify-around px-2"
           style={{ 
             paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
             WebkitBackdropFilter: 'blur(20px)',
@@ -3655,9 +3655,9 @@ function TrainerPageContent() {
 
           {/* Main Content Area - Desktop Sidebar + Main / Mobile Stack */}
           <div className="flex-1 overflow-hidden relative flex">
-            {/* Desktop Layout - Sidebar + Main Content */}
+            {/* Desktop Layout - Sidebar + Main Content - NOW USED FOR ALL SCREEN SIZES */}
             {sessionActive ? (
-              <div className="hidden md:flex h-full w-full gap-3 p-3">
+              <div className="flex h-full w-full gap-3 p-3">
                 {/* Left Sidebar - Metrics */}
                 <div className="w-80 flex-shrink-0 flex flex-col gap-3 overflow-hidden">
                   <Suspense fallback={<div className="h-full bg-slate-800/50 rounded-xl animate-pulse" />}>
@@ -3762,8 +3762,8 @@ function TrainerPageContent() {
                 </div>
               </div>
             ) : (
-              /* Pre-Session Layout - Clean Design with All Elements */
-              <div className="hidden md:flex h-full w-full gap-3 p-3">
+              /* Pre-Session Layout - Clean Design with All Elements - NOW USED FOR ALL SCREEN SIZES */
+              <div className="flex h-full w-full gap-3 p-3">
                 {/* Left Sidebar - Metrics */}
                 <div className="w-80 flex-shrink-0 flex flex-col gap-3 overflow-hidden">
                   <Suspense fallback={<div className="h-full bg-slate-800/50 rounded-lg animate-pulse" />}>
@@ -3893,10 +3893,10 @@ function TrainerPageContent() {
               </div>
             )}
 
-            {/* Mobile Layout - iOS Optimized Stacked */}
+            {/* Mobile Layout - DISABLED - Using desktop layout for all screen sizes */}
             {!sessionActive ? (
               <div 
-                className="md:hidden flex flex-col h-full overflow-hidden w-full"
+                className="hidden flex flex-col h-full overflow-hidden w-full"
                 style={{ paddingTop: 'env(safe-area-inset-top)', width: '100vw', maxWidth: '100vw', height: '100vh', minHeight: '100vh' }}
               >
                 {/* Mobile Top Section - Agent Video and Webcam Side-by-Side */}
@@ -4016,7 +4016,7 @@ function TrainerPageContent() {
               </div>
             ) : (
               <div 
-                className="md:hidden flex flex-col h-full overflow-hidden w-full"
+                className="hidden flex flex-col h-full overflow-hidden w-full"
                 style={{ paddingTop: 'env(safe-area-inset-top)', width: '100vw', maxWidth: '100vw', height: '100vh', minHeight: '100vh' }}
               >
                 {/* Mobile Top Section - Agent Video and Webcam Side-by-Side */}
@@ -4253,7 +4253,7 @@ function TrainerPageContent() {
 
           {/* Mobile Bottom Navigation - Only show during active session */}
           {sessionActive && (
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 h-[64px] flex items-center justify-around px-2 safe-area-bottom" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
+            <nav className="hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800/50 h-[64px] flex items-center justify-around px-2 safe-area-bottom" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
               <Link
                 href="/dashboard"
                 className="flex flex-col items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-purple-400 transition-colors"
