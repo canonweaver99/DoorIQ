@@ -3277,8 +3277,8 @@ function TrainerPageContent() {
               </div>
             </div>
 
-            {/* Card 2: Metrics Panel - Always visible */}
-            {sessionActive && (
+            {/* Card 2: Metrics Panel - HIDDEN ON MOBILE DURING LIVE SESSION */}
+            {/* {sessionActive && (
               <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
                 <Suspense fallback={<div className="h-full bg-slate-800/50 rounded animate-pulse" />}>
                   <LiveMetricsPanel 
@@ -3294,7 +3294,7 @@ function TrainerPageContent() {
                   />
                 </Suspense>
               </div>
-            )}
+            )} */}
 
             {/* Card 3: Transcript - Scrollable (below fold) */}
             {sessionActive && (
@@ -3950,8 +3950,8 @@ function TrainerPageContent() {
             {/* Desktop Layout - Sidebar + Main Content - NOW USED FOR ALL SCREEN SIZES */}
             {sessionActive ? (
               <div className="flex h-full w-full gap-3 p-3">
-                {/* Left Sidebar - Metrics */}
-                <div className="w-80 flex-shrink-0 flex flex-col gap-3 overflow-hidden">
+                {/* Left Sidebar - Metrics - HIDDEN ON MOBILE */}
+                <div className="hidden md:flex w-80 flex-shrink-0 flex-col gap-3 overflow-hidden">
                   <Suspense fallback={<div className="h-full bg-slate-800/50 rounded-xl animate-pulse" />}>
                     <LiveMetricsPanel 
                       metrics={metrics} 
@@ -4056,8 +4056,8 @@ function TrainerPageContent() {
             ) : (
               /* Pre-Session Layout - Clean Design with All Elements - NOW USED FOR ALL SCREEN SIZES */
               <div className="flex h-full w-full gap-3 p-3">
-                {/* Left Sidebar - Metrics */}
-                <div className="w-80 flex-shrink-0 flex flex-col gap-3 overflow-hidden">
+                {/* Left Sidebar - Metrics - HIDDEN ON MOBILE */}
+                <div className="hidden md:flex w-80 flex-shrink-0 flex-col gap-3 overflow-hidden">
                   <Suspense fallback={<div className="h-full bg-slate-800/50 rounded-lg animate-pulse" />}>
                     <LiveMetricsPanel 
                       metrics={metrics} 
