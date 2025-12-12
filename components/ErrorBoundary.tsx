@@ -2,6 +2,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { logError } from '@/lib/errorLogger'
 
 interface Props {
   children: ReactNode
@@ -38,6 +39,20 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({
       error,
       errorInfo,
+    })
+    
+    // Extract component name from component stack
+    const componentName = errorInfo.componentStack?.split('\n')[1]?.trim() || undefined
+    
+    // Log error to Supabase
+    logError({
+      error,
+      errorType: 'client',
+      componentName,
+      severity: 'critical',
+      metadata: {
+        componentStack: errorInfo.componentStack
+      }
     })
     
     if (this.props.onError) {

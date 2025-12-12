@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { 
   Building2, Users, CreditCard, Activity, ArrowRight, 
-  TrendingUp, Target, DollarSign, BarChart3, Eye
+  TrendingUp, Target, DollarSign, BarChart3, Eye, AlertTriangle
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] shadow-sm p-4 sm:p-6 mb-8">
           <h2 className="text-lg sm:text-xl font-space font-semibold tracking-tight text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <Link href="/admin/organizations">
               <div className="p-4 sm:p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group min-h-[80px] sm:min-h-0">
                 <div className="flex items-center justify-between">
@@ -236,6 +236,18 @@ export default function AdminDashboard() {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm sm:text-base text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Manage Invites</h3>
                     <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Create invite tokens</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors flex-shrink-0 ml-2" />
+                </div>
+              </div>
+            </Link>
+
+            <Link href="/admin/errors">
+              <div className="p-4 sm:p-5 bg-[#0a0a0a] rounded-lg border border-[#2a2a2a] hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group min-h-[80px] sm:min-h-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base text-white font-space font-medium mb-1 group-hover:text-purple-400 transition-colors">Error Logs</h3>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">Monitor application errors</p>
                   </div>
                   <ArrowRight className="w-5 h-5 text-[#666] group-hover:text-purple-400 transition-colors flex-shrink-0 ml-2" />
                 </div>
