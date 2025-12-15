@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Upload, FileText, Trash2, Eye, X, File } from 'lucide-react'
+import { Upload, FileText, Trash2, Eye, X, File, Save, Type } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useHaptic } from '@/hooks/useHaptic'
 import { PullToRefresh } from '@/components/ui/pull-to-refresh'
@@ -26,7 +26,11 @@ export default function CoachScripts() {
   const [scripts, setScripts] = useState<CoachingScript[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [previewScript, setPreviewScript] = useState<CoachingScript | null>(null)
+  const [scriptText, setScriptText] = useState('')
+  const [scriptName, setScriptName] = useState('')
+  const [inputMode, setInputMode] = useState<'text' | 'upload'>('text')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -60,6 +64,66 @@ export default function CoachScripts() {
     if (!files || files.length === 0) return
 
     await handleUpload(files)
+  }
+
+  const handleSaveTextScript = async () => {
+    if (!scriptText.trim()) {
+      showToast({
+        type: 'error',
+        title: 'Script Required',
+        message: 'Please enter script content before saving.'
+      })
+      return
+    }
+
+    if (!scriptName.trim()) {
+      showToast({
+        type: 'error',
+        title: 'Name Required',
+        message: 'Please enter a name for your script.'
+      })
+      return
+    }
+
+    setSaving(true)
+    trigger('impact')
+
+    try {
+      const response = await fetch('/api/coach/script/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: scriptName.trim(),
+          content: scriptText.trim()
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || errorData.error || 'Save failed')
+      }
+
+      // Clear form
+      setScriptText('')
+      setScriptName('')
+      
+      // Reload scripts
+      await loadScripts()
+      showToast({
+        type: 'success',
+        title: 'Script Saved!',
+        message: 'Your script has been saved successfully.'
+      })
+    } catch (error: any) {
+      console.error('Save error:', error)
+      showToast({
+        type: 'error',
+        title: 'Save Failed',
+        message: error.message || 'Failed to save script. Please try again.'
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleUpload = async (files: FileList) => {
@@ -191,44 +255,120 @@ export default function CoachScripts() {
         <div className={`flex items-center justify-between ${isMobile ? 'flex-col gap-4' : ''}`}>
           <div>
             <h2 className={`font-bold text-white font-space ${isMobile ? 'text-xl' : 'text-2xl'}`}>
-              Coach Scripts
+              Scripts
             </h2>
             <p className="text-white/70 text-sm mt-1">
-              Upload sales scripts for real-time coaching during practice sessions
+              Type or upload sales scripts for real-time coaching during practice sessions
             </p>
           </div>
+        </div>
 
-          {/* Upload Button */}
-          <label
-            htmlFor="script-upload"
-            className={`
-              flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 
-              text-white rounded-lg cursor-pointer transition-colors
-              ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
-              ${isMobile ? 'w-full justify-center' : ''}
-            `}
+        {/* Input Mode Toggle */}
+        <div className="flex items-center gap-2 border-b border-white/10 pb-4">
+          <button
+            onClick={() => setInputMode('text')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              inputMode === 'text'
+                ? 'bg-purple-600 text-white'
+                : 'bg-white/5 text-white/70 hover:bg-white/10'
+            }`}
+          >
+            <Type className="w-4 h-4" />
+            <span>Type Script</span>
+          </button>
+          <button
+            onClick={() => setInputMode('upload')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              inputMode === 'upload'
+                ? 'bg-purple-600 text-white'
+                : 'bg-white/5 text-white/70 hover:bg-white/10'
+            }`}
           >
             <Upload className="w-4 h-4" />
-            <span>{uploading ? 'Uploading...' : 'Upload Script'}</span>
-          </label>
-          <input
-            id="script-upload"
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.txt,application/pdf,text/plain"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-            disabled={uploading}
-          />
+            <span>Upload File</span>
+          </button>
         </div>
+
+        {/* Text Input Mode */}
+        {inputMode === 'text' && (
+          <div className="space-y-4 bg-white/5 border border-white/10 rounded-lg p-4">
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Script Name</label>
+              <input
+                type="text"
+                value={scriptName}
+                onChange={(e) => setScriptName(e.target.value)}
+                placeholder="e.g., Opening Script, Objection Handler, etc."
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans min-h-[44px]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Script Content</label>
+              <textarea
+                value={scriptText}
+                onChange={(e) => setScriptText(e.target.value)}
+                placeholder="Type your sales script here..."
+                rows={12}
+                className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 font-sans resize-y"
+              />
+            </div>
+            <button
+              onClick={handleSaveTextScript}
+              disabled={saving || !scriptText.trim() || !scriptName.trim()}
+              className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-sm font-semibold text-white transition-all shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed font-space min-h-[44px] w-full justify-center"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Script
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* File Upload Mode */}
+        {inputMode === 'upload' && (
+          <div className="space-y-4">
+            <label
+              htmlFor="script-upload"
+              className={`
+                flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 
+                text-white rounded-lg cursor-pointer transition-colors justify-center
+                ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
+                min-h-[44px]
+              `}
+            >
+              <Upload className="w-4 h-4" />
+              <span>{uploading ? 'Uploading...' : 'Upload Script File'}</span>
+            </label>
+            <input
+              id="script-upload"
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.txt,application/pdf,text/plain"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={uploading}
+            />
+            <p className="text-xs text-slate-400 text-center">
+              Supported formats: PDF, TXT (max 10MB)
+            </p>
+          </div>
+        )}
 
         {/* Scripts List */}
         {scripts.length === 0 ? (
           <div className="text-center py-12 bg-white/[0.02] border border-white/10 rounded-lg">
             <FileText className="w-12 h-12 text-white/30 mx-auto mb-4" />
-            <p className="text-white/70 mb-2">No coaching scripts uploaded yet</p>
-            <p className="text-white/50 text-sm">Upload a PDF or TXT file to get started</p>
+            <p className="text-white/70 mb-2">No scripts created yet</p>
+            <p className="text-white/50 text-sm">Type a script or upload a file to get started</p>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -246,11 +386,15 @@ export default function CoachScripts() {
                       <h3 className="font-semibold text-white truncate">{script.file_name}</h3>
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-sm text-white/60">
-                      <span>{formatFileSize(script.file_size)}</span>
+                      {script.file_size > 0 && (
+                        <>
+                          <span>{formatFileSize(script.file_size)}</span>
+                          <span>•</span>
+                        </>
+                      )}
+                      <span>{script.file_type || 'text'}</span>
                       <span>•</span>
-                      <span>{script.file_type}</span>
-                      <span>•</span>
-                      <span>Uploaded {formatDate(script.created_at)}</span>
+                      <span>Created {formatDate(script.created_at)}</span>
                     </div>
                     {script.content_preview && (
                       <p className="text-white/50 text-sm mt-2 line-clamp-2">

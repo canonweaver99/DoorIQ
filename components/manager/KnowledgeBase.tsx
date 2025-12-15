@@ -68,7 +68,7 @@ export default function KnowledgeBase() {
   const { showToast } = useToast()
   const isMobile = useIsMobile()
   const { trigger } = useHaptic()
-  const [activeTab, setActiveTab] = useState<Tab>('company')
+  const [activeTab, setActiveTab] = useState<Tab>('coach-scripts')
   const [config, setConfig] = useState<TeamGradingConfig>({
     company_values: [],
     pricing_info: [],
@@ -279,11 +279,11 @@ export default function KnowledgeBase() {
   }
 
   const tabs = [
+    { id: 'coach-scripts' as Tab, name: 'Scripts', icon: FileText },
     { id: 'company' as Tab, name: 'Company Info', icon: Building2 },
     { id: 'pricing' as Tab, name: 'Pricing Tables', icon: DollarSign },
     { id: 'objections' as Tab, name: 'Objection Handlers', icon: MessageCircle },
     { id: 'documents' as Tab, name: 'Upload Documents', icon: Upload },
-    { id: 'coach-scripts' as Tab, name: 'Coach Scripts', icon: FileText },
     { id: 'videos' as Tab, name: 'Training Videos', icon: Video },
   ]
 
