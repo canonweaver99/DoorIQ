@@ -33,6 +33,11 @@ interface RotatingCardViewProps {
   coachSuggestionLoading?: boolean
   className?: string
   defaultToCoaching?: boolean // If true, defaults to coaching when available (for transcript cards)
+  coachModeEnabled?: boolean // If true, always include coaching view even without suggestion
+  // Shared state props to prevent duplicate cards
+  otherCardView?: ViewType | null // The current view of the other card
+  onViewChange?: (view: ViewType) => void // Callback when view changes
+  cardId?: string // Unique identifier for this card instance
 }
 
 export function RotatingCardView({ 
@@ -45,40 +50,99 @@ export function RotatingCardView({
   coachSuggestion = null,
   coachSuggestionLoading = false,
   className,
-  defaultToCoaching = false // Only transcript cards should default to coaching
+  defaultToCoaching = false, // Only transcript cards should default to coaching
+  coachModeEnabled = false, // If true, always include coaching view
+  otherCardView = null, // The current view of the other card
+  onViewChange, // Callback when view changes
+  cardId // Unique identifier for this card instance
 }: RotatingCardViewProps) {
-  // Only include coaching view if coachSuggestion exists or is loading
-  const views: ViewType[] = coachSuggestion || coachSuggestionLoading
+  // Include coaching view if:
+  // 1. coachSuggestion exists or is loading, OR
+  // 2. defaultToCoaching is true (for transcript cards that should show coaching pre-session)
+  const shouldIncludeCoaching = (coachSuggestion || coachSuggestionLoading) || (defaultToCoaching && coachModeEnabled)
+  
+  const views: ViewType[] = shouldIncludeCoaching
     ? ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques', 'coaching']
     : ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques']
   
-  // Default to coaching only if defaultToCoaching is true and coaching is available
+  // Filter out views that are currently shown in the other card (except 'default' which can be duplicated)
+  const getAvailableViews = () => {
+    if (!otherCardView || otherCardView === 'default') {
+      return views
+    }
+    return views.filter(view => view === 'default' || view !== otherCardView)
+  }
+  
+  const availableViews = getAvailableViews()
+  
+  // Default to coaching if defaultToCoaching is true (even if no suggestion yet)
   // Otherwise default to 'default' view (transcript or feedback)
-  const [currentView, setCurrentView] = useState<ViewType>(() => {
-    if (defaultToCoaching && (coachSuggestion || coachSuggestionLoading)) {
+  // If the default view is taken by the other card, pick the first available view
+  const getInitialView = (): ViewType => {
+    if (defaultToCoaching && shouldIncludeCoaching) {
       return 'coaching'
     }
-    return 'default'
-  })
-  
-  // Switch to coaching when it becomes available (only if defaultToCoaching is true)
-  useEffect(() => {
-    if (defaultToCoaching && (coachSuggestion || coachSuggestionLoading) && currentView === 'default') {
-      setCurrentView('coaching')
+    // If 'default' is available, use it; otherwise use first available
+    if (availableViews.includes('default')) {
+      return 'default'
     }
-  }, [coachSuggestion, coachSuggestionLoading, currentView, defaultToCoaching])
+    return availableViews[0] || 'default'
+  }
   
-  const currentIndex = views.indexOf(currentView)
+  const [currentView, setCurrentView] = useState<ViewType>(getInitialView)
+  
+  // Update view if the other card's view conflicts with ours
+  useEffect(() => {
+    const currentAvailableViews = getAvailableViews()
+    if (otherCardView && otherCardView !== 'default' && currentView === otherCardView) {
+      // Find next available view
+      const nextAvailable = currentAvailableViews.find(view => view !== currentView && view !== otherCardView) || currentAvailableViews[0]
+      if (nextAvailable) {
+        setCurrentView(nextAvailable)
+        onViewChange?.(nextAvailable)
+      }
+    }
+  }, [otherCardView, currentView, onViewChange])
+  
+  // Switch to coaching when it becomes available or when defaultToCoaching is true
+  useEffect(() => {
+    if (defaultToCoaching && shouldIncludeCoaching && currentView === 'default') {
+      setCurrentView('coaching')
+      onViewChange?.('coaching')
+    }
+  }, [coachSuggestion, coachSuggestionLoading, currentView, defaultToCoaching, shouldIncludeCoaching])
+  
+  const currentIndex = availableViews.indexOf(currentView)
 
-  const nextView = () => {
-    const nextIndex = (currentIndex + 1) % views.length
-    setCurrentView(views[nextIndex])
+  const changeView = (direction: 'next' | 'prev') => {
+    let newIndex: number
+    if (direction === 'next') {
+      newIndex = (currentIndex + 1) % availableViews.length
+    } else {
+      newIndex = (currentIndex - 1 + availableViews.length) % availableViews.length
+    }
+    
+    const newView = availableViews[newIndex]
+    
+    // If the new view conflicts with the other card, skip to the next one
+    if (otherCardView && otherCardView !== 'default' && newView === otherCardView) {
+      const nextAvailable = availableViews.find((view, idx) => 
+        idx !== newIndex && view !== otherCardView && view !== currentView
+      ) || availableViews.find(view => view !== otherCardView && view !== currentView) || availableViews[0]
+      
+      if (nextAvailable) {
+        setCurrentView(nextAvailable)
+        onViewChange?.(nextAvailable)
+        return
+      }
+    }
+    
+    setCurrentView(newView)
+    onViewChange?.(newView)
   }
 
-  const prevView = () => {
-    const prevIndex = (currentIndex - 1 + views.length) % views.length
-    setCurrentView(views[prevIndex])
-  }
+  const nextView = () => changeView('next')
+  const prevView = () => changeView('prev')
 
   const getSentimentLabel = (score: number) => {
     if (score >= 70) return 'Positive'
@@ -161,18 +225,24 @@ export function RotatingCardView({
                     {getSentimentLabel(sentimentScore)}
                   </div>
                 </div>
-                <div className="w-full max-w-xs h-4 bg-slate-800/50 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${sentimentScore}%` }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full",
-                      sentimentScore >= 70 ? 'bg-emerald-500' :
-                      sentimentScore >= 40 ? 'bg-amber-500' :
-                      'bg-red-500'
-                    )}
-                  />
+                <div className="w-full max-w-xs mx-auto flex flex-col items-center">
+                  <div className="w-full h-4 bg-slate-800/50 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${sentimentScore}%` }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className={cn(
+                        "h-full rounded-full",
+                        sentimentScore >= 70 ? 'bg-emerald-500' :
+                        sentimentScore >= 40 ? 'bg-amber-500' :
+                        'bg-red-500'
+                      )}
+                    />
+                  </div>
+                  <div className="w-full flex justify-between text-xs text-slate-400 font-space mt-1">
+                    <span>0%</span>
+                    <span>100%</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -204,10 +274,10 @@ export function RotatingCardView({
                     </div>
                   )}
                 </div>
-                <div className="w-full max-w-xs relative">
+                <div className="w-full max-w-xs mx-auto flex flex-col items-center relative">
                   {/* Target zone indicator */}
                   {talkTimeRatio >= 50 && talkTimeRatio <= 60 && (
-                    <div className="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
+                    <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-1 pointer-events-none">
                       <div className="w-[41.67%] h-4 border-l-2 border-r-2 border-emerald-400/30 rounded" />
                     </div>
                   )}
@@ -223,6 +293,10 @@ export function RotatingCardView({
                         'bg-blue-500'
                       )}
                     />
+                  </div>
+                  <div className="w-full flex justify-between text-xs text-slate-400 font-space mt-1">
+                    <span>0%</span>
+                    <span>100%</span>
                   </div>
                 </div>
               </div>
@@ -409,7 +483,8 @@ export function RotatingCardView({
             >
               <CoachSuggestion 
                 suggestion={coachSuggestion} 
-                isLoading={coachSuggestionLoading} 
+                isLoading={coachSuggestionLoading}
+                showPlaceholder={defaultToCoaching && coachModeEnabled && !coachSuggestion && !coachSuggestionLoading}
               />
             </motion.div>
           )}

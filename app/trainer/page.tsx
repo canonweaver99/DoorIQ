@@ -182,6 +182,10 @@ function TrainerPageContent() {
   const [coachSuggestionLoading, setCoachSuggestionLoading] = useState(false)
   const lastHomeownerTextRef = useRef<string>('') // Track last homeowner text to avoid duplicate requests
 
+  // Shared state for RotatingCardView components to prevent duplicate cards
+  const [leftCardView, setLeftCardView] = useState<'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques' | 'coaching'>('default')
+  const [rightCardView, setRightCardView] = useState<'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques' | 'coaching'>('default')
+
   // Sync camera/mic state with WebcamPIP
   useEffect(() => {
     if (webcamPIPRef.current && sessionActive) {
@@ -3571,6 +3575,7 @@ function TrainerPageContent() {
                     coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                     coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                     defaultToCoaching={true}
+                    coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
                   >
                     <LiveTranscript 
                       transcript={transcript} 
@@ -4156,6 +4161,9 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={true}
+                      otherCardView={rightCardView}
+                      onViewChange={setLeftCardView}
+                      cardId="left"
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4178,6 +4186,9 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={false}
+                      otherCardView={leftCardView}
+                      onViewChange={setRightCardView}
+                      cardId="right"
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>
@@ -4248,6 +4259,9 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={true}
+                      otherCardView={rightCardView}
+                      onViewChange={setLeftCardView}
+                      cardId="left-pre"
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4270,6 +4284,9 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={false}
+                      otherCardView={leftCardView}
+                      onViewChange={setRightCardView}
+                      cardId="right-pre"
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>
