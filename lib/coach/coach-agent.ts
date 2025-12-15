@@ -20,6 +20,7 @@ export interface CoachSuggestion {
 export interface CoachAgentContext {
   homeownerText: string
   repLastStatement?: string
+  conversationHistory?: Array<{ speaker: string; text: string }>
   scriptSections: ScriptSection[]
   companyName?: string
   repName?: string
@@ -60,13 +61,24 @@ You: "Try: 'Totally get it. Quick question - what specifically do you want to th
     const repName = context.repName ? `\nRep's name: ${context.repName}` : ''
     const repContext = context.repLastStatement ? `\nRep just said: "${context.repLastStatement}"` : ''
     
+    // Format recent conversation history (last 8 exchanges) to prevent context loss
+    let conversationHistoryText = ''
+    if (context.conversationHistory && context.conversationHistory.length > 0) {
+      const recentHistory = context.conversationHistory.slice(-8) // Last 8 exchanges
+      conversationHistoryText = `\n\nRecent conversation:\n${recentHistory.map((entry, idx) => {
+        const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'Rep' : 'Homeowner'
+        return `${speaker}: ${entry.text}`
+      }).join('\n')}`
+    }
+    
     const userPrompt = `Homeowner said: "${context.homeownerText}"
 
 1. What objection/intent is this? (price, time, skepticism, interest, etc)
 2. Suggest a SHORT, CASUAL response (1-2 sentences max) from the script that handles this well.
+3. IMPORTANT: Do NOT suggest questions that have already been asked in the conversation history below.
 
 Relevant script sections:
-${scriptSectionsText}${companyName}${repName}${repContext}
+${scriptSectionsText}${companyName}${repName}${repContext}${conversationHistoryText}
 
 Replace [COMPANY NAME] with the company name and [YOUR NAME] or [REP NAME] with the rep's name if provided.
 

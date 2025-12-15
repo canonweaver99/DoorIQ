@@ -11,7 +11,7 @@ interface ScriptDocument {
   chunks?: ScriptChunk[] // Cached chunks from JSONB column
 }
 
-interface ScriptSection {
+export interface ScriptSection {
   text: string
   startIndex: number
   endIndex: number

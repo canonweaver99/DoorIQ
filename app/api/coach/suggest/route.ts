@@ -114,6 +114,15 @@ export async function POST(request: NextRequest) {
       ?.filter((entry: any) => entry.speaker === 'user' || entry.speaker === 'rep')
       ?.slice(-1)[0]?.text
 
+    // Format conversation history (last 10 exchanges) to prevent context loss
+    const conversationHistory = transcript
+      ?.slice(-10)
+      ?.map((entry: any) => ({
+        speaker: entry.speaker || entry.role || 'unknown',
+        text: entry.text || entry.content || entry.message || ''
+      }))
+      .filter((entry: any) => entry.text && entry.text.trim().length > 0)
+
     // Perform RAG retrieval - reduced to 2 sections for speed
     const relevantSections = searchScripts(homeownerText, scriptDocuments, 2)
 
@@ -125,10 +134,11 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Generate suggestion using coach agent with minimal context
+    // Generate suggestion using coach agent with conversation history
     const coachContext: CoachAgentContext = {
       homeownerText,
       repLastStatement,
+      conversationHistory,
       scriptSections: relevantSections,
       companyName,
       repName: userProfile.full_name || undefined

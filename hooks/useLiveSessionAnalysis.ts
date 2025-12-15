@@ -928,29 +928,44 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
               const futureEntries = transcript.slice(entryIndex + 1, Math.min(entryIndex + 10, transcript.length))
               const repEntries = futureEntries.filter(e => e.speaker === 'rep' || e.speaker === 'user')
               
-              const infoCollectionPatterns = [
-                /what'?s your name/i,
-                /what is your name/i,
+              // Strong closing indicators (payment, address, scheduling)
+              const strongClosingPatterns = [
                 /what'?s your address/i,
                 /what is your address/i,
-                /what'?s your phone/i,
-                /what is your phone/i,
-                /what'?s your email/i,
-                /what is your email/i,
-                /phone number/i,
-                /email address/i,
+                /address/i,
                 /credit or debit/i,
                 /how would you like to pay/i,
                 /payment method/i,
+                /when.*can.*come/i,
+                /schedule.*appointment/i,
+                /what.*time.*work/i,
                 /anything else.*should know/i,
                 /special instructions/i,
                 /gate code/i,
                 /dog.*yard/i
               ]
               
-              const isCollectingInfo = repEntries.some(entry => 
-                infoCollectionPatterns.some(pattern => pattern.test(entry.text))
-              )
+              // Weak indicators (can happen early in conversation)
+              const weakIndicators = [
+                /what'?s your name/i,
+                /what is your name/i,
+                /what'?s your phone/i,
+                /what is your phone/i,
+                /phone number/i,
+                /what'?s your email/i,
+                /what is your email/i,
+                /email address/i
+              ]
+              
+              // Count strong closing patterns
+              const strongClosingCount = repEntries.filter(entry => 
+                strongClosingPatterns.some(pattern => pattern.test(entry.text))
+              ).length
+              
+              // Count weak indicators
+              const weakIndicatorCount = repEntries.filter(entry => 
+                weakIndicators.some(pattern => pattern.test(entry.text))
+              ).length
               
               // Also check for strong buying commitments from customer
               const customerEntries = futureEntries.filter(e => e.speaker === 'homeowner')
@@ -960,6 +975,13 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
                 /count me in/i,
                 /sign me up/i,
                 /I'?m ready/i,
+                /yes.*let'?s do/i,
+                /yes.*go ahead/i,
+                /yes.*sounds good/i
+              ]
+              
+              // More moderate signals (can be ambiguous)
+              const moderateSignals = [
                 /sounds good/i,
                 /that works/i,
                 /go ahead/i,
@@ -970,8 +992,19 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
                 strongBuyingSignals.some(pattern => pattern.test(entry.text))
               )
               
-              // If rep is collecting info OR customer shows strong commitment, deal is closed!
-              if (isCollectingInfo || hasStrongCommitment) {
+              const hasModerateCommitment = customerEntries.some(entry =>
+                moderateSignals.some(pattern => pattern.test(entry.text))
+              )
+              
+              // Deal is closed ONLY if:
+              // 1. Strong commitment from customer (explicit yes), OR
+              // 2. Multiple strong closing patterns (2+), OR
+              // 3. At least 1 strong closing pattern AND moderate commitment AND at least 2 weak indicators
+              const isDealClosed = hasStrongCommitment || 
+                strongClosingCount >= 2 || 
+                (strongClosingCount >= 1 && hasModerateCommitment && weakIndicatorCount >= 2)
+              
+              if (isDealClosed) {
                 // Check if we've already shown deal_closed feedback (avoid duplicates)
                 setFeedbackItems(prev => {
                   const hasDealClosed = prev.some(item => item.type === 'deal_closed')
