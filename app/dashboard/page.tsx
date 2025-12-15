@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog, Database, Video } from 'lucide-react'
+import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog, Database, Video, FileText } from 'lucide-react'
 
 // Lazy load all dashboard components for better code splitting
 const HeroPerformanceCard = lazy(() => import('@/components/dashboard/HeroPerformanceCard'))
@@ -21,6 +21,7 @@ const ManagerPanelTab = lazy(() => import('@/components/dashboard/tabs/ManagerPa
 const RepManagement = lazy(() => import('@/components/manager/RepManagement'))
 const KnowledgeBase = lazy(() => import('@/components/manager/KnowledgeBase'))
 const TrainingVideos = lazy(() => import('@/components/manager/TrainingVideos'))
+const CoachScripts = lazy(() => import('@/components/manager/CoachScripts'))
 import type { DashboardData } from '@/app/dashboard/types'
 import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/utils'
@@ -123,6 +124,7 @@ function DashboardPageContent() {
       { id: 'manager', label: 'Manager Panel', icon: UserCog },
       { id: 'reps', label: 'Rep Management', icon: UserCog },
       { id: 'knowledge', label: 'Knowledge Base', icon: Database },
+      { id: 'coach-scripts', label: 'Coach Scripts', icon: FileText },
       { id: 'videos', label: 'Training Videos', icon: Video },
     ] : []),
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -550,6 +552,16 @@ function DashboardPageContent() {
                 </div>
               }>
                 <KnowledgeBase />
+              </Suspense>
+            )}
+
+            {activeTab === 'coach-scripts' && isManager && (
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-24">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                </div>
+              }>
+                <CoachScripts />
               </Suspense>
             )}
 

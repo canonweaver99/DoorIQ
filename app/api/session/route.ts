@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceSupabaseClient, createServerSupabaseClient } from '@/lib/supabase/server'
 import { detectObjection as detectEnhancedObjection, detectTechnique as detectEnhancedTechnique } from '@/lib/trainer/enhancedPatternAnalyzer'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 export const runtime = 'nodejs'
 
 // CREATE session
@@ -27,7 +27,8 @@ export async function POST(req: Request) {
       user_id: user?.id || null, // null for anonymous free demo sessions
       agent_name: agent_name,
       started_at: new Date().toISOString(),
-      is_free_demo: isAnonymous || false
+      is_free_demo: isAnonymous || false,
+      coach_mode_enabled: true // Default enabled per plan requirements
     }
     
     // Add agent_id if provided
