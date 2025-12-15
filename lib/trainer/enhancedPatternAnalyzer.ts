@@ -1328,16 +1328,15 @@ export function assessCloseSuccess(
   const customerResponses = nextEntries.filter(e => e.speaker === 'homeowner')
 
   for (const response of customerResponses) {
-    // Check for buying commitments
+    // Check for buying commitments (explicit commitment to proceed)
     if (MICRO_COMMITMENTS.buying.some(pattern => pattern.test(response.text))) {
       return true
     }
     
-    // Check for strong positive commitments
-    if (MICRO_COMMITMENTS.strong.some(pattern => pattern.test(response.text))) {
-      return true
-    }
-
+    // Only check strong commitments if they're explicit about next steps
+    // Removed automatic true for all strong commitments - too many false positives
+    // Strong commitments like "sounds good" can be casual acknowledgment, not deal closure
+    
     // Check for explicit rejection
     if (NEGATIVE_INDICATORS.some(pattern => pattern.test(response.text))) {
       return false

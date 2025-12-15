@@ -671,19 +671,17 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
       // Enhanced objection detection (only for homeowner/agent) with context awareness
       if (entry.speaker === 'homeowner' || entry.speaker === 'agent') {
         // IMMEDIATE DEAL CLOSED DETECTION - Check for strong buying signals first
+        // Only trigger on explicit commitment phrases, not casual acknowledgments
         const strongBuyingSignals = [
           /let'?s do it/i,
           /I'?ll take it/i,
           /count me in/i,
           /sign me up/i,
           /I'?m ready/i,
-          /sounds good/i,
-          /that works/i,
-          /go ahead/i,
-          /let'?s go/i,
           /yes.*sign/i,
           /yes.*start/i,
           /yes.*do it/i,
+          /yes.*let'?s do/i,
           /okay.*sign/i,
           /okay.*start/i,
           /sure.*sign/i,
@@ -692,7 +690,11 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
           /I.*need.*it/i,
           /where.*sign/i,
           /how.*sign/i,
-          /when.*start/i
+          /when.*start/i,
+          /when.*can.*start/i,
+          /what'?s next/i,
+          /how.*sign up/i,
+          /how.*get started/i
         ]
         
         const hasStrongBuyingSignal = strongBuyingSignals.some(pattern => pattern.test(entry.text))
@@ -976,16 +978,20 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
                 /sign me up/i,
                 /I'?m ready/i,
                 /yes.*let'?s do/i,
-                /yes.*go ahead/i,
-                /yes.*sounds good/i
+                /yes.*sign/i,
+                /yes.*start/i,
+                /when.*can.*start/i,
+                /what'?s next/i,
+                /how.*sign up/i,
+                /how.*get started/i
               ]
               
-              // More moderate signals (can be ambiguous)
+              // More moderate signals (can be ambiguous) - removed casual phrases
               const moderateSignals = [
-                /sounds good/i,
-                /that works/i,
-                /go ahead/i,
-                /let'?s go/i
+                /yes.*go ahead/i,
+                /yes.*sounds good/i,
+                /okay.*let'?s/i,
+                /sure.*let'?s/i
               ]
               
               const hasStrongCommitment = customerEntries.some(entry =>
@@ -997,12 +1003,13 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
               )
               
               // Deal is closed ONLY if:
-              // 1. Strong commitment from customer (explicit yes), OR
-              // 2. Multiple strong closing patterns (2+), OR
-              // 3. At least 1 strong closing pattern AND moderate commitment AND at least 2 weak indicators
+              // 1. Strong commitment from customer (explicit yes with action words), OR
+              // 2. Multiple strong closing patterns (3+ for higher confidence), OR
+              // 3. At least 2 strong closing patterns AND moderate commitment AND at least 2 weak indicators
+              // Made more strict to avoid false positives
               const isDealClosed = hasStrongCommitment || 
-                strongClosingCount >= 2 || 
-                (strongClosingCount >= 1 && hasModerateCommitment && weakIndicatorCount >= 2)
+                strongClosingCount >= 3 || 
+                (strongClosingCount >= 2 && hasModerateCommitment && weakIndicatorCount >= 2)
               
               if (isDealClosed) {
                 // Check if we've already shown deal_closed feedback (avoid duplicates)

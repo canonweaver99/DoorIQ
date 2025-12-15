@@ -44,10 +44,48 @@ export async function generateSuggestion(
       })
       .join('\n\n---\n\n')
     
-    // Build prompt with few-shot examples
+    // Analyze conversation stage to provide context-aware suggestions
+    const turnCount = context.conversationHistory?.length || 0
+    const repStatements = context.conversationHistory?.filter(e => 
+      e.speaker === 'user' || e.speaker === 'rep'
+    ) || []
+    const homeownerStatements = context.conversationHistory?.filter(e => 
+      e.speaker === 'homeowner' || e.speaker === 'agent'
+    ) || []
+    
+    // Check if rep has asked any discovery questions yet
+    const hasAskedQuestions = repStatements.some(stmt => {
+      const text = stmt.text.toLowerCase()
+      return text.includes('?') && (
+        text.includes('what') || text.includes('how') || text.includes('tell me') ||
+        text.includes('experience') || text.includes('deal with') || text.includes('see')
+      )
+    })
+    
+    // Determine conversation stage
+    let conversationStage = 'opener'
+    if (turnCount > 8) conversationStage = 'closing'
+    else if (turnCount > 6) conversationStage = 'objection_handling'
+    else if (turnCount > 4) conversationStage = 'presentation'
+    else if (turnCount > 2) conversationStage = 'discovery'
+    
+    // Build prompt with few-shot examples and stage awareness
     const systemPrompt = `You're a friend giving casual, quick advice during a practice session. Keep responses SHORT (1-2 sentences max, often just a phrase). Sound relaxed and friendly.
 
+CRITICAL RULES FOR OPENING RAPPORT:
+- In early turns (first 2-4 exchanges), ALWAYS prioritize asking discovery questions BEFORE pitching
+- Build rapport by asking about their situation, not by immediately explaining your service
+- Real door-to-door reps ask questions first: "What kind of bugs are you dealing with?" "How long have you lived here?" "What's your biggest concern?"
+- NEVER suggest jumping straight into the pitch without asking questions first
+- If no questions have been asked yet, suggest a discovery question, not a pitch
+
 Examples:
+Early turn, homeowner: "Hi"
+You: "Try: 'Hey there! Quick question - are you dealing with any pest issues around the house?'"
+
+Early turn, homeowner: "What's this about?"
+You: "Try: 'I'm with [COMPANY NAME]. Mind if I ask - what kind of bugs have you noticed lately?'"
+
 Homeowner: "I'm not interested"
 You: "Try: 'I hear you - most of our best customers said the same thing at first. Mind if I ask what you're using now?'"
 
@@ -71,11 +109,21 @@ You: "Try: 'Totally get it. Quick question - what specifically do you want to th
       }).join('\n')}`
     }
     
+    // Build stage-aware prompt
+    const stageContext = `\n\nCONVERSATION STAGE: ${conversationStage}
+- Turn count: ${turnCount}
+- Has asked discovery questions: ${hasAskedQuestions ? 'Yes' : 'No'}
+${!hasAskedQuestions && turnCount <= 4 ? '\n⚠️ CRITICAL: No discovery questions asked yet! Suggest a discovery question, NOT a pitch.' : ''}
+${turnCount <= 2 ? '\n⚠️ EARLY STAGE: Focus on rapport and discovery questions. Do NOT suggest pitching yet.' : ''}`
+    
     const userPrompt = `Homeowner said: "${context.homeownerText}"
 
-1. What objection/intent is this? (price, time, skepticism, interest, etc)
+1. What objection/intent is this? (price, time, skepticism, interest, neutral, greeting, etc)
 2. Suggest a SHORT, CASUAL response (1-2 sentences max) from the script that handles this well.
 3. IMPORTANT: Do NOT suggest questions that have already been asked in the conversation history below.
+4. CRITICAL: If this is early in the conversation (turn ${turnCount} or less) and no discovery questions have been asked, suggest a discovery question about their situation, NOT a pitch or explanation of your service.
+
+${stageContext}
 
 Relevant script sections:
 ${scriptSectionsText}${companyName}${repName}${repContext}${conversationHistoryText}
@@ -84,7 +132,7 @@ Replace [COMPANY NAME] with the company name and [YOUR NAME] or [REP NAME] with 
 
 Return JSON:
 {
-  "intent": "price_objection|time_objection|skepticism|interest|neutral",
+  "intent": "price_objection|time_objection|skepticism|interest|neutral|greeting",
   "suggestedLine": "the response with placeholders replaced",
   "confidence": "high|medium|low"
 }`

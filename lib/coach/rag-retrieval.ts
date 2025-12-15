@@ -454,13 +454,41 @@ export function analyzeConversation(
 ): ConversationAnalysis {
   const turnCount = transcript.length;
   
+  // Get rep statements to check for discovery questions
+  const repStatements = transcript.filter(m => 
+    m.speaker === 'user' || m.speaker === 'rep'
+  );
+  
+  // Check if rep has asked discovery questions
+  const hasAskedDiscoveryQuestions = repStatements.some(stmt => {
+    const text = stmt.text.toLowerCase()
+    const isQuestion = text.includes('?')
+    const isDiscovery = text.match(/(what|how|tell me|experience|deal with|see|notice|concern|problem|issue)/i)
+    return isQuestion && !!isDiscovery
+  })
+  
+  // Check if rep has started pitching (mentioning service, benefits, features)
+  const hasStartedPitching = repStatements.some(stmt => {
+    const text = stmt.text.toLowerCase()
+    return text.match(/(service|treatment|protect|benefit|feature|solution|program|plan|coverage)/i) &&
+           !text.match(/\?/) // Not a question
+  })
+  
   // Determine stage based on conversation progress and content
   let stage: ConversationStage['stage'] = 'opener';
   
-  if (turnCount > 8) stage = 'closing';
-  else if (turnCount > 6) stage = 'objection_handling';
-  else if (turnCount > 4) stage = 'presentation';
-  else if (turnCount > 2) stage = 'discovery';
+  // If rep hasn't asked discovery questions and has started pitching, force discovery stage
+  if (!hasAskedDiscoveryQuestions && hasStartedPitching && turnCount <= 6) {
+    stage = 'discovery' // Force discovery even if turn count suggests otherwise
+  } else if (turnCount > 8) {
+    stage = 'closing'
+  } else if (turnCount > 6) {
+    stage = 'objection_handling'
+  } else if (turnCount > 4 || hasAskedDiscoveryQuestions) {
+    stage = 'presentation'
+  } else if (turnCount > 2) {
+    stage = 'discovery'
+  }
   
   // Analyze last homeowner message
   const homeownerMessages = transcript.filter(m => 
@@ -486,6 +514,7 @@ export function analyzeConversation(
   if (fullText.match(/spouse|partner|wife|husband/)) keyPoints.push('needs_spousal_approval');
   if (fullText.includes('competitor') || fullText.includes('already have')) keyPoints.push('comparing_options');
   if (fullText.match(/guarantee|warranty|promise/)) keyPoints.push('guarantee_discussed');
+  if (!hasAskedDiscoveryQuestions && turnCount <= 4) keyPoints.push('needs_discovery_questions');
   
   return {
     stage,
