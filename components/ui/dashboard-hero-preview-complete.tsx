@@ -38,7 +38,7 @@ export function DashboardHeroPreview() {
             <h2 className="text-2xl font-bold text-white mb-1">Dashboard</h2>
             <p className="text-sm font-medium text-gray-400">{formatDate(startDate)} - {formatDate(today)}</p>
           </div>
-          <button className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors">
+          <button className="px-5 py-2 bg-gray-200 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors">
             Download
           </button>
         </div>

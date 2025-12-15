@@ -174,7 +174,7 @@ export const SignUpComponent: React.FC<SignUpPageProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="animate-element animate-delay-600 w-full rounded-md bg-white text-black py-3.5 text-base font-bold tracking-tight hover:bg-white/95 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+                className="animate-element animate-delay-600 w-full rounded-md bg-gray-200 text-gray-900 py-3.5 text-base font-bold tracking-tight hover:bg-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>

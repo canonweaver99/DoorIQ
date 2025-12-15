@@ -309,7 +309,7 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => router.push('/learning?focus=conversation')}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-white text-black font-space font-bold rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-gray-200 text-gray-900 font-space font-bold rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-gray-300 transition-all"
                 >
                   Start Lesson
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -418,7 +418,7 @@ export default function PerformanceMetricCards({ session }: PerformanceMetricCar
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => router.push('/learning?focus=closing')}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-white text-black font-space font-bold rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-gray-200 text-gray-900 font-space font-bold rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-gray-300 transition-all"
                 >
                   Start Lesson
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />

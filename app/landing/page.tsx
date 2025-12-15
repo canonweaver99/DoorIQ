@@ -225,7 +225,7 @@ function Navigation() {
             </Link>
             <Link
               href="/book-demo"
-              className="group relative px-5 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 bg-white text-black font-bold rounded-md text-sm sm:text-sm tracking-tight transition-all hover:bg-white/95 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
+              className="group relative px-5 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-sm tracking-tight transition-all hover:bg-gray-300 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
             >
               <span className="relative z-10 flex items-center gap-1 sm:gap-2">
                 <span className="hidden sm:inline">Book a Demo</span>
@@ -423,7 +423,7 @@ function HeroSection() {
             >
               <Link
                 href="/book-demo"
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-gray-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Book a Demo
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -549,7 +549,7 @@ function HeroSection() {
             >
               <Link
                 href="/book-demo"
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-gray-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Book a Demo
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -646,7 +646,7 @@ function HeroSection() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2">
                 <Link
                   href="/book-demo"
-                  className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-white text-black font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                  className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-gray-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Book a Demo
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -1429,7 +1429,7 @@ function CTASection() {
           <div className="mt-6 sm:mt-8">
             <Link
               href="/book-demo"
-              className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-white text-black font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-white/95 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-gray-200 text-gray-900 font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-gray-300 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Book Your Demo Today
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -1593,7 +1593,7 @@ function LandingFooter() {
             <h3 className="text-sm text-white/70 font-space uppercase tracking-wider mb-4 leading-none">Get Started</h3>
             <Link
               href="/book-demo"
-              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-white text-black font-semibold rounded-md text-sm tracking-tight hover:bg-white/95 transition-all ml-auto sm:ml-0 lg:ml-0"
+              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-200 text-gray-900 font-semibold rounded-md text-sm tracking-tight hover:bg-gray-300 transition-all ml-auto sm:ml-0 lg:ml-0"
             >
               Book a Demo
               <ArrowRight className="w-4 h-4" />

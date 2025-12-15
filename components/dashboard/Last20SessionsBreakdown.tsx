@@ -478,7 +478,7 @@ export default function Last20SessionsBreakdown() {
                               router.push(`/analytics/${session.id}`)
                             }
                           }}
-                          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-black font-space font-bold rounded-md text-sm md:text-base tracking-tight hover:bg-white/95 transition-all"
+                          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-900 font-space font-bold rounded-md text-sm md:text-base tracking-tight hover:bg-gray-300 transition-all"
                         >
                           View Details
                           <Eye className="w-4 h-4" />

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { 
-  Building2, Package, DollarSign, MessageCircle, Upload, 
+  Building2, Package, DollarSign, Upload, 
   FileText, Save, Plus, Trash2, Edit2, Check, X, Zap, Video
 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -16,7 +16,7 @@ import { useToast } from '@/components/ui/toast'
 const CoachScripts = lazy(() => import('@/components/manager/CoachScripts'))
 const TrainingVideos = lazy(() => import('@/components/manager/TrainingVideos'))
 
-type Tab = 'company' | 'pricing' | 'objections' | 'documents' | 'coach-scripts' | 'videos'
+type Tab = 'company' | 'pricing' | 'coach-scripts' | 'videos'
 
 interface TeamGradingConfig {
   company_name?: string
@@ -282,8 +282,6 @@ export default function KnowledgeBase() {
     { id: 'coach-scripts' as Tab, name: 'Scripts', icon: FileText },
     { id: 'company' as Tab, name: 'Company Info', icon: Building2 },
     { id: 'pricing' as Tab, name: 'Pricing Tables', icon: DollarSign },
-    { id: 'objections' as Tab, name: 'Objection Handlers', icon: MessageCircle },
-    { id: 'documents' as Tab, name: 'Upload Documents', icon: Upload },
     { id: 'videos' as Tab, name: 'Training Videos', icon: Video },
   ]
 
@@ -391,21 +389,6 @@ export default function KnowledgeBase() {
         {/* Pricing Tab */}
         {activeTab === 'pricing' && (
           <PricingTab config={config} setConfig={setConfig} />
-        )}
-
-        {/* Objections Tab */}
-        {activeTab === 'objections' && (
-          <ObjectionsTab config={config} setConfig={setConfig} />
-        )}
-
-        {/* Documents Tab */}
-        {activeTab === 'documents' && (
-          <DocumentsTab 
-            documents={documents}
-            uploading={uploading}
-            onUpload={handleFileUpload}
-            onDelete={deleteDocument}
-          />
         )}
 
         {/* Coach Scripts Tab */}
@@ -559,241 +542,6 @@ function PricingTab({ config, setConfig }: { config: TeamGradingConfig; setConfi
         <Plus className="w-4 h-4" />
         Add Pricing Item
       </button>
-    </div>
-  )
-}
-
-function ObjectionsTab({ config, setConfig }: { config: TeamGradingConfig; setConfig: (c: TeamGradingConfig) => void }) {
-  const addObjection = () => {
-    setConfig({
-      ...config,
-      objection_handlers: [...(config.objection_handlers || []), { objection: '', response: '' }]
-    })
-  }
-
-  const updateObjection = (index: number, field: string, value: string) => {
-    const newHandlers = [...(config.objection_handlers || [])]
-    newHandlers[index] = { ...newHandlers[index], [field]: value }
-    setConfig({ ...config, objection_handlers: newHandlers })
-  }
-
-  const removeObjection = (index: number) => {
-    setConfig({
-      ...config,
-      objection_handlers: config.objection_handlers?.filter((_, i) => i !== index)
-    })
-  }
-
-  return (
-    <div className="space-y-4">
-      {config.objection_handlers?.map((handler, index) => (
-        <div key={index} className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="flex-1 space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Objection</label>
-                <input
-                  type="text"
-                  value={handler.objection}
-                  onChange={(e) => updateObjection(index, 'objection', e.target.value)}
-                  placeholder="e.g., That's too expensive"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Response</label>
-                <textarea
-                  value={handler.response}
-                  onChange={(e) => updateObjection(index, 'response', e.target.value)}
-                  placeholder="I understand your concern. Let me show you how this investment protects your biggest asset..."
-                  rows={3}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm"
-                />
-              </div>
-            </div>
-            <button
-              onClick={() => removeObjection(index)}
-              className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-            >
-              <Trash2 className="w-4 h-4 text-red-400" />
-            </button>
-          </div>
-        </div>
-      ))}
-
-      <button
-        onClick={addObjection}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white transition-all"
-      >
-        <Plus className="w-4 h-4" />
-        Add Objection Handler
-      </button>
-    </div>
-  )
-}
-
-function DocumentsTab({ documents, uploading, onUpload, onDelete }: {
-  documents: KnowledgeDocument[]
-  uploading: boolean
-  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onDelete: (id: string) => void
-}) {
-  const isMobile = useIsMobile()
-  const { trigger } = useHaptic()
-  const [swipedDocId, setSwipedDocId] = useState<string | null>(null)
-
-  return (
-    <div className="space-y-6">
-      <div className={`border-2 border-dashed border-white/20 rounded-xl text-center ${isMobile ? 'p-6' : 'p-8'}`}>
-        <Upload className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} text-slate-400 mx-auto mb-3`} />
-        <h3 className={`font-semibold text-white mb-2 ${isMobile ? 'text-base' : 'text-lg'}`}>Upload Documents</h3>
-        <p className={`text-slate-400 mb-4 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-          Upload training materials, playbooks, product catalogs, or any documents you want the AI to reference during grading
-        </p>
-        <label className={`inline-flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl text-sm font-semibold text-white transition-all cursor-pointer min-h-[44px] ${isMobile ? 'w-full justify-center' : ''}`}>
-          {uploading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Uploading...
-            </>
-          ) : (
-            <>
-              <Upload className="w-4 h-4" />
-              Choose Files
-            </>
-          )}
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx,.txt"
-            onChange={onUpload}
-            className="hidden"
-            disabled={uploading}
-          />
-        </label>
-        <p className="text-xs text-slate-500 mt-2">Supported: PDF, DOC, DOCX, TXT</p>
-      </div>
-
-      {documents.length > 0 && (
-        <div>
-          <h3 className={`font-semibold text-white mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>Uploaded Documents ({documents.length})</h3>
-          <div className="space-y-3">
-            {documents.map((doc) => {
-              const cardRef = useRef<HTMLDivElement>(null)
-              
-              useEffect(() => {
-                const element = cardRef.current
-                if (!element || !isMobile) return
-
-                let startX = 0
-                let isSwiping = false
-
-                const handleTouchStart = (e: TouchEvent) => {
-                  startX = e.touches[0].clientX
-                  isSwiping = true
-                }
-
-                const handleTouchEnd = (e: TouchEvent) => {
-                  if (!isSwiping) return
-                  const endX = e.changedTouches[0].clientX
-                  const deltaX = endX - startX
-                  
-                  if (deltaX < -50) {
-                    // Swipe left - show delete
-                    trigger('light')
-                    setSwipedDocId(doc.id)
-                    setTimeout(() => {
-                      onDelete(doc.id)
-                      setSwipedDocId(null)
-                    }, 300)
-                  }
-                  
-                  isSwiping = false
-                }
-
-                element.addEventListener('touchstart', handleTouchStart, { passive: true })
-                element.addEventListener('touchend', handleTouchEnd, { passive: true })
-
-                return () => {
-                  element.removeEventListener('touchstart', handleTouchStart)
-                  element.removeEventListener('touchend', handleTouchEnd)
-                }
-              }, [doc.id, isMobile, onDelete, trigger])
-
-              return isMobile ? (
-                <IOSCard
-                  key={doc.id}
-                  ref={cardRef}
-                  variant="elevated"
-                  interactive
-                  className="overflow-hidden"
-                >
-                  <div className="p-4">
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-8 h-8 text-purple-400 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{doc.document_name}</p>
-                        <p className="text-xs text-white/60 mt-1">
-                          {(doc.file_size_bytes / 1024).toFixed(1)} KB • {doc.document_type}
-                        </p>
-                        {doc.is_shared_with_team && (
-                          <p className="text-xs text-purple-400 mt-1">Shared with team</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          doc.use_in_grading 
-                            ? 'bg-green-500/20 text-green-300' 
-                            : 'bg-slate-500/20 text-slate-400'
-                        }`}>
-                          {doc.use_in_grading ? 'In Use' : 'Inactive'}
-                        </span>
-                        <button
-                          onClick={() => {
-                            trigger('warning')
-                            onDelete(doc.id)
-                          }}
-                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        >
-                          <Trash2 className="w-5 h-5 text-red-400" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </IOSCard>
-              ) : (
-                <div key={doc.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <FileText className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{doc.document_name}</p>
-                      <p className="text-xs text-slate-400">
-                        {(doc.file_size_bytes / 1024).toFixed(1)} KB • {doc.document_type}
-                        {doc.is_shared_with_team && ' • Shared'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      doc.use_in_grading 
-                        ? 'bg-green-500/20 text-green-300' 
-                        : 'bg-slate-500/20 text-slate-400'
-                    }`}>
-                      {doc.use_in_grading ? 'In Use' : 'Inactive'}
-                    </span>
-                    <button
-                      onClick={() => onDelete(doc.id)}
-                      className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -28,6 +28,8 @@ export default function CoachScripts() {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [previewScript, setPreviewScript] = useState<CoachingScript | null>(null)
+  const [fullScriptContent, setFullScriptContent] = useState<string | null>(null)
+  const [loadingFullContent, setLoadingFullContent] = useState(false)
   const [scriptText, setScriptText] = useState('')
   const [scriptName, setScriptName] = useState('')
   const [inputMode, setInputMode] = useState<'text' | 'upload'>('text')
@@ -191,6 +193,30 @@ export default function CoachScripts() {
     }
   }
 
+  const handlePreviewScript = async (script: CoachingScript) => {
+    setPreviewScript(script)
+    setFullScriptContent(null)
+    setLoadingFullContent(true)
+
+    try {
+      // Fetch full script content
+      const response = await fetch(`/api/coach/script?id=${script.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setFullScriptContent(data.content || script.content_preview || '')
+      } else {
+        // Fallback to preview if full content fetch fails
+        setFullScriptContent(script.content_preview || '')
+      }
+    } catch (error) {
+      console.error('Error fetching full script content:', error)
+      // Fallback to preview on error
+      setFullScriptContent(script.content_preview || '')
+    } finally {
+      setLoadingFullContent(false)
+    }
+  }
+
   const deleteScript = async (id: string) => {
     if (!confirm('Are you sure you want to delete this coaching script?')) return
 
@@ -203,6 +229,7 @@ export default function CoachScripts() {
         setScripts(scripts.filter(s => s.id !== id))
         if (previewScript?.id === id) {
           setPreviewScript(null)
+          setFullScriptContent(null)
         }
         showToast({
           type: 'success',
@@ -404,7 +431,7 @@ export default function CoachScripts() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
-                      onClick={() => setPreviewScript(script)}
+                      onClick={() => handlePreviewScript(script)}
                       className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                       title="Preview"
                     >
@@ -426,29 +453,44 @@ export default function CoachScripts() {
 
         {/* Preview Modal */}
         {previewScript && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setPreviewScript(null)
+                setFullScriptContent(null)
+              }
+            }}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="bg-[#1a1a1a] border border-white/20 rounded-lg max-w-4xl w-full max-h-[80vh] flex flex-col"
             >
-              <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
                 <h3 className="font-semibold text-white">{previewScript.file_name}</h3>
                 <button
-                  onClick={() => setPreviewScript(null)}
+                  onClick={() => {
+                    setPreviewScript(null)
+                    setFullScriptContent(null)
+                  }}
                   className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-white/70" />
                 </button>
               </div>
-              <div className="p-4 overflow-y-auto flex-1">
-                {previewScript.content_preview ? (
-                  <pre className="text-white/80 text-sm whitespace-pre-wrap font-mono">
-                    {previewScript.content_preview}
+              <div className="p-4 overflow-y-auto flex-1 min-h-0">
+                {loadingFullContent ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                  </div>
+                ) : fullScriptContent ? (
+                  <pre className="text-white/80 text-sm whitespace-pre-wrap font-mono break-words">
+                    {fullScriptContent}
                   </pre>
                 ) : (
                   <p className="text-white/60 text-center py-8">
-                    Content preview not available. Download the file to view full content.
+                    Content not available. Download the file to view full content.
                   </p>
                 )}
               </div>

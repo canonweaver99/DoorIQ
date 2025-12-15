@@ -320,7 +320,7 @@ export default function RecentSessionsPreview() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => router.push(`/analytics/${session.id}`)}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-space font-bold rounded-md text-base md:text-lg tracking-tight hover:bg-white/95 transition-all"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-900 font-space font-bold rounded-md text-base md:text-lg tracking-tight hover:bg-gray-300 transition-all"
                   >
                     View Details
                     <Eye className="w-5 h-5" />

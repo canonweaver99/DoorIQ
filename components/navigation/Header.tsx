@@ -626,7 +626,7 @@ function HeaderContent() {
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="px-4 py-2 text-sm md:text-base bg-white text-black font-bold rounded-md transition-all hover:bg-white/90 font-space"
+                  className="px-4 py-2 text-sm md:text-base bg-gray-200 text-gray-900 font-bold rounded-md transition-all hover:bg-gray-300 font-space"
                 >
                   Sign Up
                 </Link>
@@ -708,7 +708,7 @@ function HeaderContent() {
                     <Link
                       href="/auth/signup"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center justify-center px-4 py-3 rounded-lg text-base sm:text-lg font-bold bg-white text-black hover:bg-white/90 transition-all font-space"
+                      className="flex items-center justify-center px-4 py-3 rounded-lg text-base sm:text-lg font-bold bg-gray-200 text-gray-900 hover:bg-gray-300 transition-all font-space"
                     >
                       Sign Up
                     </Link>
@@ -799,7 +799,7 @@ function HeaderContent() {
                         <Link
                           href="/auth/signup"
                           onClick={() => setIsSidebarOpen(false)}
-                          className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-white text-black px-[14px] py-[9px] text-[14px] font-semibold transition hover:bg-white/95"
+                          className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-gray-200 text-gray-900 px-[14px] py-[9px] text-[14px] font-semibold transition hover:bg-gray-300"
                         >
                           <ArrowRight className="h-[16.5px] w-[16.5px]" />
                           <span>Sign Up</span>
@@ -1099,7 +1099,7 @@ function HeaderContent() {
                 <motion.div
                   key="sidebar-panel"
                   ref={sidebarRef}
-                  className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-border/20 dark:border-white/10 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)]"
+                  className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-border/20 dark:border-white/10 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#1a0d2e] dark:via-[#1f0f3a] dark:to-[#250f45] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)]"
                   role="menu"
                   initial={{ opacity: 0, x: 64 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -1250,7 +1250,7 @@ function HeaderContent() {
                     {isSignedIn && (
                       <button
                         onClick={handleSignOut}
-                        className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-white text-black px-[14px] py-[9px] text-[14px] font-semibold transition hover:bg-white/95 disabled:cursor-not-allowed disabled:opacity-70"
+                        className="flex w-full items-center justify-center gap-[9px] rounded-xl border border-white/10 bg-gray-200 text-gray-900 px-[14px] py-[9px] text-[14px] font-semibold transition hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70"
                         disabled={signingOut}
                       >
                         <LogOut className="h-[16.5px] w-[16.5px]" />

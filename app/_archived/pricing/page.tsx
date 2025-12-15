@@ -467,7 +467,7 @@ function PricingPageContent() {
                               "w-full mt-auto py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2",
                               selectedCard === tier.id
                                 ? "bg-emerald-500 text-black hover:bg-emerald-400 shadow-md shadow-emerald-500/20"
-                                : "bg-white text-black hover:bg-gray-100"
+                                : "bg-gray-200 text-gray-900 hover:bg-gray-300"
                             )}
                           >
                             <span>{getCTA(tier.id)}</span>

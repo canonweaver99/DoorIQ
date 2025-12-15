@@ -4,10 +4,12 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
+ * GET /api/coach/script?id=scriptId
+ * Get a single coaching script with full content
  * GET /api/coach/script
  * List all coaching scripts for the user's team/organization
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
     
@@ -27,7 +29,48 @@ export async function GET() {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // Fetch coaching scripts for the organization/team
+    const url = new URL(request.url)
+    const scriptId = url.searchParams.get('id')
+
+    // If scriptId is provided, fetch single script with full content
+    if (scriptId) {
+      const { data: script, error: fetchError } = await supabase
+        .from('knowledge_base')
+        .select('*')
+        .eq('id', scriptId)
+        .eq('is_coaching_script', true)
+        .eq('is_active', true)
+        .single()
+
+      if (fetchError || !script) {
+        return NextResponse.json({ error: 'Script not found' }, { status: 404 })
+      }
+
+      // Verify ownership (check metadata for organization_id or team_id)
+      const scriptOrgId = script.metadata?.organization_id
+      const scriptTeamId = script.metadata?.team_id
+      
+      if (scriptOrgId && scriptOrgId !== userProfile.organization_id) {
+        return NextResponse.json({ error: 'Unauthorized to view this script' }, { status: 403 })
+      }
+      
+      if (scriptTeamId && scriptTeamId !== userProfile.team_id) {
+        return NextResponse.json({ error: 'Unauthorized to view this script' }, { status: 403 })
+      }
+
+      return NextResponse.json({
+        id: script.id,
+        file_name: script.file_name,
+        file_url: script.file_url,
+        file_size: script.file_size,
+        file_type: script.file_type,
+        content: script.content || null,
+        created_at: script.created_at,
+        updated_at: script.updated_at
+      })
+    }
+
+    // Otherwise, fetch all scripts with previews
     let query = supabase
       .from('knowledge_base')
       .select('*')

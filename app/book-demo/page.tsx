@@ -543,7 +543,7 @@ export default function BookDemoPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group w-full px-8 py-3.5 bg-white text-black font-medium rounded-md text-base tracking-tight hover:bg-white/95 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-space"
+                  className="group w-full px-8 py-3.5 bg-gray-200 text-gray-900 font-medium rounded-md text-base tracking-tight hover:bg-gray-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 font-space"
                 >
                   {isSubmitting ? (
                     <>
