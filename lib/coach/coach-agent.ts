@@ -4,14 +4,7 @@
  */
 
 import OpenAI from 'openai'
-import { 
-  COACH_SYSTEM_PROMPT, 
-  ENHANCED_COACH_SYSTEM_PROMPT,
-  ADAPTIVE_COACH_PROMPT,
-  buildCoachPrompt,
-  buildEnhancedCoachPrompt 
-} from './prompts'
-import { ScriptSection, ConversationAnalysis, analyzeConversation } from './rag-retrieval'
+import { ScriptSection } from './rag-retrieval'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -20,108 +13,79 @@ const openai = new OpenAI({
 export interface CoachSuggestion {
   suggestedLine: string
   explanation?: string
-  reasoning?: string
-  scriptSection?: string
   confidence: 'high' | 'medium' | 'low'
-  tacticalNote?: string
-  alternatives?: string[]
-  isAdapted?: boolean
+  intent?: string
 }
 
 export interface CoachAgentContext {
   homeownerText: string
-  transcript: Array<{ speaker: string; text: string; timestamp?: string }>
+  repLastStatement?: string
   scriptSections: ScriptSection[]
-  conversationAnalysis?: ConversationAnalysis
-  companyInfo?: {
-    company_name?: string
-    company_mission?: string
-    product_description?: string
-    service_guarantees?: string
-    company_values?: string[]
-  } | null
-  pricingInfo?: Array<{
-    name?: string
-    price?: number
-    frequency?: string
-    description?: string
-  }> | null
+  companyName?: string
   repName?: string
 }
 
 /**
- * Generate a coaching suggestion using OpenAI with enhanced context awareness
+ * Generate a coaching suggestion using OpenAI - optimized for speed
  */
 export async function generateSuggestion(
   context: CoachAgentContext
 ): Promise<CoachSuggestion> {
   try {
-    // Analyze conversation if not provided
-    const conversationAnalysis = context.conversationAnalysis || analyzeConversation(context.transcript)
-    
-    // Format conversation context from transcript
-    const conversationContext = formatTranscript(context.transcript)
-    const fullTranscript = formatTranscript(context.transcript)
-    
-    // Format script sections for prompt
+    // Format script sections for prompt - truncate long sections for speed
     const scriptSectionsText = context.scriptSections
-      .map((section, index) => `[Section ${index + 1}] (Score: ${section.score.toFixed(2)})\n${section.text}`)
+      .map((section) => {
+        // Limit each section to 300 chars to reduce token usage
+        const text = section.text.length > 300 
+          ? section.text.substring(0, 300) + '...' 
+          : section.text
+        return text
+      })
       .join('\n\n---\n\n')
     
-    // Format company info and pricing for prompt
-    const companyInfoText = formatCompanyInfo(context.companyInfo, context.pricingInfo)
-    
-    // Use enhanced prompt if we have good script matches, otherwise use adaptive
-    const hasGoodMatches = context.scriptSections.some(s => s.score > 2)
-    const useEnhanced = hasGoodMatches && conversationAnalysis.turnCount > 0
-    
-    let userPrompt: string
-    let systemPrompt: string
-    
-    if (useEnhanced) {
-      systemPrompt = ENHANCED_COACH_SYSTEM_PROMPT
-      userPrompt = buildEnhancedCoachPrompt(
-        context.homeownerText,
-        conversationAnalysis,
-        fullTranscript,
-        scriptSectionsText,
-        companyInfoText,
-        context.repName
-      )
-    } else if (context.scriptSections.length === 0 || !hasGoodMatches) {
-      // Use adaptive prompt when no good script matches
-      const repNameContext = context.repName ? `\n\nRep's name: ${context.repName}` : ''
-      systemPrompt = ADAPTIVE_COACH_PROMPT
-      userPrompt = `Homeowner said: "${context.homeownerText}"
+    // Build prompt with few-shot examples
+    const systemPrompt = `You're a friend giving casual, quick advice during a practice session. Keep responses SHORT (1-2 sentences max, often just a phrase). Sound relaxed and friendly.
 
-Conversation context:
-${conversationContext}
+Examples:
+Homeowner: "I'm not interested"
+You: "Try: 'I hear you - most of our best customers said the same thing at first. Mind if I ask what you're using now?'"
 
-${companyInfoText ? `${companyInfoText}\n\n` : ''}Available script sections (may not be perfect match):
-${scriptSectionsText || 'No relevant script sections found.'}${repNameContext}
+Homeowner: "How much does it cost?"
+You: "Try: 'Great question! Before I throw numbers at you, mind if I ask - are you dealing with [specific pest]?'"
 
-Generate a SHORT, CASUAL response (1-2 sentences max, often just a phrase) like a friend giving advice - relaxed and friendly, like you're both sipping whiskey by a fire. Keep it brief, natural, and contextual. Use the rep's name naturally in the response when appropriate.`
-    } else {
-      // Fallback to standard prompt
-      systemPrompt = COACH_SYSTEM_PROMPT
-      userPrompt = buildCoachPrompt(
-        context.homeownerText,
-        conversationContext,
-        scriptSectionsText,
-        companyInfoText,
-        context.repName
-      )
-    }
+Homeowner: "I need to think about it"
+You: "Try: 'Totally get it. Quick question - what specifically do you want to think over? Price, timing, or something else?'"`
     
-    // Call OpenAI
+    const companyName = context.companyName ? `\nCompany name: ${context.companyName}` : ''
+    const repName = context.repName ? `\nRep's name: ${context.repName}` : ''
+    const repContext = context.repLastStatement ? `\nRep just said: "${context.repLastStatement}"` : ''
+    
+    const userPrompt = `Homeowner said: "${context.homeownerText}"
+
+1. What objection/intent is this? (price, time, skepticism, interest, etc)
+2. Suggest a SHORT, CASUAL response (1-2 sentences max) from the script that handles this well.
+
+Relevant script sections:
+${scriptSectionsText}${companyName}${repName}${repContext}
+
+Replace [COMPANY NAME] with the company name and [YOUR NAME] or [REP NAME] with the rep's name if provided.
+
+Return JSON:
+{
+  "intent": "price_objection|time_objection|skepticism|interest|neutral",
+  "suggestedLine": "the response with placeholders replaced",
+  "confidence": "high|medium|low"
+}`
+    
+    // Call OpenAI with optimized settings for speed
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Faster and cheaper for real-time suggestions
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.5, // Slightly higher for more conversational tone
-      max_tokens: 150, // Reduced to enforce shorter, more conversational suggestions
+      temperature: 0.3,
+      max_tokens: 100,
       response_format: { type: 'json_object' }
     })
     
@@ -134,85 +98,25 @@ Generate a SHORT, CASUAL response (1-2 sentences max, often just a phrase) like 
     const parsed = JSON.parse(content)
     
     // Get the suggested line and replace placeholders
-    let suggestedLine = parsed.suggestedLine || parsed.line || 'No suggestion available'
-    suggestedLine = replacePlaceholders(suggestedLine, context.companyInfo, context.repName || '')
-    // Remove em dashes and replace with regular hyphens
+    let suggestedLine = parsed.suggestedLine || 'Continue the conversation naturally.'
+    suggestedLine = replacePlaceholders(suggestedLine, context.companyName, context.repName || '')
     suggestedLine = suggestedLine.replace(/—/g, '-').replace(/–/g, '-')
     
-    // Validate and return suggestion
     return {
       suggestedLine,
       explanation: parsed.explanation,
-      reasoning: parsed.reasoning,
-      scriptSection: parsed.scriptSection,
       confidence: parsed.confidence || 'medium',
-      tacticalNote: parsed.tacticalNote,
-      alternatives: Array.isArray(parsed.alternatives) ? parsed.alternatives.map((alt: string) => {
-        let cleaned = replacePlaceholders(alt, context.companyInfo, context.repName || '')
-        // Remove em dashes and replace with regular hyphens
-        cleaned = cleaned.replace(/—/g, '-').replace(/–/g, '-')
-        return cleaned
-      }) : [],
-      isAdapted: !hasGoodMatches || parsed.isAdapted || false
+      intent: parsed.intent
     }
   } catch (error: any) {
     console.error('Error generating coach suggestion:', error)
     
-    // Return fallback suggestion
     return {
       suggestedLine: 'Continue the conversation naturally based on the script.',
       explanation: 'Unable to generate suggestion at this time.',
-      confidence: 'low',
-      isAdapted: true
+      confidence: 'low'
     }
   }
-}
-
-/**
- * Format company info for prompt
- */
-function formatCompanyInfo(
-  companyInfo: CoachAgentContext['companyInfo'],
-  pricingInfo: CoachAgentContext['pricingInfo']
-): string {
-  if (!companyInfo && (!pricingInfo || pricingInfo.length === 0)) {
-    return ''
-  }
-
-  const parts: string[] = []
-  
-  if (companyInfo) {
-    parts.push('🏢 COMPANY INFORMATION:')
-    if (companyInfo.company_name) {
-      parts.push(`- Company Name: ${companyInfo.company_name}`)
-    }
-    if (companyInfo.company_mission) {
-      parts.push(`- Mission: ${companyInfo.company_mission}`)
-    }
-    if (companyInfo.product_description) {
-      parts.push(`- Product/Service: ${companyInfo.product_description}`)
-    }
-    if (companyInfo.service_guarantees) {
-      parts.push(`- Guarantees: ${companyInfo.service_guarantees}`)
-    }
-    if (companyInfo.company_values && companyInfo.company_values.length > 0) {
-      parts.push(`- Values: ${companyInfo.company_values.join(', ')}`)
-    }
-  }
-
-  if (pricingInfo && pricingInfo.length > 0) {
-    parts.push('\n💰 PRICING INFORMATION:')
-    pricingInfo.forEach((item, index) => {
-      if (item.name || item.price) {
-        const priceStr = item.price ? `$${item.price}` : 'Price not set'
-        const freqStr = item.frequency ? ` (${item.frequency})` : ''
-        const descStr = item.description ? ` - ${item.description}` : ''
-        parts.push(`${index + 1}. ${item.name || 'Unnamed Plan'}: ${priceStr}${freqStr}${descStr}`)
-      }
-    })
-  }
-
-  return parts.join('\n')
 }
 
 /**
@@ -220,15 +124,15 @@ function formatCompanyInfo(
  */
 function replacePlaceholders(
   line: string,
-  companyInfo: CoachAgentContext['companyInfo'],
+  companyName: string | undefined,
   repName: string
 ): string {
   let result = line
 
   // Replace [COMPANY NAME] or [COMPANY_NAME]
-  if (companyInfo?.company_name) {
-    result = result.replace(/\[COMPANY NAME\]/gi, companyInfo.company_name)
-    result = result.replace(/\[COMPANY_NAME\]/gi, companyInfo.company_name)
+  if (companyName) {
+    result = result.replace(/\[COMPANY NAME\]/gi, companyName)
+    result = result.replace(/\[COMPANY_NAME\]/gi, companyName)
   }
 
   // Replace [YOUR NAME] or [YOUR_NAME] or [REP NAME]
@@ -246,25 +150,4 @@ function replacePlaceholders(
   result = result.replace(/\s+/g, ' ')
 
   return result
-}
-
-/**
- * Format transcript for context
- */
-function formatTranscript(
-  transcript: Array<{ speaker: string; text: string; timestamp?: string }>
-): string {
-  if (transcript.length === 0) {
-    return 'No conversation history yet.'
-  }
-  
-  // Get last 10 exchanges for context (to keep prompt size manageable)
-  const recentTranscript = transcript.slice(-10)
-  
-  return recentTranscript
-    .map((entry, index) => {
-      const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'Rep' : 'Homeowner'
-      return `[${index + 1}] ${speaker}: ${entry.text}`
-    })
-    .join('\n')
 }

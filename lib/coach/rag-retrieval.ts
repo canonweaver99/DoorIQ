@@ -8,6 +8,7 @@ interface ScriptDocument {
   id: string
   content: string
   file_name: string
+  chunks?: ScriptChunk[] // Cached chunks from JSONB column
 }
 
 interface ScriptSection {
@@ -404,6 +405,48 @@ function splitIntoChunks(content: string, chunkSize: number = 500, overlap: numb
 }
 
 /**
+ * Pre-process script content into chunks for caching
+ * Returns chunks with pre-extracted keywords for faster retrieval
+ */
+export interface ScriptChunk {
+  text: string
+  keywords: string[]
+  startIndex: number
+  endIndex: number
+}
+
+export function preprocessScriptChunks(content: string): ScriptChunk[] {
+  if (!content || content.trim().length === 0) {
+    return []
+  }
+
+  // Use optimized chunk size (300 chars, 50 overlap) matching searchScripts
+  const chunkSize = 300
+  const overlap = 50
+  const chunks: ScriptChunk[] = []
+  let startIndex = 0
+
+  while (startIndex < content.length) {
+    const endIndex = Math.min(startIndex + chunkSize, content.length)
+    const text = content.substring(startIndex, endIndex)
+    
+    // Extract keywords for this chunk
+    const keywords = extractKeywords(text)
+
+    chunks.push({
+      text,
+      keywords,
+      startIndex,
+      endIndex
+    })
+
+    startIndex += chunkSize - overlap
+  }
+
+  return chunks
+}
+
+/**
  * Analyze conversation to determine current stage and context
  */
 export function analyzeConversation(
@@ -454,13 +497,14 @@ export function analyzeConversation(
 }
 
 /**
- * Search scripts using enhanced keyword matching with intent and stage awareness
+ * Search scripts using simplified keyword matching - optimized for speed
+ * Uses cached chunks when available, falls back to on-the-fly processing
  * Returns top N most relevant sections
  */
 export function searchScripts(
   homeownerText: string,
   scripts: ScriptDocument[],
-  topN: number = 5,
+  topN: number = 2,
   conversationAnalysis?: ConversationAnalysis
 ): ScriptSection[] {
   if (!homeownerText || homeownerText.trim().length === 0) {
@@ -472,55 +516,99 @@ export function searchScripts(
   }
   
   const keywords = extractKeywords(homeownerText)
-  const intent = classifyIntent(homeownerText)
+  const homeownerLower = homeownerText.toLowerCase()
   
-  // Default conversation analysis if not provided
-  const analysis = conversationAnalysis || {
-    stage: 'discovery' as ConversationStage['stage'],
-    turnCount: 5,
-    lastIntent: intent,
-    momentum: 'neutral' as const,
-    keyPoints: []
+  if (keywords.length === 0) {
+    // If no keywords, return first sections from scripts
+    return scripts.slice(0, topN).map(script => {
+      // Use cached chunks if available, otherwise use content
+      if (script.chunks && script.chunks.length > 0) {
+        return {
+          text: script.chunks[0].text,
+          startIndex: script.chunks[0].startIndex,
+          endIndex: script.chunks[0].endIndex,
+          score: 0.5
+        }
+      }
+      return {
+        text: script.content.substring(0, 300),
+        startIndex: 0,
+        endIndex: Math.min(300, script.content.length),
+        score: 0.5
+      }
+    })
   }
   
-  const conversationStage: ConversationStage = {
-    stage: analysis.stage,
-    turnCount: analysis.turnCount
-  }
-  
-  if (keywords.length === 0 && intent.type === 'neutral') {
-    // If no keywords extracted and no clear intent, return first sections from scripts
-    return scripts.slice(0, topN).map(script => ({
-      text: script.content.substring(0, 300),
-      startIndex: 0,
-      endIndex: Math.min(300, script.content.length),
-      score: 0.5
-    }))
-  }
-  
-  // Split each script into chunks and score them with enhanced scoring
+  // Simplified scoring - just keyword matching (much faster)
   const allSections: ScriptSection[] = []
   
   scripts.forEach(script => {
-    if (!script.content || script.content.trim().length === 0) {
-      return
-    }
-    
-    const chunks = splitIntoChunks(script.content, 500, 100)
-    
-    chunks.forEach(chunk => {
-      const score = calculateEnhancedScore(
-        chunk.text, 
-        keywords, 
-        homeownerText, 
-        intent, 
-        conversationStage
-      )
-      allSections.push({
-        ...chunk,
-        score
+    // Use cached chunks if available (much faster)
+    if (script.chunks && script.chunks.length > 0) {
+      script.chunks.forEach(chunk => {
+        let score = 0
+        const chunkLower = chunk.text.toLowerCase()
+        
+        // Use pre-extracted keywords for faster matching
+        const keywordMatches = chunk.keywords.filter(kw => 
+          keywords.some(searchKw => chunkLower.includes(searchKw.toLowerCase()))
+        )
+        score += keywordMatches.length
+        
+        // Also check direct keyword matches in text
+        keywords.forEach(keyword => {
+          const matches = (chunkLower.match(new RegExp(keyword, 'gi')) || []).length
+          score += matches
+        })
+        
+        // Boost for exact phrase matches
+        if (chunkLower.includes(homeownerLower)) {
+          score += 5
+        }
+        
+        // Prefer shorter sections
+        score = score / (1 + chunk.text.length / 300)
+        
+        allSections.push({
+          text: chunk.text,
+          startIndex: chunk.startIndex,
+          endIndex: chunk.endIndex,
+          score
+        })
       })
-    })
+    } else {
+      // Fall back to on-the-fly processing (backward compatibility)
+      if (!script.content || script.content.trim().length === 0) {
+        return
+      }
+      
+      // Smaller chunks (300 chars) with less overlap (50) for speed
+      const chunks = splitIntoChunks(script.content, 300, 50)
+      
+      chunks.forEach(chunk => {
+        let score = 0
+        const chunkLower = chunk.text.toLowerCase()
+        
+        // Simple keyword matching
+        keywords.forEach(keyword => {
+          const matches = (chunkLower.match(new RegExp(keyword, 'gi')) || []).length
+          score += matches
+        })
+        
+        // Boost for exact phrase matches
+        if (chunkLower.includes(homeownerLower)) {
+          score += 5
+        }
+        
+        // Prefer shorter sections
+        score = score / (1 + chunk.text.length / 300)
+        
+        allSections.push({
+          ...chunk,
+          score
+        })
+      })
+    }
   })
   
   // Sort by score (highest first) and return top N

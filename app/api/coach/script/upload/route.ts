@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { extractTextFromPDF, isPDFFile, isTextFile } from '@/lib/coach/pdf-extractor'
+import { preprocessScriptChunks } from '@/lib/coach/rag-retrieval'
 
 export async function POST(request: Request) {
   try {
@@ -125,6 +126,18 @@ export async function POST(request: Request) {
         details: insertError.message,
         code: insertError.code 
       }, { status: 500 })
+    }
+
+    // Pre-process and cache script chunks for faster retrieval
+    try {
+      const chunks = preprocessScriptChunks(extractedContent.trim())
+      await supabase
+        .from('knowledge_base')
+        .update({ chunks })
+        .eq('id', document.id)
+    } catch (chunkError) {
+      // Log but don't fail - chunks are optional for backward compatibility
+      console.error('Error pre-processing script chunks:', chunkError)
     }
 
     return NextResponse.json({

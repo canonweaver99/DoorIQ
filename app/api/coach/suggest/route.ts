@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { searchScripts, formatSectionsForPrompt, analyzeConversation } from '@/lib/coach/rag-retrieval'
+import { searchScripts } from '@/lib/coach/rag-retrieval'
 import { generateSuggestion, CoachAgentContext } from '@/lib/coach/coach-agent'
 
 export async function POST(request: NextRequest) {
@@ -47,55 +47,45 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user's organization/team and full name
-    const { data: userProfile } = await supabase
+    // Get user profile first (needed for subsequent queries)
+    const { data: userProfile, error: userError } = await supabase
       .from('users')
       .select('organization_id, team_id, full_name')
       .eq('id', user.id)
       .single()
 
-    if (!userProfile) {
+    if (userError || !userProfile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // Fetch team grading config (company info and pricing tables)
-    let companyInfo = null
-    let pricingInfo = null
-    
-    if (userProfile.team_id) {
-      const { data: config } = await supabase
-        .from('team_grading_configs')
-        .select('company_name, company_mission, product_description, service_guarantees, company_values, pricing_info')
-        .eq('team_id', userProfile.team_id)
-        .single()
-      
-      if (config) {
-        companyInfo = {
-          company_name: config.company_name || '',
-          company_mission: config.company_mission || '',
-          product_description: config.product_description || '',
-          service_guarantees: config.service_guarantees || '',
-          company_values: config.company_values || []
+    // Fetch company name and scripts in parallel (after we have user profile)
+    const [companyResult, scriptsResult] = await Promise.all([
+      userProfile.team_id
+        ? supabase
+            .from('team_grading_configs')
+            .select('company_name')
+            .eq('team_id', userProfile.team_id)
+            .single()
+        : Promise.resolve({ data: null, error: null }),
+      (async () => {
+        let query = supabase
+          .from('knowledge_base')
+          .select('id, content, file_name, chunks')
+          .eq('is_coaching_script', true)
+          .eq('is_active', true)
+
+        if (userProfile.organization_id) {
+          query = query.contains('metadata', { organization_id: userProfile.organization_id })
+        } else if (userProfile.team_id) {
+          query = query.contains('metadata', { team_id: userProfile.team_id })
         }
-        pricingInfo = config.pricing_info || []
-      }
-    }
 
-    // Fetch active coaching scripts for the organization/team
-    let query = supabase
-      .from('knowledge_base')
-      .select('id, content, file_name')
-      .eq('is_coaching_script', true)
-      .eq('is_active', true)
+        return query
+      })()
+    ])
 
-    // Filter by organization_id or team_id from metadata
-    if (userProfile.organization_id) {
-      query = query.contains('metadata', { organization_id: userProfile.organization_id })
-    } else if (userProfile.team_id) {
-      query = query.contains('metadata', { team_id: userProfile.team_id })
-    }
-
-    const { data: scripts, error: scriptsError } = await query
+    const companyName = companyResult.data?.company_name
+    const { data: scripts, error: scriptsError } = scriptsResult
 
     if (scriptsError) {
       console.error('Error fetching scripts:', scriptsError)
@@ -111,14 +101,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert scripts to format expected by RAG retrieval
+    // Include cached chunks if available
     const scriptDocuments = scripts.map(script => ({
       id: script.id,
       content: script.content || '',
-      file_name: script.file_name
+      file_name: script.file_name,
+      chunks: script.chunks || undefined
     }))
 
-    // Perform RAG retrieval
-    const relevantSections = searchScripts(homeownerText, scriptDocuments, 5)
+    // Extract rep's last statement from transcript
+    const repLastStatement = transcript
+      ?.filter((entry: any) => entry.speaker === 'user' || entry.speaker === 'rep')
+      ?.slice(-1)[0]?.text
+
+    // Perform RAG retrieval - reduced to 2 sections for speed
+    const relevantSections = searchScripts(homeownerText, scriptDocuments, 2)
 
     if (relevantSections.length === 0) {
       return NextResponse.json({
@@ -128,60 +125,51 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Prepare transcript for coach agent
-    const transcriptEntries = transcript || []
-    const formattedTranscript = transcriptEntries.map((entry: any) => ({
-      speaker: entry.speaker || entry.role || 'unknown',
-      text: entry.text || entry.content || entry.message || '',
-      timestamp: entry.timestamp
-    }))
-
-    // Analyze conversation for enhanced context
-    const conversationAnalysis = analyzeConversation(formattedTranscript)
-
-    // Generate suggestion using coach agent with enhanced context
+    // Generate suggestion using coach agent with minimal context
     const coachContext: CoachAgentContext = {
       homeownerText,
-      transcript: formattedTranscript,
+      repLastStatement,
       scriptSections: relevantSections,
-      conversationAnalysis,
-      companyInfo,
-      pricingInfo,
-      repName: userProfile.full_name || ''
+      companyName,
+      repName: userProfile.full_name || undefined
     }
 
     const suggestion = await generateSuggestion(coachContext)
 
-    // Save suggestion to session's coaching_suggestions array
-    const { data: currentSession } = await supabase
+    // Save suggestion to session (non-blocking, fetch and update in parallel)
+    supabase
       .from('live_sessions')
       .select('coaching_suggestions')
       .eq('id', sessionId)
       .single()
+      .then(({ data: currentSession, error: fetchError }) => {
+        if (fetchError) {
+          console.error('Error fetching session for suggestion save:', fetchError)
+          return
+        }
 
-    const existingSuggestions = Array.isArray(currentSession?.coaching_suggestions)
-      ? currentSession.coaching_suggestions
-      : []
+        const existingSuggestions = Array.isArray(currentSession?.coaching_suggestions)
+          ? currentSession.coaching_suggestions
+          : []
 
-    const newSuggestion = {
-      timestamp: new Date().toISOString(),
-      homeowner_text: homeownerText,
-      suggested_line: suggestion.suggestedLine,
-      explanation: suggestion.explanation,
-      script_section: suggestion.scriptSection,
-      confidence: suggestion.confidence
-    }
+        const newSuggestion = {
+          timestamp: new Date().toISOString(),
+          homeowner_text: homeownerText,
+          suggested_line: suggestion.suggestedLine,
+          explanation: suggestion.explanation,
+          confidence: suggestion.confidence
+        }
 
-    const updatedSuggestions = [...existingSuggestions, newSuggestion]
+        const updatedSuggestions = [...existingSuggestions, newSuggestion]
 
-    // Update session with new suggestion (non-blocking)
-    supabase
-      .from('live_sessions')
-      .update({ coaching_suggestions: updatedSuggestions })
-      .eq('id', sessionId)
-      .then(({ error }) => {
-        if (error) {
-          console.error('Error saving suggestion to session:', error)
+        return supabase
+          .from('live_sessions')
+          .update({ coaching_suggestions: updatedSuggestions })
+          .eq('id', sessionId)
+      })
+      .then((result: any) => {
+        if (result?.error) {
+          console.error('Error saving suggestion to session:', result.error)
         }
       })
 
