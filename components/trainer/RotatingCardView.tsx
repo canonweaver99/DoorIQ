@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -45,12 +45,23 @@ export function RotatingCardView({
   coachSuggestionLoading = false,
   className 
 }: RotatingCardViewProps) {
-  const [currentView, setCurrentView] = useState<ViewType>('default')
-
   // Only include coaching view if coachSuggestion exists or is loading
   const views: ViewType[] = coachSuggestion || coachSuggestionLoading
     ? ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques', 'coaching']
     : ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques']
+  
+  // Default to coaching if available, otherwise default view
+  const [currentView, setCurrentView] = useState<ViewType>(
+    (coachSuggestion || coachSuggestionLoading) ? 'coaching' : 'default'
+  )
+  
+  // Switch to coaching when it becomes available
+  useEffect(() => {
+    if ((coachSuggestion || coachSuggestionLoading) && currentView === 'default') {
+      setCurrentView('coaching')
+    }
+  }, [coachSuggestion, coachSuggestionLoading, currentView])
+  
   const currentIndex = views.indexOf(currentView)
 
   const nextView = () => {
@@ -130,22 +141,25 @@ export function RotatingCardView({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="h-full flex items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 p-6"
+              className="h-full flex flex-col items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 p-8"
             >
-              <div className="text-center space-y-4">
-                <div className="text-4xl mb-2">📊</div>
-                <h3 className="text-lg font-semibold text-white font-space">Sale Sentiment</h3>
-                <div className={cn("text-5xl font-bold font-space", getSentimentColor(sentimentScore))}>
-                  {sentimentScore}%
+              <div className="text-center space-y-6 w-full max-w-md">
+                <div>
+                  <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider font-space mb-6">
+                    Sale Sentiment
+                  </h3>
+                  <div className={cn("text-6xl md:text-7xl lg:text-8xl font-bold font-space mb-2", getSentimentColor(sentimentScore))}>
+                    {sentimentScore}%
+                  </div>
+                  <div className={cn("text-base md:text-lg font-medium font-space", getSentimentColor(sentimentScore))}>
+                    {getSentimentLabel(sentimentScore)}
+                  </div>
                 </div>
-                <div className={cn("text-sm font-medium font-space", getSentimentColor(sentimentScore))}>
-                  {getSentimentLabel(sentimentScore)}
-                </div>
-                <div className="w-48 h-2 bg-slate-800 rounded-full overflow-hidden mx-auto">
+                <div className="w-full max-w-xs h-4 bg-slate-800/50 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${sentimentScore}%` }}
-                    transition={{ duration: 0.5 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
                     className={cn(
                       "h-full rounded-full",
                       sentimentScore >= 70 ? 'bg-emerald-500' :
@@ -165,29 +179,45 @@ export function RotatingCardView({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="h-full flex items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 p-6"
+              className="h-full flex flex-col items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 p-8"
             >
-              <div className="text-center space-y-4">
-                <div className="text-4xl mb-2">🎤</div>
-                <h3 className="text-lg font-semibold text-white font-space">Talk Time Ratio</h3>
-                <div className={cn("text-5xl font-bold font-space", getTalkTimeColor(talkTimeRatio))}>
-                  {talkTimeRatio}%
+              <div className="text-center space-y-6 w-full max-w-md">
+                <div>
+                  <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider font-space mb-6">
+                    Talk Time Ratio
+                  </h3>
+                  <div className={cn("text-6xl md:text-7xl lg:text-8xl font-bold font-space mb-2", getTalkTimeColor(talkTimeRatio))}>
+                    {talkTimeRatio}%
+                  </div>
+                  <div className={cn("text-base md:text-lg font-medium font-space", getTalkTimeColor(talkTimeRatio))}>
+                    {getTalkTimeLabel(talkTimeRatio)}
+                  </div>
+                  {talkTimeRatio >= 50 && talkTimeRatio <= 60 && (
+                    <div className="text-xs text-emerald-400/70 font-space mt-1">
+                      Ideal range: 50-60%
+                    </div>
+                  )}
                 </div>
-                <div className={cn("text-sm font-medium font-space", getTalkTimeColor(talkTimeRatio))}>
-                  {getTalkTimeLabel(talkTimeRatio)}
-                </div>
-                <div className="w-48 h-2 bg-slate-800 rounded-full overflow-hidden mx-auto">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${talkTimeRatio}%` }}
-                    transition={{ duration: 0.5 }}
-                    className={cn(
-                      "h-full rounded-full",
-                      talkTimeRatio >= 50 && talkTimeRatio <= 60 ? 'bg-emerald-500' :
-                      talkTimeRatio < 50 ? 'bg-orange-500' :
-                      'bg-blue-500'
-                    )}
-                  />
+                <div className="w-full max-w-xs relative">
+                  {/* Target zone indicator */}
+                  {talkTimeRatio >= 50 && talkTimeRatio <= 60 && (
+                    <div className="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
+                      <div className="w-[41.67%] h-4 border-l-2 border-r-2 border-emerald-400/30 rounded" />
+                    </div>
+                  )}
+                  <div className="w-full h-4 bg-slate-800/50 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${talkTimeRatio}%` }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className={cn(
+                        "h-full rounded-full",
+                        talkTimeRatio >= 50 && talkTimeRatio <= 60 ? 'bg-emerald-500' :
+                        talkTimeRatio < 50 ? 'bg-orange-500' :
+                        'bg-blue-500'
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -200,21 +230,24 @@ export function RotatingCardView({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="h-full flex items-center justify-center bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 p-4"
+              className="h-full flex flex-col bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 p-6 md:p-8"
             >
               {speechAnalysis ? (
-                <div className="w-full space-y-4">
-                  <div className="text-center mb-4">
-                    <div className="text-3xl mb-2">🎙️</div>
-                    <h3 className="text-lg font-semibold text-white font-space">Live Speech Analysis</h3>
+                <div className="h-full flex flex-col">
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider font-space text-center">
+                      Live Speech Analysis
+                    </h3>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="flex-1 grid grid-cols-2 gap-4 md:gap-6">
                     {/* WPM */}
-                    <div className="bg-slate-800/50 rounded-lg p-3">
-                      <div className="text-xs text-slate-400 font-space mb-1">Words/Min</div>
+                    <div className="bg-slate-800/40 rounded-xl p-4 md:p-6 flex flex-col items-center justify-center border border-slate-700/30">
+                      <div className="text-xs md:text-sm text-slate-400 font-space mb-3 uppercase tracking-wide">
+                        Words/Min
+                      </div>
                       <div className={cn(
-                        "text-2xl font-bold font-space",
+                        "text-3xl md:text-4xl font-bold font-space",
                         speechAnalysis.wpm && speechAnalysis.wpm >= 140 && speechAnalysis.wpm <= 180 
                           ? 'text-emerald-400' 
                           : speechAnalysis.wpm && speechAnalysis.wpm > 180 
@@ -226,10 +259,12 @@ export function RotatingCardView({
                     </div>
                     
                     {/* Filler Words */}
-                    <div className="bg-slate-800/50 rounded-lg p-3">
-                      <div className="text-xs text-slate-400 font-space mb-1">Filler Words</div>
+                    <div className="bg-slate-800/40 rounded-xl p-4 md:p-6 flex flex-col items-center justify-center border border-slate-700/30">
+                      <div className="text-xs md:text-sm text-slate-400 font-space mb-3 uppercase tracking-wide">
+                        Filler Words
+                      </div>
                       <div className={cn(
-                        "text-2xl font-bold font-space",
+                        "text-3xl md:text-4xl font-bold font-space",
                         speechAnalysis.totalFillerWords !== undefined && speechAnalysis.totalFillerWords <= 3
                           ? 'text-emerald-400'
                           : speechAnalysis.totalFillerWords !== undefined && speechAnalysis.totalFillerWords <= 6
@@ -242,10 +277,12 @@ export function RotatingCardView({
                     
                     {/* Pitch Variation */}
                     {speechAnalysis.pitchVariation !== undefined && (
-                      <div className="bg-slate-800/50 rounded-lg p-3">
-                        <div className="text-xs text-slate-400 font-space mb-1">Pitch Var</div>
+                      <div className="bg-slate-800/40 rounded-xl p-4 md:p-6 flex flex-col items-center justify-center border border-slate-700/30">
+                        <div className="text-xs md:text-sm text-slate-400 font-space mb-3 uppercase tracking-wide">
+                          Pitch Variation
+                        </div>
                         <div className={cn(
-                          "text-2xl font-bold font-space",
+                          "text-3xl md:text-4xl font-bold font-space",
                           speechAnalysis.pitchVariation >= 15
                             ? 'text-emerald-400'
                             : speechAnalysis.pitchVariation >= 10
@@ -259,26 +296,29 @@ export function RotatingCardView({
                     
                     {/* Volume */}
                     {speechAnalysis.avgVolume !== undefined && speechAnalysis.avgVolume > -60 && (
-                      <div className="bg-slate-800/50 rounded-lg p-3">
-                        <div className="text-xs text-slate-400 font-space mb-1">Volume</div>
+                      <div className="bg-slate-800/40 rounded-xl p-4 md:p-6 flex flex-col items-center justify-center border border-slate-700/30">
+                        <div className="text-xs md:text-sm text-slate-400 font-space mb-3 uppercase tracking-wide">
+                          Volume
+                        </div>
                         <div className={cn(
-                          "text-2xl font-bold font-space",
+                          "text-3xl md:text-4xl font-bold font-space",
                           speechAnalysis.avgVolume >= -30
                             ? 'text-emerald-400'
                             : speechAnalysis.avgVolume >= -40
                               ? 'text-amber-400'
                               : 'text-red-400'
                         )}>
-                          {speechAnalysis.avgVolume > 0 ? speechAnalysis.avgVolume.toFixed(0) : speechAnalysis.avgVolume.toFixed(0)}dB
+                          {speechAnalysis.avgVolume.toFixed(0)}dB
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="text-center space-y-2">
-                  <div className="text-3xl mb-2">🎙️</div>
-                  <h3 className="text-lg font-semibold text-white font-space">Live Speech Analysis</h3>
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
+                  <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider font-space">
+                    Live Speech Analysis
+                  </h3>
                   <p className="text-sm text-slate-400 font-space">Waiting for speech data...</p>
                 </div>
               )}
