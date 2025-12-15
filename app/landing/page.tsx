@@ -336,41 +336,41 @@ function HeroSection() {
         />
       </motion.div>
 
-      {/* Animated accent glows */}
-      <motion.div
-        animate={shouldAnimate ? {
-          x: [0, 30, 0],
-          y: [0, 20, 0],
-          scale: [1, 1.1, 1],
-        } : { x: 0, y: 0, scale: 1 }}
-        transition={shouldAnimate ? {
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut",
-        } : {}}
-        className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
-        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
-      />
-      <motion.div
-        animate={shouldAnimate ? {
-          x: [0, -25, 0],
-          y: [0, 30, 0],
-          scale: [1, 1.2, 1],
-        } : { x: 0, y: 0, scale: 1 }}
-        transition={shouldAnimate ? {
-          duration: 20,
-          repeat: Infinity,
-          ease: "easeInOut",
-        } : {}}
-        className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
-        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
-      />
+      {/* Animated accent glows - Reduced animation complexity for better performance */}
+      {shouldAnimate && (
+        <>
+          <motion.div
+            animate={{
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
+            style={{ transform: 'translateZ(0)' }}
+          />
+          <motion.div
+            animate={{
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
+            style={{ transform: 'translateZ(0)' }}
+          />
+        </>
+      )}
 
       {/* Desktop Hero Section - Laptop (md to 2xl) */}
       <div className="hidden md:block 2xl:hidden">
         <ContainerScroll
         titleComponent={
-          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-16 sm:pt-16 md:pt-12 px-0 sm:px-4 w-full">
+          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 px-0 sm:px-4 w-full">
             {/* Badge */}
             <motion.div
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
@@ -469,7 +469,7 @@ function HeroSection() {
               muted
               playsInline
               className="w-full h-full object-cover"
-              preload="metadata"
+              preload="none"
               style={{ display: 'block', backgroundColor: '#000' }}
             >
               <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
@@ -1171,7 +1171,7 @@ InlineAgentCarousel.displayName = "InlineAgentCarousel";
 // Meet the Trainer Section
 function MeetTrainerSection() {
   return (
-    <section id="trainers" className="relative bg-black pt-10 sm:pt-12 md:pt-16 pb-10 sm:pb-12 md:pb-16 overflow-hidden">
+    <section id="trainers" className="relative bg-black pt-10 sm:pt-12 md:pt-[60px] pb-10 sm:pb-12 md:pb-[60px] overflow-hidden">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div

@@ -1016,3 +1016,9 @@ input[type="range"].pricing-slider::-moz-range-thumb:hover {
 .badge-pulse {
   animation: badge-pulse 2s infinite;
 }
+
+/* Next.js dev tools portal positioning fix */
+nextjs-portal {
+  top: -1px !important;
+  left: 0px !important;
+}

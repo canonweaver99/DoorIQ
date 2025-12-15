@@ -41,11 +41,11 @@ export const ContainerScroll = ({
 
   return (
     <div
-      className={`${isMobile ? 'h-auto min-h-[40rem]' : 'h-[55rem] md:h-[90rem]'} flex items-center justify-center relative p-2 md:p-20 overflow-visible`}
+      className={`${isMobile ? 'h-auto min-h-[40rem]' : 'h-[55rem] md:h-[90rem]'} flex items-center justify-center relative overflow-visible`}
       ref={containerRef}
     >
       <div
-        className={`${isMobile ? 'py-8' : 'py-8 md:py-40 md:pt-60 md:pb-80 xl:pt-48 xl:pb-96 2xl:pt-56 2xl:pb-[28rem]'} w-full relative overflow-visible`}
+        className={`${isMobile ? 'py-8' : 'py-8 pt-[1px] pb-[1px]'} w-full relative overflow-visible`}
         style={shouldAnimate ? {
           perspective: "1000px",
         } : {}}
