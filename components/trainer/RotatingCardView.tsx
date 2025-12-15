@@ -32,6 +32,7 @@ interface RotatingCardViewProps {
   } | null
   coachSuggestionLoading?: boolean
   className?: string
+  defaultToCoaching?: boolean // If true, defaults to coaching when available (for transcript cards)
 }
 
 export function RotatingCardView({ 
@@ -43,24 +44,29 @@ export function RotatingCardView({
   techniquesUsed = [],
   coachSuggestion = null,
   coachSuggestionLoading = false,
-  className 
+  className,
+  defaultToCoaching = false // Only transcript cards should default to coaching
 }: RotatingCardViewProps) {
   // Only include coaching view if coachSuggestion exists or is loading
   const views: ViewType[] = coachSuggestion || coachSuggestionLoading
     ? ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques', 'coaching']
     : ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques']
   
-  // Default to coaching if available, otherwise default view
-  const [currentView, setCurrentView] = useState<ViewType>(
-    (coachSuggestion || coachSuggestionLoading) ? 'coaching' : 'default'
-  )
+  // Default to coaching only if defaultToCoaching is true and coaching is available
+  // Otherwise default to 'default' view (transcript or feedback)
+  const [currentView, setCurrentView] = useState<ViewType>(() => {
+    if (defaultToCoaching && (coachSuggestion || coachSuggestionLoading)) {
+      return 'coaching'
+    }
+    return 'default'
+  })
   
-  // Switch to coaching when it becomes available
+  // Switch to coaching when it becomes available (only if defaultToCoaching is true)
   useEffect(() => {
-    if ((coachSuggestion || coachSuggestionLoading) && currentView === 'default') {
+    if (defaultToCoaching && (coachSuggestion || coachSuggestionLoading) && currentView === 'default') {
       setCurrentView('coaching')
     }
-  }, [coachSuggestion, coachSuggestionLoading, currentView])
+  }, [coachSuggestion, coachSuggestionLoading, currentView, defaultToCoaching])
   
   const currentIndex = views.indexOf(currentView)
 

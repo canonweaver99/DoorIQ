@@ -3570,6 +3570,7 @@ function TrainerPageContent() {
                     techniquesUsed={metrics.techniquesUsed || []}
                     coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                     coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                    defaultToCoaching={true}
                   >
                     <LiveTranscript 
                       transcript={transcript} 
@@ -3594,6 +3595,7 @@ function TrainerPageContent() {
                   techniquesUsed={metrics.techniquesUsed || []}
                   coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                   coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                  defaultToCoaching={false}
                 >
                   <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                 </RotatingCardView>
@@ -4029,6 +4031,7 @@ function TrainerPageContent() {
                 techniquesUsed={metrics.techniquesUsed || []}
                 coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                 coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                defaultToCoaching={true}
               >
                 <LiveTranscript 
                   transcript={transcript} 
@@ -4049,6 +4052,7 @@ function TrainerPageContent() {
               speechAnalysis={speechAnalysis}
               objectionCount={metrics.objectionCount || 0}
               techniquesUsed={metrics.techniquesUsed || []}
+              defaultToCoaching={false}
             >
               <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
             </RotatingCardView>
@@ -4151,6 +4155,7 @@ function TrainerPageContent() {
                       techniquesUsed={metrics.techniquesUsed || []}
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                      defaultToCoaching={true}
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4172,6 +4177,7 @@ function TrainerPageContent() {
                       techniquesUsed={metrics.techniquesUsed || []}
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                      defaultToCoaching={false}
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>
@@ -4241,6 +4247,7 @@ function TrainerPageContent() {
                       techniquesUsed={metrics.techniquesUsed || []}
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                      defaultToCoaching={true}
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4262,6 +4269,7 @@ function TrainerPageContent() {
                       techniquesUsed={metrics.techniquesUsed || []}
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                      defaultToCoaching={false}
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>
@@ -4613,6 +4621,7 @@ function TrainerPageContent() {
                       techniquesUsed={metrics.techniquesUsed || []}
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                      defaultToCoaching={true}
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4634,6 +4643,7 @@ function TrainerPageContent() {
                       techniquesUsed={metrics.techniquesUsed || []}
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
+                      defaultToCoaching={false}
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>
