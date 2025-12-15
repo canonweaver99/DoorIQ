@@ -3249,9 +3249,9 @@ function TrainerPageContent() {
 
         {/* Mobile Layout - Stacked Cards (4 cards vertical, equal size, scrollable) */}
         <div className="md:hidden flex-1 overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div className="flex flex-col gap-2 p-2">
+          <div className="flex flex-col gap-4 p-2">
             {/* Card 1: Agent Video - Always visible */}
-            <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 relative bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
+            <div className="w-full h-[40vh] min-h-[250px] flex-shrink-0 relative bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
               {/* Agent Video Content - Same as desktop */}
               <div className="absolute inset-0">
                 {loading ? (
@@ -3500,7 +3500,7 @@ function TrainerPageContent() {
 
             {/* Card 2: Metrics Panel - HIDDEN ON MOBILE DURING LIVE SESSION */}
             {/* {sessionActive && (
-              <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
+              <div className="w-full h-[40vh] min-h-[250px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
                 <Suspense fallback={<div className="h-full bg-slate-800/50 rounded animate-pulse" />}>
                   <LiveMetricsPanel 
                     metrics={metrics} 
@@ -3519,7 +3519,7 @@ function TrainerPageContent() {
 
             {/* Card 3: Transcript - Scrollable (below fold) */}
             {sessionActive && (
-              <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 flex flex-col">
+              <div className="w-full h-[40vh] min-h-[250px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 flex flex-col mb-4">
                 {/* Coach Suggestion - Above transcript */}
                 {coachModeEnabled && !challengeModeEnabled && (
                   <div className="p-2 border-b border-slate-800/50">
@@ -3533,6 +3533,8 @@ function TrainerPageContent() {
                     speechAnalysis={speechAnalysis}
                     objectionCount={metrics.objectionCount || 0}
                     techniquesUsed={metrics.techniquesUsed || []}
+                    coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                    coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                   >
                     <LiveTranscript 
                       transcript={transcript} 
@@ -3548,13 +3550,15 @@ function TrainerPageContent() {
 
             {/* Card 4: Feedback Feed - Scrollable (below fold) */}
             {sessionActive && (
-              <div className="w-full h-[50vh] min-h-[300px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50">
+              <div className="w-full h-[40vh] min-h-[250px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 mt-4">
                 <RotatingCardView
                   sentimentScore={sentimentScore}
                   talkTimeRatio={metrics.talkTimeRatio || 0}
                   speechAnalysis={speechAnalysis}
                   objectionCount={metrics.objectionCount || 0}
                   techniquesUsed={metrics.techniquesUsed || []}
+                  coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                  coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                 >
                   <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                 </RotatingCardView>
@@ -3988,6 +3992,8 @@ function TrainerPageContent() {
                 speechAnalysis={speechAnalysis}
                 objectionCount={metrics.objectionCount || 0}
                 techniquesUsed={metrics.techniquesUsed || []}
+                coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
               >
                 <LiveTranscript 
                   transcript={transcript} 
@@ -4108,6 +4114,8 @@ function TrainerPageContent() {
                       speechAnalysis={speechAnalysis}
                       objectionCount={metrics.objectionCount || 0}
                       techniquesUsed={metrics.techniquesUsed || []}
+                      coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                      coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4127,6 +4135,8 @@ function TrainerPageContent() {
                       speechAnalysis={speechAnalysis}
                       objectionCount={metrics.objectionCount || 0}
                       techniquesUsed={metrics.techniquesUsed || []}
+                      coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                      coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>
@@ -4185,7 +4195,7 @@ function TrainerPageContent() {
                 </div>
 
                 {/* Bottom - Transcript and Feedback Split - Adjusted height to match expanded hero section */}
-                <div className="grid grid-cols-2 h-[35vh]">
+                <div className="grid grid-cols-2 h-[35vh] gap-4">
                   {/* Left - Transcript */}
                   <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm border-r border-slate-800/50">
                     <RotatingCardView
@@ -4194,6 +4204,8 @@ function TrainerPageContent() {
                       speechAnalysis={speechAnalysis}
                       objectionCount={metrics.objectionCount || 0}
                       techniquesUsed={metrics.techniquesUsed || []}
+                      coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                      coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4213,6 +4225,8 @@ function TrainerPageContent() {
                       speechAnalysis={speechAnalysis}
                       objectionCount={metrics.objectionCount || 0}
                       techniquesUsed={metrics.techniquesUsed || []}
+                      coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                      coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>
@@ -4562,6 +4576,8 @@ function TrainerPageContent() {
                       speechAnalysis={speechAnalysis}
                       objectionCount={metrics.objectionCount || 0}
                       techniquesUsed={metrics.techniquesUsed || []}
+                      coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                      coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4581,6 +4597,8 @@ function TrainerPageContent() {
                       speechAnalysis={speechAnalysis}
                       objectionCount={metrics.objectionCount || 0}
                       techniquesUsed={metrics.techniquesUsed || []}
+                      coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
+                      coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>
@@ -4639,7 +4657,7 @@ function TrainerPageContent() {
                   </div>
 
                   {/* Bottom - Transcript and Feedback Split - Adjusted height to match expanded hero section */}
-                  <div className="grid grid-cols-2 h-[35vh]">
+                  <div className="grid grid-cols-2 h-[35vh] gap-4">
                     {/* Left - Transcript */}
                     <div className="flex flex-col overflow-hidden bg-slate-900/50 backdrop-blur-sm border-r border-slate-800/50">
                       <RotatingCardView

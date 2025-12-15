@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { CoachSuggestion } from './CoachSuggestion'
 
-type ViewType = 'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques'
+type ViewType = 'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques' | 'coaching'
 
 interface RotatingCardViewProps {
   children: React.ReactNode // Default view (LiveTranscript or LiveFeedbackFeed)
@@ -20,6 +21,16 @@ interface RotatingCardViewProps {
   } | null
   objectionCount?: number
   techniquesUsed?: string[]
+  coachSuggestion?: {
+    suggestedLine: string
+    explanation?: string
+    reasoning?: string
+    confidence?: 'high' | 'medium' | 'low'
+    tacticalNote?: string
+    alternatives?: string[]
+    isAdapted?: boolean
+  } | null
+  coachSuggestionLoading?: boolean
   className?: string
 }
 
@@ -30,11 +41,16 @@ export function RotatingCardView({
   speechAnalysis = null,
   objectionCount = 0,
   techniquesUsed = [],
+  coachSuggestion = null,
+  coachSuggestionLoading = false,
   className 
 }: RotatingCardViewProps) {
   const [currentView, setCurrentView] = useState<ViewType>('default')
 
-  const views: ViewType[] = ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques']
+  // Only include coaching view if coachSuggestion exists or is loading
+  const views: ViewType[] = coachSuggestion || coachSuggestionLoading
+    ? ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques', 'coaching']
+    : ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques']
   const currentIndex = views.indexOf(currentView)
 
   const nextView = () => {
@@ -333,6 +349,30 @@ export function RotatingCardView({
                   <p className="text-sm text-slate-400 font-space">No techniques detected yet</p>
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {currentView === 'coaching' && (
+            <motion.div
+              key="coaching"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="h-full flex flex-col bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 p-4 overflow-y-auto"
+            >
+              <div className="text-center mb-4">
+                <div className="text-3xl mb-2">🎯</div>
+                <h3 className="text-lg font-semibold text-white font-space">Live Coaching</h3>
+                <p className="text-xs text-slate-400 font-space mt-1">Suggested lines to use</p>
+              </div>
+              
+              <div className="flex-1 flex items-center justify-center">
+                <CoachSuggestion 
+                  suggestion={coachSuggestion} 
+                  isLoading={coachSuggestionLoading} 
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
