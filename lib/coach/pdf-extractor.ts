@@ -3,8 +3,6 @@
  * Extracts text content from PDF files for coaching scripts
  */
 
-import pdfParse from 'pdf-parse'
-
 /**
  * Extract text content from a PDF file
  * @param file - PDF file (File object or Buffer)
@@ -12,6 +10,9 @@ import pdfParse from 'pdf-parse'
  */
 export async function extractTextFromPDF(file: File | Buffer): Promise<string> {
   try {
+    // Dynamic import to avoid loading pdf-parse during build
+    const pdfParse = (await import('pdf-parse')).default
+
     let buffer: Buffer
 
     // Convert File to Buffer if needed
