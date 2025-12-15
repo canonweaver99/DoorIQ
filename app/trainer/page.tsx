@@ -3576,6 +3576,7 @@ function TrainerPageContent() {
                     coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                     defaultToCoaching={true}
                     coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                    sessionActive={sessionActive}
                   >
                     <LiveTranscript 
                       transcript={transcript} 
@@ -3601,6 +3602,8 @@ function TrainerPageContent() {
                   coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                   coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                   defaultToCoaching={false}
+                  coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                  sessionActive={sessionActive}
                 >
                   <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                 </RotatingCardView>
@@ -4037,6 +4040,8 @@ function TrainerPageContent() {
                 coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                 coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                 defaultToCoaching={true}
+                coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                sessionActive={sessionActive}
               >
                 <LiveTranscript 
                   transcript={transcript} 
@@ -4058,6 +4063,8 @@ function TrainerPageContent() {
               objectionCount={metrics.objectionCount || 0}
               techniquesUsed={metrics.techniquesUsed || []}
               defaultToCoaching={false}
+              coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+              sessionActive={sessionActive}
             >
               <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
             </RotatingCardView>
@@ -4161,6 +4168,8 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={true}
+                      coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                      sessionActive={sessionActive}
                       otherCardView={rightCardView}
                       onViewChange={setLeftCardView}
                       cardId="left"
@@ -4186,6 +4195,8 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={false}
+                      coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                      sessionActive={sessionActive}
                       otherCardView={leftCardView}
                       onViewChange={setRightCardView}
                       cardId="right"
@@ -4259,6 +4270,8 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={true}
+                      coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                      sessionActive={sessionActive}
                       otherCardView={rightCardView}
                       onViewChange={setLeftCardView}
                       cardId="left-pre"
@@ -4284,6 +4297,8 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={false}
+                      coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                      sessionActive={sessionActive}
                       otherCardView={leftCardView}
                       onViewChange={setRightCardView}
                       cardId="right-pre"
@@ -4639,6 +4654,8 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={true}
+                      coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                      sessionActive={sessionActive}
                     >
                       <LiveTranscript 
                         transcript={transcript} 
@@ -4661,6 +4678,8 @@ function TrainerPageContent() {
                       coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
                       coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
                       defaultToCoaching={false}
+                      coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                      sessionActive={sessionActive}
                     >
                       <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
                     </RotatingCardView>

@@ -85,10 +85,12 @@ export async function generateSuggestion(
         conversationAnalysis,
         fullTranscript,
         scriptSectionsText,
-        companyInfoText
+        companyInfoText,
+        context.repName
       )
     } else if (context.scriptSections.length === 0 || !hasGoodMatches) {
       // Use adaptive prompt when no good script matches
+      const repNameContext = context.repName ? `\n\nRep's name: ${context.repName}` : ''
       systemPrompt = ADAPTIVE_COACH_PROMPT
       userPrompt = `Homeowner said: "${context.homeownerText}"
 
@@ -96,9 +98,9 @@ Conversation context:
 ${conversationContext}
 
 ${companyInfoText ? `${companyInfoText}\n\n` : ''}Available script sections (may not be perfect match):
-${scriptSectionsText || 'No relevant script sections found.'}
+${scriptSectionsText || 'No relevant script sections found.'}${repNameContext}
 
-Generate an adapted response based on script principles.`
+Generate a SHORT, CASUAL response (1-2 sentences max, often just a phrase) like a friend giving advice - relaxed and friendly, like you're both sipping whiskey by a fire. Keep it brief, natural, and contextual. Use the rep's name naturally in the response when appropriate.`
     } else {
       // Fallback to standard prompt
       systemPrompt = COACH_SYSTEM_PROMPT
@@ -106,7 +108,8 @@ Generate an adapted response based on script principles.`
         context.homeownerText,
         conversationContext,
         scriptSectionsText,
-        companyInfoText
+        companyInfoText,
+        context.repName
       )
     }
     
@@ -117,8 +120,8 @@ Generate an adapted response based on script principles.`
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.3, // Lower temperature for more consistent, script-focused responses
-      max_tokens: 400, // Increased for enhanced responses
+      temperature: 0.5, // Slightly higher for more conversational tone
+      max_tokens: 150, // Reduced to enforce shorter, more conversational suggestions
       response_format: { type: 'json_object' }
     })
     
@@ -133,6 +136,8 @@ Generate an adapted response based on script principles.`
     // Get the suggested line and replace placeholders
     let suggestedLine = parsed.suggestedLine || parsed.line || 'No suggestion available'
     suggestedLine = replacePlaceholders(suggestedLine, context.companyInfo, context.repName || '')
+    // Remove em dashes and replace with regular hyphens
+    suggestedLine = suggestedLine.replace(/—/g, '-').replace(/–/g, '-')
     
     // Validate and return suggestion
     return {
@@ -142,9 +147,12 @@ Generate an adapted response based on script principles.`
       scriptSection: parsed.scriptSection,
       confidence: parsed.confidence || 'medium',
       tacticalNote: parsed.tacticalNote,
-      alternatives: Array.isArray(parsed.alternatives) ? parsed.alternatives.map((alt: string) => 
-        replacePlaceholders(alt, context.companyInfo, context.repName || '')
-      ) : [],
+      alternatives: Array.isArray(parsed.alternatives) ? parsed.alternatives.map((alt: string) => {
+        let cleaned = replacePlaceholders(alt, context.companyInfo, context.repName || '')
+        // Remove em dashes and replace with regular hyphens
+        cleaned = cleaned.replace(/—/g, '-').replace(/–/g, '-')
+        return cleaned
+      }) : [],
       isAdapted: !hasGoodMatches || parsed.isAdapted || false
     }
   } catch (error: any) {

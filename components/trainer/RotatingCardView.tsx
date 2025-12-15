@@ -34,6 +34,7 @@ interface RotatingCardViewProps {
   className?: string
   defaultToCoaching?: boolean // If true, defaults to coaching when available (for transcript cards)
   coachModeEnabled?: boolean // If true, always include coaching view even without suggestion
+  sessionActive?: boolean // Whether a session is currently active
   // Shared state props to prevent duplicate cards
   otherCardView?: ViewType | null // The current view of the other card
   onViewChange?: (view: ViewType) => void // Callback when view changes
@@ -52,6 +53,7 @@ export function RotatingCardView({
   className,
   defaultToCoaching = false, // Only transcript cards should default to coaching
   coachModeEnabled = false, // If true, always include coaching view
+  sessionActive = false, // Whether a session is currently active
   otherCardView = null, // The current view of the other card
   onViewChange, // Callback when view changes
   cardId // Unique identifier for this card instance
@@ -485,6 +487,7 @@ export function RotatingCardView({
                 suggestion={coachSuggestion} 
                 isLoading={coachSuggestionLoading}
                 showPlaceholder={defaultToCoaching && coachModeEnabled && !coachSuggestion && !coachSuggestionLoading}
+                sessionActive={sessionActive}
               />
             </motion.div>
           )}

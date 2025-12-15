@@ -2,70 +2,56 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
 
 interface CoachSuggestionProps {
   suggestion: {
     suggestedLine: string
   } | null
   isLoading?: boolean
+  showPlaceholder?: boolean // If true, show placeholder even when no suggestion
+  sessionActive?: boolean // Whether a session is currently active
 }
 
-export function CoachSuggestion({ suggestion, isLoading }: CoachSuggestionProps) {
-  const [displayedText, setDisplayedText] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+export function CoachSuggestion({ suggestion, isLoading, showPlaceholder = false, sessionActive = false }: CoachSuggestionProps) {
 
-  useEffect(() => {
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
+  // Show pre-session card when not active and placeholder is requested
+  if (!sessionActive && showPlaceholder && !suggestion && !isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.2 }}
+        className="h-full flex flex-col justify-center p-6 md:p-8"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6 justify-center">
+          <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
+            <Sparkles className="w-5 h-5 text-purple-400" />
+          </div>
+          <h3 className="text-lg md:text-xl font-semibold text-white font-space">
+            Live Coaching
+          </h3>
+        </div>
 
-    if (!suggestion?.suggestedLine) {
-      setDisplayedText('')
-      setIsTyping(false)
-      return
-    }
+        {/* Description */}
+        <div className="space-y-4 max-w-2xl mx-auto text-center">
+          <p className="text-slate-300 text-base md:text-lg leading-relaxed font-space">
+            Get real-time AI-powered coaching suggestions during your practice session. 
+            The coach will analyze your conversation and provide tactical advice to help 
+            you improve your sales skills.
+          </p>
+          <div className="pt-4 border-t border-slate-700/50">
+            <p className="text-slate-400 text-sm md:text-base leading-relaxed font-space">
+              Start a practice session to see live coaching suggestions appear here.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
 
-    // Reset and start typing animation
-    setDisplayedText('')
-    setIsTyping(true)
-    
-    const words = suggestion.suggestedLine.split(' ')
-    let currentIndex = 0
-
-    const typeNextWord = () => {
-      if (currentIndex < words.length) {
-        setDisplayedText(prev => {
-          const newText = currentIndex === 0 
-            ? words[currentIndex] 
-            : prev + ' ' + words[currentIndex]
-          return newText
-        })
-        currentIndex++
-        
-        // Speed: faster for short words, slightly slower for longer words
-        const word = words[currentIndex - 1]
-        const delay = word.length > 8 ? 50 : word.length > 4 ? 40 : 30
-        
-        timeoutRef.current = setTimeout(typeNextWord, delay)
-      } else {
-        setIsTyping(false)
-      }
-    }
-
-    // Start typing after a brief delay
-    timeoutRef.current = setTimeout(typeNextWord, 50)
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [suggestion?.suggestedLine])
-
-  if (!suggestion && !isLoading) {
+  if (!suggestion && !isLoading && !showPlaceholder) {
     return null
   }
 
@@ -97,16 +83,13 @@ export function CoachSuggestion({ suggestion, isLoading }: CoachSuggestionProps)
           ) : suggestion ? (
             <div className="flex-1 flex items-center justify-center">
               <p className="text-white text-lg md:text-xl lg:text-2xl leading-relaxed text-center font-medium max-w-4xl">
-                {displayedText}
-                {isTyping && (
-                  <motion.span
-                    animate={{ opacity: [1, 0] }}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                    className="inline-block ml-1"
-                  >
-                    |
-                  </motion.span>
-                )}
+                {suggestion.suggestedLine}
+              </p>
+            </div>
+          ) : showPlaceholder ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-white/40 text-base md:text-lg leading-relaxed text-center font-medium max-w-4xl">
+                Waiting for coaching suggestions...
               </p>
             </div>
           ) : null}
