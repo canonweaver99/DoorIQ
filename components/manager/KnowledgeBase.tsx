@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Building2, Package, DollarSign, MessageCircle, Upload, 
-  FileText, Save, Plus, Trash2, Edit2, Check, X, Zap
+  FileText, Save, Plus, Trash2, Edit2, Check, X, Zap, Video
 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useHaptic } from '@/hooks/useHaptic'
@@ -13,7 +13,10 @@ import { IOSSegmentedControl } from '@/components/ui/ios-segmented-control'
 import { PullToRefresh } from '@/components/ui/pull-to-refresh'
 import { useToast } from '@/components/ui/toast'
 
-type Tab = 'company' | 'pricing' | 'objections' | 'documents'
+const CoachScripts = lazy(() => import('@/components/manager/CoachScripts'))
+const TrainingVideos = lazy(() => import('@/components/manager/TrainingVideos'))
+
+type Tab = 'company' | 'pricing' | 'objections' | 'documents' | 'coach-scripts' | 'videos'
 
 interface TeamGradingConfig {
   company_name?: string
@@ -280,6 +283,8 @@ export default function KnowledgeBase() {
     { id: 'pricing' as Tab, name: 'Pricing Tables', icon: DollarSign },
     { id: 'objections' as Tab, name: 'Objection Handlers', icon: MessageCircle },
     { id: 'documents' as Tab, name: 'Upload Documents', icon: Upload },
+    { id: 'coach-scripts' as Tab, name: 'Coach Scripts', icon: FileText },
+    { id: 'videos' as Tab, name: 'Training Videos', icon: Video },
   ]
 
   if (loading) {
@@ -296,8 +301,8 @@ export default function KnowledgeBase() {
         {/* Header */}
         <div className={`flex items-center justify-between ${isMobile ? 'flex-col gap-4' : ''}`}>
           <div>
-            <h2 className={`font-bold text-white font-space ${isMobile ? 'text-xl' : 'text-2xl'}`}>Knowledge Base Management</h2>
-            <p className={`text-slate-400 mt-1 font-sans ${isMobile ? 'text-sm' : ''}`}>Manage company knowledge and training data</p>
+            <h2 className={`font-bold text-white font-space ${isMobile ? 'text-xl' : 'text-2xl'}`}>Manager Tools</h2>
+            <p className={`text-slate-400 mt-1 font-sans ${isMobile ? 'text-sm' : ''}`}>Manage company knowledge, training data, and coaching resources</p>
           </div>
           <button
             onClick={() => {
@@ -401,6 +406,28 @@ export default function KnowledgeBase() {
             onUpload={handleFileUpload}
             onDelete={deleteDocument}
           />
+        )}
+
+        {/* Coach Scripts Tab */}
+        {activeTab === 'coach-scripts' && (
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-24">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+            </div>
+          }>
+            <CoachScripts />
+          </Suspense>
+        )}
+
+        {/* Training Videos Tab */}
+        {activeTab === 'videos' && (
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-24">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+            </div>
+          }>
+            <TrainingVideos />
+          </Suspense>
         )}
         </motion.div>
       </div>

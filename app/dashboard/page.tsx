@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, lazy } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog, Database, Video, FileText } from 'lucide-react'
+import { Upload, Users, Settings, LayoutDashboard, ChevronDown, X, UserCog, Database } from 'lucide-react'
 
 // Lazy load all dashboard components for better code splitting
 const HeroPerformanceCard = lazy(() => import('@/components/dashboard/HeroPerformanceCard'))
@@ -18,10 +18,7 @@ const TeamTab = lazy(() => import('@/components/dashboard/tabs/TeamTab'))
 const ManagerPanelTab = lazy(() => import('@/components/dashboard/tabs/ManagerPanelTab'))
 
 // Lazy load manager components
-const RepManagement = lazy(() => import('@/components/manager/RepManagement'))
 const KnowledgeBase = lazy(() => import('@/components/manager/KnowledgeBase'))
-const TrainingVideos = lazy(() => import('@/components/manager/TrainingVideos'))
-const CoachScripts = lazy(() => import('@/components/manager/CoachScripts'))
 import type { DashboardData } from '@/app/dashboard/types'
 import { useIsMobile, useReducedMotion } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/utils'
@@ -122,10 +119,7 @@ function DashboardPageContent() {
     { id: 'team', label: 'Team', icon: Users },
     ...(isManager ? [
       { id: 'manager', label: 'Manager Panel', icon: UserCog },
-      { id: 'reps', label: 'Rep Management', icon: UserCog },
-      { id: 'knowledge', label: 'Knowledge Base', icon: Database },
-      { id: 'coach-scripts', label: 'Coach Scripts', icon: FileText },
-      { id: 'videos', label: 'Training Videos', icon: Video },
+      { id: 'knowledge', label: 'Manager Tools', icon: Database },
     ] : []),
     { id: 'settings', label: 'Settings', icon: Settings },
   ]
@@ -389,18 +383,6 @@ function DashboardPageContent() {
               </div>
             )}
 
-            {activeTab === 'reps' && isManager && (
-              <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                <Suspense fallback={
-                  <div className="flex items-center justify-center py-24">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-                  </div>
-                }>
-                  <RepManagement />
-                </Suspense>
-              </div>
-            )}
-
             {activeTab === 'knowledge' && isManager && (
               <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
                 <Suspense fallback={
@@ -409,18 +391,6 @@ function DashboardPageContent() {
                   </div>
                 }>
                   <KnowledgeBase />
-                </Suspense>
-              </div>
-            )}
-
-            {activeTab === 'videos' && isManager && (
-              <div className="bg-white/[0.03] rounded-3xl p-5 shadow-xl border border-white/10 backdrop-blur-sm">
-                <Suspense fallback={
-                  <div className="flex items-center justify-center py-24">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-                  </div>
-                }>
-                  <TrainingVideos />
                 </Suspense>
               </div>
             )}
@@ -535,16 +505,6 @@ function DashboardPageContent() {
               </Suspense>
             )}
 
-            {activeTab === 'reps' && isManager && (
-              <Suspense fallback={
-                <div className="flex items-center justify-center py-24">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-                </div>
-              }>
-                <RepManagement />
-              </Suspense>
-            )}
-
             {activeTab === 'knowledge' && isManager && (
               <Suspense fallback={
                 <div className="flex items-center justify-center py-24">
@@ -552,26 +512,6 @@ function DashboardPageContent() {
                 </div>
               }>
                 <KnowledgeBase />
-              </Suspense>
-            )}
-
-            {activeTab === 'coach-scripts' && isManager && (
-              <Suspense fallback={
-                <div className="flex items-center justify-center py-24">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-                </div>
-              }>
-                <CoachScripts />
-              </Suspense>
-            )}
-
-            {activeTab === 'videos' && isManager && (
-              <Suspense fallback={
-                <div className="flex items-center justify-center py-24">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-                </div>
-              }>
-                <TrainingVideos />
               </Suspense>
             )}
 
