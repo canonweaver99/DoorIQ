@@ -359,20 +359,12 @@ export function RotatingCardView({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="h-full flex flex-col bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 p-4 overflow-y-auto"
+              className="h-full flex flex-col bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 overflow-hidden shadow-lg"
             >
-              <div className="text-center mb-4">
-                <div className="text-3xl mb-2">🎯</div>
-                <h3 className="text-lg font-semibold text-white font-space">Live Coaching</h3>
-                <p className="text-xs text-slate-400 font-space mt-1">Suggested lines to use</p>
-              </div>
-              
-              <div className="flex-1 flex items-center justify-center">
-                <CoachSuggestion 
-                  suggestion={coachSuggestion} 
-                  isLoading={coachSuggestionLoading} 
-                />
-              </div>
+              <CoachSuggestion 
+                suggestion={coachSuggestion} 
+                isLoading={coachSuggestionLoading} 
+              />
             </motion.div>
           )}
         </AnimatePresence>

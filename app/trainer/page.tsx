@@ -2873,6 +2873,41 @@ function TrainerPageContent() {
             )}
         </div>
 
+        {/* Desktop Header - Always visible on desktop */}
+        {sessionActive && (
+          <div className="hidden md:flex items-center justify-between px-4 py-3 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98 w-full z-50">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-white font-space">
+                {selectedAgent?.name || 'Training Session'}
+              </span>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <Clock className="w-4 h-4" />
+                <span className="font-mono">{formatDuration(duration)}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {restartSession && (
+                <button
+                  onClick={restartSession}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg transition-all bg-slate-700/90 hover:bg-slate-600 text-white"
+                  aria-label="Restart session"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="text-sm font-medium">Restart</span>
+                </button>
+              )}
+              <button
+                onClick={() => handleDoorClosingSequence('User ended session')}
+                className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-all"
+                aria-label="End session"
+              >
+                <PhoneOff className="w-4 h-4 flex-shrink-0" />
+                <span>End Session</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* TEMPORARILY REMOVED: Mobile Layout - Using desktop layout for all screen sizes */}
         {/* Mobile Layout - iOS Optimized - DISABLED TO USE DESKTOP LAYOUT */}
         <div 
