@@ -33,6 +33,20 @@ export interface CoachAgentContext {
   transcript: Array<{ speaker: string; text: string; timestamp?: string }>
   scriptSections: ScriptSection[]
   conversationAnalysis?: ConversationAnalysis
+  companyInfo?: {
+    company_name?: string
+    company_mission?: string
+    product_description?: string
+    service_guarantees?: string
+    company_values?: string[]
+  } | null
+  pricingInfo?: Array<{
+    name?: string
+    price?: number
+    frequency?: string
+    description?: string
+  }> | null
+  repName?: string
 }
 
 /**
@@ -54,6 +68,9 @@ export async function generateSuggestion(
       .map((section, index) => `[Section ${index + 1}] (Score: ${section.score.toFixed(2)})\n${section.text}`)
       .join('\n\n---\n\n')
     
+    // Format company info and pricing for prompt
+    const companyInfoText = formatCompanyInfo(context.companyInfo, context.pricingInfo)
+    
     // Use enhanced prompt if we have good script matches, otherwise use adaptive
     const hasGoodMatches = context.scriptSections.some(s => s.score > 2)
     const useEnhanced = hasGoodMatches && conversationAnalysis.turnCount > 0
@@ -67,7 +84,8 @@ export async function generateSuggestion(
         context.homeownerText,
         conversationAnalysis,
         fullTranscript,
-        scriptSectionsText
+        scriptSectionsText,
+        companyInfoText
       )
     } else if (context.scriptSections.length === 0 || !hasGoodMatches) {
       // Use adaptive prompt when no good script matches
@@ -77,7 +95,7 @@ export async function generateSuggestion(
 Conversation context:
 ${conversationContext}
 
-Available script sections (may not be perfect match):
+${companyInfoText ? `${companyInfoText}\n\n` : ''}Available script sections (may not be perfect match):
 ${scriptSectionsText || 'No relevant script sections found.'}
 
 Generate an adapted response based on script principles.`
@@ -87,7 +105,8 @@ Generate an adapted response based on script principles.`
       userPrompt = buildCoachPrompt(
         context.homeownerText,
         conversationContext,
-        scriptSectionsText
+        scriptSectionsText,
+        companyInfoText
       )
     }
     
@@ -111,15 +130,21 @@ Generate an adapted response based on script principles.`
     // Parse JSON response
     const parsed = JSON.parse(content)
     
+    // Get the suggested line and replace placeholders
+    let suggestedLine = parsed.suggestedLine || parsed.line || 'No suggestion available'
+    suggestedLine = replacePlaceholders(suggestedLine, context.companyInfo, context.repName || '')
+    
     // Validate and return suggestion
     return {
-      suggestedLine: parsed.suggestedLine || parsed.line || 'No suggestion available',
+      suggestedLine,
       explanation: parsed.explanation,
       reasoning: parsed.reasoning,
       scriptSection: parsed.scriptSection,
       confidence: parsed.confidence || 'medium',
       tacticalNote: parsed.tacticalNote,
-      alternatives: parsed.alternatives || [],
+      alternatives: Array.isArray(parsed.alternatives) ? parsed.alternatives.map((alt: string) => 
+        replacePlaceholders(alt, context.companyInfo, context.repName || '')
+      ) : [],
       isAdapted: !hasGoodMatches || parsed.isAdapted || false
     }
   } catch (error: any) {
@@ -133,6 +158,86 @@ Generate an adapted response based on script principles.`
       isAdapted: true
     }
   }
+}
+
+/**
+ * Format company info for prompt
+ */
+function formatCompanyInfo(
+  companyInfo: CoachAgentContext['companyInfo'],
+  pricingInfo: CoachAgentContext['pricingInfo']
+): string {
+  if (!companyInfo && (!pricingInfo || pricingInfo.length === 0)) {
+    return ''
+  }
+
+  const parts: string[] = []
+  
+  if (companyInfo) {
+    parts.push('🏢 COMPANY INFORMATION:')
+    if (companyInfo.company_name) {
+      parts.push(`- Company Name: ${companyInfo.company_name}`)
+    }
+    if (companyInfo.company_mission) {
+      parts.push(`- Mission: ${companyInfo.company_mission}`)
+    }
+    if (companyInfo.product_description) {
+      parts.push(`- Product/Service: ${companyInfo.product_description}`)
+    }
+    if (companyInfo.service_guarantees) {
+      parts.push(`- Guarantees: ${companyInfo.service_guarantees}`)
+    }
+    if (companyInfo.company_values && companyInfo.company_values.length > 0) {
+      parts.push(`- Values: ${companyInfo.company_values.join(', ')}`)
+    }
+  }
+
+  if (pricingInfo && pricingInfo.length > 0) {
+    parts.push('\n💰 PRICING INFORMATION:')
+    pricingInfo.forEach((item, index) => {
+      if (item.name || item.price) {
+        const priceStr = item.price ? `$${item.price}` : 'Price not set'
+        const freqStr = item.frequency ? ` (${item.frequency})` : ''
+        const descStr = item.description ? ` - ${item.description}` : ''
+        parts.push(`${index + 1}. ${item.name || 'Unnamed Plan'}: ${priceStr}${freqStr}${descStr}`)
+      }
+    })
+  }
+
+  return parts.join('\n')
+}
+
+/**
+ * Replace placeholders in suggested line with actual values
+ */
+function replacePlaceholders(
+  line: string,
+  companyInfo: CoachAgentContext['companyInfo'],
+  repName: string
+): string {
+  let result = line
+
+  // Replace [COMPANY NAME] or [COMPANY_NAME]
+  if (companyInfo?.company_name) {
+    result = result.replace(/\[COMPANY NAME\]/gi, companyInfo.company_name)
+    result = result.replace(/\[COMPANY_NAME\]/gi, companyInfo.company_name)
+  }
+
+  // Replace [YOUR NAME] or [YOUR_NAME] or [REP NAME]
+  if (repName) {
+    result = result.replace(/\[YOUR NAME\]/gi, repName)
+    result = result.replace(/\[YOUR_NAME\]/gi, repName)
+    result = result.replace(/\[REP NAME\]/gi, repName)
+    result = result.replace(/\[REP_NAME\]/gi, repName)
+  }
+
+  // Remove any remaining undefined values
+  result = result.replace(/\s*undefined\s*/gi, ' ').trim()
+  
+  // Clean up extra spaces
+  result = result.replace(/\s+/g, ' ')
+
+  return result
 }
 
 /**

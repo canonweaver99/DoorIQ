@@ -47,15 +47,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user's organization/team
+    // Get user's organization/team and full name
     const { data: userProfile } = await supabase
       .from('users')
-      .select('organization_id, team_id')
+      .select('organization_id, team_id, full_name')
       .eq('id', user.id)
       .single()
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    }
+
+    // Fetch team grading config (company info and pricing tables)
+    let companyInfo = null
+    let pricingInfo = null
+    
+    if (userProfile.team_id) {
+      const { data: config } = await supabase
+        .from('team_grading_configs')
+        .select('company_name, company_mission, product_description, service_guarantees, company_values, pricing_info')
+        .eq('team_id', userProfile.team_id)
+        .single()
+      
+      if (config) {
+        companyInfo = {
+          company_name: config.company_name || '',
+          company_mission: config.company_mission || '',
+          product_description: config.product_description || '',
+          service_guarantees: config.service_guarantees || '',
+          company_values: config.company_values || []
+        }
+        pricingInfo = config.pricing_info || []
+      }
     }
 
     // Fetch active coaching scripts for the organization/team
@@ -121,7 +144,10 @@ export async function POST(request: NextRequest) {
       homeownerText,
       transcript: formattedTranscript,
       scriptSections: relevantSections,
-      conversationAnalysis
+      conversationAnalysis,
+      companyInfo,
+      pricingInfo,
+      repName: userProfile.full_name || ''
     }
 
     const suggestion = await generateSuggestion(coachContext)

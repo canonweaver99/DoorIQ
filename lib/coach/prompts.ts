@@ -68,21 +68,27 @@ Include a note that this is an adapted response, not a direct script line.`
 export function buildCoachPrompt(
   homeownerText: string,
   conversationContext: string,
-  scriptSections: string
+  scriptSections: string,
+  companyInfo?: string
 ): string {
   return `Homeowner's last statement: "${homeownerText}"
 
 Conversation context:
 ${conversationContext}
 
-Relevant script sections:
+${companyInfo ? `${companyInfo}\n\n` : ''}Relevant script sections:
 ${scriptSections}
 
-Based on the homeowner's statement and the conversation context, suggest the EXACT next line from the script that the rep should say. Provide the line exactly as it appears in the script.
+IMPORTANT: When suggesting script lines, replace placeholders with actual values:
+- [COMPANY NAME] or [COMPANY_NAME] → Use the actual company name from company info
+- [YOUR NAME] or [YOUR_NAME] or [REP NAME] → Use the rep's actual name
+- [POINT TO HOUSE] → Keep as is (this is a physical action instruction)
+
+Based on the homeowner's statement and the conversation context, suggest the EXACT next line from the script that the rep should say. Replace any placeholders with actual values from the company info provided above.
 
 Return your response in this JSON format:
 {
-  "suggestedLine": "the exact line from the script",
+  "suggestedLine": "the exact line from the script with placeholders replaced",
   "explanation": "brief explanation if helpful (optional, 1-2 sentences)",
   "scriptSection": "which section this came from (optional)",
   "confidence": "high|medium|low"
@@ -99,7 +105,8 @@ export function buildEnhancedCoachPrompt(
     keyPoints: string[];
   },
   fullTranscript: string,
-  scriptSections: string
+  scriptSections: string,
+  companyInfo?: string
 ): string {
   return `🎯 CURRENT SITUATION:
 Homeowner just said: "${homeownerText}"
@@ -114,7 +121,7 @@ Homeowner just said: "${homeownerText}"
 📜 RECENT CONVERSATION:
 ${fullTranscript.split('\n').slice(-6).join('\n')}
 
-📝 RELEVANT SCRIPT SECTIONS:
+${companyInfo ? `${companyInfo}\n\n` : ''}📝 RELEVANT SCRIPT SECTIONS:
 ${scriptSections}
 
 🎤 YOUR TASK:
@@ -124,13 +131,18 @@ Suggest the best script line for the rep to say next. Consider:
 3. Conversational momentum (${conversationAnalysis.momentum})
 4. What's been discussed already
 
+IMPORTANT: When suggesting script lines, replace placeholders with actual values:
+- [COMPANY NAME] or [COMPANY_NAME] → Use the actual company name from company info above
+- [YOUR NAME] or [YOUR_NAME] or [REP NAME] → Use the rep's actual name
+- [POINT TO HOUSE] → Keep as is (this is a physical action instruction)
+
 Return JSON:
 {
-  "suggestedLine": "exact line from script, adapted if needed",
+  "suggestedLine": "exact line from script with placeholders replaced, adapted if needed",
   "reasoning": "why this line fits the current situation (1 sentence)",
   "confidence": "high|medium|low",
   "tacticalNote": "quick tip for delivery (optional)",
-  "alternatives": ["other good options from script"]
+  "alternatives": ["other good options from script with placeholders replaced"]
 }
 
 Remember: This needs to feel like a natural, human response to what the homeowner just said.`
