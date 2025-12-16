@@ -31,7 +31,7 @@ export default function AffiliateProgramPage() {
               asChild
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-6 text-lg font-semibold"
             >
-              <Link href="/affiliate/dashboard">
+              <Link href="/affiliate">
                 Join the Program
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
@@ -228,7 +228,7 @@ export default function AffiliateProgramPage() {
             asChild
             className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-10 py-6 text-lg font-semibold"
           >
-            <Link href="/affiliate/dashboard">
+            <Link href="/affiliate">
               Get Started Now
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
