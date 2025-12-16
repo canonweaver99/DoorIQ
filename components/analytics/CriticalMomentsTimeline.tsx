@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, AlertTriangle, Clock, Lightbulb } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, Clock, Lightbulb, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface CriticalMoment {
@@ -103,6 +104,8 @@ export function CriticalMomentsTimeline({
   durationSeconds,
   agentName
 }: CriticalMomentsTimelineProps) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+
   if (!moments || moments.length === 0) {
     return (
       <motion.div
@@ -120,6 +123,22 @@ export function CriticalMomentsTimeline({
   const sortedMoments = [...moments]
     .sort((a, b) => (b.importance || 0) - (a.importance || 0))
 
+  const currentMoment = sortedMoments[currentIndex]
+  const canGoPrevious = currentIndex > 0
+  const canGoNext = currentIndex < sortedMoments.length - 1
+
+  const goToPrevious = () => {
+    if (canGoPrevious) {
+      setCurrentIndex(currentIndex - 1)
+    }
+  }
+
+  const goToNext = () => {
+    if (canGoNext) {
+      setCurrentIndex(currentIndex + 1)
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -127,10 +146,48 @@ export function CriticalMomentsTimeline({
       transition={{ duration: 0.5, delay: 0.3 }}
       className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 mb-8"
     >
-      <h2 className="text-3xl font-bold text-white mb-6">Key Moments That Defined This Session</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold text-white">Key Moments That Defined This Session</h2>
+        {sortedMoments.length > 1 && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-slate-400">
+              {currentIndex + 1} of {sortedMoments.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={goToPrevious}
+                disabled={!canGoPrevious}
+                className={cn(
+                  "p-2 rounded-lg transition-all",
+                  canGoPrevious
+                    ? "bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
+                    : "bg-slate-800/50 text-slate-600 cursor-not-allowed"
+                )}
+                aria-label="Previous moment"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={goToNext}
+                disabled={!canGoNext}
+                className={cn(
+                  "p-2 rounded-lg transition-all",
+                  canGoNext
+                    ? "bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
+                    : "bg-slate-800/50 text-slate-600 cursor-not-allowed"
+                )}
+                aria-label="Next moment"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       
-      <div className="space-y-6">
+      <div className="relative">
         {sortedMoments.map((moment, index) => {
+          if (index !== currentIndex) return null
           const ratingColors = getOutcomeColor(moment.outcome)
           const isSuccess = moment.outcome === 'success'
           const isFailure = moment.outcome === 'failure'
@@ -151,9 +208,9 @@ export function CriticalMomentsTimeline({
           return (
             <motion.div
               key={moment.id}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: index < currentIndex ? -20 : 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 + 0.3 }}
+              transition={{ duration: 0.3 }}
               className="relative"
             >
               <div className={cn(
