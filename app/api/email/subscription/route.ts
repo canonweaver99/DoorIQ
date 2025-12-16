@@ -9,7 +9,8 @@ const EMAIL_TEMPLATES = {
   trial_started: (data: any) => ({
     subject: '🎉 Welcome to DoorIQ - Your 14-Day Free Trial Starts Now!',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; 
+max-width: 600px; margin: 0 auto;">
         <h1 style="color: #8b5cf6;">Welcome to DoorIQ!</h1>
         <p>Your 14-day free trial has started! You now have full access to all premium features:</p>
         <ul>

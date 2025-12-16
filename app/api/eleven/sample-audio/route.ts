@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 import { PERSONA_METADATA, ALLOWED_AGENT_ORDER, type AllowedAgentName } from '@/components/trainer/personas'

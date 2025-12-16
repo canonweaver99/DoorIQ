@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { processNextJob } from '@/lib/queue/supabase-worker'
 import { logger } from '@/lib/logger'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 export const maxDuration = 60
 
 /**

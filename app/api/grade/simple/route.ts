@@ -3,8 +3,8 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
+export const dynamic = "force-dynamic";
 export const maxDuration = 60 // 60 seconds max
-export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

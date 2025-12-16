@@ -2,6 +2,8 @@ import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/s
 import { NextResponse } from 'next/server'
 import { sendNewUserNotification } from '@/lib/email/send'
 
+export const dynamic = "force-static";
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')

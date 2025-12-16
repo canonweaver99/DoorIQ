@@ -19,6 +19,7 @@
     "@calcom/embed-react": "^1.5.3",
     "@elevenlabs/client": "^0.12.0",
     "@elevenlabs/react": "^0.12.1",
+    "@expo/config-plugins": "^54.0.4",
     "@number-flow/react": "^0.5.10",
     "@openai/agents": "^0.0.7",
     "@prisma/client": "^6.16.2",
@@ -51,6 +52,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "expo": "~54.0.0",
+    "expo-dev-client": "^6.0.20",
     "framer-motion": "^12.23.24",
     "html2canvas": "^1.4.1",
     "ioredis": "^5.8.2",
@@ -81,6 +84,7 @@
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.0.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20.19.17",
     "@types/react": "^19",

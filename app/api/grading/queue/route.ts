@@ -4,7 +4,7 @@ import { addLineRatingJob } from '@/lib/queue/supabase-queue'
 import { splitTranscriptIntoBatches } from '@/lib/queue/supabase-worker'
 import { logger } from '@/lib/logger'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {

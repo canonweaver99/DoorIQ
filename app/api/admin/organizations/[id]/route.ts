@@ -1,10 +1,17 @@
+export const dynamic = "force-static";
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+
+export async function generateStaticParams() {
+  return []
+}
 
 /**
  * GET /api/admin/organizations/[id]
  * Admin-only endpoint to get organization details
  */
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

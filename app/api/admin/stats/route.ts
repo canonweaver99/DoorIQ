@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
+export const dynamic = "force-static";
+
 /**
  * GET /api/admin/stats
  * Admin-only endpoint to fetch comprehensive dashboard statistics
@@ -135,7 +137,7 @@ export async function GET(request: NextRequest) {
       null: 0
     }
     
-    ;(subscriptionStatsResult.data || []).forEach(user => {
+    (subscriptionStatsResult.data || []).forEach(user => {
       const status = user.subscription_status || 'null'
       if (status in subscriptionStats) {
         subscriptionStats[status as keyof typeof subscriptionStats]++

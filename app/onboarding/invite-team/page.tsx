@@ -200,6 +200,18 @@ export default function InviteTeamPage() {
       
       {/* Content */}
       <div className="relative z-10 min-h-[calc(100vh-200px)] flex flex-col items-center p-4 sm:p-6 pt-20 sm:pt-24 md:pt-32">
+        {/* Back button */}
+        <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="text-sm">Back</span>
+          </button>
+        </div>
         <AnimatePresence mode="wait">
           {!inviteSent ? (
             <motion.div

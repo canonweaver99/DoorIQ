@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
@@ -5,6 +7,10 @@ import Stripe from 'stripe'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-11-20.acacia',
 })
+
+export async function generateStaticParams() {
+  return []
+}
 
 /**
  * PATCH /api/admin/organizations/[id]/seats

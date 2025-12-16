@@ -1,5 +1,11 @@
+export const dynamic = "force-static";
+
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+
+export async function generateStaticParams() {
+  return []
+}
 
 export async function DELETE(
   request: NextRequest,

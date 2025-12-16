@@ -116,14 +116,40 @@ function SignUpForm() {
         callbackUrl += `?${params.toString()}`
       }
 
-      const { error: signUpError } = await supabase.auth.signInWithOAuth({
+      console.log('🔐 Initiating Google OAuth signup')
+      console.log('📍 Callback URL:', callbackUrl)
+
+      const { data, error: signUpError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
         },
       })
 
-      if (signUpError) throw signUpError
+      console.log('📦 OAuth response:', { 
+        hasData: !!data, 
+        hasUrl: !!data?.url, 
+        url: data?.url,
+        error: signUpError 
+      })
+
+      if (signUpError) {
+        console.error('❌ OAuth error:', signUpError)
+        throw signUpError
+      }
+
+      // Check if we got a URL to redirect to
+      if (data?.url) {
+        console.log('✅ Redirecting to OAuth URL:', data.url)
+        // Use window.location.replace to ensure redirect happens
+        window.location.replace(data.url)
+        return // Don't reset loading - redirect is happening
+      }
+
+      // If no URL was returned, this is unexpected
+      console.error('❌ No URL returned from OAuth')
+      setLoading(false)
+      setError('Failed to get OAuth URL. Please ensure your redirect URL is configured in Supabase dashboard and try again.')
     } catch (err: any) {
       setError(err.message || 'Failed to sign up with Google')
       setLoading(false)

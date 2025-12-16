@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { SessionPerformance, GradeInfo, KeyIssue, VoiceMetrics, ConversationMetrics, ClosingMetrics, OverallMetrics } from '@/app/dashboard/types'

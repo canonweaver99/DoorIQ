@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
@@ -54,30 +56,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!org.stripe_subscription_id || !org.stripe_subscription_item_id) {
-      return NextResponse.json(
-        { error: 'No active subscription found' },
-        { status: 400 }
-      )
+    // FAKE PAYWALL: Allow adding seats even without Stripe subscription
+    let currentQuantity = 0
+    let subscriptionItem = null
+
+    if (org.stripe_subscription_id && org.stripe_subscription_item_id) {
+      try {
+        // Get current subscription
+        const subscription = await stripe.subscriptions.retrieve(
+          org.stripe_subscription_id
+        )
+
+        subscriptionItem = subscription.items.data.find(
+          (item) => item.id === org.stripe_subscription_item_id
+        )
+
+        if (subscriptionItem) {
+          currentQuantity = subscriptionItem.quantity || 0
+        }
+      } catch (stripeError) {
+        // If Stripe fails, just use current seat_limit from database
+        console.log('Stripe subscription check skipped (fake paywall mode)')
+        currentQuantity = org.seat_limit || 0
+      }
+    } else {
+      // No Stripe subscription - use current seat_limit from database
+      currentQuantity = org.seat_limit || 0
     }
 
-    // Get current subscription
-    const subscription = await stripe.subscriptions.retrieve(
-      org.stripe_subscription_id
-    )
-
-    const subscriptionItem = subscription.items.data.find(
-      (item) => item.id === org.stripe_subscription_item_id
-    )
-
-    if (!subscriptionItem) {
-      return NextResponse.json(
-        { error: 'Subscription item not found' },
-        { status: 404 }
-      )
-    }
-
-    const newQuantity = (subscriptionItem.quantity || 0) + seatsToAdd
+    const newQuantity = currentQuantity + seatsToAdd
 
     // Check plan limits
     if (org.plan_tier === 'starter' && newQuantity > 20) {
@@ -104,44 +111,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if subscription is on trial
-    const isTrialing = subscription.status === 'trialing' || subscription.status === 'active' && subscription.trial_end && subscription.trial_end > Math.floor(Date.now() / 1000)
-
-    // If on trial, update subscription quantity directly without charging
-    // Billing will happen when trial ends
-    if (isTrialing) {
-      try {
-        // Update subscription quantity directly
-        await stripe.subscriptionItems.update(subscriptionItem.id, {
-          quantity: newQuantity,
-        })
-
-        // Update organization seat_limit in database
-        const { error: updateError } = await supabase
-          .from('organizations')
-          .update({ seat_limit: newQuantity })
-          .eq('id', org.id)
-
-        if (updateError) {
-          console.error('Error updating organization seat limit:', updateError)
-          throw updateError
+    // FAKE PAYWALL: Always add seats directly without payment
+    // This bypasses Stripe checkout for development/testing
+    try {
+      // Update subscription quantity directly (if subscription exists)
+      if (subscriptionItem && org.stripe_subscription_item_id) {
+        try {
+          await stripe.subscriptionItems.update(org.stripe_subscription_item_id, {
+            quantity: newQuantity,
+          })
+        } catch (stripeError) {
+          // If Stripe update fails, just update database (for testing without Stripe)
+          console.log('Stripe update skipped (fake paywall mode)')
         }
-
-        return NextResponse.json({
-          success: true,
-          message: `${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} added. No charge during trial period.`,
-          seatsAdded: seatsToAdd,
-          newQuantity,
-        })
-      } catch (error: any) {
-        console.error('Error updating subscription quantity:', error)
-        return NextResponse.json(
-          { error: error.message || 'Failed to add seats' },
-          { status: 500 }
-        )
       }
+
+      // Update organization seat_limit in database
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ seat_limit: newQuantity })
+        .eq('id', org.id)
+
+      if (updateError) {
+        console.error('Error updating organization seat limit:', updateError)
+        throw updateError
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} added successfully.`,
+        seatsAdded: seatsToAdd,
+        newQuantity,
+      })
+    } catch (error: any) {
+      console.error('Error adding seats:', error)
+      return NextResponse.json(
+        { error: error.message || 'Failed to add seats' },
+        { status: 500 }
+      )
     }
 
+    // ARCHIVED: Original Stripe checkout code (bypassed for fake paywall)
+    /*
     // Not on trial - proceed with checkout for immediate payment
     // Get the price ID for the current plan and billing interval
     const planConfig = STRIPE_CONFIG[org.plan_tier as keyof typeof STRIPE_CONFIG]
@@ -226,6 +237,7 @@ export async function POST(request: NextRequest) {
       url: session.url,
       sessionId: session.id,
     })
+    */
   } catch (error: any) {
     console.error('Error adding seats:', error)
     return NextResponse.json(

@@ -21,7 +21,8 @@ export async function POST(request: NextRequest) {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #333; margin: 0; padding: 0; background: #f5f5f5; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+line-height: 1.7; color: #333; margin: 0; padding: 0; background: #f5f5f5; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .email-content { background: #ffffff; padding: 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
             .header { text-align: center; margin-bottom: 30px; }

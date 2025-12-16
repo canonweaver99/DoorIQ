@@ -569,6 +569,18 @@ export default function GettingStartedPage() {
                 exit={{ opacity: 0, x: -100 }}
                 className="text-center max-w-2xl mx-auto w-full pt-12 sm:pt-16 md:pt-20"
               >
+                {/* Back button */}
+                <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+                  <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="text-sm">Back</span>
+                  </button>
+                </div>
                 {/* Door animation */}
                 <div className="flex justify-center mb-6 md:mb-8">
                   <AnimatedDoor isOpen={doorOpen} onClick={() => setDoorOpen(!doorOpen)} />
@@ -653,8 +665,20 @@ export default function GettingStartedPage() {
                 initial={{ opacity: 0, x: 100 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -100 }}
-                className="w-full max-w-7xl mx-auto pt-12 sm:pt-16 md:pt-20"
+                className="w-full max-w-7xl mx-auto pt-12 sm:pt-16 md:pt-20 relative"
               >
+                {/* Back button */}
+                <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10">
+                  <button
+                    onClick={() => setStep('welcome')}
+                    className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="text-sm">Back</span>
+                  </button>
+                </div>
                 <div className="text-center mb-8 sm:mb-10">
                   <motion.h2 
                     className="text-3xl sm:text-4xl md:text-5xl font-black mb-3"
@@ -761,8 +785,20 @@ export default function GettingStartedPage() {
                 initial={{ opacity: 0, x: 100 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0 }}
-                className="w-full max-w-lg mx-auto pt-6 sm:pt-10 md:pt-14"
+                className="w-full max-w-lg mx-auto pt-6 sm:pt-10 md:pt-14 relative"
               >
+                {/* Back button */}
+                <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10">
+                  <button
+                    onClick={() => setStep('choose-persona')}
+                    className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="text-sm">Back</span>
+                  </button>
+                </div>
                 {!micGranted ? (
                   <MicPermission onGranted={() => setMicGranted(true)} />
                 ) : (

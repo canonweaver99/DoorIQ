@@ -115,11 +115,13 @@ function DashboardPageContent() {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    ...(isManager ? [
+      { id: 'knowledge', label: 'Manager Tools', icon: Database },
+    ] : []),
     { id: 'upload', label: 'Upload Pitch', icon: Upload },
     { id: 'team', label: 'Team', icon: Users },
     ...(isManager ? [
       { id: 'manager', label: 'Manager Panel', icon: UserCog },
-      { id: 'knowledge', label: 'Manager Tools', icon: Database },
     ] : []),
     { id: 'settings', label: 'Settings', icon: Settings },
   ]

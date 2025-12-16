@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   images: {
     remotePatterns: [],
-    unoptimized: false,
+    unoptimized: true, // Required for static export (output: 'export')
     formats: ['image/avif', 'image/webp'], // Prefer modern formats
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -45,7 +45,7 @@ const nextConfig: NextConfig = {
     } : false,
   },
   // Output configuration
-  output: 'standalone', // Optimize for production deployments
+  output: 'export', // static site export for Capacitor
 };
 
 export default nextConfig;

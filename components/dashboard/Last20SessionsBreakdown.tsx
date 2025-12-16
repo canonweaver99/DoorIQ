@@ -444,7 +444,6 @@ export default function Last20SessionsBreakdown() {
                         )}
                         {session.virtualEarnings > 0 && (
                           <div className="flex items-center gap-1.5 font-space text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">
-                            <DollarSign className="w-3 h-3" />
                             {formatCurrency(session.virtualEarnings)}
                           </div>
                         )}

@@ -179,3 +179,5 @@ ALTER COLUMN credits SET DEFAULT 75;
 -- ✅ Functions simplified (no subscription-based logic)
 -- ✅ Monthly reset to 75 credits
 -- ✅ Anti-spam protection maintained
+
+

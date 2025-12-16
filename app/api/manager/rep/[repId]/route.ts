@@ -1,5 +1,11 @@
+export const dynamic = "force-static";
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+
+export async function generateStaticParams() {
+  return []
+}
 
 export async function GET(request: NextRequest, context: { params: Promise<{ repId: string }> }) {
   try {

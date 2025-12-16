@@ -17,3 +17,5 @@ ADD CONSTRAINT speech_analysis_session_id_unique UNIQUE (session_id);
 -- Add comment
 COMMENT ON CONSTRAINT speech_analysis_session_id_unique ON speech_analysis IS 
 'Ensures one speech_analysis record per session, allowing upsert operations';
+
+

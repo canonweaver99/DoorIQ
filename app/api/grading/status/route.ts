@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-static";
 
 export async function GET(request: NextRequest) {
   try {

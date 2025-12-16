@@ -40,13 +40,9 @@ export default function ModuleDetailPage() {
       setLoading(true)
       setError(null)
 
-      // Add cache-busting timestamp to ensure fresh data
-      const response = await fetch(`/api/learning/modules/${slug}?_t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
+      // Use revalidation instead of cache-busting for better performance
+      const response = await fetch(`/api/learning/modules/${slug}`, {
+        next: { revalidate: 300 } // Revalidate every 5 minutes
       })
       if (!response.ok) {
         if (response.status === 404) {

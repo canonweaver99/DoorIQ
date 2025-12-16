@@ -106,7 +106,8 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email to the lead
     const confirmationHtml = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #6B46C1 0%, #9333EA 100%); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
           <h1 style="color: white; margin: 0; font-size: 28px;">Thank You for Your Interest!</h1>
         </div>

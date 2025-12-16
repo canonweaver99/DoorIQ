@@ -3,9 +3,9 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 
+export const dynamic = "force-dynamic";
 // Increased timeout for reliable grading (Vercel Pro allows up to 300s)
 export const maxDuration = 60 // 60 seconds - allows for longer sessions
-export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

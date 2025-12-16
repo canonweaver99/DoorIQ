@@ -345,3 +345,5 @@ WHERE ended_at IS NULL AND user_id IS NOT NULL;
 -- ✅ Foreign key constraint for user_id
 -- ✅ JSONB default values
 -- ✅ Date range indexes
+
+

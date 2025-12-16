@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-static";
 export const maxDuration = 10
 
 /**

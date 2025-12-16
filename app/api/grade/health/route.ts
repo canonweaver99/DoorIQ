@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 
+export const dynamic = "force-static";
 export const maxDuration = 10
-export const dynamic = 'force-dynamic'
 
 /**
  * Health check endpoint to verify grading status and diagnose issues

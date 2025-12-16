@@ -1,6 +1,12 @@
+export const dynamic = "force-static";
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { ModuleWithProgress } from '@/lib/learning/types'
+
+export async function generateStaticParams() {
+  return []
+}
 
 export async function GET(
   request: NextRequest,
