@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { searchScripts } from '@/lib/coach/rag-retrieval'
-import { generateSuggestion, CoachAgentContext } from '@/lib/coach/coach-agent'
+import { searchScripts, classifyIntent } from '@/lib/coach/rag-retrieval'
+import { generateSuggestion, CoachAgentContext, CoachState } from '@/lib/coach/coach-agent'
 
 export async function POST(request: NextRequest) {
   try {
@@ -123,6 +123,50 @@ export async function POST(request: NextRequest) {
       }))
       .filter((entry: any) => entry.text && entry.text.trim().length > 0)
 
+    // Build CoachState from session history
+    const { data: currentSession } = await supabase
+      .from('live_sessions')
+      .select('coaching_suggestions')
+      .eq('id', sessionId)
+      .single()
+
+    const existingSuggestions = Array.isArray(currentSession?.coaching_suggestions)
+      ? currentSession.coaching_suggestions
+      : []
+
+    // Extract state from history
+    const suggestedLines = existingSuggestions
+      .map((s: any) => s.suggested_line)
+      .filter((line: string) => line && line.trim().length > 0)
+
+    const addressedObjections = existingSuggestions
+      .map((s: any) => {
+        // Try to infer objection from homeowner text
+        if (s.homeowner_text) {
+          const intent = classifyIntent(s.homeowner_text)
+          if (intent.type.includes('objection') || intent.type === 'brush_off' || intent.type === 'stall') {
+            return intent.type
+          }
+        }
+        return null
+      })
+      .filter((obj: string | null) => obj !== null)
+
+    const askedQuestions = conversationHistory
+      ?.filter((entry: any) => {
+        const text = entry.text.toLowerCase()
+        return (entry.speaker === 'user' || entry.speaker === 'rep') &&
+               text.includes('?') &&
+               /(what|how|tell me|experience|deal with|see|notice|concern|problem|issue|current|situation)/i.test(text)
+      })
+      .map((entry: any) => entry.text) || []
+
+    const coachState: CoachState = {
+      suggestedLines,
+      addressedObjections: Array.from(new Set(addressedObjections)),
+      askedQuestions: Array.from(new Set(askedQuestions))
+    }
+
     // Perform RAG retrieval - reduced to 2 sections for speed
     const relevantSections = searchScripts(homeownerText, scriptDocuments, 2)
 
@@ -134,49 +178,35 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Generate suggestion using coach agent with conversation history
+    // Generate suggestion using coach agent with conversation history and state
     const coachContext: CoachAgentContext = {
       homeownerText,
       repLastStatement,
       conversationHistory,
       scriptSections: relevantSections,
       companyName,
-      repName: userProfile.full_name || undefined
+      repName: userProfile.full_name || undefined,
+      coachState
     }
 
     const suggestion = await generateSuggestion(coachContext)
 
-    // Save suggestion to session (non-blocking, fetch and update in parallel)
+    // Save suggestion to session (non-blocking)
+    const newSuggestion = {
+      timestamp: new Date().toISOString(),
+      homeowner_text: homeownerText,
+      suggested_line: suggestion.suggestedLine,
+      explanation: suggestion.explanation,
+      confidence: suggestion.confidence,
+      intent: suggestion.intent
+    }
+
+    const updatedSuggestions = [...existingSuggestions, newSuggestion]
+
     supabase
       .from('live_sessions')
-      .select('coaching_suggestions')
+      .update({ coaching_suggestions: updatedSuggestions })
       .eq('id', sessionId)
-      .single()
-      .then(({ data: currentSession, error: fetchError }) => {
-        if (fetchError) {
-          console.error('Error fetching session for suggestion save:', fetchError)
-          return
-        }
-
-        const existingSuggestions = Array.isArray(currentSession?.coaching_suggestions)
-          ? currentSession.coaching_suggestions
-          : []
-
-        const newSuggestion = {
-          timestamp: new Date().toISOString(),
-          homeowner_text: homeownerText,
-          suggested_line: suggestion.suggestedLine,
-          explanation: suggestion.explanation,
-          confidence: suggestion.confidence
-        }
-
-        const updatedSuggestions = [...existingSuggestions, newSuggestion]
-
-        return supabase
-          .from('live_sessions')
-          .update({ coaching_suggestions: updatedSuggestions })
-          .eq('id', sessionId)
-      })
       .then((result: any) => {
         if (result?.error) {
           console.error('Error saving suggestion to session:', result.error)

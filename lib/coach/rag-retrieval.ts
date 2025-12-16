@@ -196,173 +196,42 @@ function getIntentKeywords(intentType: Intent['type']): string[] {
 }
 
 /**
- * Get stage-specific keywords
- */
-function getStageKeywords(stage: ConversationStage['stage']): string[] {
-  const stageMap: Record<ConversationStage['stage'], string[]> = {
-    'opener': [
-      'introduce', 'hello', 'my name', 'calling from', 'here because',
-      'reach out', 'quick', 'moment', 'hi there'
-    ],
-    'discovery': [
-      'currently', 'situation', 'pain point', 'challenge', 'concern',
-      'tell me', 'understand', 'learn about', 'experience with', 'what\'s your'
-    ],
-    'presentation': [
-      'benefit', 'feature', 'solution', 'how it works', 'specifically',
-      'imagine', 'for example', 'what this means', 'here\'s how'
-    ],
-    'objection_handling': [
-      'understand', 'concern', 'actually', 'many people', 'what if',
-      'make sense', 'fair question', 'let me address', 'i hear you'
-    ],
-    'closing': [
-      'next step', 'get started', 'move forward', 'sign up', 'schedule',
-      'today', 'now', 'secure', 'commit', 'let\'s do this'
-    ]
-  };
-  
-  return stageMap[stage] || [];
-}
-
-/**
- * Get sales patterns for intent matching
- */
-function getSalesPatterns(intentType: Intent['type']): RegExp[] {
-  const patterns: Record<Intent['type'], RegExp[]> = {
-    'price_objection': [
-      /\$\d+/,
-      /\d+% (off|discount|savings)/i,
-      /payment plan/i,
-      /break down the cost/i,
-      /monthly payment/i
-    ],
-    'time_objection': [
-      /takes? (just|only) \d+ minutes?/i,
-      /quick question/i,
-      /won't take long/i,
-      /just a moment/i
-    ],
-    'competitor_mention': [
-      /unlike (other|competitors)/i,
-      /what makes us different/i,
-      /our unique/i,
-      /key difference/i
-    ],
-    'skepticism': [
-      /\d+ years? (of )?(experience|in business)/i,
-      /\d+ satisfied customers/i,
-      /\d+% satisfaction/i,
-      /money-back guarantee/i
-    ],
-    'interest': [
-      /next step/i,
-      /get started/i,
-      /how do we/i,
-      /what's involved/i
-    ],
-    'brush_off': [
-      /respect your time/i,
-      /one quick/i,
-      /just curious/i
-    ],
-    'question': [],
-    'stall': [
-      /limited time/i,
-      /special offer/i,
-      /today only/i
-    ],
-    'neutral': []
-  };
-  
-  return patterns[intentType] || [];
-}
-
-/**
- * Check if section is relevant to current conversation stage
- */
-function isStageRelevant(section: string, currentStage: ConversationStage['stage']): boolean {
-  const sectionLower = section.toLowerCase();
-  
-  // If we're in objection handling, opener content is irrelevant
-  if (currentStage === 'objection_handling' && 
-      sectionLower.match(/my name is|calling from|introduce|hello there/)) {
-    return false;
-  }
-  
-  // If we're closing, discovery questions are irrelevant
-  if (currentStage === 'closing' && 
-      sectionLower.match(/tell me about|what's your current|learn about|how long have/)) {
-    return false;
-  }
-  
-  // If we're in opener, closing lines are irrelevant
-  if (currentStage === 'opener' && 
-      sectionLower.match(/next step|get started|sign up|move forward|let's do this/)) {
-    return false;
-  }
-  
-  return true;
-}
-
-/**
- * Calculate enhanced relevance score with intent and conversation stage
+ * Calculate enhanced relevance score - simplified to 3 factors only
  */
 function calculateEnhancedScore(
   section: string,
   keywords: string[],
   homeownerText: string,
-  intent: Intent,
-  conversationStage: ConversationStage
+  intent: Intent
 ): number {
-  let score = 0;
-  const sectionLower = section.toLowerCase();
+  let score = 0
+  const sectionLower = section.toLowerCase()
+  const homeownerLower = homeownerText.toLowerCase()
   
   // 1. Base keyword matching (weight: 1x)
   keywords.forEach(keyword => {
-    const matches = (sectionLower.match(new RegExp(keyword, 'gi')) || []).length;
-    score += matches;
-  });
+    const matches = (sectionLower.match(new RegExp(keyword, 'gi')) || []).length
+    score += matches
+  })
   
-  // 2. Intent-based scoring (weight: 3x) - MOST IMPORTANT
-  const intentKeywords = getIntentKeywords(intent.type);
+  // 2. Intent keyword matching (weight: 2x)
+  const intentKeywords = getIntentKeywords(intent.type)
   intentKeywords.forEach(keyword => {
     if (sectionLower.includes(keyword)) {
-      score += 3 * intent.confidence;
+      score += 2 * intent.confidence
     }
-  });
+  })
   
-  // 3. Stage-based scoring (weight: 2x)
-  const stageKeywords = getStageKeywords(conversationStage.stage);
-  stageKeywords.forEach(keyword => {
-    if (sectionLower.includes(keyword)) {
-      score += 2;
-    }
-  });
-  
-  // 4. Exact phrase matching (weight: 5x)
-  if (sectionLower.includes(homeownerText.toLowerCase())) {
-    score += 5;
-  }
-  
-  // 5. Pattern matching for common sales scenarios (weight: 4x)
-  const patterns = getSalesPatterns(intent.type);
-  patterns.forEach(pattern => {
-    if (pattern.test(sectionLower)) {
-      score += 4;
-    }
-  });
-  
-  // 6. Penalize irrelevant stages
-  if (!isStageRelevant(section, conversationStage.stage)) {
-    score *= 0.3; // Heavy penalty for wrong stage
+  // 3. Exact phrase matching (weight: 3x)
+  if (sectionLower.includes(homeownerLower)) {
+    score += 3
   }
   
   // Normalize by section length (prefer shorter, more focused sections)
-  const lengthPenalty = Math.min(section.length / 500, 1);
-  score = score / (1 + lengthPenalty * 0.5);
+  const lengthPenalty = Math.min(section.length / 500, 1)
+  score = score / (1 + lengthPenalty * 0.5)
   
-  return score;
+  return score
 }
 
 /**
@@ -373,10 +242,9 @@ function calculateRelevanceScore(
   keywords: string[],
   homeownerText: string
 ): number {
-  // Use enhanced scoring with default intent and stage
-  const intent = classifyIntent(homeownerText);
-  const stage: ConversationStage = { stage: 'discovery', turnCount: 5 };
-  return calculateEnhancedScore(section, keywords, homeownerText, intent, stage);
+  // Use enhanced scoring with default intent
+  const intent = classifyIntent(homeownerText)
+  return calculateEnhancedScore(section, keywords, homeownerText, intent)
 }
 
 /**
@@ -448,73 +316,86 @@ export function preprocessScriptChunks(content: string): ScriptChunk[] {
 
 /**
  * Analyze conversation to determine current stage and context
+ * Uses content-based detection instead of turn count
  */
 export function analyzeConversation(
   transcript: Array<{ speaker: string; text: string; timestamp?: string }>
 ): ConversationAnalysis {
   const turnCount = transcript.length;
   
-  // Get rep statements to check for discovery questions
+  // Get rep and homeowner statements
   const repStatements = transcript.filter(m => 
     m.speaker === 'user' || m.speaker === 'rep'
   );
+  const homeownerStatements = transcript.filter(m => 
+    m.speaker === 'homeowner' || m.speaker === 'agent'
+  );
   
-  // Check if rep has asked discovery questions
-  const hasAskedDiscoveryQuestions = repStatements.some(stmt => {
+  // Count discovery questions asked by rep
+  const discoveryQuestions = repStatements.filter(stmt => {
     const text = stmt.text.toLowerCase()
-    const isQuestion = text.includes('?')
-    const isDiscovery = text.match(/(what|how|tell me|experience|deal with|see|notice|concern|problem|issue)/i)
-    return isQuestion && !!isDiscovery
-  })
+    return text.includes('?') && 
+           /(what|how|tell me|experience|deal with|see|notice|concern|problem|issue|current|situation)/i.test(text)
+  }).length
   
   // Check if rep has started pitching (mentioning service, benefits, features)
   const hasStartedPitching = repStatements.some(stmt => {
     const text = stmt.text.toLowerCase()
-    return text.match(/(service|treatment|protect|benefit|feature|solution|program|plan|coverage)/i) &&
+    return text.match(/(service|treatment|protect|benefit|feature|solution|program|plan|coverage|how it works)/i) &&
            !text.match(/\?/) // Not a question
   })
   
-  // Determine stage based on conversation progress and content
-  let stage: ConversationStage['stage'] = 'opener';
+  // Detect objections from homeowner text
+  const hasObjections = homeownerStatements.some(stmt => {
+    const intent = classifyIntent(stmt.text)
+    return intent.type.includes('objection') || intent.type === 'brush_off' || intent.type === 'stall'
+  })
   
-  // If rep hasn't asked discovery questions and has started pitching, force discovery stage
-  if (!hasAskedDiscoveryQuestions && hasStartedPitching && turnCount <= 6) {
-    stage = 'discovery' // Force discovery even if turn count suggests otherwise
-  } else if (turnCount > 8) {
-    stage = 'closing'
-  } else if (turnCount > 6) {
+  // Check if pricing has been discussed
+  const fullText = transcript.map(m => m.text).join(' ').toLowerCase()
+  const pricingDiscussed = /(price|cost|how much|pricing|payment|budget)/i.test(fullText)
+  
+  // Detect closing language from rep
+  const closingLanguage = repStatements.some(stmt => {
+    const text = stmt.text.toLowerCase()
+    return /(next step|get started|sign up|schedule|move forward|let's do|ready to|when can we)/i.test(text)
+  })
+  
+  // Determine stage from actual content
+  let stage: ConversationStage['stage'] = 'opener'
+  
+  if (hasObjections) {
     stage = 'objection_handling'
-  } else if (turnCount > 4 || hasAskedDiscoveryQuestions) {
+  } else if (closingLanguage || (pricingDiscussed && discoveryQuestions >= 2)) {
+    stage = 'closing'
+  } else if (hasStartedPitching && discoveryQuestions >= 2) {
     stage = 'presentation'
-  } else if (turnCount > 2) {
+  } else if (discoveryQuestions >= 1) {
     stage = 'discovery'
   }
+  // else stays 'opener'
   
   // Analyze last homeowner message
-  const homeownerMessages = transcript.filter(m => 
-    m.speaker === 'homeowner' || m.speaker === 'agent'
-  );
-  const lastHomeownerMsg = homeownerMessages[homeownerMessages.length - 1]?.text || '';
-  const lastIntent = classifyIntent(lastHomeownerMsg);
+  const lastHomeownerMsg = homeownerStatements[homeownerStatements.length - 1]?.text || ''
+  const lastIntent = classifyIntent(lastHomeownerMsg)
   
   // Determine momentum
-  let momentum: 'positive' | 'neutral' | 'negative' = 'neutral';
-  const recentMessages = transcript.slice(-4).map(m => m.text).join(' ').toLowerCase();
+  let momentum: 'positive' | 'neutral' | 'negative' = 'neutral'
+  const recentMessages = transcript.slice(-4).map(m => m.text).join(' ').toLowerCase()
   
   if (recentMessages.match(/interested|sounds good|tell me more|great|perfect|that's interesting/)) {
-    momentum = 'positive';
+    momentum = 'positive'
   } else if (recentMessages.match(/not interested|no thanks|busy|already have|not today|go away/)) {
-    momentum = 'negative';
+    momentum = 'negative'
   }
   
   // Extract key points
-  const fullText = transcript.map(m => m.text).join(' ').toLowerCase();
-  const keyPoints: string[] = [];
-  if (fullText.includes('price') || fullText.includes('cost')) keyPoints.push('price_discussed');
-  if (fullText.match(/spouse|partner|wife|husband/)) keyPoints.push('needs_spousal_approval');
-  if (fullText.includes('competitor') || fullText.includes('already have')) keyPoints.push('comparing_options');
-  if (fullText.match(/guarantee|warranty|promise/)) keyPoints.push('guarantee_discussed');
-  if (!hasAskedDiscoveryQuestions && turnCount <= 4) keyPoints.push('needs_discovery_questions');
+  const keyPoints: string[] = []
+  if (pricingDiscussed) keyPoints.push('price_discussed')
+  if (fullText.match(/spouse|partner|wife|husband/)) keyPoints.push('needs_spousal_approval')
+  if (fullText.includes('competitor') || fullText.includes('already have')) keyPoints.push('comparing_options')
+  if (fullText.match(/guarantee|warranty|promise/)) keyPoints.push('guarantee_discussed')
+  if (discoveryQuestions === 0 && turnCount <= 4) keyPoints.push('needs_discovery_questions')
   
   return {
     stage,
@@ -522,7 +403,7 @@ export function analyzeConversation(
     lastIntent,
     momentum,
     keyPoints
-  };
+  }
 }
 
 /**
@@ -533,8 +414,7 @@ export function analyzeConversation(
 export function searchScripts(
   homeownerText: string,
   scripts: ScriptDocument[],
-  topN: number = 2,
-  conversationAnalysis?: ConversationAnalysis
+  topN: number = 2
 ): ScriptSection[] {
   if (!homeownerText || homeownerText.trim().length === 0) {
     return []
@@ -568,35 +448,16 @@ export function searchScripts(
     })
   }
   
-  // Simplified scoring - just keyword matching (much faster)
+  // Use simplified scoring with intent matching
+  const intent = classifyIntent(homeownerText)
   const allSections: ScriptSection[] = []
   
   scripts.forEach(script => {
     // Use cached chunks if available (much faster)
     if (script.chunks && script.chunks.length > 0) {
       script.chunks.forEach(chunk => {
-        let score = 0
-        const chunkLower = chunk.text.toLowerCase()
-        
-        // Use pre-extracted keywords for faster matching
-        const keywordMatches = chunk.keywords.filter(kw => 
-          keywords.some(searchKw => chunkLower.includes(searchKw.toLowerCase()))
-        )
-        score += keywordMatches.length
-        
-        // Also check direct keyword matches in text
-        keywords.forEach(keyword => {
-          const matches = (chunkLower.match(new RegExp(keyword, 'gi')) || []).length
-          score += matches
-        })
-        
-        // Boost for exact phrase matches
-        if (chunkLower.includes(homeownerLower)) {
-          score += 5
-        }
-        
-        // Prefer shorter sections
-        score = score / (1 + chunk.text.length / 300)
+        // Use simplified enhanced scoring
+        const score = calculateEnhancedScore(chunk.text, keywords, homeownerText, intent)
         
         allSections.push({
           text: chunk.text,
@@ -615,22 +476,8 @@ export function searchScripts(
       const chunks = splitIntoChunks(script.content, 300, 50)
       
       chunks.forEach(chunk => {
-        let score = 0
-        const chunkLower = chunk.text.toLowerCase()
-        
-        // Simple keyword matching
-        keywords.forEach(keyword => {
-          const matches = (chunkLower.match(new RegExp(keyword, 'gi')) || []).length
-          score += matches
-        })
-        
-        // Boost for exact phrase matches
-        if (chunkLower.includes(homeownerLower)) {
-          score += 5
-        }
-        
-        // Prefer shorter sections
-        score = score / (1 + chunk.text.length / 300)
+        // Use simplified enhanced scoring
+        const score = calculateEnhancedScore(chunk.text, keywords, homeownerText, intent)
         
         allSections.push({
           ...chunk,

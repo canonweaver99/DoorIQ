@@ -305,7 +305,8 @@ function detectPersonalRapportQuestion(text: string): boolean {
 function detectMomentumShift(
   currentEntry: TranscriptEntry,
   recentEntries: TranscriptEntry[],
-  objectionHandled: boolean
+  objectionHandled: boolean,
+  lastInterestGrowingTime: Date | null
 ): { type: 'building_rapport' | 'interest_growing' | 'losing_engagement' | 'strong_recovery'; message: string } | null {
   if (currentEntry.speaker !== 'homeowner' && currentEntry.speaker !== 'agent') return null
   
@@ -313,7 +314,8 @@ function detectMomentumShift(
     .filter(e => e.speaker === 'homeowner' || e.speaker === 'agent')
     .slice(-5)
   
-  if (recentHomeownerEntries.length < 2) return null
+  // Need at least 3 previous responses to establish a trend
+  if (recentHomeownerEntries.length < 3) return null
   
   // Check response length trend
   const lengths = recentHomeownerEntries.map(e => e.text.length)
@@ -325,9 +327,33 @@ function detectMomentumShift(
     return { type: 'strong_recovery', message: 'Strong recovery! Regained momentum.' }
   }
   
-  // Interest growing - responses getting longer
-  if (currentLength > avgLength * 1.2 && currentLength > 40) {
-    return { type: 'interest_growing', message: 'Interest growing! Responses getting longer.' }
+  // Interest growing - responses getting longer (made stricter)
+  // Require: 1.5x average length, minimum 80 chars, engagement signals, and cooldown period
+  const timeSinceLastInterestGrowing = lastInterestGrowingTime 
+    ? Date.now() - lastInterestGrowingTime.getTime()
+    : Infinity
+  
+  // Cooldown: Don't trigger again within 30 seconds
+  if (timeSinceLastInterestGrowing < 30000) {
+    return null
+  }
+  
+  // Check for engagement signals (questions, positive language, interest indicators)
+  const text = currentEntry.text.toLowerCase()
+  const hasEngagementSignals = 
+    text.includes('?') || // Asking questions
+    /(tell me|explain|how|what|when|where|why)/i.test(currentEntry.text) || // Seeking information
+    /(interesting|sounds good|that makes sense|I see|good to know|didn't know)/i.test(currentEntry.text) || // Positive engagement
+    /(yes|yeah|sure|okay|alright)/i.test(currentEntry.text) && currentLength > 50 // Agreement with substance
+  
+  // Stricter threshold: 1.5x average AND minimum 80 characters AND engagement signals
+  if (currentLength > avgLength * 1.5 && currentLength >= 80 && hasEngagementSignals) {
+    // Also check that this is a sustained trend (at least 2 of last 3 responses were longer)
+    const lastThreeLengths = lengths.slice(-3)
+    const longerResponses = lastThreeLengths.filter(len => len > avgLength * 1.2).length
+    if (longerResponses >= 2) {
+      return { type: 'interest_growing', message: 'Interest growing! Responses getting longer.' }
+    }
   }
   
   // Losing engagement - responses getting shorter
@@ -607,6 +633,7 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
   const lastTalkTimeWarningRef = useRef<{ threshold: 'high' | 'low' | null; timestamp: Date | null }>({ threshold: null, timestamp: null })
   const recentObjectionsRef = useRef<Array<{ timestamp: Date; type: 'price' | 'timing' | 'trust' | 'need' | 'authority' | 'comparison' | 'skepticism' | 'renter_ownership' | 'existing_service' | 'no_problem' | 'contract_fear' | 'door_policy' | 'brush_off' | 'bad_experience' | 'just_moved' }>>([]) // For stacking detection
   const commitmentHistoryRef = useRef<Array<{ timestamp: Date; level: 'minimal' | 'moderate' | 'strong' | 'buying' }>>([]) // For buying temperature
+  const lastInterestGrowingRef = useRef<Date | null>(null) // Track when "interest growing" was last triggered
   
   // Reset objection sequence on new session
   useEffect(() => {
@@ -823,8 +850,13 @@ export function useLiveSessionAnalysis(transcript: TranscriptEntry[]): UseLiveSe
         }
         
         // Detect momentum shifts
-        const momentum = detectMomentumShift(entry, recentEntriesRef.current, false)
+        const momentum = detectMomentumShift(entry, recentEntriesRef.current, false, lastInterestGrowingRef.current)
         if (momentum) {
+          // Track when "interest growing" was triggered for cooldown
+          if (momentum.type === 'interest_growing') {
+            lastInterestGrowingRef.current = entry.timestamp
+          }
+          
           addFeedbackItem(
             'momentum_shift',
             momentum.message,

@@ -5,6 +5,7 @@
 
 import OpenAI from 'openai'
 import { ScriptSection } from './rag-retrieval'
+import { CONSOLIDATED_COACH_PROMPT } from './prompts'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -17,6 +18,12 @@ export interface CoachSuggestion {
   intent?: string
 }
 
+export interface CoachState {
+  suggestedLines: string[]
+  addressedObjections: string[]
+  askedQuestions: string[]
+}
+
 export interface CoachAgentContext {
   homeownerText: string
   repLastStatement?: string
@@ -24,6 +31,111 @@ export interface CoachAgentContext {
   scriptSections: ScriptSection[]
   companyName?: string
   repName?: string
+  coachState?: CoachState
+}
+
+const INTENT_FALLBACKS = {
+  price_objection: "Ask them what their budget range is",
+  time_objection: "Ask when would work better for them",
+  brush_off: "Acknowledge their concern and ask one discovery question about their situation",
+  skepticism: "Ask what would make them feel comfortable moving forward",
+  stall: "Ask what specifically they need to think about",
+  neutral: "Ask about their current situation or biggest concern"
+}
+
+/**
+ * Verify that suggested line exists in script sections
+ * Returns actual script text if found, or closest match
+ */
+function verifyScriptLine(
+  suggestion: string,
+  scriptSections: ScriptSection[]
+): { verified: string; isExact: boolean } {
+  const suggestionLower = suggestion.toLowerCase().trim()
+  
+  // Check for exact match first
+  for (const section of scriptSections) {
+    const sectionLower = section.text.toLowerCase()
+    if (sectionLower.includes(suggestionLower) || suggestionLower.includes(sectionLower.substring(0, 100))) {
+      // Find the actual line in the section
+      const lines = section.text.split('\n').filter(line => line.trim().length > 0)
+      for (const line of lines) {
+        const lineLower = line.toLowerCase().trim()
+        // Check if suggestion matches this line (allowing for minor variations)
+        if (lineLower === suggestionLower || 
+            lineLower.includes(suggestionLower.substring(0, Math.min(30, suggestionLower.length))) ||
+            suggestionLower.includes(lineLower.substring(0, Math.min(30, lineLower.length)))) {
+          return { verified: line.trim(), isExact: true }
+        }
+      }
+      // If no exact line match, return first substantial line from section
+      const firstSubstantialLine = lines.find(line => line.trim().length > 20)
+      if (firstSubstantialLine) {
+        return { verified: firstSubstantialLine.trim(), isExact: false }
+      }
+    }
+  }
+  
+  // If no match found, find closest match using simple substring matching
+  let bestMatch: string | null = null
+  let bestScore = 0
+  
+  for (const section of scriptSections) {
+    const lines = section.text.split('\n').filter(line => line.trim().length > 0)
+    for (const line of lines) {
+      const lineLower = line.toLowerCase().trim()
+      // Calculate simple similarity score
+      const commonWords = suggestionLower.split(/\s+/).filter(word => 
+        word.length > 3 && lineLower.includes(word)
+      ).length
+      const score = commonWords / Math.max(suggestionLower.split(/\s+/).length, 1)
+      
+      if (score > bestScore && score > 0.3) {
+        bestScore = score
+        bestMatch = line.trim()
+      }
+    }
+  }
+  
+  if (bestMatch) {
+    return { verified: bestMatch, isExact: false }
+  }
+  
+  // Fallback: return first substantial line from first section
+  const firstSection = scriptSections[0]
+  if (firstSection) {
+    const lines = firstSection.text.split('\n').filter(line => line.trim().length > 0)
+    const firstSubstantialLine = lines.find(line => line.trim().length > 20)
+    if (firstSubstantialLine) {
+      return { verified: firstSubstantialLine.trim(), isExact: false }
+    }
+  }
+  
+  return { verified: suggestion, isExact: false }
+}
+
+/**
+ * Normalize a line for comparison (lowercase, remove punctuation, first 50 chars)
+ */
+function normalizeLine(line: string): string {
+  return line
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 50)
+}
+
+/**
+ * Check if a line has already been suggested
+ */
+function hasBeenSuggested(line: string, coachState?: CoachState): boolean {
+  if (!coachState || !coachState.suggestedLines) return false
+  
+  const normalized = normalizeLine(line)
+  return coachState.suggestedLines.some(suggested => 
+    normalizeLine(suggested) === normalized
+  )
 }
 
 /**
@@ -44,57 +156,6 @@ export async function generateSuggestion(
       })
       .join('\n\n---\n\n')
     
-    // Analyze conversation stage to provide context-aware suggestions
-    const turnCount = context.conversationHistory?.length || 0
-    const repStatements = context.conversationHistory?.filter(e => 
-      e.speaker === 'user' || e.speaker === 'rep'
-    ) || []
-    const homeownerStatements = context.conversationHistory?.filter(e => 
-      e.speaker === 'homeowner' || e.speaker === 'agent'
-    ) || []
-    
-    // Check if rep has asked any discovery questions yet
-    const hasAskedQuestions = repStatements.some(stmt => {
-      const text = stmt.text.toLowerCase()
-      return text.includes('?') && (
-        text.includes('what') || text.includes('how') || text.includes('tell me') ||
-        text.includes('experience') || text.includes('deal with') || text.includes('see')
-      )
-    })
-    
-    // Determine conversation stage
-    let conversationStage = 'opener'
-    if (turnCount > 8) conversationStage = 'closing'
-    else if (turnCount > 6) conversationStage = 'objection_handling'
-    else if (turnCount > 4) conversationStage = 'presentation'
-    else if (turnCount > 2) conversationStage = 'discovery'
-    
-    // Build prompt with few-shot examples and stage awareness
-    const systemPrompt = `You're a friend giving casual, quick advice during a practice session. Keep responses SHORT (1-2 sentences max, often just a phrase). Sound relaxed and friendly.
-
-CRITICAL RULES FOR OPENING RAPPORT:
-- In early turns (first 2-4 exchanges), ALWAYS prioritize asking discovery questions BEFORE pitching
-- Build rapport by asking about their situation, not by immediately explaining your service
-- Real door-to-door reps ask questions first: "What kind of bugs are you dealing with?" "How long have you lived here?" "What's your biggest concern?"
-- NEVER suggest jumping straight into the pitch without asking questions first
-- If no questions have been asked yet, suggest a discovery question, not a pitch
-
-Examples:
-Early turn, homeowner: "Hi"
-You: "Try: 'Hey there! Quick question - are you dealing with any pest issues around the house?'"
-
-Early turn, homeowner: "What's this about?"
-You: "Try: 'I'm with [COMPANY NAME]. Mind if I ask - what kind of bugs have you noticed lately?'"
-
-Homeowner: "I'm not interested"
-You: "Try: 'I hear you - most of our best customers said the same thing at first. Mind if I ask what you're using now?'"
-
-Homeowner: "How much does it cost?"
-You: "Try: 'Great question! Before I throw numbers at you, mind if I ask - are you dealing with [specific pest]?'"
-
-Homeowner: "I need to think about it"
-You: "Try: 'Totally get it. Quick question - what specifically do you want to think over? Price, timing, or something else?'"`
-    
     const companyName = context.companyName ? `\nCompany name: ${context.companyName}` : ''
     const repName = context.repName ? `\nRep's name: ${context.repName}` : ''
     const repContext = context.repLastStatement ? `\nRep just said: "${context.repLastStatement}"` : ''
@@ -109,31 +170,26 @@ You: "Try: 'Totally get it. Quick question - what specifically do you want to th
       }).join('\n')}`
     }
     
-    // Build stage-aware prompt
-    const stageContext = `\n\nCONVERSATION STAGE: ${conversationStage}
-- Turn count: ${turnCount}
-- Has asked discovery questions: ${hasAskedQuestions ? 'Yes' : 'No'}
-${!hasAskedQuestions && turnCount <= 4 ? '\n⚠️ CRITICAL: No discovery questions asked yet! Suggest a discovery question, NOT a pitch.' : ''}
-${turnCount <= 2 ? '\n⚠️ EARLY STAGE: Focus on rapport and discovery questions. Do NOT suggest pitching yet.' : ''}`
+    // Check what's already been suggested to avoid repetition
+    const alreadySuggested = context.coachState?.suggestedLines || []
+    const alreadySuggestedText = alreadySuggested.length > 0
+      ? `\n\nIMPORTANT: Do NOT suggest these lines again:\n${alreadySuggested.slice(-5).join('\n')}`
+      : ''
     
     const userPrompt = `Homeowner said: "${context.homeownerText}"
 
-1. What objection/intent is this? (price, time, skepticism, interest, neutral, greeting, etc)
+1. What objection/intent is this? (price_objection, time_objection, skepticism, interest, brush_off, neutral)
 2. Suggest a SHORT, CASUAL response (1-2 sentences max) from the script that handles this well.
 3. IMPORTANT: Do NOT suggest questions that have already been asked in the conversation history below.
-4. CRITICAL: If this is early in the conversation (turn ${turnCount} or less) and no discovery questions have been asked, suggest a discovery question about their situation, NOT a pitch or explanation of your service.
-
-${stageContext}
+4. CRITICAL: If this is early in the conversation (first 4 turns) and no discovery questions have been asked, suggest a discovery question about their situation, NOT a pitch or explanation of your service.
 
 Relevant script sections:
-${scriptSectionsText}${companyName}${repName}${repContext}${conversationHistoryText}
-
-Replace [COMPANY NAME] with the company name and [YOUR NAME] or [REP NAME] with the rep's name if provided.
+${scriptSectionsText}${companyName}${repName}${repContext}${conversationHistoryText}${alreadySuggestedText}
 
 Return JSON:
 {
-  "intent": "price_objection|time_objection|skepticism|interest|neutral|greeting",
-  "suggestedLine": "the response with placeholders replaced",
+  "intent": "price_objection|time_objection|skepticism|interest|brush_off|neutral",
+  "suggestedLine": "the response from script",
   "confidence": "high|medium|low"
 }`
     
@@ -141,7 +197,7 @@ Return JSON:
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: CONSOLIDATED_COACH_PROMPT },
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.3,
@@ -157,26 +213,65 @@ Return JSON:
     // Parse JSON response
     const parsed = JSON.parse(content)
     
-    // Get the suggested line and replace placeholders
-    let suggestedLine = parsed.suggestedLine || 'Continue the conversation naturally.'
+    // Get the suggested line
+    let suggestedLine = parsed.suggestedLine || ''
+    const intent = parsed.intent || 'neutral'
+    
+    // Verify the suggestion exists in script sections
+    const verification = verifyScriptLine(suggestedLine, context.scriptSections)
+    suggestedLine = verification.verified
+    
+    // Check if this line has already been suggested
+    if (hasBeenSuggested(suggestedLine, context.coachState)) {
+      // Use intent-specific fallback instead
+      const fallback = INTENT_FALLBACKS[intent as keyof typeof INTENT_FALLBACKS] || INTENT_FALLBACKS.neutral
+      suggestedLine = fallback
+    }
+    
+    // Replace placeholders
     suggestedLine = replacePlaceholders(suggestedLine, context.companyName, context.repName || '')
     suggestedLine = suggestedLine.replace(/—/g, '-').replace(/–/g, '-')
+    
+    // Adjust confidence if not exact match
+    let confidence = parsed.confidence || 'medium'
+    if (!verification.isExact && confidence === 'high') {
+      confidence = 'medium'
+    }
     
     return {
       suggestedLine,
       explanation: parsed.explanation,
-      confidence: parsed.confidence || 'medium',
-      intent: parsed.intent
+      confidence: confidence as 'high' | 'medium' | 'low',
+      intent
     }
   } catch (error: any) {
     console.error('Error generating coach suggestion:', error)
     
+    // Use intent-specific fallback if we can determine intent
+    const intent = classifyIntentFromText(context.homeownerText)
+    const fallback = INTENT_FALLBACKS[intent as keyof typeof INTENT_FALLBACKS] || INTENT_FALLBACKS.neutral
+    
     return {
-      suggestedLine: 'Continue the conversation naturally based on the script.',
+      suggestedLine: fallback,
       explanation: 'Unable to generate suggestion at this time.',
-      confidence: 'low'
+      confidence: 'low',
+      intent
     }
   }
+}
+
+/**
+ * Simple intent classification from homeowner text (fallback)
+ */
+function classifyIntentFromText(text: string): string {
+  const lower = text.toLowerCase()
+  if (lower.match(/price|cost|expensive|afford|budget|how much/)) return 'price_objection'
+  if (lower.match(/busy|later|think about|not right now|maybe later/)) return 'time_objection'
+  if (lower.match(/scam|trust|believe|prove|doubt|skeptical/)) return 'skepticism'
+  if (lower.match(/not interested|no thanks|not today|go away/)) return 'brush_off'
+  if (lower.match(/think about|talk to|discuss|decide|consider/)) return 'stall'
+  if (lower.match(/tell me more|interested|sounds good|that's interesting/)) return 'interest'
+  return 'neutral'
 }
 
 /**
