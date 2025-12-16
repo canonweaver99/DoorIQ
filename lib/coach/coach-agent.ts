@@ -1,6 +1,6 @@
 /**
  * Coach Agent Implementation
- * Simple version: Takes homeowner statement, conversation history, and script → suggests next line
+ * Takes homeowner statement, conversation history, and script → suggests natural, human response
  */
 
 import OpenAI from 'openai'
@@ -22,6 +22,83 @@ export interface CoachAgentContext {
   scriptSections: ScriptSection[]
   companyName?: string
   repName?: string
+}
+
+/**
+ * Banned phrases that sound scripted/salesy
+ */
+const BANNED_PHRASES = [
+  // Openers
+  "i appreciate your time",
+  "quick question though",
+  "i'll only take a minute",
+  "i'm not here to sell you anything",
+  "don't worry, i'm not trying to",
+  
+  // Transitions
+  "the reason i stopped by",
+  "what brings me to your door",
+  "what i wanted to share with you",
+  "the great news is",
+  "here's the thing",
+  "what sets us apart",
+  
+  // Validation (over-eager)
+  "absolutely!",
+  "definitely!",
+  "perfect!",
+  "that's a great question",
+  "i totally understand",
+  "i completely understand",
+  "that's totally fair",
+  
+  // Pressure
+  "just so you know",
+  "i should mention",
+  "the only thing is",
+  "what i can do for you",
+  "if i could show you a way",
+  "would it make sense if",
+  
+  // Closing
+  "does that sound fair",
+  "how does that sound",
+  "would that work for you",
+  "all i need from you is",
+  "the next step would be"
+]
+
+/**
+ * Filter out scripted phrases and clean up response to sound more human
+ */
+function humanizeResponse(line: string): string {
+  let result = line.trim()
+  
+  // Check for banned phrases and log warning
+  const lowerResult = result.toLowerCase()
+  for (const phrase of BANNED_PHRASES) {
+    if (lowerResult.includes(phrase)) {
+      console.warn(`⚠️ Banned phrase detected: "${phrase}" in response: "${result}"`)
+      // Note: We'll let the AI regenerate if needed, but this helps catch issues
+    }
+  }
+  
+  // Remove exclamation points (too eager)
+  result = result.replace(/!/g, '.')
+  
+  // Fix double periods
+  result = result.replace(/\.\./g, '.')
+  
+  // Shorten if too long (real people don't monologue)
+  const sentences = result.split(/(?<=[.?])\s+/)
+  if (sentences.length > 3) {
+    result = sentences.slice(0, 2).join(' ')
+  }
+  
+  // Clean up extra spaces
+  result = result.replace(/\s+/g, ' ').trim()
+  
+  return result
 }
 
 /**
@@ -93,27 +170,35 @@ export async function generateSuggestion(
     }
     const contextText = contextInfo.length > 0 ? `\n\nContext:\n${contextInfo.join('\n')}` : ''
     
-    const userPrompt = `Homeowner said: "${context.homeownerText}"
+    // Updated user prompt - emphasizes adapting vs copying
+    const userPrompt = `The homeowner just said: "${context.homeownerText}"
 
-Suggest the next line for the sales rep to say based on the sales script below.${contextText}${conversationHistoryText}
+Look at the script below for IDEAS, but DO NOT copy phrases from it.
+Your job is to capture the INTENT of the script in casual, human words.
 
-Sales script:
+Think: How would you respond if this was your neighbor and you genuinely wanted to help them?
+
+${contextText}${conversationHistoryText}
+
+Script for reference (adapt, don't copy):
 ${scriptSectionsText}
+
+Respond with 1-2 short sentences max. Sound like a real person, not a salesperson.
 
 Return JSON:
 {
-  "suggestedLine": "the next line to say from the script"
+  "suggestedLine": "your casual, human response"
 }`
     
-    // Call OpenAI
+    // Call OpenAI with increased temperature for more natural variation
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: CONSOLIDATED_COACH_PROMPT },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.3,
-      max_tokens: 150,
+      temperature: 0.7, // Increased from 0.3 for more natural variation
+      max_tokens: 100,  // Reduced to force brevity
       response_format: { type: 'json_object' }
     })
     
@@ -126,8 +211,20 @@ Return JSON:
     const parsed = JSON.parse(content)
     let suggestedLine = parsed.suggestedLine || ''
     
+    // Humanize the response (remove scripted phrases, clean up)
+    suggestedLine = humanizeResponse(suggestedLine)
+    
     // Replace placeholders
     suggestedLine = replacePlaceholders(suggestedLine, context.companyName, context.repName)
+    
+    // Final check: if still contains banned phrases after humanization, use fallback
+    const lowerLine = suggestedLine.toLowerCase()
+    const containsBanned = BANNED_PHRASES.some(phrase => lowerLine.includes(phrase))
+    
+    if (containsBanned) {
+      console.warn(`⚠️ Banned phrase still present after humanization. Using fallback.`)
+      suggestedLine = 'Continue the conversation naturally.'
+    }
     
     return {
       suggestedLine
