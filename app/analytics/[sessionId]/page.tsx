@@ -358,7 +358,10 @@ export default function AnalyticsPage() {
 
   const fetchSession = async () => {
     try {
-      const response = await fetch(`/api/session?id=${sessionId}`)
+      const response = await fetch(`/api/session?id=${sessionId}`, {
+        cache: 'force-cache',
+        next: { revalidate: 30 } // Cache for 30 seconds to reduce load
+      })
         if (!response.ok) throw new Error('Failed to fetch session')
       
       const data = await response.json()
@@ -446,7 +449,9 @@ export default function AnalyticsPage() {
         
         const pollForCompletion = async () => {
           try {
-            const pollResponse = await fetch(`/api/session?id=${sessionId}`)
+            const pollResponse = await fetch(`/api/session?id=${sessionId}`, {
+              cache: 'no-store' // Don't cache polling requests
+            })
             if (pollResponse.ok) {
               const pollData = await pollResponse.json()
               
@@ -510,7 +515,10 @@ export default function AnalyticsPage() {
     
     const fetchComparison = async () => {
       try {
-        const response = await fetch(`/api/analytics/v2/comparison/${sessionId}`)
+        const response = await fetch(`/api/analytics/v2/comparison/${sessionId}`, {
+          cache: 'force-cache',
+          next: { revalidate: 60 } // Cache comparison data for 1 minute
+        })
         if (!response.ok) throw new Error('Failed to fetch comparison')
         
         const data = await response.json()

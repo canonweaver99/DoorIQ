@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SignInComponent, Testimonial } from '@/components/ui/sign-in'
 import PasswordResetModal from '@/components/auth/PasswordResetModal'
-import { testimonialsData } from '@/components/ui/testimonials-columns-1'
+import dynamic from 'next/dynamic'
+
+// Lazy load testimonials data to reduce initial bundle
+const testimonialsDataPromise = import('@/components/ui/testimonials-columns-1').then(mod => mod.testimonialsData)
 
 // Map landing page testimonials to component format, keeping old images
 const oldImages = [
@@ -15,22 +18,32 @@ const oldImages = [
   'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop',
 ]
 
-const testimonials: Testimonial[] = testimonialsData.slice(0, 4).map((t, index) => ({
-  avatarSrc: oldImages[index] || '',
-  name: t.name,
-  handle: t.role,
-  text: t.text,
-}))
+// Lazy load testimonials - will be loaded when component mounts
+let testimonials: Testimonial[] = []
 
 function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
+  const [testimonialsLoaded, setTestimonialsLoaded] = useState<Testimonial[]>([])
   const router = useRouter()
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite')
   const nextUrl = searchParams.get('next')
   const checkoutIntent = searchParams.get('checkout')
+
+  // Lazy load testimonials on mount
+  useEffect(() => {
+    testimonialsDataPromise.then(testimonialsData => {
+      const mapped: Testimonial[] = testimonialsData.slice(0, 4).map((t, index) => ({
+        avatarSrc: oldImages[index] || '',
+        name: t.name,
+        handle: t.role,
+        text: t.text,
+      }))
+      setTestimonialsLoaded(mapped)
+    })
+  }, [])
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -89,6 +102,10 @@ function LoginForm() {
 
     try {
       const supabase = createClient()
+      if (!supabase) {
+        throw new Error('Supabase client not initialized. Please check your environment variables.')
+      }
+
       const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
 
       // Preserve redirect params in OAuth callback
@@ -100,16 +117,44 @@ function LoginForm() {
         callbackUrl += `?${params.toString()}`
       }
 
-      const { error: signInError } = await supabase.auth.signInWithOAuth({
+      console.log('🔐 Initiating Google OAuth')
+      console.log('📍 Callback URL:', callbackUrl)
+      console.log('🌐 Origin:', origin)
+
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
         },
       })
 
-      if (signInError) throw signInError
+      console.log('📦 OAuth response:', { 
+        hasData: !!data, 
+        hasUrl: !!data?.url, 
+        url: data?.url,
+        error: signInError 
+      })
+
+      if (signInError) {
+        console.error('❌ OAuth error:', signInError)
+        throw signInError
+      }
+
+      // Check if we got a URL to redirect to
+      if (data?.url) {
+        console.log('✅ Redirecting to OAuth URL:', data.url)
+        // Use window.location.replace to ensure redirect happens
+        window.location.replace(data.url)
+        return // Don't reset loading - redirect is happening
+      }
+
+      // If no URL was returned, this is unexpected
+      console.error('❌ No URL returned from OAuth')
+      setLoading(false)
+      setError('Failed to get OAuth URL. Please ensure your redirect URL is configured in Supabase dashboard and try again.')
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google')
+      console.error('❌ Google sign-in error:', err)
+      setError(err.message || 'Failed to sign in with Google. Please try again.')
       setLoading(false)
     }
   }
@@ -139,8 +184,8 @@ function LoginForm() {
           </span>
         }
         description="Access your training sessions, compete on leaderboards, and master door-to-door sales. New signups are invite-only—contact us or use an invite link to join."
-        heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=2160&q=80"
-        testimonials={testimonials}
+        heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=75"
+        testimonials={testimonialsLoaded}
         onSignIn={handleSignIn}
         onGoogleSignIn={handleGoogleSignIn}
         onResetPassword={handleResetPassword}

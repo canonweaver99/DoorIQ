@@ -100,52 +100,64 @@ export default function HomePage() {
   const fetchUserData = async () => {
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
       
-      if (!user) {
-        setUserName('')
-        setLoading(false)
-        return
-      }
+      // Parallel fetch user and stats to reduce loading time
+      const [userResult, statsResponse] = await Promise.allSettled([
+        supabase.auth.getUser(),
+        fetch('/api/homepage/rotating-stats', { 
+          cache: 'force-cache',
+          next: { revalidate: 300 } // Revalidate every 5 minutes instead of 60 seconds
+        })
+      ])
       
-      // Fetch user name
-      const { data: userData } = await supabase
-        .from('users')
-        .select('full_name, email')
-        .eq('id', user.id)
-        .single()
-      
-      if (userData?.full_name) {
-        const firstName = userData.full_name.split(' ')[0] || userData.email?.split('@')[0] || ''
-        if (firstName) {
-          setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+      // Handle user data
+      if (userResult.status === 'fulfilled') {
+        const { data: { user } } = userResult.value
+        
+        if (!user) {
+          setUserName('')
+          setLoading(false)
+          return
         }
-      } else if (userData?.email) {
-        const emailName = userData.email.split('@')[0] || ''
-        if (emailName) {
-          setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
-        }
-      } else {
-        const authName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || ''
-        if (authName) {
-          const firstName = authName.split(' ')[0]
-          setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+        
+        // Fetch user name
+        const { data: userData } = await supabase
+          .from('users')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .single()
+        
+        if (userData?.full_name) {
+          const firstName = userData.full_name.split(' ')[0] || userData.email?.split('@')[0] || ''
+          if (firstName) {
+            setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+          }
+        } else if (userData?.email) {
+          const emailName = userData.email.split('@')[0] || ''
+          if (emailName) {
+            setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
+          }
+        } else {
+          const authName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || ''
+          if (authName) {
+            const firstName = authName.split(' ')[0]
+            setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
+          }
         }
       }
 
-      // Fetch stats for inline display
-      try {
-        const statsResponse = await fetch('/api/homepage/rotating-stats')
-        if (statsResponse.ok) {
-          const statsData = await statsResponse.json()
+      // Handle stats
+      if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
+        try {
+          const statsData = await statsResponse.value.json()
           setStats({
             streak: statsData.streak || 0,
             sessionsToday: statsData.repsToday || 0,
             avgScore: statsData.averageScore || 0,
           })
+        } catch (e) {
+          console.error('Error parsing stats:', e)
         }
-      } catch (e) {
-        console.error('Error fetching stats:', e)
       }
       
       setLoading(false)

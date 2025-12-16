@@ -469,7 +469,8 @@ function HeroSection() {
               muted
               playsInline
               className="w-full h-full object-cover"
-              preload="metadata"
+              preload="none"
+              loading="lazy"
               style={{ display: 'block', backgroundColor: '#000' }}
             >
               <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
@@ -595,6 +596,7 @@ function HeroSection() {
               playsInline
               className="w-full h-full object-cover"
               preload="none"
+              loading="lazy"
               style={{ display: 'block', backgroundColor: '#000' }}
             >
               <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
@@ -680,6 +682,7 @@ function HeroSection() {
                 playsInline
                 className="w-full h-full object-cover"
                 preload="none"
+                loading="lazy"
                 style={{ display: 'block', backgroundColor: '#000' }}
               >
                 <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
