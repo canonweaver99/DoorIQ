@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { searchScripts, classifyIntent } from '@/lib/coach/rag-retrieval'
-import { generateSuggestion, CoachAgentContext, CoachState } from '@/lib/coach/coach-agent'
+import { searchScripts } from '@/lib/coach/rag-retrieval'
+import { generateSuggestion, CoachAgentContext } from '@/lib/coach/coach-agent'
 
 export async function POST(request: NextRequest) {
   try {
@@ -95,8 +95,7 @@ export async function POST(request: NextRequest) {
     if (!scripts || scripts.length === 0) {
       return NextResponse.json({
         error: 'No coaching scripts found for your team',
-        suggestedLine: 'No script available. Continue the conversation naturally.',
-        confidence: 'low'
+        suggestedLine: 'No script available. Continue the conversation naturally.'
       }, { status: 404 })
     }
 
@@ -114,7 +113,7 @@ export async function POST(request: NextRequest) {
       ?.filter((entry: any) => entry.speaker === 'user' || entry.speaker === 'rep')
       ?.slice(-1)[0]?.text
 
-    // Format conversation history (last 10 exchanges) to prevent context loss
+    // Format conversation history (last 10 exchanges)
     const conversationHistory = transcript
       ?.slice(-10)
       ?.map((entry: any) => ({
@@ -123,7 +122,28 @@ export async function POST(request: NextRequest) {
       }))
       .filter((entry: any) => entry.text && entry.text.trim().length > 0)
 
-    // Build CoachState from session history
+    // Perform RAG retrieval - reduced to 2 sections for speed
+    const relevantSections = searchScripts(homeownerText, scriptDocuments, 2)
+
+    if (relevantSections.length === 0) {
+      return NextResponse.json({
+        suggestedLine: 'Continue the conversation naturally based on the script.'
+      })
+    }
+
+    // Generate suggestion using coach agent
+    const coachContext: CoachAgentContext = {
+      homeownerText,
+      repLastStatement,
+      conversationHistory,
+      scriptSections: relevantSections,
+      companyName,
+      repName: userProfile.full_name || undefined
+    }
+
+    const suggestion = await generateSuggestion(coachContext)
+
+    // Save suggestion to session (non-blocking)
     const { data: currentSession } = await supabase
       .from('live_sessions')
       .select('coaching_suggestions')
@@ -134,71 +154,10 @@ export async function POST(request: NextRequest) {
       ? currentSession.coaching_suggestions
       : []
 
-    // Extract state from history
-    const suggestedLines = existingSuggestions
-      .map((s: any) => s.suggested_line)
-      .filter((line: string) => line && line.trim().length > 0)
-
-    const addressedObjections = existingSuggestions
-      .map((s: any) => {
-        // Try to infer objection from homeowner text
-        if (s.homeowner_text) {
-          const intent = classifyIntent(s.homeowner_text)
-          if (intent.type.includes('objection') || intent.type === 'brush_off' || intent.type === 'stall') {
-            return intent.type
-          }
-        }
-        return null
-      })
-      .filter((obj: string | null) => obj !== null)
-
-    const askedQuestions = conversationHistory
-      ?.filter((entry: any) => {
-        const text = entry.text.toLowerCase()
-        return (entry.speaker === 'user' || entry.speaker === 'rep') &&
-               text.includes('?') &&
-               /(what|how|tell me|experience|deal with|see|notice|concern|problem|issue|current|situation)/i.test(text)
-      })
-      .map((entry: any) => entry.text) || []
-
-    const coachState: CoachState = {
-      suggestedLines,
-      addressedObjections: Array.from(new Set(addressedObjections)),
-      askedQuestions: Array.from(new Set(askedQuestions))
-    }
-
-    // Perform RAG retrieval - reduced to 2 sections for speed
-    const relevantSections = searchScripts(homeownerText, scriptDocuments, 2)
-
-    if (relevantSections.length === 0) {
-      return NextResponse.json({
-        suggestedLine: 'Continue the conversation naturally based on the script.',
-        explanation: 'No relevant script sections found for this context.',
-        confidence: 'low'
-      })
-    }
-
-    // Generate suggestion using coach agent with conversation history and state
-    const coachContext: CoachAgentContext = {
-      homeownerText,
-      repLastStatement,
-      conversationHistory,
-      scriptSections: relevantSections,
-      companyName,
-      repName: userProfile.full_name || undefined,
-      coachState
-    }
-
-    const suggestion = await generateSuggestion(coachContext)
-
-    // Save suggestion to session (non-blocking)
     const newSuggestion = {
       timestamp: new Date().toISOString(),
       homeowner_text: homeownerText,
-      suggested_line: suggestion.suggestedLine,
-      explanation: suggestion.explanation,
-      confidence: suggestion.confidence,
-      intent: suggestion.intent
+      suggested_line: suggestion.suggestedLine
     }
 
     const updatedSuggestions = [...existingSuggestions, newSuggestion]
@@ -222,8 +181,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       error: 'Internal server error',
       details: error.message,
-      suggestedLine: 'Continue the conversation naturally.',
-      confidence: 'low'
+      suggestedLine: 'Continue the conversation naturally.'
     }, { status: 500 })
   }
 }
