@@ -150,10 +150,10 @@ export async function generateSuggestion(
       .map((section) => section.text)
       .join('\n\n---\n\n')
     
-    // Format conversation history
+    // Format conversation history - reduced to 5 exchanges for speed
     let conversationHistoryText = ''
     if (context.conversationHistory && context.conversationHistory.length > 0) {
-      const recentHistory = context.conversationHistory.slice(-10) // Last 10 exchanges
+      const recentHistory = context.conversationHistory.slice(-5) // Last 5 exchanges only
       conversationHistoryText = `\n\nConversation history:\n${recentHistory.map((entry) => {
         const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'Rep' : 'Homeowner'
         return `${speaker}: ${entry.text}`
@@ -193,15 +193,15 @@ Return JSON:
     // Build system prompt with specialization if provided
     const systemPrompt = buildCoachPrompt(context.specialization)
     
-    // Call OpenAI with increased temperature for more natural variation
+    // Call OpenAI - optimized for speed while maintaining quality
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.7, // Increased from 0.3 for more natural variation
-      max_tokens: 100,  // Reduced to force brevity
+      temperature: 0.6, // Slightly lower for faster, more deterministic responses
+      max_tokens: 60,   // Reduced for speed (suggestions should be 1-2 sentences)
       response_format: { type: 'json_object' }
     })
     

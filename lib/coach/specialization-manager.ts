@@ -22,7 +22,8 @@ function isSpecializationFresh(updatedAt: string | null): boolean {
 }
 
 /**
- * Get cached specialization or generate new one if missing/stale
+ * Get cached specialization - returns immediately, generates in background if stale
+ * This is optimized for speed - we don't wait for generation if cache is stale
  */
 export async function getOrGenerateSpecialization(teamId: string): Promise<string> {
   try {
@@ -35,27 +36,28 @@ export async function getOrGenerateSpecialization(teamId: string): Promise<strin
       .eq('team_id', teamId)
       .single()
 
-    // Check if we have a fresh cached version
-    if (config?.coach_specialization && isSpecializationFresh(config.coach_specialization_updated_at)) {
+    // If we have ANY cached version (even if stale), return it immediately
+    // Regenerate in background if stale
+    if (config?.coach_specialization) {
+      // If stale, regenerate in background (don't await)
+      if (!isSpecializationFresh(config.coach_specialization_updated_at)) {
+        // Regenerate in background - don't block the request
+        invalidateAndRegenerateSpecialization(teamId).catch(err => {
+          console.error('Background specialization regeneration failed:', err)
+        })
+      }
       return config.coach_specialization
     }
 
-    // Generate new specialization
-    console.log(`Generating new coach specialization for team ${teamId}`)
-    const specialization = await generateCoachSpecialization(teamId)
-
-    // Save to database
-    await supabase
-      .from('team_grading_configs')
-      .update({
-        coach_specialization: specialization,
-        coach_specialization_updated_at: new Date().toISOString()
-      })
-      .eq('team_id', teamId)
-
-    return specialization
+    // No cache exists - return empty string immediately, generate in background
+    // This prevents blocking the request on first-time generation
+    invalidateAndRegenerateSpecialization(teamId).catch(err => {
+      console.error('Background specialization generation failed:', err)
+    })
+    
+    return '' // Return empty - base prompt will work fine
   } catch (error: any) {
-    console.error('Error getting/generating specialization:', error)
+    console.error('Error getting specialization:', error)
     // Return empty string on error - base prompt will still work
     return ''
   }

@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
       }))
       .filter((entry: any) => entry.text && entry.text.trim().length > 0)
 
-    // Perform RAG retrieval - reduced to 2 sections for speed
-    const relevantSections = searchScripts(homeownerText, scriptDocuments, 2)
+    // Perform RAG retrieval - reduced to 1 section for maximum speed
+    const relevantSections = searchScripts(homeownerText, scriptDocuments, 1)
 
     if (relevantSections.length === 0) {
       return NextResponse.json({
