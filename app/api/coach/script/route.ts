@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidateAndRegenerateSpecialization } from '@/lib/coach/specialization-manager'
 
 /**
  * GET /api/coach/script?id=scriptId
@@ -194,6 +195,15 @@ export async function DELETE(request: NextRequest) {
     if (deleteError) {
       console.error('Error deleting script:', deleteError)
       return NextResponse.json({ error: 'Failed to delete script' }, { status: 500 })
+    }
+
+    // Regenerate specialization since script was deleted
+    const teamId = scriptTeamId || (userProfile.team_id || null)
+    if (teamId) {
+      // Don't await - run in background to avoid blocking response
+      invalidateAndRegenerateSpecialization(teamId).catch(err => {
+        console.error('Error regenerating specialization:', err)
+      })
     }
 
     return NextResponse.json({ success: true })

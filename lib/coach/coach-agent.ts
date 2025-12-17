@@ -5,7 +5,7 @@
 
 import OpenAI from 'openai'
 import { ScriptSection } from './rag-retrieval'
-import { CONSOLIDATED_COACH_PROMPT } from './prompts'
+import { buildCoachPrompt } from './prompts'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -13,6 +13,8 @@ const openai = new OpenAI({
 
 export interface CoachSuggestion {
   suggestedLine: string
+  reasoning?: string
+  phase?: 'opening' | 'discovery' | 'value' | 'objection' | 'closing'
 }
 
 export interface CoachAgentContext {
@@ -22,6 +24,7 @@ export interface CoachAgentContext {
   scriptSections: ScriptSection[]
   companyName?: string
   repName?: string
+  specialization?: string // Optional specialization paragraphs
 }
 
 /**
@@ -170,31 +173,31 @@ export async function generateSuggestion(
     }
     const contextText = contextInfo.length > 0 ? `\n\nContext:\n${contextInfo.join('\n')}` : ''
     
-    // Updated user prompt - emphasizes adapting vs copying
+    // User prompt - focuses on real-time coaching
     const userPrompt = `The homeowner just said: "${context.homeownerText}"
-
-Look at the script below for IDEAS, but DO NOT copy phrases from it.
-Your job is to capture the INTENT of the script in casual, human words.
-
-Think: How would you respond if this was your neighbor and you genuinely wanted to help them?
 
 ${contextText}${conversationHistoryText}
 
 Script for reference (adapt, don't copy):
 ${scriptSectionsText}
 
-Respond with 1-2 short sentences max. Sound like a real person, not a salesperson.
+Based on the conversation so far, what should the rep say RIGHT NOW? Keep it natural, short, and perfectly timed for this moment in the conversation.
 
 Return JSON:
 {
-  "suggestedLine": "your casual, human response"
+  "suggestedResponse": "The actual line to say",
+  "reasoning": "Brief explanation of why (1 sentence)",
+  "phase": "opening|discovery|value|objection|closing"
 }`
+    
+    // Build system prompt with specialization if provided
+    const systemPrompt = buildCoachPrompt(context.specialization)
     
     // Call OpenAI with increased temperature for more natural variation
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: CONSOLIDATED_COACH_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7, // Increased from 0.3 for more natural variation
@@ -209,7 +212,11 @@ Return JSON:
     
     // Parse JSON response
     const parsed = JSON.parse(content)
-    let suggestedLine = parsed.suggestedLine || ''
+    
+    // Handle both new format (suggestedResponse) and old format (suggestedLine) for compatibility
+    let suggestedLine = parsed.suggestedResponse || parsed.suggestedLine || ''
+    const reasoning = parsed.reasoning
+    const phase = parsed.phase
     
     // Humanize the response (remove scripted phrases, clean up)
     suggestedLine = humanizeResponse(suggestedLine)
@@ -227,7 +234,9 @@ Return JSON:
     }
     
     return {
-      suggestedLine
+      suggestedLine,
+      ...(reasoning && { reasoning }),
+      ...(phase && { phase })
     }
   } catch (error: any) {
     console.error('Error generating coach suggestion:', error)

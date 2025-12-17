@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { searchScripts } from '@/lib/coach/rag-retrieval'
 import { generateSuggestion, CoachAgentContext } from '@/lib/coach/coach-agent'
+import { getOrGenerateSpecialization } from '@/lib/coach/specialization-manager'
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,12 +36,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 
-    if (session.user_id !== user.id) {
+    const sessionData = session as { id: string; user_id: string; coach_mode_enabled: boolean }
+
+    if (sessionData.user_id !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     // Check if coach mode is enabled for this session
-    if (!session.coach_mode_enabled) {
+    if (!sessionData.coach_mode_enabled) {
       return NextResponse.json(
         { error: 'Coach mode is not enabled for this session' },
         { status: 400 }
@@ -58,13 +61,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // Fetch company name and scripts in parallel (after we have user profile)
-    const [companyResult, scriptsResult] = await Promise.all([
-      userProfile.team_id
+    const userProfileData = userProfile as { organization_id: string | null; team_id: string | null; full_name: string | null }
+
+    // Fetch company name, scripts, and specialization in parallel (after we have user profile)
+    const [companyResult, scriptsResult, specialization] = await Promise.all([
+      userProfileData.team_id
         ? supabase
             .from('team_grading_configs')
             .select('company_name')
-            .eq('team_id', userProfile.team_id)
+            .eq('team_id', userProfileData.team_id)
             .single()
         : Promise.resolve({ data: null, error: null }),
       (async () => {
@@ -74,18 +79,25 @@ export async function POST(request: NextRequest) {
           .eq('is_coaching_script', true)
           .eq('is_active', true)
 
-        if (userProfile.organization_id) {
-          query = query.contains('metadata', { organization_id: userProfile.organization_id })
-        } else if (userProfile.team_id) {
-          query = query.contains('metadata', { team_id: userProfile.team_id })
+        if (userProfileData.organization_id) {
+          query = query.contains('metadata', { organization_id: userProfileData.organization_id })
+        } else if (userProfileData.team_id) {
+          query = query.contains('metadata', { team_id: userProfileData.team_id })
         }
 
         return query
-      })()
+      })(),
+      // Get or generate specialization for this team (non-blocking if no team_id)
+      userProfileData.team_id
+        ? getOrGenerateSpecialization(userProfileData.team_id).catch(err => {
+            console.error('Error getting specialization:', err)
+            return '' // Return empty string on error - base prompt will work
+          })
+        : Promise.resolve('')
     ])
 
-    const companyName = companyResult.data?.company_name
-    const { data: scripts, error: scriptsError } = scriptsResult
+    const companyName = (companyResult.data as { company_name?: string } | null)?.company_name
+    const { data: scripts, error: scriptsError } = scriptsResult as { data: Array<{ id: string; content: string | null; file_name: string; chunks: any }> | null; error: any }
 
     if (scriptsError) {
       console.error('Error fetching scripts:', scriptsError)
@@ -101,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     // Convert scripts to format expected by RAG retrieval
     // Include cached chunks if available
-    const scriptDocuments = scripts.map(script => ({
+    const scriptDocuments = (scripts || []).map((script: any) => ({
       id: script.id,
       content: script.content || '',
       file_name: script.file_name,
@@ -138,7 +150,8 @@ export async function POST(request: NextRequest) {
       conversationHistory,
       scriptSections: relevantSections,
       companyName,
-      repName: userProfile.full_name || undefined
+      repName: userProfileData.full_name || undefined,
+      specialization: specialization || undefined
     }
 
     const suggestion = await generateSuggestion(coachContext)
@@ -150,8 +163,9 @@ export async function POST(request: NextRequest) {
       .eq('id', sessionId)
       .single()
 
-    const existingSuggestions = Array.isArray(currentSession?.coaching_suggestions)
-      ? currentSession.coaching_suggestions
+    const sessionWithSuggestions = currentSession as { coaching_suggestions?: any[] } | null
+    const existingSuggestions = Array.isArray(sessionWithSuggestions?.coaching_suggestions)
+      ? sessionWithSuggestions.coaching_suggestions
       : []
 
     const newSuggestion = {
@@ -162,14 +176,18 @@ export async function POST(request: NextRequest) {
 
     const updatedSuggestions = [...existingSuggestions, newSuggestion]
 
+    // Save suggestion to session (non-blocking)
     supabase
       .from('live_sessions')
-      .update({ coaching_suggestions: updatedSuggestions })
+      .update({ coaching_suggestions: updatedSuggestions } as any)
       .eq('id', sessionId)
       .then((result: any) => {
         if (result?.error) {
           console.error('Error saving suggestion to session:', result.error)
         }
+      })
+      .catch((err: any) => {
+        console.error('Error saving suggestion:', err)
       })
 
     return NextResponse.json({

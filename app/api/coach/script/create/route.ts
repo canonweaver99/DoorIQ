@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { preprocessScriptChunks } from '@/lib/coach/rag-retrieval'
+import { invalidateAndRegenerateSpecialization } from '@/lib/coach/specialization-manager'
 
 /**
  * POST /api/coach/script/create
@@ -94,6 +95,14 @@ export async function POST(request: NextRequest) {
     } catch (chunkError) {
       // Log but don't fail - chunks are optional for backward compatibility
       console.error('Error pre-processing script chunks:', chunkError)
+    }
+
+    // Regenerate specialization since new script was created
+    if (userProfile.team_id) {
+      // Don't await - run in background to avoid blocking response
+      invalidateAndRegenerateSpecialization(userProfile.team_id).catch(err => {
+        console.error('Error regenerating specialization:', err)
+      })
     }
 
     return NextResponse.json({

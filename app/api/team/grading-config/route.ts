@@ -1,6 +1,7 @@
 
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { invalidateAndRegenerateSpecialization } from '@/lib/coach/specialization-manager'
 
 export async function GET() {
   try {
@@ -84,6 +85,10 @@ export async function POST(request: Request) {
       'objection_handlers', 'custom_grading_rubric', 'passing_score', 'enabled'
     ]
     
+    // Track if knowledge base content changed (triggers specialization regeneration)
+    const kbFields = ['company_name', 'company_mission', 'product_description', 'service_guarantees', 'pricing_info']
+    const kbContentChanged = kbFields.some(field => body[field] !== undefined)
+    
     validFields.forEach(field => {
       if (body[field] !== undefined) {
         cleanBody[field] = body[field]
@@ -141,6 +146,14 @@ export async function POST(request: Request) {
       }
       result = data
       console.log('Config created successfully')
+    }
+
+    // Regenerate specialization if knowledge base content changed
+    if (kbContentChanged && userProfile.team_id) {
+      // Don't await - run in background to avoid blocking response
+      invalidateAndRegenerateSpecialization(userProfile.team_id).catch(err => {
+        console.error('Error regenerating specialization:', err)
+      })
     }
 
     return NextResponse.json({ success: true, config: result })

@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { extractTextFromPDF, isPDFFile, isTextFile } from '@/lib/coach/pdf-extractor'
 import { preprocessScriptChunks } from '@/lib/coach/rag-retrieval'
+import { invalidateAndRegenerateSpecialization } from '@/lib/coach/specialization-manager'
 
 export async function POST(request: Request) {
   try {
@@ -138,6 +139,14 @@ export async function POST(request: Request) {
     } catch (chunkError) {
       // Log but don't fail - chunks are optional for backward compatibility
       console.error('Error pre-processing script chunks:', chunkError)
+    }
+
+    // Regenerate specialization since new script was uploaded
+    if (userProfile.team_id) {
+      // Don't await - run in background to avoid blocking response
+      invalidateAndRegenerateSpecialization(userProfile.team_id).catch(err => {
+        console.error('Error regenerating specialization:', err)
+      })
     }
 
     return NextResponse.json({
