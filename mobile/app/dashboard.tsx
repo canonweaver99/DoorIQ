@@ -43,16 +43,16 @@ export default function DashboardScreen() {
 
       if (error) throw error
 
-      setRecentSessions(sessions || [])
+      setRecentSessions((sessions || []) as TrainingSession[])
 
       // Calculate stats
       const totalSessions = sessions?.length || 0
-      const scores = sessions?.map((s) => s.overall_score).filter((s) => s !== null) || []
+      const scores = sessions?.map((s: TrainingSession) => s.overall_score).filter((s) => s !== null) as number[] || []
       const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
 
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
-      const sessionsThisWeek = sessions?.filter((s) => new Date(s.created_at) > weekAgo).length || 0
+      const sessionsThisWeek = sessions?.filter((s: TrainingSession) => new Date(s.created_at) > weekAgo).length || 0
 
       setStats({
         totalSessions,

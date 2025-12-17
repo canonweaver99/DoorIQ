@@ -1,25 +1,16 @@
-import { useEffect } from 'react'
-import { Redirect } from 'expo-router'
-import { useAuth } from '../contexts/AuthContext'
-import { ActivityIndicator, View, StyleSheet } from 'react-native'
+import React from 'react'
+import { View, Text, StyleSheet } from 'react-native'
 
-export default function Index() {
-  const { session, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#a855f7" />
-      </View>
-    )
-  }
-
-  if (session) {
-    return <Redirect href="/dashboard" />
-  }
-
-  return <Redirect href="/auth/login" />
+function App() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>DoorIQ Mobile</Text>
+      <Text style={styles.subtext}>App is running!</Text>
+    </View>
+  )
 }
+
+export default App
 
 const styles = StyleSheet.create({
   container: {
@@ -27,6 +18,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  text: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subtext: {
+    color: '#888',
+    fontSize: 16,
   },
 })
 

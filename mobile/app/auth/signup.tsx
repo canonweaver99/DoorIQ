@@ -11,10 +11,11 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native'
-import { Link, router } from 'expo-router'
-import { supabase } from '../../lib/supabase/client'
+import { Link, useRouter } from 'expo-router'
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '../../constants/theme'
 
 export default function SignUpScreen() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -22,63 +23,8 @@ export default function SignUpScreen() {
   const [error, setError] = useState<string | null>(null)
 
   const handleSignUp = async () => {
-    if (!email || !password || !fullName) {
-      setError('Please fill in all fields')
-      return
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      })
-
-      if (signUpError) throw signUpError
-
-      if (data.user) {
-        // Create user profile
-        const { error: profileError } = await supabase.from('users').insert({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: fullName,
-          rep_id: `REP-${Date.now().toString().slice(-6)}`,
-          role: 'rep',
-          virtual_earnings: 0,
-        })
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError)
-        }
-
-        Alert.alert(
-          'Success',
-          'Account created! Please check your email to verify your account.',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.replace('/auth/login'),
-            },
-          ]
-        )
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account')
-    } finally {
-      setLoading(false)
-    }
+    setError('Sign up temporarily disabled - rebuilding auth')
+    setLoading(false)
   }
 
   return (

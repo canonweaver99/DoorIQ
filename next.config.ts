@@ -45,7 +45,9 @@ const nextConfig: NextConfig = {
     } : false,
   },
   // Output configuration
-  output: 'export', // static site export for Capacitor
+  // Note: API routes cannot be statically exported
+  // For Capacitor, deploy frontend as static and API routes separately
+  output: 'standalone', // Use standalone for API route support
 };
 
 export default nextConfig;

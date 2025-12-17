@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase/server'
 
-export const dynamic = "force-static";
 
 interface SeatData {
   name: string

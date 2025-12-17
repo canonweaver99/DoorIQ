@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 
 
-export const dynamic = "force-static";
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io';
 
 /**

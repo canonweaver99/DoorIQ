@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/logger'
 
-export const dynamic = "force-static";
 export const maxDuration = 30
 
 // Find matching conversation by time window

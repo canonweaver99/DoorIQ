@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, useCallback } from 'react'
-import { View, Text, ScrollView, StyleSheet, FlatList } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, FlatList, Platform } from 'react-native'
 
 export interface FeedbackItem {
   id: string
@@ -79,11 +79,13 @@ const FeedbackItemComponent = React.memo(({ item }: { item: FeedbackItem }) => {
         <Text style={localStyles.icon}>{config.icon}</Text>
         <Text style={localStyles.message}>{item.message}</Text>
       </View>
+      {/* iOS-style separator */}
+      {Platform.OS === 'ios' && <View style={localStyles.separator} />}
     </View>
   )
-}
+})
 
-export const LiveFeedbackFeed = React.memo(({ feedbackItems }: LiveFeedbackFeedProps) => {
+export const LiveFeedbackFeed: React.FC<LiveFeedbackFeedProps> = React.memo(({ feedbackItems }) => {
   const flatListRef = useRef<FlatList>(null)
 
   useEffect(() => {
@@ -132,92 +134,112 @@ export const LiveFeedbackFeed = React.memo(({ feedbackItems }: LiveFeedbackFeedP
 const localStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
+    width: '100%',
+    backgroundColor: Platform.OS === 'ios' ? '#1C1C1E' : '#0f172a',
+    borderRadius: Platform.OS === 'ios' ? 0 : 12,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: Platform.OS === 'ios' ? 0 : 12,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    gap: Platform.OS === 'ios' ? 10 : 8,
+    padding: Platform.OS === 'ios' ? 16 : 12,
+    paddingBottom: Platform.OS === 'ios' ? 12 : 12,
+    borderBottomWidth: Platform.OS === 'ios' ? StyleSheet.hairlineWidth : 1,
+    borderBottomColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.1)' : '#1e293b',
   },
   statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10b981',
+    width: Platform.OS === 'ios' ? 8 : 8,
+    height: Platform.OS === 'ios' ? 8 : 8,
+    borderRadius: Platform.OS === 'ios' ? 4 : 4,
+    backgroundColor: Platform.OS === 'ios' ? '#34C759' : '#10b981',
   },
   headerText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: Platform.OS === 'ios' ? 15 : 13,
+    fontWeight: Platform.OS === 'ios' ? '600' : '600',
+    color: Platform.OS === 'ios' ? '#FFFFFF' : '#fff',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 12,
-    gap: 8,
+    padding: Platform.OS === 'ios' ? 0 : 12,
+    gap: Platform.OS === 'ios' ? 0 : 8,
   },
   feedbackItem: {
-    backgroundColor: '#1e293b',
-    borderRadius: 8,
-    padding: 10,
-    borderLeftWidth: 3,
-    marginBottom: 8,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : '#1e293b',
+    borderRadius: Platform.OS === 'ios' ? 0 : 8,
+    padding: Platform.OS === 'ios' ? 16 : 10,
+    paddingLeft: Platform.OS === 'ios' ? 16 : 13,
+    borderLeftWidth: Platform.OS === 'ios' ? 0 : 3,
+    marginBottom: Platform.OS === 'ios' ? 0 : 8,
+    minHeight: Platform.OS === 'ios' ? 44 : undefined,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginLeft: Platform.OS === 'ios' ? 16 : 0,
+    marginTop: Platform.OS === 'ios' ? 16 : 0,
   },
   feedbackHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
+    gap: Platform.OS === 'ios' ? 10 : 8,
+    marginBottom: Platform.OS === 'ios' ? 8 : 6,
   },
   badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: Platform.OS === 'ios' ? 8 : 6,
+    paddingVertical: Platform.OS === 'ios' ? 3 : 2,
+    borderRadius: Platform.OS === 'ios' ? 6 : 4,
   },
   badgeText: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: Platform.OS === 'ios' ? 11 : 9,
+    fontWeight: Platform.OS === 'ios' ? '600' : '600',
+    color: '#FFFFFF',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
   timeText: {
-    fontSize: 10,
-    color: '#64748b',
+    fontSize: Platform.OS === 'ios' ? 13 : 10,
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.5)' : '#64748b',
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
   feedbackContent: {
     flexDirection: 'row',
-    gap: 8,
+    gap: Platform.OS === 'ios' ? 12 : 8,
     alignItems: 'flex-start',
   },
   icon: {
-    fontSize: 16,
+    fontSize: Platform.OS === 'ios' ? 18 : 16,
   },
   message: {
     flex: 1,
-    fontSize: 12,
-    color: '#e2e8f0',
-    lineHeight: 18,
+    fontSize: Platform.OS === 'ios' ? 15 : 12,
+    color: Platform.OS === 'ios' ? '#FFFFFF' : '#e2e8f0',
+    lineHeight: Platform.OS === 'ios' ? 22 : 18,
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: Platform.OS === 'ios' ? 48 : 32,
+    paddingHorizontal: Platform.OS === 'ios' ? 32 : 16,
   },
   emptyIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-    opacity: 0.5,
+    fontSize: Platform.OS === 'ios' ? 36 : 32,
+    marginBottom: Platform.OS === 'ios' ? 12 : 8,
+    opacity: Platform.OS === 'ios' ? 0.4 : 0.5,
   },
   emptyText: {
-    fontSize: 13,
-    color: '#64748b',
+    fontSize: Platform.OS === 'ios' ? 15 : 13,
+    color: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.5)' : '#64748b',
+    fontWeight: Platform.OS === 'ios' ? '400' : '500',
+    textAlign: 'center',
+    letterSpacing: Platform.OS === 'ios' ? -0.1 : 0,
   },
 })
 

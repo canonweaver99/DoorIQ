@@ -11,7 +11,6 @@ import {
   ReportFormat
 } from '@/lib/reports/generator'
 
-export const dynamic = "force-static";
 
 export async function GET(request: NextRequest) {
   try {

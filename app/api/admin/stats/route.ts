@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-export const dynamic = "force-static";
 
 /**
  * GET /api/admin/stats

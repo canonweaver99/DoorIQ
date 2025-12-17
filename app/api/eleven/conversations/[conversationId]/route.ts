@@ -2,17 +2,12 @@ import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 
 
-export const dynamic = "force-static";
 const ELEVENLABS_API_BASE = 'https://api.elevenlabs.io';
 
 /**
  * GET /api/eleven/conversations/[conversationId]
  * Simple proxy to get conversation details
  */
-export async function generateStaticParams() {
-  return []
-}
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ conversationId: string }> }

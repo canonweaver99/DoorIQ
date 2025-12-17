@@ -11,92 +11,32 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native'
-import { Link, router } from 'expo-router'
-import { useAuth } from '../../contexts/AuthContext'
-import { supabase } from '../../lib/supabase/client'
+import { Link, useRouter } from 'expo-router'
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '../../constants/theme'
 
 export default function LoginScreen() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPasswordReset, setShowPasswordReset] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please enter both email and password')
-      return
-    }
+    setError('Login temporarily disabled - rebuilding auth')
+    setLoading(false)
+  }
 
-    setLoading(true)
-    setError(null)
-
-    try {
-      console.log('Attempting to sign in...')
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) {
-        console.error('Sign in error:', signInError)
-        throw signInError
-      }
-
-      // Verify session was created
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        throw new Error('Session not created after sign in')
-      }
-
-      console.log('Sign in successful, session verified, navigating to dashboard...')
-      
-      // Wait a moment for auth state to update, then navigate
-      setTimeout(() => {
-        try {
-          if (router && typeof router.replace === 'function') {
-            router.replace('/dashboard')
-          } else {
-            console.error('Router not available or replace method missing')
-            setError('Sign in successful but navigation failed. Please restart the app.')
-            setLoading(false)
-          }
-        } catch (navError: any) {
-          console.error('Navigation error:', navError)
-          setError('Sign in successful but navigation failed: ' + (navError.message || 'Unknown error'))
-          setLoading(false)
-        }
-      }, 300)
-    } catch (err: any) {
-      console.error('Login error:', err)
-      setError(err.message || 'Failed to sign in')
-      setLoading(false)
-    }
+  const handlePasswordReset = async () => {
+    setError('Password reset temporarily disabled')
+    setResetLoading(false)
   }
 
   const handleGoogleSignIn = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      console.log('Attempting Google sign in...')
-      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'dooriq://auth/callback',
-        },
-      })
-
-      if (signInError) {
-        console.error('Google OAuth error:', signInError)
-        throw signInError
-      }
-      
-      console.log('Google OAuth initiated successfully')
-    } catch (err: any) {
-      console.error('Google sign in error:', err)
-      setError(err.message || 'Failed to sign in with Google')
-      setLoading(false)
-    }
+    setError('Google sign in temporarily disabled')
+    setLoading(false)
   }
 
   return (
@@ -153,7 +93,56 @@ export default function LoginScreen() {
                 editable={!loading}
                 onSubmitEditing={handleLogin}
               />
+              <TouchableOpacity
+                onPress={() => setShowPasswordReset(true)}
+                style={styles.forgotPasswordButton}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              </TouchableOpacity>
             </View>
+
+            {showPasswordReset && (
+              <View style={styles.passwordResetContainer}>
+                <Text style={styles.passwordResetTitle}>Reset Password</Text>
+                <Text style={styles.passwordResetSubtitle}>
+                  Enter your email and we'll send you a reset link
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor="#666"
+                  value={resetEmail}
+                  onChangeText={setResetEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                  editable={!resetLoading}
+                />
+                <View style={styles.passwordResetActions}>
+                  <TouchableOpacity
+                    style={[styles.button, styles.buttonSecondary]}
+                    onPress={() => {
+                      setShowPasswordReset(false)
+                      setResetEmail('')
+                    }}
+                    disabled={resetLoading}
+                  >
+                    <Text style={styles.buttonSecondaryText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.button, resetLoading && styles.buttonDisabled]}
+                    onPress={handlePasswordReset}
+                    disabled={resetLoading}
+                  >
+                    {resetLoading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.buttonText}>Send Reset Link</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
@@ -222,8 +211,6 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 36,
     fontWeight: '700',
-    background: 'linear-gradient(90deg, #ec4899 0%, #a855f7 100%)',
-    backgroundClip: 'text',
     color: '#a855f7',
     marginBottom: 12,
   },
@@ -321,6 +308,48 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     textAlign: 'center',
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginTop: SPACING.xs,
+  },
+  forgotPasswordText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.medium,
+  },
+  passwordResetContainer: {
+    backgroundColor: COLORS.backgroundSecondary,
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  passwordResetTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
+  },
+  passwordResetSubtitle: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.md,
+  },
+  passwordResetActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  buttonSecondary: {
+    backgroundColor: COLORS.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  buttonSecondaryText: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '600',
   },
 })
 
