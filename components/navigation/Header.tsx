@@ -135,11 +135,9 @@ function HeaderContent() {
   const navContainerRef = useRef<HTMLElement | null>(null)
   const rightSideRef = useRef<HTMLDivElement | null>(null)
   const navItemsRefs = useRef<Map<string, HTMLAnchorElement>>(new Map())
-  // Initialize with all items, will be recalculated once refs are ready
-  const [visibleNavItems, setVisibleNavItems] = useState<typeof navigation>(() => 
-    navigation.filter(item => !(item as any).desktopOnly)
-  )
-  const [overflowNavItems, setOverflowNavItems] = useState<typeof navigation>([])
+  // Initialize with empty array, will be populated by useEffect
+  const [visibleNavItems, setVisibleNavItems] = useState<Array<{ name: string; href: string; icon: LucideIcon; desktopOnly?: boolean }>>([])
+  const [overflowNavItems, setOverflowNavItems] = useState<Array<{ name: string; href: string; icon: LucideIcon; desktopOnly?: boolean }>>([])
 
   const userRole: UserRole | null = normalizeRole(user?.role) ?? normalizeRole(authMeta?.role)
   const isSignedIn = Boolean(user || authMeta)
@@ -319,24 +317,52 @@ function HeaderContent() {
     return navItems
   }, [userRole, user?.team_id, hasLearningPageAccess, userHasActivePlan, isSignedIn])
 
+  // Initialize visible nav items when navigation becomes available
+  useEffect(() => {
+    if (navigation && Array.isArray(navigation) && navigation.length > 0) {
+      const headerNavItems = navigation.filter(item => !(item as any).desktopOnly)
+      setVisibleNavItems(prev => {
+        // Only update if currently empty
+        if (prev.length === 0 && headerNavItems.length > 0) {
+          return headerNavItems
+        }
+        return prev
+      })
+    }
+  }, [navigation])
+
   // Calculate which navigation items fit in the header
   useEffect(() => {
-    if (!isSignedIn || isAuthPage || typeof window === 'undefined') {
-      setVisibleNavItems(navigation.filter(item => !(item as any).desktopOnly))
+    // Ensure navigation is defined and is an array
+    if (!navigation || !Array.isArray(navigation)) {
+      setVisibleNavItems([])
       setOverflowNavItems([])
       return
     }
 
+    // Immediately set visible items for auth pages or when not signed in
+    if (!isSignedIn || isAuthPage || typeof window === 'undefined') {
+      const headerNavItems = navigation.filter(item => !(item as any).desktopOnly)
+      setVisibleNavItems(headerNavItems)
+      setOverflowNavItems([])
+      return
+    }
+
+    // For signed-in users, initialize with all items first (will be recalculated below)
+    const headerNavItems = navigation.filter(item => !(item as any).desktopOnly)
+
     const calculateVisibleItems = () => {
-      const navContainer = navContainerRef.current
-      const rightSide = rightSideRef.current
-      
-      if (!navContainer || !rightSide) {
-        // Fallback: show all items if refs aren't ready
-        setVisibleNavItems(navigation.filter(item => !(item as any).desktopOnly))
-        setOverflowNavItems([])
-        return
-      }
+      try {
+        const navContainer = navContainerRef.current
+        const rightSide = rightSideRef.current
+        
+        if (!navContainer || !rightSide) {
+          // Fallback: show all items if refs aren't ready
+          const headerNavItems = navigation.filter(item => !(item as any).desktopOnly)
+          setVisibleNavItems(headerNavItems)
+          setOverflowNavItems([])
+          return
+        }
 
       // Get available width for navigation
       const containerRect = navContainer.getBoundingClientRect()
@@ -386,8 +412,15 @@ function HeaderContent() {
         }
       }
 
-      setVisibleNavItems(visible)
-      setOverflowNavItems(overflow)
+        setVisibleNavItems(visible)
+        setOverflowNavItems(overflow)
+      } catch (error) {
+        // Error handling: fallback to showing all items
+        console.error('Error calculating visible nav items:', error)
+        const headerNavItems = navigation.filter(item => !(item as any).desktopOnly)
+        setVisibleNavItems(headerNavItems)
+        setOverflowNavItems([])
+      }
     }
 
     // Calculate on mount (with small delay to let DOM settle) and resize
