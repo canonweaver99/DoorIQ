@@ -224,12 +224,12 @@ function Navigation() {
               Log In
             </Link>
             <Link
-              href="/book-demo"
+              href="/auth/signup"
               className="group relative px-5 sm:px-4 md:px-6 py-2.5 sm:py-2 md:py-2.5 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-sm tracking-tight transition-all hover:bg-gray-300 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
             >
               <span className="relative z-10 flex items-center gap-1 sm:gap-2">
-                <span className="hidden sm:inline">Book a Demo</span>
-                <span className="sm:hidden">Demo</span>
+                <span className="hidden sm:inline">Sign Up Free</span>
+                <span className="sm:hidden">Sign Up</span>
                 <ChevronRight className="w-4 h-4 sm:w-4 sm:h-4 group-hover:translate-x-0.5 transition-transform" />
               </span>
             </Link>
@@ -414,21 +414,21 @@ function HeroSection() {
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
             </motion.p>
 
-            {/* CTA Button */}
-            <motion.div
-              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
-              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
-              className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
-            >
-              <Link
-                href="/book-demo"
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-gray-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              {/* CTA Button */}
+              <motion.div
+                initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
+                animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
+                transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
+                className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
               >
-                Book a Demo
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </motion.div>
+                <Link
+                  href="/auth/signup"
+                  className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-gray-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Sign Up Free
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </motion.div>
 
             {/* See it in action label */}
             <motion.div
@@ -534,10 +534,10 @@ function HeroSection() {
               {/* CTA Button */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2">
                 <Link
-                  href="/book-demo"
+                  href="/auth/signup"
                   className="group px-6 sm:px-8 py-2.5 sm:py-3 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-gray-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Book a Demo
+                  Sign Up Free
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
@@ -1314,10 +1314,10 @@ function CTASection() {
           {/* CTA Button */}
           <div className="mt-6 sm:mt-8">
             <Link
-              href="/book-demo"
+              href="/auth/signup"
               className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-gray-200 text-gray-900 font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-gray-300 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Book Your Demo Today
+              Sign Up Free - No Credit Card Required
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
@@ -1561,10 +1561,73 @@ function LandingFooter() {
   );
 }
 
+// Free Period Banner Component
+function FreePeriodBanner() {
+  const [isVisible, setIsVisible] = useState(true)
+  const [daysRemaining, setDaysRemaining] = useState(0)
+
+  useEffect(() => {
+    // Calculate days remaining client-side
+    const freePeriodEnd = new Date('2025-01-01T00:00:00Z')
+    const now = Date.now()
+    const endMs = freePeriodEnd.getTime()
+    const diffMs = endMs - now
+    const days = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
+    setDaysRemaining(days)
+  }, [])
+
+  if (!isVisible) return null
+
+  return (
+    <motion.div
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="sticky top-0 z-50 w-full bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 shadow-lg"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="flex-shrink-0">
+              <span className="text-2xl">🎄</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-space font-bold text-sm sm:text-base md:text-lg leading-tight">
+                <span className="font-semibold">Merry Christmas!</span> DoorIQ is completely <span className="font-bold">FREE</span> until January 1st, 2025
+                {daysRemaining > 0 && (
+                  <span className="hidden sm:inline"> • {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining</span>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link
+              href="/auth/signup"
+              className="px-4 py-1.5 sm:px-5 sm:py-2 bg-white text-purple-600 font-bold rounded-md text-xs sm:text-sm tracking-tight hover:bg-gray-100 transition-all whitespace-nowrap"
+            >
+              Sign Up Free
+            </Link>
+            <button
+              onClick={() => setIsVisible(false)}
+              className="text-white/90 hover:text-white transition-colors p-1"
+              aria-label="Dismiss banner"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 // Main Landing Page
 export default function LandingPage() {
   return (
     <main className="bg-black min-h-screen text-white relative">
+      <FreePeriodBanner />
       <Navigation />
       <HeroSection />
       <MeetTrainerSection />

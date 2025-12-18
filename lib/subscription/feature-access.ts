@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { FEATURES, type FeatureKey } from './feature-keys'
+import { isFreePeriod } from './free-period'
 
 // Re-export for backward compatibility
 export { FEATURES, type FeatureKey }
@@ -14,6 +15,11 @@ export async function checkFeatureAccess(
   userId: string,
   featureKey: FeatureKey
 ): Promise<boolean> {
+  // During free period (until Jan 1st), everyone has access to all features
+  if (isFreePeriod()) {
+    return true
+  }
+
   try {
     const supabase = await createServerSupabaseClient()
 
@@ -45,6 +51,16 @@ export async function checkSessionLimit(userId: string): Promise<{
   sessionsUsed: number
   sessionsLimit: number
 }> {
+  // During free period (until Jan 1st), unlimited sessions for everyone
+  if (isFreePeriod()) {
+    return {
+      canStartSession: true,
+      sessionsRemaining: 999999, // Effectively unlimited
+      sessionsUsed: 0,
+      sessionsLimit: 999999, // Effectively unlimited
+    }
+  }
+
   try {
     const supabase = await createServerSupabaseClient()
 
@@ -118,6 +134,18 @@ export async function getUserSubscription(userId: string): Promise<{
   daysRemainingInTrial: number | null
   trialEndsAt: string | null
 }> {
+  // During free period (until Jan 1st), treat everyone as having active subscription
+  if (isFreePeriod()) {
+    const { getDaysRemainingInFreePeriod, getFreePeriodEndDate } = await import('./free-period')
+    return {
+      status: 'active',
+      hasActiveSubscription: true,
+      isTrialing: false,
+      daysRemainingInTrial: getDaysRemainingInFreePeriod(),
+      trialEndsAt: getFreePeriodEndDate().toISOString(),
+    }
+  }
+
   try {
     const supabase = await createServerSupabaseClient()
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isFreePeriod, getDaysRemainingInFreePeriod, getFreePeriodEndDate } from '@/lib/subscription/free-period'
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'none'
 
@@ -83,6 +84,25 @@ export function useSubscription(): SubscriptionData & { refetch: () => Promise<v
         return
       }
 
+      // Free period until Jan 1st, 2025 - everyone has full access
+      if (isFreePeriod()) {
+        const daysRemaining = getDaysRemainingInFreePeriod()
+        const freePeriodEnd = getFreePeriodEndDate().toISOString()
+        
+        setData({
+          status: 'active' as SubscriptionStatus,
+          trialEndsAt: freePeriodEnd,
+          currentPeriodEnd: freePeriodEnd,
+          cancelAtPeriodEnd: false,
+          hasActiveSubscription: true,
+          isTrialing: false,
+          isPastDue: false,
+          daysRemainingInTrial: daysRemaining,
+          loading: false
+        })
+        return
+      }
+
       // ARCHIVED: All paywalls removed - software is now free for signed-in users
       // Return active subscription status for all authenticated users
       const status = 'active' as SubscriptionStatus
@@ -140,6 +160,19 @@ export function useSessionLimit(): SessionLimitData & { refresh: () => Promise<v
   })
 
   const fetchSessionLimit = async () => {
+    // During free period (until Jan 1st), unlimited sessions
+    if (isFreePeriod()) {
+      setData({
+        canStartSession: true,
+        sessionsRemaining: 999999,
+        sessionsUsed: 0,
+        sessionsLimit: 999999,
+        isUnlimited: true,
+        loading: false
+      })
+      return
+    }
+
     try {
       const response = await fetch('/api/session/check-limit')
       if (response.ok) {
@@ -222,6 +255,13 @@ export function useFeatureAccess(featureKey: string): {
 
   useEffect(() => {
     const checkAccess = async () => {
+      // During free period (until Jan 1st), everyone has access to all features
+      if (isFreePeriod()) {
+        setHasAccess(true)
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       
