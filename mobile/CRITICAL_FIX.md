@@ -111,3 +111,4 @@ After running `npx expo run:ios`, the app should:
 
 The development build approach is the recommended solution for React Native 0.76.5 + React 19 + Expo SDK 53.
 
+

@@ -347,3 +347,4 @@ WHERE ended_at IS NULL AND user_id IS NOT NULL;
 -- ✅ Date range indexes
 
 
+

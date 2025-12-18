@@ -181,3 +181,4 @@ ALTER COLUMN credits SET DEFAULT 75;
 -- ✅ Anti-spam protection maintained
 
 
+

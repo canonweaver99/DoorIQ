@@ -60,3 +60,4 @@ In the simulator:
 
 Expo Go should work fine with your current setup. The crash was likely just a cache issue.
 
+

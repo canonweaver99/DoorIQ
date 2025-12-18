@@ -140,3 +140,4 @@ export const getDifficultyColor = (difficulty: string): string => {
   }
 }
 
+

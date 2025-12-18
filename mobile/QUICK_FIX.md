@@ -31,3 +31,4 @@ npx expo start --clear
 
 That's it. No need for development builds or complex setup.
 
+

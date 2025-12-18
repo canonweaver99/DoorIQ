@@ -46,3 +46,4 @@ echo "2. Run: npx expo start --clear"
 echo "3. If using iOS Simulator, reset it: xcrun simctl erase all"
 echo ""
 
+

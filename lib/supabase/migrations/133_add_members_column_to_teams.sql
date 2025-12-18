@@ -108,3 +108,4 @@ SELECT update_all_team_members();
 
 -- Add comment
 COMMENT ON COLUMN teams.members IS 'Array of full names of users in this team. Automatically maintained via triggers when users join/leave teams or change their names.';
+

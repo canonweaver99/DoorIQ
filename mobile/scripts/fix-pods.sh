@@ -45,3 +45,4 @@ echo "1. cd ios && pod deintegrate && pod install --repo-update"
 echo "2. Or run: npx expo prebuild --clean"
 echo ""
 
+

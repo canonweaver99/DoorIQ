@@ -105,3 +105,4 @@ If crashes persist, the app will now show an error screen instead of completely 
 3. Update Xcode to latest version
 4. Check for macOS/iOS compatibility issues
 
+

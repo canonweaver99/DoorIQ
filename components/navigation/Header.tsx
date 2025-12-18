@@ -130,6 +130,16 @@ function HeaderContent() {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
 
   const [authMeta, setAuthMeta] = useState<AuthMeta | null>(null)
+  
+  // Responsive navigation: track which tabs fit in header
+  const navContainerRef = useRef<HTMLElement | null>(null)
+  const rightSideRef = useRef<HTMLDivElement | null>(null)
+  const navItemsRefs = useRef<Map<string, HTMLAnchorElement>>(new Map())
+  // Initialize with all items, will be recalculated once refs are ready
+  const [visibleNavItems, setVisibleNavItems] = useState<typeof navigation>(() => 
+    navigation.filter(item => !(item as any).desktopOnly)
+  )
+  const [overflowNavItems, setOverflowNavItems] = useState<typeof navigation>([])
 
   const userRole: UserRole | null = normalizeRole(user?.role) ?? normalizeRole(authMeta?.role)
   const isSignedIn = Boolean(user || authMeta)
@@ -308,6 +318,122 @@ function HeaderContent() {
 
     return navItems
   }, [userRole, user?.team_id, hasLearningPageAccess, userHasActivePlan, isSignedIn])
+
+  // Calculate which navigation items fit in the header
+  useEffect(() => {
+    if (!isSignedIn || isAuthPage || typeof window === 'undefined') {
+      setVisibleNavItems(navigation.filter(item => !(item as any).desktopOnly))
+      setOverflowNavItems([])
+      return
+    }
+
+    const calculateVisibleItems = () => {
+      const navContainer = navContainerRef.current
+      const rightSide = rightSideRef.current
+      
+      if (!navContainer || !rightSide) {
+        // Fallback: show all items if refs aren't ready
+        setVisibleNavItems(navigation.filter(item => !(item as any).desktopOnly))
+        setOverflowNavItems([])
+        return
+      }
+
+      // Get available width for navigation
+      const containerRect = navContainer.getBoundingClientRect()
+      const rightSideRect = rightSide.getBoundingClientRect()
+      const availableWidth = rightSideRect.left - containerRect.left - 32 // 32px padding/gap
+      
+      // Filter out desktop-only items for header display
+      const headerNavItems = navigation.filter(item => !(item as any).desktopOnly)
+      
+      // Measure actual rendered tab widths if available, otherwise estimate
+      const measuredWidths: number[] = []
+      headerNavItems.forEach((item) => {
+        const renderedLink = navItemsRefs.current.get(item.name)
+        if (renderedLink) {
+          measuredWidths.push(renderedLink.getBoundingClientRect().width)
+        } else {
+          // Estimate width: icon (20px) + padding (24px) + text (varies by name length)
+          // For lg screens, text is visible; for smaller, just icon + padding
+          const estimatedTextWidth = item.name.length * 8 // rough estimate
+          const isLgScreen = window.innerWidth >= 1024
+          measuredWidths.push(isLgScreen ? 44 + estimatedTextWidth : 44)
+        }
+      })
+
+      // Calculate which items fit
+      let totalWidth = 0
+      const visible: typeof navigation = []
+      const overflow: typeof navigation = []
+
+      headerNavItems.forEach((item, index) => {
+        const itemWidth = measuredWidths[index] || 80 // fallback width
+        // Add gap between items (8px for md:gap-2)
+        const gapWidth = visible.length > 0 ? 8 : 0
+        if (totalWidth + gapWidth + itemWidth <= availableWidth) {
+          visible.push(item)
+          totalWidth += gapWidth + itemWidth
+        } else {
+          overflow.push(item)
+        }
+      })
+
+      // Always show at least the first item (Home) if available
+      if (visible.length === 0 && headerNavItems.length > 0) {
+        visible.push(headerNavItems[0])
+        if (overflow.length > 0 && overflow[0] === headerNavItems[0]) {
+          overflow.shift()
+        }
+      }
+
+      setVisibleNavItems(visible)
+      setOverflowNavItems(overflow)
+    }
+
+    // Calculate on mount (with small delay to let DOM settle) and resize
+    const initialTimeout = setTimeout(() => {
+      calculateVisibleItems()
+    }, 100)
+
+    let resizeTimeout: NodeJS.Timeout
+    const handleResize = () => {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(calculateVisibleItems, 150)
+    }
+
+    window.addEventListener('resize', handleResize, { passive: true })
+    
+    // Use ResizeObserver for more accurate measurements
+    let resizeObserver: ResizeObserver | null = null
+    let observerTimeout: NodeJS.Timeout | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      // Wait a bit for refs to be set
+      observerTimeout = setTimeout(() => {
+        if (navContainerRef.current) {
+          resizeObserver = new ResizeObserver(() => {
+            calculateVisibleItems()
+          })
+          resizeObserver.observe(navContainerRef.current)
+          if (rightSideRef.current) {
+            resizeObserver.observe(rightSideRef.current)
+          }
+        }
+      }, 200)
+    }
+    
+    // Cleanup function
+    return () => {
+      clearTimeout(initialTimeout)
+      if (observerTimeout) {
+        clearTimeout(observerTimeout)
+      }
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(resizeTimeout)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [navigation, isSignedIn, isAuthPage])
 
   const isManagerLike = userRole === 'manager' || userRole === 'admin'
 
@@ -891,13 +1017,20 @@ function HeaderContent() {
 
               <div className="h-6 w-px bg-border/20 dark:bg-white/10 flex-shrink-0" />
 
-              <nav className="flex items-center gap-1 md:gap-2 flex-1 min-w-0">
-                {navigation.filter(item => !(item as any).desktopOnly).map((item) => {
+              <nav ref={navContainerRef} className="flex items-center gap-1 md:gap-2 flex-1 min-w-0">
+                {visibleNavItems.map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
                   return (
                     <Link
                       key={item.name}
+                      ref={(el) => {
+                        if (el) {
+                          navItemsRefs.current.set(item.name, el)
+                        } else {
+                          navItemsRefs.current.delete(item.name)
+                        }
+                      }}
                       href={item.href}
                       className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base transition-all flex-shrink-0 font-space
                         ${active ? 'text-white bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 font-semibold' : 'text-white/70 hover:text-white hover:bg-white/5 font-medium'}`}
@@ -912,7 +1045,7 @@ function HeaderContent() {
 
             {/* Right side: User info and menu */}
             {isSignedIn && (
-              <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
+              <div ref={rightSideRef} className="flex items-center gap-3 md:gap-4 flex-shrink-0">
                 <div className="relative min-w-0 max-w-[120px] md:max-w-[150px] hidden lg:block">
                   <p className="text-sm md:text-base text-white/80 leading-4 truncate font-space font-medium">{user?.full_name ?? profileName}</p>
                 </div>
@@ -1186,6 +1319,37 @@ function HeaderContent() {
 
                   <nav className="flex-1 overflow-y-auto px-[19px] pt-[14px] pb-[9px]">
                     <div className="space-y-[14px]">
+                      {/* Overflow navigation items from header */}
+                      {overflowNavItems.length > 0 && (
+                        <div>
+                          <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-white/50 mb-[7px] font-space">Navigation</p>
+                          <div className="space-y-[5px]">
+                            {overflowNavItems.map((item) => {
+                              const Icon = item.icon
+                              const active = isActive(item.href)
+                              return (
+                                <button
+                                  key={item.name}
+                                  onClick={() => {
+                                    router.push(item.href)
+                                    setIsSidebarOpen(false)
+                                  }}
+                                  className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:border-white/15 hover:bg-white/5 font-space ${
+                                    active ? 'bg-white/10 border-white/15' : ''
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-[12px]">
+                                    <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white shrink-0">
+                                      <Icon className="h-[16.5px] w-[16.5px]" />
+                                    </span>
+                                    <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
+                                  </span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
                       {sidebarSections.map((section) => {
                         // Filter items based on user role
                         const visibleItems = section.items.filter(item => {
