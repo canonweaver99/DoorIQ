@@ -4,29 +4,19 @@ import { sendNewUserNotification } from '@/lib/email/send'
 
 export const dynamic = "force-static";
 
-/**
- * Get the correct origin for redirects
- * Priority: 1) Environment variable, 2) Production URL, 3) Request origin (for local dev)
- */
-function getRedirectOrigin(requestOrigin: string): string {
-  // Use environment variable if available (most reliable for production)
-  const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL
-  if (envUrl && !envUrl.includes('localhost')) {
-    return new URL(envUrl).origin
-  }
-  
-  // In production, use production URL even if env var not set
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://dooriq.ai'
-  }
-  
-  // In development, use request origin (localhost)
-  return requestOrigin
-}
-
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
-  const redirectOrigin = getRedirectOrigin(requestUrl.origin)
+  
+  // Use request origin for redirects, but block localhost in production
+  let redirectOrigin = requestUrl.origin
+  
+  // Safety check: Block localhost redirects in production
+  if ((requestUrl.hostname === 'localhost' || requestUrl.hostname === '127.0.0.1') && process.env.NODE_ENV === 'production') {
+    console.error('❌ BLOCKED: Localhost callback in production!')
+    const productionUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://dooriq.ai'
+    redirectOrigin = new URL(productionUrl).origin
+    console.log('✅ Using production URL instead:', redirectOrigin)
+  }
   const code = requestUrl.searchParams.get('code')
   const token = requestUrl.searchParams.get('token')
   const token_hash = requestUrl.searchParams.get('token_hash')

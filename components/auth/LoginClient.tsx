@@ -43,26 +43,17 @@ export function LoginClient() {
     try {
       const supabase = createClient()
       
-      // Determine the correct origin for OAuth redirect
-      // Priority: 1) Environment variable, 2) Production URL, 3) Current origin (for local dev)
+      // Use current origin - this ensures redirects go back to the same domain
       if (typeof window === 'undefined') {
         throw new Error('OAuth sign-in must be initiated from browser')
       }
       
-      let origin = window.location.origin
+      const origin = window.location.origin
       
-      // Use environment variable if available (most reliable for production)
-      const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL
-      if (envUrl && !envUrl.includes('localhost')) {
-        origin = new URL(envUrl).origin
-        console.log('✅ Using environment variable for redirect origin:', origin)
-      } else if (process.env.NODE_ENV === 'production') {
-        // In production, use production URL even if env var not set
-        origin = 'https://dooriq.ai'
-        console.log('✅ Using production URL for redirect origin:', origin)
-      } else {
-        // In development, use current origin (localhost)
-        console.log('✅ Using current origin for redirect (development):', origin)
+      // Safety check: Warn if using localhost in production (shouldn't happen)
+      if (origin.includes('localhost') && process.env.NODE_ENV === 'production') {
+        console.error('⚠️ Warning: Using localhost origin in production:', origin)
+        console.error('⚠️ This suggests a configuration issue. Check Supabase Site URL setting.')
       }
       
       const callbackUrl = `${origin}/auth/callback`
