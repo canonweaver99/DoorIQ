@@ -15,6 +15,7 @@ export interface CoachSuggestion {
   suggestedLine: string
   reasoning?: string
   phase?: 'opening' | 'discovery' | 'value' | 'objection' | 'closing'
+  tone?: 'fast' | 'casual' | 'patient' | 'direct'
 }
 
 export interface CoachAgentContext {
@@ -284,6 +285,7 @@ Based on the FULL conversation above, what should the rep say next? Make it natu
     let suggestedLine = parsed.suggestedResponse || parsed.suggestedLine || ''
     const reasoning = parsed.reasoning
     const phase = parsed.phase
+    const tone = parsed.tone
     
     // Humanize the response (remove scripted phrases, clean up)
     suggestedLine = humanizeResponse(suggestedLine)
@@ -303,7 +305,8 @@ Based on the FULL conversation above, what should the rep say next? Make it natu
     return {
       suggestedLine,
       ...(reasoning && { reasoning }),
-      ...(phase && { phase })
+      ...(phase && { phase }),
+      ...(tone && { tone })
     }
   } catch (error: any) {
     console.error('Error generating coach suggestion:', error)
