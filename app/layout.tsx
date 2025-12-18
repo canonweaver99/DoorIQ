@@ -251,7 +251,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark">
       <head>
         {/* Resource hints for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -306,21 +306,19 @@ export default function RootLayout({
               })();
               
               (function() {
+                // Always force dark theme
+                document.documentElement.classList.remove('light', 'dark');
+                document.documentElement.classList.add('dark');
+                // Override any stored theme preference
                 try {
-                  const storedTheme = localStorage.getItem('theme');
-                  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  const theme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
-                  document.documentElement.classList.remove('light', 'dark');
-                  document.documentElement.classList.add(theme);
-                } catch (e) {
-                  document.documentElement.classList.add('dark');
-                }
+                  localStorage.setItem('theme', 'dark');
+                } catch (e) {}
               })();
 `,
           }}
         />
       </head>
-      <body className={`${inter.variable} ${geistMono.variable} ${playfairDisplay.variable} ${spaceGrotesk.variable} ${poppins.variable} ${bebasNeue.variable} antialiased bg-background text-foreground`}>
+      <body className={`${inter.variable} ${geistMono.variable} ${playfairDisplay.variable} ${spaceGrotesk.variable} ${poppins.variable} ${bebasNeue.variable} antialiased bg-black text-white`}>
         <StructuredData />
         <Script id="rewardful-init" strategy="beforeInteractive">
           {`(function(w,r){w._rwq=r;w[r]=w[r]||function(){(w[r].q=w[r].q||[]).push(arguments)}})(window,'rewardful');`}

@@ -14,14 +14,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Only access localStorage on client side
+    // Always default to dark theme
     if (typeof window === 'undefined') return 'dark'
     
-    const storedTheme = localStorage.getItem('theme') as Theme | null
-    if (storedTheme) return storedTheme
-    
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    return systemPrefersDark ? 'dark' : 'light'
+    // Force dark theme, ignore stored preferences
+    return 'dark'
   })
   const [mounted, setMounted] = useState(false)
 
@@ -30,12 +27,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMounted(true)
   }, [])
 
-  // Apply theme to document
+  // Apply theme to document - always force dark
   useEffect(() => {
     const root = document.documentElement
     root.classList.remove('light', 'dark')
-    root.classList.add(theme)
-    localStorage.setItem('theme', theme)
+    root.classList.add('dark')
+    localStorage.setItem('theme', 'dark')
   }, [theme])
 
   const setTheme = (newTheme: Theme) => {

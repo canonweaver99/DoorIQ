@@ -529,7 +529,7 @@ function HeaderContent() {
       {!isSignedIn && !isAuthPage && (
         <>
           {/* Desktop Public Header */}
-          <header className={`hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 overflow-hidden`}>
+          <header className={`hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-white/10 bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 overflow-hidden`}>
             {/* Animated grid pattern */}
             <motion.div
               animate={{
@@ -606,7 +606,7 @@ function HeaderContent() {
                         key={item.name}
                         href={item.href}
                         className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-3 md:px-4 py-3 text-sm md:text-base transition-all flex-shrink-0 font-space
-                          ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
+                          ${active ? 'text-white bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 font-semibold' : 'text-white/70 hover:text-white hover:bg-white/5 font-medium'}`}
                       >
                         <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
                         <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
@@ -620,7 +620,7 @@ function HeaderContent() {
               <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
                 <Link
                   href="/auth/login"
-                  className="px-4 py-2 text-sm md:text-base text-foreground/70 hover:text-foreground dark:text-slate-300 dark:hover:text-white font-medium transition-all font-space"
+                  className="px-4 py-2 text-sm md:text-base text-white/70 hover:text-white dark:text-slate-300 dark:hover:text-white font-medium transition-all font-space"
                 >
                   Log In
                 </Link>
@@ -658,7 +658,7 @@ function HeaderContent() {
               <div className="fixed inset-0 z-[99] md:hidden">
                 {/* Backdrop */}
                 <motion.div 
-                  className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"
+                  className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                   onClick={() => setIsMenuOpen(false)}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -667,7 +667,7 @@ function HeaderContent() {
                 />
                 {/* Mobile Navigation Panel - Dropdown from top */}
                 <motion.div 
-                  className="absolute top-0 left-0 right-0 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-b border-border/20 dark:border-white/10 overflow-y-auto max-h-[85vh]"
+                  className="absolute top-0 left-0 right-0 bg-gradient-to-br from-black via-black to-black backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-b border-white/10 overflow-y-auto max-h-[85vh]"
                   initial={{ y: -100, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: -100, opacity: 0 }}
@@ -690,18 +690,18 @@ function HeaderContent() {
                         href={item.href}
                         onClick={() => setIsMenuOpen(false)}
                         className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base sm:text-lg font-medium transition-all font-space
-                          ${active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 text-foreground font-semibold' : 'text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white'}`}
+                          ${active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 text-white font-semibold' : 'text-white/70 dark:text-slate-300 hover:bg-white/5 hover:text-white dark:hover:text-white'}`}
                       >
                         <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                         <span className="tracking-tight">{item.name}</span>
                       </Link>
                     )
                   })}
-                  <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4 space-y-2">
+                  <div className="border-t border-white/10 pt-4 mt-4 space-y-2">
                     <Link
                       href="/auth/login"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center justify-center px-4 py-3 rounded-lg text-base sm:text-lg font-medium text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white transition-all font-space"
+                      className="flex items-center justify-center px-4 py-3 rounded-lg text-base sm:text-lg font-medium text-white/70 dark:text-slate-300 hover:bg-white/5 hover:text-white dark:hover:text-white transition-all font-space"
                     >
                       Log In
                     </Link>
@@ -727,7 +727,7 @@ function HeaderContent() {
                   <>
                     <motion.div
                       key="sidebar-backdrop"
-                      className="hidden md:block fixed inset-0 z-[998] bg-background/70 dark:bg-black/70"
+                      className="hidden md:block fixed inset-0 z-[998] bg-black/70"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 0.7 }}
                       exit={{ opacity: 0 }}
@@ -823,7 +823,7 @@ function HeaderContent() {
 
       {/* Full-width header - Desktop Only - Only show for signed-in users */}
       {isSignedIn && !isAuthPage && (
-        <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-border/20 dark:border-white/10 bg-background/95 dark:bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 overflow-hidden">
+        <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 items-center gap-1 md:gap-1.5 border-b border-white/10 bg-black/95 backdrop-blur-xl px-4 md:px-6 lg:px-8 py-5 shadow-lg shadow-purple-500/10 overflow-hidden">
           {/* Animated grid pattern */}
           <motion.div
             animate={{
@@ -900,7 +900,7 @@ function HeaderContent() {
                       key={item.name}
                       href={item.href}
                       className={`inline-flex items-center gap-1 md:gap-1.5 rounded-md px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base transition-all flex-shrink-0 font-space
-                        ${active ? 'text-foreground bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 font-semibold' : 'text-foreground/70 hover:text-foreground hover:bg-background/50 dark:hover:bg-white/5 font-medium'}`}
+                        ${active ? 'text-white bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 font-semibold' : 'text-white/70 hover:text-white hover:bg-white/5 font-medium'}`}
                     >
                       <Icon className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
                       <span className="tracking-tight whitespace-nowrap hidden lg:inline">{item.name}</span>
@@ -914,7 +914,7 @@ function HeaderContent() {
             {isSignedIn && (
               <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
                 <div className="relative min-w-0 max-w-[120px] md:max-w-[150px] hidden lg:block">
-                  <p className="text-sm md:text-base text-foreground/80 leading-4 truncate font-space font-medium">{user?.full_name ?? profileName}</p>
+                  <p className="text-sm md:text-base text-white/80 leading-4 truncate font-space font-medium">{user?.full_name ?? profileName}</p>
                 </div>
                 <div className="h-6 w-px bg-border/20 dark:bg-white/10 flex-shrink-0" />
                 <div className="flex items-center gap-2">
@@ -981,7 +981,7 @@ function HeaderContent() {
           <div className="fixed inset-0 z-40 md:hidden">
             {/* Backdrop */}
             <motion.div 
-              className="absolute inset-0 bg-background/70 dark:bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
               onClick={() => setIsMenuOpen(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -990,7 +990,7 @@ function HeaderContent() {
             />
             {/* Mobile Navigation Panel - Dropdown from top */}
             <motion.div 
-              className="absolute top-0 left-0 right-0 bg-gradient-to-br from-background via-background/95 to-background dark:from-[#07030f] dark:via-[#0e0b1f] dark:to-[#150c28] backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-b border-border/20 dark:border-white/10 overflow-y-auto max-h-[85vh]"
+              className="absolute top-0 left-0 right-0 bg-gradient-to-br from-black via-black to-black backdrop-blur-2xl shadow-[0_30px_120px_rgba(109,40,217,0.35)] border-b border-white/10 overflow-y-auto max-h-[85vh]"
               initial={{ y: -100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -100, opacity: 0 }}
@@ -1010,15 +1010,15 @@ function HeaderContent() {
                   href={item.href}
                   onClick={() => setIsMenuOpen(false)}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-base sm:text-lg font-medium transition-all font-space
-                    ${active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 text-foreground font-semibold' : 'text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white'}`}
+                    ${active ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 text-white font-semibold' : 'text-white/70 dark:text-slate-300 hover:bg-white/5 hover:text-white dark:hover:text-white'}`}
                 >
                   <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                   <span className="tracking-tight">{item.name}</span>
                 </Link>
               )
             })}
-            <div className="border-t border-border/20 dark:border-white/10 pt-4 mt-4">
-              <p className="px-4 text-xs sm:text-sm uppercase tracking-[0.3em] text-foreground/50 dark:text-slate-400 font-space">Account</p>
+            <div className="border-t border-white/10 pt-4 mt-4">
+              <p className="px-4 text-xs sm:text-sm uppercase tracking-[0.3em] text-white/50 dark:text-slate-400 font-space">Account</p>
               <div className="mt-2 space-y-2">
                 {profileNavigation.filter(item => {
                   if (item.adminOnly) {
@@ -1042,8 +1042,8 @@ function HeaderContent() {
                       onClick={() => setIsMenuOpen(false)}
                       className={`flex items-center justify-between px-4 py-3 rounded-lg text-base sm:text-lg font-medium transition-all font-space ${
                         active
-                          ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-border/20 dark:border-white/10 text-foreground font-semibold'
-                          : 'text-foreground/70 dark:text-slate-300 hover:bg-background/50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-white'
+                          ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-white/10 text-white font-semibold'
+                          : 'text-white/70 dark:text-slate-300 hover:bg-white/5 hover:text-white dark:hover:text-white'
                       }`}
                     >
                       <span className="flex items-center space-x-3">
@@ -1064,14 +1064,14 @@ function HeaderContent() {
                   setIsMenuOpen(false)
                   await handleSignOut()
                 }}
-                className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-border/20 dark:border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-base sm:text-lg font-semibold text-foreground dark:text-white transition hover:from-purple-500/40 hover:to-pink-500/40 font-space"
+                className="mt-4 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/30 to-pink-600/30 px-4 py-3 text-base sm:text-lg font-semibold text-white transition hover:from-purple-500/40 hover:to-pink-500/40 font-space"
               >
                 <LogOut className="h-4 w-4" />
                 <span>{signingOut ? 'Signing out…' : 'Sign out'}</span>
               </button>
               {user && (
-                <div className="px-4 py-3 border-t border-border/20 dark:border-white/10 mt-4">
-                  <p className="text-base sm:text-lg font-medium text-foreground font-space">{profileName}</p>
+                <div className="px-4 py-3 border-t border-white/10 mt-4">
+                  <p className="text-base sm:text-lg font-medium text-white font-space">{profileName}</p>
                   {/* Credit display removed */}
                 </div>
               )}
@@ -1088,7 +1088,7 @@ function HeaderContent() {
               <>
                 <motion.div
                   key="sidebar-backdrop"
-                  className="hidden md:block fixed inset-0 z-[998] bg-background/70 dark:bg-black/70"
+                  className="hidden md:block fixed inset-0 z-[998] bg-black/70"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.7 }}
                   exit={{ opacity: 0 }}
@@ -1099,7 +1099,7 @@ function HeaderContent() {
                 <motion.div
                   key="sidebar-panel"
                   ref={sidebarRef}
-                  className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-border/20 dark:border-white/10 bg-gradient-to-br from-background via-background/95 to-background dark:from-black dark:via-black dark:to-black backdrop-blur-2xl"
+                  className="hidden md:flex fixed top-0 right-0 bottom-0 z-[9999] w-full max-w-[428px] flex-col overflow-hidden border-l border-white/10 bg-black backdrop-blur-2xl"
                   role="menu"
                   initial={{ opacity: 0, x: 64 }}
                   animate={{ opacity: 1, x: 0 }}
