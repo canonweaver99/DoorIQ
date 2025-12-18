@@ -313,7 +313,7 @@ function HeroSection() {
   }, []);
 
   return (
-    <div id="hero" className="relative bg-black overflow-hidden pt-16 sm:pt-20 md:pt-24 lg:pt-28 xl:pt-32 2xl:pt-36">
+    <div id="hero" className="relative bg-black overflow-hidden pt-32 sm:pt-36 md:pt-40 lg:pt-44 xl:pt-48 2xl:pt-52">
       {/* Animated grid pattern */}
       <motion.div
         animate={shouldAnimate ? {
@@ -1583,7 +1583,7 @@ function FreePeriodBanner() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="sticky top-0 z-50 w-full bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 shadow-lg"
+      className="sticky top-16 sm:top-20 md:top-24 z-40 w-full bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 shadow-lg"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between gap-4">
