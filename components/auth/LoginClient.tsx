@@ -43,15 +43,26 @@ export function LoginClient() {
     try {
       const supabase = createClient()
       
-      // Get the current origin or fallback to production URL
-      const origin = typeof window !== 'undefined' 
-        ? window.location.origin 
-        : process.env.NEXT_PUBLIC_SITE_URL || 'https://door-iq.vercel.app'
+      // Get the current origin - always use window.location.origin in browser
+      // Never fallback to localhost or hardcoded URLs
+      if (typeof window === 'undefined') {
+        throw new Error('OAuth sign-in must be initiated from browser')
+      }
+      
+      const origin = window.location.origin
+      
+      // Ensure we're not using localhost in production
+      if (origin.includes('localhost') && process.env.NODE_ENV === 'production') {
+        console.error('⚠️ Warning: Using localhost origin in production:', origin)
+      }
+      
+      const callbackUrl = `${origin}/auth/callback`
+      console.log('🔐 OAuth callback URL:', callbackUrl)
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${origin}/auth/callback`,
+          redirectTo: callbackUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

@@ -106,7 +106,18 @@ function LoginForm() {
         throw new Error('Supabase client not initialized. Please check your environment variables.')
       }
 
-      const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
+      // Always use window.location.origin - never fallback to hardcoded URLs
+      // This ensures users are redirected to the correct domain
+      if (typeof window === 'undefined') {
+        throw new Error('OAuth sign-in must be initiated from browser')
+      }
+      
+      const origin = window.location.origin
+      
+      // Warn if using localhost in production (shouldn't happen)
+      if (origin.includes('localhost') && process.env.NODE_ENV === 'production') {
+        console.error('⚠️ Warning: Using localhost origin in production:', origin)
+      }
 
       // Preserve redirect params in OAuth callback
       let callbackUrl = `${origin}/auth/callback`
@@ -120,6 +131,7 @@ function LoginForm() {
       console.log('🔐 Initiating Google OAuth')
       console.log('📍 Callback URL:', callbackUrl)
       console.log('🌐 Origin:', origin)
+      console.log('🌍 Full URL:', window.location.href)
 
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',

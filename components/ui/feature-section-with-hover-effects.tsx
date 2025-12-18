@@ -25,49 +25,49 @@ export function FeaturesSectionWithHoverEffects({ features }: FeaturesSectionPro
     {
       title: "AI Roleplay Agents",
       description:
-        "Practice with hyper-realistic AI homeowners that adapt to your pitch and throw real objections.",
+        "Practice with realistic AI homeowners that adapt to your pitch and throw real objections.",
       icon: <Bot className="w-6 h-6" />,
     },
     {
       title: "Real-time Feedback",
       description:
-        "Get instant coaching on tone, pacing, and persuasion techniques as you practice.",
+        "Instant coaching on tone, pacing, and persuasion techniques as you practice.",
       icon: <MessageSquare className="w-6 h-6" />,
     },
     {
       title: "Performance Analytics",
       description:
-        "Deep insights into every rep's strengths, weaknesses, and improvement trajectory.",
+        "Deep insights into each rep's strengths, weaknesses, and improvement trajectory.",
       icon: <BarChart3 className="w-6 h-6" />,
     },
     {
       title: "Objection Handling",
       description:
-        "Master the toughest objections with AI-powered scenarios that prepare reps for anything.",
+        "Master tough objections with AI-powered scenarios that prepare reps for anything.",
       icon: <Shield className="w-6 h-6" />,
     },
     {
       title: "Team Leaderboards",
       description:
-        "Drive healthy competition with gamified rankings that motivate your team.",
+        "Drive competition with gamified rankings that motivate your team.",
       icon: <Trophy className="w-6 h-6" />,
     },
     {
       title: "Manager Insights",
       description:
-        "See exactly where each rep needs coaching without sitting in on calls.",
+        "See where each rep needs coaching without sitting in on calls.",
       icon: <LineChart className="w-6 h-6" />,
     },
     {
       title: "Lightning Fast Setup",
       description:
-        "Get your team onboarded and practicing in under 10 minutes.",
+        "Get your team onboarded and practicing in 10 minutes.",
       icon: <Zap className="w-6 h-6" />,
     },
     {
       title: "Unlimited Practice",
       description:
-        "No caps, no limits. Your reps train as much as they need to become closers.",
+        "No caps, no limits. Reps train as much as they need to become closers.",
       icon: <Users className="w-6 h-6" />,
     },
   ];

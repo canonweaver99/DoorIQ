@@ -104,7 +104,18 @@ function SignUpForm() {
 
     try {
       const supabase = createClient()
-      const origin = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
+      
+      // Always use window.location.origin - never fallback to hardcoded URLs
+      if (typeof window === 'undefined') {
+        throw new Error('OAuth sign-up must be initiated from browser')
+      }
+      
+      const origin = window.location.origin
+      
+      // Warn if using localhost in production
+      if (origin.includes('localhost') && process.env.NODE_ENV === 'production') {
+        console.error('⚠️ Warning: Using localhost origin in production:', origin)
+      }
 
       // Preserve redirect params in OAuth callback
       let callbackUrl = `${origin}/auth/callback`
@@ -118,6 +129,8 @@ function SignUpForm() {
 
       console.log('🔐 Initiating Google OAuth signup')
       console.log('📍 Callback URL:', callbackUrl)
+      console.log('🌐 Origin:', origin)
+      console.log('🌍 Full URL:', window.location.href)
 
       const { data, error: signUpError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
