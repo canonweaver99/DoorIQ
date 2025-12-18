@@ -200,6 +200,10 @@ export function MeetHomeownersSection() {
                               unoptimized={agent.image.includes(' ') || agent.image.includes('&')}
                               onError={(e) => {
                                 console.error('❌ Homeowners section image failed to load:', agent.image, 'Encoded:', imageSrc)
+                                const target = e.target as HTMLImageElement
+                                if (target.src !== '/agents/default.png') {
+                                  target.src = '/agents/default.png'
+                                }
                                 e.stopPropagation()
                               }}
                             />

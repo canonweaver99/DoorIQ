@@ -366,8 +366,8 @@ function HeroSection() {
         style={{ transform: 'translateZ(0)', willChange: 'transform' }}
       />
 
-      {/* Desktop Hero Section - Laptop (md to 2xl) */}
-      <div className="hidden md:block 2xl:hidden">
+      {/* Desktop Hero Section - Laptop (md and above) */}
+      <div className="hidden md:block">
         <ContainerScroll
         titleComponent={
           <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-16 sm:pt-16 md:pt-12 px-0 sm:px-4 w-full">
@@ -489,119 +489,6 @@ function HeroSection() {
               </div>
             </div>
           </MacbookPro>
-        </div>
-      </ContainerScroll>
-      </div>
-
-      {/* Large Monitor Hero Section - 2xl and above */}
-      <div className="hidden 2xl:block 2xl:pt-24">
-        <ContainerScroll
-        titleComponent={
-          <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 pb-4 sm:pb-5 md:pb-6 pt-32 sm:pt-36 md:pt-40 lg:pt-44 xl:pt-48 px-0 sm:px-4 w-full">
-            {/* Badge */}
-            <motion.div
-              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
-              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.18, duration: 0.54 } : {}}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 rounded border border-white/10 bg-white/[0.02] backdrop-blur-sm"
-            >
-              <span className="text-white/80 text-xs sm:text-sm md:text-base font-medium tracking-wider uppercase font-space">
-                Enterprise D2D Sales Training Platform
-              </span>
-            </motion.div>
-
-            {/* Headline */}
-            <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
-              <AnimatedText
-                text="Unlimited AI Practice for"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
-                underlineClassName="hidden"
-                duration={0.036}
-                delay={0.014}
-              />
-              <AnimatedText
-                text="DOOR-TO-DOOR SALES"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
-                underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
-                underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
-                underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
-                animationType="fade"
-                underlineFirst={true}
-                startDelay={1.17}
-              />
-            </div>
-
-            {/* Subheadline */}
-            <motion.p
-              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
-              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.45, duration: 0.54 } : {}}
-              className="font-sans text-lg sm:text-lg md:text-lg lg:text-xl xl:text-2xl text-white/80 w-full max-w-full md:max-w-4xl text-center leading-relaxed font-light px-4"
-            >
-              Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
-            </motion.p>
-
-            {/* CTA Button */}
-            <motion.div
-              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
-              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
-              className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
-            >
-              <Link
-                href="/book-demo"
-                className="group px-6 sm:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gray-200 text-gray-900 font-bold rounded-md text-sm sm:text-base tracking-tight hover:bg-gray-300 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Book a Demo
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </motion.div>
-
-            {/* See it in action label */}
-            <motion.div
-              initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
-              animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.585, duration: 0.54 } : {}}
-              className="text-center mt-2 sm:mt-6 md:mt-8 mb-4 md:mb-6 lg:mb-8 xl:mb-10 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3"
-            >
-              <span className="text-white/80 text-lg sm:text-xl md:text-2xl lg:text-4xl xl:text-5xl font-medium tracking-wider uppercase font-space">
-                See it in action
-              </span>
-              <motion.div
-                animate={shouldAnimate ? { y: [0, 8, 0] } : { y: 0 }}
-                transition={shouldAnimate ? { 
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                } : {}}
-              >
-                <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 text-white/80" />
-              </motion.div>
-            </motion.div>
-          </div>
-        }
-      >
-        {/* Demo Video in Mac Monitor */}
-        <div className="relative w-full flex items-center justify-center overflow-visible pb-8">
-          <Mac
-            width={2400}
-            height={1800}
-            className="w-full"
-            style={{ maxWidth: 'min(95vw, 2400px)', height: 'auto', width: 'auto' }}
-          >
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-              preload="none"
-              loading="lazy"
-              style={{ display: 'block', backgroundColor: '#000' }}
-            >
-              <source src="/Demo Video Home Compressed.mp4" type="video/mp4" />
-            </video>
-          </Mac>
         </div>
       </ContainerScroll>
       </div>
@@ -979,7 +866,7 @@ function FeaturesSection() {
 // Inline Agent Carousel Component (from home hero)
 const InlineAgentCarousel = React.memo(() => {
   const router = useRouter();
-  const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'laptop' | 'desktop'>('laptop');
+  const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'laptop'>('laptop');
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -989,10 +876,8 @@ const InlineAgentCarousel = React.memo(() => {
         setScreenSize('mobile');
       } else if (width < 1024) {
         setScreenSize('tablet');
-      } else if (width < 1440) {
-        setScreenSize('laptop');
       } else {
-        setScreenSize('desktop');
+        setScreenSize('laptop');
       }
     };
     if (typeof window !== 'undefined') {
@@ -1024,7 +909,6 @@ const InlineAgentCarousel = React.memo(() => {
       case 'mobile': return Math.round((96 + 20) * 1.1); // 10% bigger
       case 'tablet': return 112 + 24;
       case 'laptop': return 128 + 28;
-      case 'desktop': return 192 + 36;
       default: return 128 + 28;
     }
   };
@@ -1034,7 +918,6 @@ const InlineAgentCarousel = React.memo(() => {
       case 'mobile': return 18; // Slower - increased from 12.5
       case 'tablet': return 35;
       case 'laptop': return 50;
-      case 'desktop': return 65;
       default: return 50;
     }
   };

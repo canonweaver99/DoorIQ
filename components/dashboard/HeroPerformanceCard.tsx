@@ -151,9 +151,14 @@ export default function HeroPerformanceCard({
                   }
                   const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
                   
+                  // URL encode image path if it contains spaces to ensure proper loading
+                  const imageSrc = agentImage.includes(' ') || agentImage.includes('&')
+                    ? agentImage.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                    : agentImage
+                  
                   return (
                     <Image
-                      src={agentImage}
+                      src={imageSrc}
                       alt={agentName}
                       fill
                       className="object-cover"
@@ -162,6 +167,15 @@ export default function HeroPerformanceCard({
                         transform: `scale(${scaleValue}) translateY(${translateY})`,
                       }}
                       sizes="128px"
+                      unoptimized={agentImage.includes(' ') || agentImage.includes('&')}
+                      onError={(e) => {
+                        console.error('❌ HeroPerformanceCard image failed to load:', agentImage, 'Encoded:', imageSrc)
+                        const target = e.target as HTMLImageElement
+                        if (target.src !== '/agents/default.png') {
+                          target.src = '/agents/default.png'
+                        }
+                        e.stopPropagation()
+                      }}
                     />
                   )
                 })()}

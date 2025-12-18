@@ -176,6 +176,14 @@ export default function RecommendedAgents({ agents, skillGaps }: RecommendedAgen
                               sizes="160px"
                               quality={95}
                               unoptimized={agentImage.includes(' ') || agentImage.includes('&')}
+                              onError={(e) => {
+                                console.error('❌ RecommendedAgents image failed to load:', agentImage, 'Encoded:', imageSrc)
+                                const target = e.target as HTMLImageElement
+                                if (target.src !== '/agents/default.png') {
+                                  target.src = '/agents/default.png'
+                                }
+                                e.stopPropagation()
+                              }}
                             />
                           )
                         })()}

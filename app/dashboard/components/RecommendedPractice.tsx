@@ -393,9 +393,14 @@ export default function RecommendedPractice() {
                 }
                 const scaleValue = imageStyle.transform?.match(/scale\(([^)]+)\)/)?.[1] || '1'
                 
+                // URL encode image path if it contains spaces to ensure proper loading
+                const imageSrc = agentImage.includes(' ') || agentImage.includes('&')
+                  ? agentImage.split('/').map((part, i) => i === 0 ? part : encodeURIComponent(part)).join('/')
+                  : agentImage
+                
                 return (
                   <Image
-                    src={agentImage}
+                    src={imageSrc}
                     alt={personaName}
                     fill
                     className="object-cover"
@@ -406,6 +411,15 @@ export default function RecommendedPractice() {
                     sizes="(max-width: 640px) 112px, (max-width: 768px) 128px, 160px"
                     quality={100}
                     priority
+                    unoptimized={agentImage.includes(' ') || agentImage.includes('&')}
+                    onError={(e) => {
+                      console.error('❌ RecommendedPractice image failed to load:', agentImage, 'Encoded:', imageSrc)
+                      const target = e.target as HTMLImageElement
+                      if (target.src !== '/agents/default.png') {
+                        target.src = '/agents/default.png'
+                      }
+                      e.stopPropagation()
+                    }}
                   />
                 )
               })()}
