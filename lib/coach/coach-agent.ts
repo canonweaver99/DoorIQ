@@ -5,7 +5,7 @@
 
 import OpenAI from 'openai'
 import { ScriptSection } from './rag-retrieval'
-import { buildCoachPrompt } from './prompts'
+import { CONSOLIDATED_COACH_PROMPT } from './prompts'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -13,9 +13,6 @@ const openai = new OpenAI({
 
 export interface CoachSuggestion {
   suggestedLine: string
-  reasoning?: string
-  phase?: 'opening' | 'discovery' | 'value' | 'objection' | 'closing'
-  tone?: 'fast' | 'casual' | 'patient' | 'direct'
 }
 
 export interface CoachAgentContext {
@@ -25,7 +22,6 @@ export interface CoachAgentContext {
   scriptSections: ScriptSection[]
   companyName?: string
   repName?: string
-  specialization?: string // Optional specialization paragraphs
 }
 
 /**
@@ -140,71 +136,6 @@ function replacePlaceholders(
 }
 
 /**
- * Generate a contextual fallback suggestion based on homeowner's text
- * This is faster than a full OpenAI call and provides better context
- */
-function generateContextualFallback(
-  homeownerText: string,
-  conversationHistory?: Array<{ speaker: string; text: string }>
-): string {
-  const lowerText = homeownerText.toLowerCase()
-  
-  // Pattern-based contextual responses
-  if (lowerText.includes('not interested') || lowerText.includes('not looking') || lowerText.includes('not today')) {
-    return 'Gotcha. What made you say that?'
-  }
-  
-  if (lowerText.includes('already have') || lowerText.includes('already got') || lowerText.includes('already using')) {
-    return 'Oh nice. How long you been with them?'
-  }
-  
-  if (lowerText.includes('too expensive') || lowerText.includes('cost') || lowerText.includes('price') || lowerText.includes('money')) {
-    return 'Fair. What are you paying now?'
-  }
-  
-  if (lowerText.includes('think about it') || lowerText.includes('let me think')) {
-    return 'Sure. What specifically are you thinking about?'
-  }
-  
-  if (lowerText.includes('spouse') || lowerText.includes('wife') || lowerText.includes('husband') || lowerText.includes('partner')) {
-    return 'She home? Happy to explain it to both of you.'
-  }
-  
-  if (lowerText.includes('busy') || lowerText.includes('not a good time') || lowerText.includes('later')) {
-    return 'No worries. When would be better?'
-  }
-  
-  if (lowerText.includes('yes') || lowerText.includes('sure') || lowerText.includes('okay') || lowerText.includes('ok')) {
-    return 'Great. When can we get started?'
-  }
-  
-  if (lowerText.includes('no') || lowerText.includes('nah') || lowerText.includes('nope')) {
-    return 'Fair enough. What changed your mind?'
-  }
-  
-  if (lowerText.includes('maybe') || lowerText.includes('might')) {
-    return 'What would help you decide?'
-  }
-  
-  if (lowerText.includes('how much') || lowerText.includes('what does it cost')) {
-    return 'Depends on your place. Mind if I take a quick look?'
-  }
-  
-  // If homeowner asked a question, acknowledge and respond
-  if (homeownerText.includes('?')) {
-    return 'Good question. Let me explain.'
-  }
-  
-  // If they made a statement, acknowledge and dig deeper
-  if (conversationHistory && conversationHistory.length > 0) {
-    return 'Makes sense. Tell me more about that.'
-  }
-  
-  // Default contextual response
-  return 'Gotcha. What do you think?'
-}
-
-/**
  * Generate a coaching suggestion using OpenAI
  */
 export async function generateSuggestion(
@@ -216,60 +147,58 @@ export async function generateSuggestion(
       .map((section) => section.text)
       .join('\n\n---\n\n')
     
-    // Format conversation history - make it very clear and prominent
+    // Format conversation history
     let conversationHistoryText = ''
     if (context.conversationHistory && context.conversationHistory.length > 0) {
-      const recentHistory = context.conversationHistory.slice(-10) // Last 10 exchanges for full context
-      conversationHistoryText = recentHistory.map((entry, index) => {
+      const recentHistory = context.conversationHistory.slice(-10) // Last 10 exchanges
+      conversationHistoryText = `\n\nConversation history:\n${recentHistory.map((entry) => {
         const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'Rep' : 'Homeowner'
         return `${speaker}: ${entry.text}`
-      }).join('\n')
+      }).join('\n')}`
     }
     
     // Build context information
     const contextInfo = []
     if (context.companyName) {
-      contextInfo.push(`Company: ${context.companyName}`)
+      contextInfo.push(`Company name: ${context.companyName}`)
     }
     if (context.repName) {
-      contextInfo.push(`Rep name: ${context.repName}`)
+      contextInfo.push(`Sales rep's name: ${context.repName}`)
     }
     if (context.repLastStatement) {
-      contextInfo.push(`Rep's last statement: "${context.repLastStatement}"`)
+      contextInfo.push(`Rep just said: "${context.repLastStatement}"`)
     }
-    const contextText = contextInfo.length > 0 ? contextInfo.join(' | ') : ''
+    const contextText = contextInfo.length > 0 ? `\n\nContext:\n${contextInfo.join('\n')}` : ''
     
-    // User prompt - make conversation context very prominent
-    const isConversationStart = !conversationHistoryText || conversationHistoryText.trim().length === 0
-    const situationContext = isConversationStart 
-      ? 'SITUATION: Sales rep is standing at homeowner\'s front door. Homeowner just opened the door. This is the very beginning of the conversation.\n\n'
-      : ''
+    // Updated user prompt - emphasizes adapting vs copying
+    const userPrompt = `The homeowner just said: "${context.homeownerText}"
+
+Look at the script below for IDEAS, but DO NOT copy phrases from it.
+Your job is to capture the INTENT of the script in casual, human words.
+
+Think: How would you respond if this was your neighbor and you genuinely wanted to help them?
+
+${contextText}${conversationHistoryText}
+
+Script for reference (adapt, don't copy):
+${scriptSectionsText}
+
+Respond with 1-2 short sentences max. Sound like a real person, not a salesperson.
+
+Return JSON:
+{
+  "suggestedLine": "your casual, human response"
+}`
     
-    const userPrompt = `${situationContext}FULL CONVERSATION HISTORY:
-${conversationHistoryText || '(This is the first exchange - homeowner just opened the door)'}
-
-CURRENT MOMENT:
-Homeowner just said: "${context.homeownerText}"
-${context.repLastStatement ? `Rep just said: "${context.repLastStatement}"` : ''}
-
-${contextText ? `Additional context: ${contextText}` : ''}
-
-${scriptSectionsText ? `\nScript reference:\n${scriptSectionsText}` : ''}
-
-Based on the FULL conversation above, what should the rep say next? Make it natural and directly respond to what the homeowner just said. Remember: This is happening face-to-face at their front door.`
-    
-    // Build system prompt with specialization if provided
-    const systemPrompt = buildCoachPrompt(context.specialization)
-    
-    // Call OpenAI - simplified, trusting AI more
+    // Call OpenAI with increased temperature for more natural variation
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: CONSOLIDATED_COACH_PROMPT },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.8, // Higher for more natural, varied responses
-      max_tokens: 80,   // Slightly more tokens for better context understanding
+      temperature: 0.7, // Increased from 0.3 for more natural variation
+      max_tokens: 100,  // Reduced to force brevity
       response_format: { type: 'json_object' }
     })
     
@@ -280,12 +209,7 @@ Based on the FULL conversation above, what should the rep say next? Make it natu
     
     // Parse JSON response
     const parsed = JSON.parse(content)
-    
-    // Handle both new format (suggestedResponse) and old format (suggestedLine) for compatibility
-    let suggestedLine = parsed.suggestedResponse || parsed.suggestedLine || ''
-    const reasoning = parsed.reasoning
-    const phase = parsed.phase
-    const tone = parsed.tone
+    let suggestedLine = parsed.suggestedLine || ''
     
     // Humanize the response (remove scripted phrases, clean up)
     suggestedLine = humanizeResponse(suggestedLine)
@@ -293,27 +217,23 @@ Based on the FULL conversation above, what should the rep say next? Make it natu
     // Replace placeholders
     suggestedLine = replacePlaceholders(suggestedLine, context.companyName, context.repName)
     
-    // Final check: if still contains banned phrases after humanization, use contextual fallback
+    // Final check: if still contains banned phrases after humanization, use fallback
     const lowerLine = suggestedLine.toLowerCase()
     const containsBanned = BANNED_PHRASES.some(phrase => lowerLine.includes(phrase))
     
-    if (containsBanned || !suggestedLine || suggestedLine.trim().length === 0) {
-      console.warn(`⚠️ Banned phrase detected or empty response. Using contextual fallback.`)
-      suggestedLine = generateContextualFallback(context.homeownerText, context.conversationHistory)
+    if (containsBanned) {
+      console.warn(`⚠️ Banned phrase still present after humanization. Using fallback.`)
+      suggestedLine = 'Continue the conversation naturally.'
     }
     
     return {
-      suggestedLine,
-      ...(reasoning && { reasoning }),
-      ...(phase && { phase }),
-      ...(tone && { tone })
+      suggestedLine
     }
   } catch (error: any) {
     console.error('Error generating coach suggestion:', error)
     
-    // Use contextual fallback instead of generic message
     return {
-      suggestedLine: generateContextualFallback(context.homeownerText, context.conversationHistory)
+      suggestedLine: 'Continue the conversation naturally.'
     }
   }
 }

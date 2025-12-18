@@ -4,10 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { searchScripts } from '@/lib/coach/rag-retrieval'
 import { generateSuggestion, CoachAgentContext } from '@/lib/coach/coach-agent'
-import { getOrGenerateSpecialization } from '@/lib/coach/specialization-manager'
 
 export async function POST(request: NextRequest) {
-  let homeownerText = '' // Declare at function scope for error handler
   try {
     const supabase = await createServerSupabaseClient()
     
@@ -17,8 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { sessionId, homeownerText: bodyHomeownerText, conversationContext, transcript } = body
-    homeownerText = bodyHomeownerText || ''
+    const { sessionId, homeownerText, conversationContext, transcript } = body
 
     if (!sessionId || !homeownerText) {
       return NextResponse.json(
@@ -38,14 +35,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 
-    const sessionData = session as { id: string; user_id: string; coach_mode_enabled: boolean }
-
-    if (sessionData.user_id !== user.id) {
+    if (session.user_id !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     // Check if coach mode is enabled for this session
-    if (!sessionData.coach_mode_enabled) {
+    if (!session.coach_mode_enabled) {
       return NextResponse.json(
         { error: 'Coach mode is not enabled for this session' },
         { status: 400 }
@@ -63,16 +58,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    const userProfileData = userProfile as { organization_id: string | null; team_id: string | null; full_name: string | null }
-
-    // TEMPORARILY DISABLED: Specialization disabled to perfect base coach agent first
     // Fetch company name and scripts in parallel (after we have user profile)
     const [companyResult, scriptsResult] = await Promise.all([
-      userProfileData.team_id
+      userProfile.team_id
         ? supabase
             .from('team_grading_configs')
             .select('company_name')
-            .eq('team_id', userProfileData.team_id)
+            .eq('team_id', userProfile.team_id)
             .single()
         : Promise.resolve({ data: null, error: null }),
       (async () => {
@@ -82,28 +74,18 @@ export async function POST(request: NextRequest) {
           .eq('is_coaching_script', true)
           .eq('is_active', true)
 
-        if (userProfileData.organization_id) {
-          query = query.contains('metadata', { organization_id: userProfileData.organization_id })
-        } else if (userProfileData.team_id) {
-          query = query.contains('metadata', { team_id: userProfileData.team_id })
+        if (userProfile.organization_id) {
+          query = query.contains('metadata', { organization_id: userProfile.organization_id })
+        } else if (userProfile.team_id) {
+          query = query.contains('metadata', { team_id: userProfile.team_id })
         }
 
         return query
       })()
-      // TODO: Re-enable specialization after base coach agent is perfected
-      // userProfileData.team_id
-      //   ? getOrGenerateSpecialization(userProfileData.team_id).catch(err => {
-      //       console.error('Error getting specialization:', err)
-      //       return '' // Return empty string on error - base prompt will work
-      //     })
-      //   : Promise.resolve('')
     ])
-    
-    // Temporarily set specialization to empty
-    const specialization = ''
 
-    const companyName = (companyResult.data as { company_name?: string } | null)?.company_name
-    const { data: scripts, error: scriptsError } = scriptsResult as { data: Array<{ id: string; content: string | null; file_name: string; chunks: any }> | null; error: any }
+    const companyName = companyResult.data?.company_name
+    const { data: scripts, error: scriptsError } = scriptsResult
 
     if (scriptsError) {
       console.error('Error fetching scripts:', scriptsError)
@@ -111,34 +93,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (!scripts || scripts.length === 0) {
-      // Generate contextual fallback even without scripts
-      const fallbackResponses: Record<string, string> = {
-        'not interested': 'Gotcha. What made you say that?',
-        'already have': 'Oh nice. How long you been with them?',
-        'too expensive': 'Fair. What are you paying now?',
-        'think about it': 'Sure. What specifically are you thinking about?',
-        'busy': 'No worries. When would be better?'
-      }
-      
-      const lowerText = homeownerText.toLowerCase()
-      let fallback = 'Gotcha. What do you think?'
-      
-      for (const [key, response] of Object.entries(fallbackResponses)) {
-        if (lowerText.includes(key)) {
-          fallback = response
-          break
-        }
-      }
-      
       return NextResponse.json({
         error: 'No coaching scripts found for your team',
-        suggestedLine: fallback
+        suggestedLine: 'No script available. Continue the conversation naturally.'
       }, { status: 404 })
     }
 
     // Convert scripts to format expected by RAG retrieval
     // Include cached chunks if available
-    const scriptDocuments = (scripts || []).map((script: any) => ({
+    const scriptDocuments = scripts.map(script => ({
       id: script.id,
       content: script.content || '',
       file_name: script.file_name,
@@ -159,30 +122,12 @@ export async function POST(request: NextRequest) {
       }))
       .filter((entry: any) => entry.text && entry.text.trim().length > 0)
 
-    // Perform RAG retrieval - reduced to 1 section for maximum speed
-    const relevantSections = searchScripts(homeownerText, scriptDocuments, 1)
+    // Perform RAG retrieval - reduced to 2 sections for speed
+    const relevantSections = searchScripts(homeownerText, scriptDocuments, 2)
 
     if (relevantSections.length === 0) {
-      // Generate contextual fallback based on homeowner's text
-      const lowerText = homeownerText.toLowerCase()
-      let fallback = 'Gotcha. What do you think?'
-      
-      if (lowerText.includes('not interested') || lowerText.includes('not looking')) {
-        fallback = 'Gotcha. What made you say that?'
-      } else if (lowerText.includes('already have') || lowerText.includes('already got')) {
-        fallback = 'Oh nice. How long you been with them?'
-      } else if (lowerText.includes('too expensive') || lowerText.includes('cost')) {
-        fallback = 'Fair. What are you paying now?'
-      } else if (lowerText.includes('think about it')) {
-        fallback = 'Sure. What specifically are you thinking about?'
-      } else if (lowerText.includes('busy') || lowerText.includes('not a good time')) {
-        fallback = 'No worries. When would be better?'
-      } else if (lowerText.includes('?')) {
-        fallback = 'Good question. Let me explain.'
-      }
-      
       return NextResponse.json({
-        suggestedLine: fallback
+        suggestedLine: 'Continue the conversation naturally based on the script.'
       })
     }
 
@@ -193,8 +138,7 @@ export async function POST(request: NextRequest) {
       conversationHistory,
       scriptSections: relevantSections,
       companyName,
-      repName: userProfileData.full_name || undefined,
-      specialization: specialization || undefined
+      repName: userProfile.full_name || undefined
     }
 
     const suggestion = await generateSuggestion(coachContext)
@@ -206,9 +150,8 @@ export async function POST(request: NextRequest) {
       .eq('id', sessionId)
       .single()
 
-    const sessionWithSuggestions = currentSession as { coaching_suggestions?: any[] } | null
-    const existingSuggestions = Array.isArray(sessionWithSuggestions?.coaching_suggestions)
-      ? sessionWithSuggestions.coaching_suggestions
+    const existingSuggestions = Array.isArray(currentSession?.coaching_suggestions)
+      ? currentSession.coaching_suggestions
       : []
 
     const newSuggestion = {
@@ -219,18 +162,14 @@ export async function POST(request: NextRequest) {
 
     const updatedSuggestions = [...existingSuggestions, newSuggestion]
 
-    // Save suggestion to session (non-blocking)
     supabase
       .from('live_sessions')
-      .update({ coaching_suggestions: updatedSuggestions } as any)
+      .update({ coaching_suggestions: updatedSuggestions })
       .eq('id', sessionId)
       .then((result: any) => {
         if (result?.error) {
           console.error('Error saving suggestion to session:', result.error)
         }
-      })
-      .catch((err: any) => {
-        console.error('Error saving suggestion:', err)
       })
 
     return NextResponse.json({
@@ -239,24 +178,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error in coach suggest:', error)
-    // Generate contextual fallback even on error
-    const lowerText = (homeownerText || '').toLowerCase()
-    let fallback = 'Gotcha. What do you think?'
-    
-    if (lowerText.includes('not interested')) {
-      fallback = 'Gotcha. What made you say that?'
-    } else if (lowerText.includes('already have')) {
-      fallback = 'Oh nice. How long you been with them?'
-    } else if (lowerText.includes('too expensive')) {
-      fallback = 'Fair. What are you paying now?'
-    } else if (lowerText.includes('?')) {
-      fallback = 'Good question. Let me explain.'
-    }
-    
     return NextResponse.json({
       error: 'Internal server error',
       details: error.message,
-      suggestedLine: fallback
+      suggestedLine: 'Continue the conversation naturally.'
     }, { status: 500 })
   }
 }
