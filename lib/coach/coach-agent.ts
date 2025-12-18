@@ -215,58 +215,60 @@ export async function generateSuggestion(
       .map((section) => section.text)
       .join('\n\n---\n\n')
     
-    // Format conversation history - reduced to 5 exchanges for speed
+    // Format conversation history - make it very clear and prominent
     let conversationHistoryText = ''
     if (context.conversationHistory && context.conversationHistory.length > 0) {
-      const recentHistory = context.conversationHistory.slice(-5) // Last 5 exchanges only
-      conversationHistoryText = `\n\nConversation history:\n${recentHistory.map((entry) => {
+      const recentHistory = context.conversationHistory.slice(-10) // Last 10 exchanges for full context
+      conversationHistoryText = recentHistory.map((entry, index) => {
         const speaker = entry.speaker === 'user' || entry.speaker === 'rep' ? 'Rep' : 'Homeowner'
         return `${speaker}: ${entry.text}`
-      }).join('\n')}`
+      }).join('\n')
     }
     
     // Build context information
     const contextInfo = []
     if (context.companyName) {
-      contextInfo.push(`Company name: ${context.companyName}`)
+      contextInfo.push(`Company: ${context.companyName}`)
     }
     if (context.repName) {
-      contextInfo.push(`Sales rep's name: ${context.repName}`)
+      contextInfo.push(`Rep name: ${context.repName}`)
     }
     if (context.repLastStatement) {
-      contextInfo.push(`Rep just said: "${context.repLastStatement}"`)
+      contextInfo.push(`Rep's last statement: "${context.repLastStatement}"`)
     }
-    const contextText = contextInfo.length > 0 ? `\n\nContext:\n${contextInfo.join('\n')}` : ''
+    const contextText = contextInfo.length > 0 ? contextInfo.join(' | ') : ''
     
-    // User prompt - focuses on real-time coaching
-    const userPrompt = `The homeowner just said: "${context.homeownerText}"
+    // User prompt - make conversation context very prominent
+    const isConversationStart = !conversationHistoryText || conversationHistoryText.trim().length === 0
+    const situationContext = isConversationStart 
+      ? 'SITUATION: Sales rep is standing at homeowner\'s front door. Homeowner just opened the door. This is the very beginning of the conversation.\n\n'
+      : ''
+    
+    const userPrompt = `${situationContext}FULL CONVERSATION HISTORY:
+${conversationHistoryText || '(This is the first exchange - homeowner just opened the door)'}
 
-${contextText}${conversationHistoryText}
+CURRENT MOMENT:
+Homeowner just said: "${context.homeownerText}"
+${context.repLastStatement ? `Rep just said: "${context.repLastStatement}"` : ''}
 
-Script for reference (adapt, don't copy):
-${scriptSectionsText}
+${contextText ? `Additional context: ${contextText}` : ''}
 
-Based on the conversation so far, what should the rep say RIGHT NOW? Keep it natural, short, and perfectly timed for this moment in the conversation.
+${scriptSectionsText ? `\nScript reference:\n${scriptSectionsText}` : ''}
 
-Return JSON:
-{
-  "suggestedResponse": "The actual line to say",
-  "reasoning": "Brief explanation of why (1 sentence)",
-  "phase": "opening|discovery|value|objection|closing"
-}`
+Based on the FULL conversation above, what should the rep say next? Make it natural and directly respond to what the homeowner just said. Remember: This is happening face-to-face at their front door.`
     
     // Build system prompt with specialization if provided
     const systemPrompt = buildCoachPrompt(context.specialization)
     
-    // Call OpenAI - optimized for speed while maintaining quality
+    // Call OpenAI - simplified, trusting AI more
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.6, // Slightly lower for faster, more deterministic responses
-      max_tokens: 60,   // Reduced for speed (suggestions should be 1-2 sentences)
+      temperature: 0.8, // Higher for more natural, varied responses
+      max_tokens: 80,   // Slightly more tokens for better context understanding
       response_format: { type: 'json_object' }
     })
     
