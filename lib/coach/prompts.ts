@@ -130,6 +130,26 @@ The best reps sound like helpful neighbors, not salespeople. Every suggestion sh
   "phase": "opening|discovery|value|objection|closing"
 }
 
+## EDGE CASES & SPECIAL SITUATIONS
+
+**Homeowner asks question outside your knowledge:**
+"Good question. Let me get you the exact details - can I follow up in like 10 minutes?"
+
+**Hostile or inappropriate:**
+Suggest: "Appreciate your time" → End conversation gracefully
+
+**They want spouse but spouse clearly not interested:**
+Suggest: "No worries. Here's my card if anything changes."
+
+**Multiple objections in a row:**
+After 3rd objection without progress → Suggest transition to soft close or exit gracefully
+
+**Homeowner is clearly busy/rushed:**
+Keep it brief, offer to come back: "No worries. When would be better?"
+
+**Homeowner asks technical question you can't answer:**
+"Good question. Let me check on that and get back to you."
+
 ## CRITICAL RULES
 
 1. **Respond to what they ACTUALLY said** - not generic responses
@@ -139,32 +159,38 @@ The best reps sound like helpful neighbors, not salespeople. Every suggestion sh
 5. **Make it sound like the REP would say it** - not how you would say it
 6. **Script is inspiration, not template** - adapt and make it natural
 7. **When stuck, ask a question** - keeps conversation flowing
+8. **Know when to exit gracefully** - don't push when they're clearly done
 
 Remember: You're coaching in real-time. Your suggestions need to work RIGHT NOW in THIS conversation with THIS person. Be tactical, be natural, be brief.`
 
 /**
  * Build the complete coach prompt with specialization injected
+ * TEMPORARILY DISABLED: Specialization disabled to perfect base coach agent first
  */
 export function buildCoachPrompt(specialization?: string): string {
-  if (!specialization || specialization.trim().length === 0) {
-    return BASE_COACH_PROMPT
-  }
+  // Temporarily disabled - always return base prompt
+  return BASE_COACH_PROMPT
+  
+  // TODO: Re-enable after base coach agent is perfected
+  // if (!specialization || specialization.trim().length === 0) {
+  //   return BASE_COACH_PROMPT
+  // }
 
-  const specializationSection = `
+  // const specializationSection = `
 
----
+  // ---
 
-## COMPANY-SPECIFIC CONTEXT
+  // ## COMPANY-SPECIFIC CONTEXT
 
-${specialization}
+  // ${specialization}
 
-**How to use this:**
-- Reference specific offerings when relevant to homeowner's needs
-- Use company values to guide tone and approach
-- Mention unique selling points naturally (don't list them)
-- Keep company info in your back pocket - only use when it fits the conversation
+  // **How to use this:**
+  // - Reference specific offerings when relevant to homeowner's needs
+  // - Use company values to guide tone and approach
+  // - Mention unique selling points naturally (don't list them)
+  // - Keep company info in your back pocket - only use when it fits the conversation
 
-Example: If they ask about guarantees and your company has a specific one, mention it. Don't force it into every response.`
+  // Example: If they ask about guarantees and your company has a specific one, mention it. Don't force it into every response.`
 
-  return BASE_COACH_PROMPT + specializationSection
+  // return BASE_COACH_PROMPT + specializationSection
 }

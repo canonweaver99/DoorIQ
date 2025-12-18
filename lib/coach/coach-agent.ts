@@ -139,6 +139,71 @@ function replacePlaceholders(
 }
 
 /**
+ * Generate a contextual fallback suggestion based on homeowner's text
+ * This is faster than a full OpenAI call and provides better context
+ */
+function generateContextualFallback(
+  homeownerText: string,
+  conversationHistory?: Array<{ speaker: string; text: string }>
+): string {
+  const lowerText = homeownerText.toLowerCase()
+  
+  // Pattern-based contextual responses
+  if (lowerText.includes('not interested') || lowerText.includes('not looking') || lowerText.includes('not today')) {
+    return 'Gotcha. What made you say that?'
+  }
+  
+  if (lowerText.includes('already have') || lowerText.includes('already got') || lowerText.includes('already using')) {
+    return 'Oh nice. How long you been with them?'
+  }
+  
+  if (lowerText.includes('too expensive') || lowerText.includes('cost') || lowerText.includes('price') || lowerText.includes('money')) {
+    return 'Fair. What are you paying now?'
+  }
+  
+  if (lowerText.includes('think about it') || lowerText.includes('let me think')) {
+    return 'Sure. What specifically are you thinking about?'
+  }
+  
+  if (lowerText.includes('spouse') || lowerText.includes('wife') || lowerText.includes('husband') || lowerText.includes('partner')) {
+    return 'She home? Happy to explain it to both of you.'
+  }
+  
+  if (lowerText.includes('busy') || lowerText.includes('not a good time') || lowerText.includes('later')) {
+    return 'No worries. When would be better?'
+  }
+  
+  if (lowerText.includes('yes') || lowerText.includes('sure') || lowerText.includes('okay') || lowerText.includes('ok')) {
+    return 'Great. When can we get started?'
+  }
+  
+  if (lowerText.includes('no') || lowerText.includes('nah') || lowerText.includes('nope')) {
+    return 'Fair enough. What changed your mind?'
+  }
+  
+  if (lowerText.includes('maybe') || lowerText.includes('might')) {
+    return 'What would help you decide?'
+  }
+  
+  if (lowerText.includes('how much') || lowerText.includes('what does it cost')) {
+    return 'Depends on your place. Mind if I take a quick look?'
+  }
+  
+  // If homeowner asked a question, acknowledge and respond
+  if (homeownerText.includes('?')) {
+    return 'Good question. Let me explain.'
+  }
+  
+  // If they made a statement, acknowledge and dig deeper
+  if (conversationHistory && conversationHistory.length > 0) {
+    return 'Makes sense. Tell me more about that.'
+  }
+  
+  // Default contextual response
+  return 'Gotcha. What do you think?'
+}
+
+/**
  * Generate a coaching suggestion using OpenAI
  */
 export async function generateSuggestion(
@@ -224,13 +289,13 @@ Return JSON:
     // Replace placeholders
     suggestedLine = replacePlaceholders(suggestedLine, context.companyName, context.repName)
     
-    // Final check: if still contains banned phrases after humanization, use fallback
+    // Final check: if still contains banned phrases after humanization, use contextual fallback
     const lowerLine = suggestedLine.toLowerCase()
     const containsBanned = BANNED_PHRASES.some(phrase => lowerLine.includes(phrase))
     
-    if (containsBanned) {
-      console.warn(`⚠️ Banned phrase still present after humanization. Using fallback.`)
-      suggestedLine = 'Continue the conversation naturally.'
+    if (containsBanned || !suggestedLine || suggestedLine.trim().length === 0) {
+      console.warn(`⚠️ Banned phrase detected or empty response. Using contextual fallback.`)
+      suggestedLine = generateContextualFallback(context.homeownerText, context.conversationHistory)
     }
     
     return {
@@ -241,8 +306,9 @@ Return JSON:
   } catch (error: any) {
     console.error('Error generating coach suggestion:', error)
     
+    // Use contextual fallback instead of generic message
     return {
-      suggestedLine: 'Continue the conversation naturally.'
+      suggestedLine: generateContextualFallback(context.homeownerText, context.conversationHistory)
     }
   }
 }

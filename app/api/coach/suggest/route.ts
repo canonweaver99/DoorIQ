@@ -7,6 +7,7 @@ import { generateSuggestion, CoachAgentContext } from '@/lib/coach/coach-agent'
 import { getOrGenerateSpecialization } from '@/lib/coach/specialization-manager'
 
 export async function POST(request: NextRequest) {
+  let homeownerText = '' // Declare at function scope for error handler
   try {
     const supabase = await createServerSupabaseClient()
     
@@ -16,7 +17,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { sessionId, homeownerText, conversationContext, transcript } = body
+    const { sessionId, homeownerText: bodyHomeownerText, conversationContext, transcript } = body
+    homeownerText = bodyHomeownerText || ''
 
     if (!sessionId || !homeownerText) {
       return NextResponse.json(
@@ -63,8 +65,9 @@ export async function POST(request: NextRequest) {
 
     const userProfileData = userProfile as { organization_id: string | null; team_id: string | null; full_name: string | null }
 
-    // Fetch company name, scripts, and specialization in parallel (after we have user profile)
-    const [companyResult, scriptsResult, specialization] = await Promise.all([
+    // TEMPORARILY DISABLED: Specialization disabled to perfect base coach agent first
+    // Fetch company name and scripts in parallel (after we have user profile)
+    const [companyResult, scriptsResult] = await Promise.all([
       userProfileData.team_id
         ? supabase
             .from('team_grading_configs')
@@ -86,15 +89,18 @@ export async function POST(request: NextRequest) {
         }
 
         return query
-      })(),
-      // Get or generate specialization for this team (non-blocking if no team_id)
-      userProfileData.team_id
-        ? getOrGenerateSpecialization(userProfileData.team_id).catch(err => {
-            console.error('Error getting specialization:', err)
-            return '' // Return empty string on error - base prompt will work
-          })
-        : Promise.resolve('')
+      })()
+      // TODO: Re-enable specialization after base coach agent is perfected
+      // userProfileData.team_id
+      //   ? getOrGenerateSpecialization(userProfileData.team_id).catch(err => {
+      //       console.error('Error getting specialization:', err)
+      //       return '' // Return empty string on error - base prompt will work
+      //     })
+      //   : Promise.resolve('')
     ])
+    
+    // Temporarily set specialization to empty
+    const specialization = ''
 
     const companyName = (companyResult.data as { company_name?: string } | null)?.company_name
     const { data: scripts, error: scriptsError } = scriptsResult as { data: Array<{ id: string; content: string | null; file_name: string; chunks: any }> | null; error: any }
@@ -105,9 +111,28 @@ export async function POST(request: NextRequest) {
     }
 
     if (!scripts || scripts.length === 0) {
+      // Generate contextual fallback even without scripts
+      const fallbackResponses: Record<string, string> = {
+        'not interested': 'Gotcha. What made you say that?',
+        'already have': 'Oh nice. How long you been with them?',
+        'too expensive': 'Fair. What are you paying now?',
+        'think about it': 'Sure. What specifically are you thinking about?',
+        'busy': 'No worries. When would be better?'
+      }
+      
+      const lowerText = homeownerText.toLowerCase()
+      let fallback = 'Gotcha. What do you think?'
+      
+      for (const [key, response] of Object.entries(fallbackResponses)) {
+        if (lowerText.includes(key)) {
+          fallback = response
+          break
+        }
+      }
+      
       return NextResponse.json({
         error: 'No coaching scripts found for your team',
-        suggestedLine: 'No script available. Continue the conversation naturally.'
+        suggestedLine: fallback
       }, { status: 404 })
     }
 
@@ -138,8 +163,26 @@ export async function POST(request: NextRequest) {
     const relevantSections = searchScripts(homeownerText, scriptDocuments, 1)
 
     if (relevantSections.length === 0) {
+      // Generate contextual fallback based on homeowner's text
+      const lowerText = homeownerText.toLowerCase()
+      let fallback = 'Gotcha. What do you think?'
+      
+      if (lowerText.includes('not interested') || lowerText.includes('not looking')) {
+        fallback = 'Gotcha. What made you say that?'
+      } else if (lowerText.includes('already have') || lowerText.includes('already got')) {
+        fallback = 'Oh nice. How long you been with them?'
+      } else if (lowerText.includes('too expensive') || lowerText.includes('cost')) {
+        fallback = 'Fair. What are you paying now?'
+      } else if (lowerText.includes('think about it')) {
+        fallback = 'Sure. What specifically are you thinking about?'
+      } else if (lowerText.includes('busy') || lowerText.includes('not a good time')) {
+        fallback = 'No worries. When would be better?'
+      } else if (lowerText.includes('?')) {
+        fallback = 'Good question. Let me explain.'
+      }
+      
       return NextResponse.json({
-        suggestedLine: 'Continue the conversation naturally based on the script.'
+        suggestedLine: fallback
       })
     }
 
@@ -196,10 +239,24 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error in coach suggest:', error)
+    // Generate contextual fallback even on error
+    const lowerText = (homeownerText || '').toLowerCase()
+    let fallback = 'Gotcha. What do you think?'
+    
+    if (lowerText.includes('not interested')) {
+      fallback = 'Gotcha. What made you say that?'
+    } else if (lowerText.includes('already have')) {
+      fallback = 'Oh nice. How long you been with them?'
+    } else if (lowerText.includes('too expensive')) {
+      fallback = 'Fair. What are you paying now?'
+    } else if (lowerText.includes('?')) {
+      fallback = 'Good question. Let me explain.'
+    }
+    
     return NextResponse.json({
       error: 'Internal server error',
       details: error.message,
-      suggestedLine: 'Continue the conversation naturally.'
+      suggestedLine: fallback
     }, { status: 500 })
   }
 }
