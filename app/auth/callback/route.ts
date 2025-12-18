@@ -4,8 +4,29 @@ import { sendNewUserNotification } from '@/lib/email/send'
 
 export const dynamic = "force-static";
 
+/**
+ * Get the correct origin for redirects
+ * Priority: 1) Environment variable, 2) Production URL, 3) Request origin (for local dev)
+ */
+function getRedirectOrigin(requestOrigin: string): string {
+  // Use environment variable if available (most reliable for production)
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL
+  if (envUrl && !envUrl.includes('localhost')) {
+    return new URL(envUrl).origin
+  }
+  
+  // In production, use production URL even if env var not set
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://dooriq.ai'
+  }
+  
+  // In development, use request origin (localhost)
+  return requestOrigin
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
+  const redirectOrigin = getRedirectOrigin(requestUrl.origin)
   const code = requestUrl.searchParams.get('code')
   const token = requestUrl.searchParams.get('token')
   const token_hash = requestUrl.searchParams.get('token_hash')
@@ -26,8 +47,31 @@ export async function GET(request: Request) {
     checkoutIntent: !!checkoutIntent,
     error: errorParam,
     errorCode,
-    origin: requestUrl.origin
+    origin: requestUrl.origin,
+    fullUrl: requestUrl.href,
+    hostname: requestUrl.hostname,
+    protocol: requestUrl.protocol
   })
+  
+  // CRITICAL: Check if we're being called from localhost when we shouldn't be
+  if (requestUrl.hostname === 'localhost' || requestUrl.hostname === '127.0.0.1') {
+    console.error('❌ CRITICAL: Auth callback received from localhost!')
+    console.error('❌ This should not happen in production. Check:')
+    console.error('   1. Supabase Site URL configuration (should be https://dooriq.ai)')
+    console.error('   2. Supabase redirect URLs configuration')
+    console.error('   3. Google OAuth redirect URIs configuration')
+    console.error('   4. Environment variables (NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_APP_URL)')
+    console.error('❌ Current request origin:', requestUrl.origin)
+    console.error('❌ Expected production origin should be: https://dooriq.ai')
+    
+    // If we're in production but got localhost, redirect to production
+    if (process.env.NODE_ENV === 'production') {
+      const productionUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://dooriq.ai'
+      const productionCallbackUrl = new URL(requestUrl.pathname + requestUrl.search, productionUrl)
+      console.log('🔄 Redirecting to production callback URL:', productionCallbackUrl.href)
+      return NextResponse.redirect(productionCallbackUrl)
+    }
+  }
 
   // Handle errors from Supabase redirect
   if (errorParam) {
@@ -100,7 +144,9 @@ export async function GET(request: Request) {
         }
         
         const redirectPath = requestUrl.searchParams.get('next') || '/home'
-        return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
+        const redirectUrl = new URL(redirectPath, redirectOrigin)
+        console.log('🔄 Redirecting after email verification to:', redirectUrl.href)
+        return NextResponse.redirect(redirectUrl)
       }
     } catch (error: any) {
       console.error('❌ Error in code exchange:', error)
@@ -234,7 +280,11 @@ export async function GET(request: Request) {
       
       // Create redirect response
       // Cookies set via cookies().set() in setAll callback should automatically be included
-      const redirectUrl = new URL(redirectPath, requestUrl.origin)
+      // Always use the correct origin (production in prod, localhost in dev)
+      const redirectUrl = new URL(redirectPath, redirectOrigin)
+      console.log('🔄 Redirecting after email verification to:', redirectUrl.href)
+      console.log('📍 Request origin was:', requestUrl.origin)
+      console.log('📍 Using redirect origin:', redirectOrigin)
       return NextResponse.redirect(redirectUrl)
     } else {
       console.error('❌ No user in verification data')
@@ -391,12 +441,24 @@ export async function GET(request: Request) {
       }
 
       // Redirect directly to the destination (no intermediate page)
-      console.log('🔄 Redirecting after auth to:', redirectPath)
-      return NextResponse.redirect(new URL(redirectPath, requestUrl.origin))
+      // Always use the correct origin (production in prod, localhost in dev)
+      const redirectUrl = new URL(redirectPath, redirectOrigin)
+      console.log('🔄 Redirecting after auth to:', redirectUrl.href)
+      console.log('📍 Redirect origin:', redirectUrl.origin)
+      console.log('📍 Request origin was:', requestUrl.origin)
+      console.log('📍 Using redirect origin:', redirectOrigin)
+      
+      return NextResponse.redirect(redirectUrl)
     }
   }
   
   // Fallback: redirect to home if no valid callback parameters
   console.log('⚠️ No valid callback parameters, redirecting to home')
-  return NextResponse.redirect(new URL('/home', requestUrl.origin))
+  // Always use the correct origin (production in prod, localhost in dev)
+  const fallbackUrl = new URL('/home', redirectOrigin)
+  console.log('📍 Fallback redirect to:', fallbackUrl.href)
+  console.log('📍 Request origin was:', requestUrl.origin)
+  console.log('📍 Using redirect origin:', redirectOrigin)
+  
+  return NextResponse.redirect(fallbackUrl)
 }

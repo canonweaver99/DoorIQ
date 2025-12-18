@@ -43,21 +43,31 @@ export function LoginClient() {
     try {
       const supabase = createClient()
       
-      // Get the current origin - always use window.location.origin in browser
-      // Never fallback to localhost or hardcoded URLs
+      // Determine the correct origin for OAuth redirect
+      // Priority: 1) Environment variable, 2) Production URL, 3) Current origin (for local dev)
       if (typeof window === 'undefined') {
         throw new Error('OAuth sign-in must be initiated from browser')
       }
       
-      const origin = window.location.origin
+      let origin = window.location.origin
       
-      // Ensure we're not using localhost in production
-      if (origin.includes('localhost') && process.env.NODE_ENV === 'production') {
-        console.error('⚠️ Warning: Using localhost origin in production:', origin)
+      // Use environment variable if available (most reliable for production)
+      const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL
+      if (envUrl && !envUrl.includes('localhost')) {
+        origin = new URL(envUrl).origin
+        console.log('✅ Using environment variable for redirect origin:', origin)
+      } else if (process.env.NODE_ENV === 'production') {
+        // In production, use production URL even if env var not set
+        origin = 'https://dooriq.ai'
+        console.log('✅ Using production URL for redirect origin:', origin)
+      } else {
+        // In development, use current origin (localhost)
+        console.log('✅ Using current origin for redirect (development):', origin)
       }
       
       const callbackUrl = `${origin}/auth/callback`
       console.log('🔐 OAuth callback URL:', callbackUrl)
+      console.log('🌐 Origin:', origin)
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -70,9 +80,25 @@ export function LoginClient() {
         },
       })
 
+      // Check if the OAuth URL contains localhost (indicates Supabase config issue)
+      if (data?.url && (data.url.includes('localhost:3000') || data.url.includes('localhost')) && !origin.includes('localhost')) {
+        console.error('❌ CRITICAL: Supabase is redirecting to localhost despite origin being:', origin)
+        console.error('❌ OAuth URL from Supabase:', data.url)
+        console.error('❌ Please add this URL to Supabase Auth > URL Configuration > Redirect URLs:', callbackUrl)
+        setError(`Configuration error: Your domain (${origin}) needs to be added to Supabase redirect URLs. Please add ${callbackUrl} to your Supabase dashboard under Authentication > URL Configuration.`)
+        setLoading(false)
+        return
+      }
+
       if (error) {
         console.error('Google OAuth error:', error)
         throw error
+      }
+      
+      if (data?.url) {
+        console.log('✅ Redirecting to OAuth URL:', data.url)
+        window.location.replace(data.url)
+        return
       }
       
       console.log('Google OAuth initiated:', data)
