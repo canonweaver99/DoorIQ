@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { searchScripts } from '@/lib/coach/rag-retrieval'
 import { generateSuggestion, CoachAgentContext } from '@/lib/coach/coach-agent'
 
 export async function POST(request: NextRequest) {
@@ -47,10 +46,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user profile first (needed for subsequent queries)
+    // Get user profile for rep name and company name
     const { data: userProfile, error: userError } = await supabase
       .from('users')
-      .select('organization_id, team_id, full_name')
+      .select('team_id, full_name')
       .eq('id', user.id)
       .single()
 
@@ -58,55 +57,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // Fetch company name and scripts in parallel (after we have user profile)
-    const [companyResult, scriptsResult] = await Promise.all([
-      userProfile.team_id
-        ? supabase
-            .from('team_grading_configs')
-            .select('company_name')
-            .eq('team_id', userProfile.team_id)
-            .single()
-        : Promise.resolve({ data: null, error: null }),
-      (async () => {
-        let query = supabase
-          .from('knowledge_base')
-          .select('id, content, file_name, chunks')
-          .eq('is_coaching_script', true)
-          .eq('is_active', true)
-
-        if (userProfile.organization_id) {
-          query = query.contains('metadata', { organization_id: userProfile.organization_id })
-        } else if (userProfile.team_id) {
-          query = query.contains('metadata', { team_id: userProfile.team_id })
-        }
-
-        return query
-      })()
-    ])
-
-    const companyName = companyResult.data?.company_name
-    const { data: scripts, error: scriptsError } = scriptsResult
-
-    if (scriptsError) {
-      console.error('Error fetching scripts:', scriptsError)
-      return NextResponse.json({ error: 'Failed to fetch coaching scripts' }, { status: 500 })
+    // Fetch company name if team_id exists
+    let companyName: string | undefined
+    if (userProfile.team_id) {
+      const { data: companyResult } = await supabase
+        .from('team_grading_configs')
+        .select('company_name')
+        .eq('team_id', userProfile.team_id)
+        .single()
+      
+      companyName = companyResult?.company_name
     }
-
-    if (!scripts || scripts.length === 0) {
-      return NextResponse.json({
-        error: 'No coaching scripts found for your team',
-        suggestedLine: 'No script available. Continue the conversation naturally.'
-      }, { status: 404 })
-    }
-
-    // Convert scripts to format expected by RAG retrieval
-    // Include cached chunks if available
-    const scriptDocuments = scripts.map(script => ({
-      id: script.id,
-      content: script.content || '',
-      file_name: script.file_name,
-      chunks: script.chunks || undefined
-    }))
 
     // Extract rep's last statement from transcript
     const repLastStatement = transcript
@@ -122,21 +83,11 @@ export async function POST(request: NextRequest) {
       }))
       .filter((entry: any) => entry.text && entry.text.trim().length > 0)
 
-    // Perform RAG retrieval - reduced to 2 sections for speed
-    const relevantSections = searchScripts(homeownerText, scriptDocuments, 2)
-
-    if (relevantSections.length === 0) {
-      return NextResponse.json({
-        suggestedLine: 'Continue the conversation naturally based on the script.'
-      })
-    }
-
-    // Generate suggestion using coach agent
+    // Generate suggestion using coach agent with only live context
     const coachContext: CoachAgentContext = {
       homeownerText,
       repLastStatement,
       conversationHistory,
-      scriptSections: relevantSections,
       companyName,
       repName: userProfile.full_name || undefined
     }
