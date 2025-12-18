@@ -159,16 +159,10 @@ export async function POST(req: Request) {
     const supabase = await createServiceSupabaseClient()
 
     // ============================================
-    // INVITE-ONLY SIGNUP VALIDATION
+    // INVITE VALIDATION (OPTIONAL)
     // ============================================
-    // Require either invite token or checkout intent
-    if (!invite_token && !checkout_intent) {
-      return NextResponse.json({ 
-        error: 'Signups are invite-only. Please use a valid invite link or complete checkout first.' 
-      }, { status: 403 })
-    }
-
-    // Validate invite token if provided
+    // Invites are now optional - signups are open to everyone
+    // If an invite token is provided, validate and mark it as used
     let inviteData = null
     if (invite_token) {
       const { data: invite, error: inviteError } = await supabase

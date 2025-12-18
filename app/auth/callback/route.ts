@@ -64,26 +64,9 @@ export async function GET(request: Request) {
           .single()
         
         if (!existingUser) {
-          // Validate invite/checkout for email verification signups
+          // Invites are now optional - signups are open to everyone
           const inviteToken = requestUrl.searchParams.get('invite')
           const checkoutIntent = requestUrl.searchParams.get('checkout')
-          
-          // Note: If user came from fast-signup, invite was already validated there
-          // But we still check here as a safety measure
-          if (!inviteToken && !checkoutIntent) {
-            // Check if this is a new signup (user just created)
-            // If user was created very recently (within last hour), might be from signup flow
-            const userCreatedAt = new Date(data.user.created_at)
-            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
-            
-            if (userCreatedAt < oneHourAgo) {
-              // User was created more than an hour ago, this might be a bypass attempt
-              console.error('❌ Email verification signup blocked: No invite token or checkout intent')
-              await supabase.auth.signOut()
-              return NextResponse.redirect(new URL('/auth/login?error=Signups are invite-only. Please use a valid invite link.', requestUrl.origin))
-            }
-            // If created recently, assume it came from signup flow (invite was validated there)
-          }
           
           const serviceSupabase = await createServiceSupabaseClient()
           const userMetadata = data.user.user_metadata
@@ -284,17 +267,12 @@ export async function GET(request: Request) {
       
       if (!existingUser) {
         // ============================================
-        // INVITE-ONLY SIGNUP VALIDATION FOR OAUTH
+        // INVITE VALIDATION (OPTIONAL) FOR OAUTH
         // ============================================
+        // Signups are now open to everyone
+        // If an invite token is provided, validate and mark it as used
         
-        if (!inviteToken && !checkoutIntent) {
-          console.error('❌ OAuth signup blocked: No invite token or checkout intent')
-          // Sign out the user since they shouldn't have an account
-          await supabase.auth.signOut()
-          return NextResponse.redirect(new URL('/auth/login?error=Signups are invite-only. Please use a valid invite link or complete checkout first.', requestUrl.origin))
-        }
-        
-        // Validate admin invite token if provided
+        // Validate admin invite token if provided (optional)
         let inviteData = null
         if (inviteToken) {
           const serviceSupabase = await createServiceSupabaseClient()

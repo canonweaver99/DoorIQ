@@ -137,6 +137,8 @@ function LoginForm() {
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
+          // Force Supabase to use our redirect URL
+          skipBrowserRedirect: false,
         },
       })
 
@@ -146,6 +148,15 @@ function LoginForm() {
         url: data?.url,
         error: signInError 
       })
+      
+      // Check if the OAuth URL contains localhost (indicates Supabase config issue)
+      if (data?.url && data.url.includes('localhost:3000') && !origin.includes('localhost')) {
+        console.error('❌ CRITICAL: Supabase is redirecting to localhost despite origin being:', origin)
+        console.error('❌ This means your production domain is not configured in Supabase dashboard')
+        setError('Configuration error: Please contact support. Your domain needs to be added to Supabase redirect URLs.')
+        setLoading(false)
+        return
+      }
 
       if (signInError) {
         console.error('❌ OAuth error:', signInError)
@@ -195,7 +206,7 @@ function LoginForm() {
             Welcome to <span className="font-semibold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span>
           </span>
         }
-        description="Access your training sessions, compete on leaderboards, and master door-to-door sales. New signups are invite-only—contact us or use an invite link to join."
+        description="Access your training sessions, compete on leaderboards, and master door-to-door sales."
         heroImageSrc="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=75"
         testimonials={testimonialsLoaded}
         onSignIn={handleSignIn}
