@@ -65,8 +65,6 @@ import { cn } from "@/lib/utils";
 import { useIsMobile, useReducedMotion } from "@/hooks/useIsMobile";
 import {
   ArrowRight,
-  DollarSign,
-  TrendingDown,
   Users,
   Target,
   Zap,
@@ -587,25 +585,16 @@ function HeroSection() {
 function ProblemSection() {
   const problems = [
     {
-      icon: <Users className="w-6 h-6" />,
-      stat: "40%",
+      stat: "38%",
       title: "of New Reps Quit in First 30 Days",
-      description:
-        "Poor preparation kills confidence.",
     },
     {
-      icon: <DollarSign className="w-6 h-6" />,
-      stat: "$75K",
+      stat: "$43K",
       title: "Revenue Gap Between Average & Top Reps",
-      description:
-        "Top performers close 2-3x more deals.",
     },
     {
-      icon: <TrendingDown className="w-6 h-6" />,
       stat: "60%",
       title: "of Deals Lost Due to Poor Objection Handling",
-      description:
-        "Unprepared reps miss opportunities.",
     },
   ];
 
@@ -651,34 +640,37 @@ function ProblemSection() {
             return (
               <div
                 key={problem.title}
-                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-4 sm:p-5 md:p-6 lg:p-8 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden"
+                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.025] overflow-hidden flex flex-col items-center justify-center text-center"
               >
                 {/* Subtle purple glow at bottom for depth */}
                 <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
-                {/* Icon */}
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white mb-4 sm:mb-5 md:mb-6 transition-colors group-hover:bg-white/[0.08] group-hover:border-white/20 relative z-10">
-                  {problem.icon}
-                </div>
-
                 {/* Stat */}
-                <div className="font-space text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-light mb-2 sm:mb-3 tracking-tight relative z-10">
+                <div className="font-space text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white font-light mb-4 sm:mb-5 md:mb-6 tracking-tight relative z-10">
                   {problem.stat}
                 </div>
 
                 {/* Title */}
-                <h3 className="font-space font-medium text-lg sm:text-xl md:text-2xl text-white/90 mb-2 sm:mb-3 tracking-tight relative z-10">
+                <h3 className="font-space font-medium text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 tracking-tight relative z-10">
                   {problem.title}
                 </h3>
-
-                {/* Description */}
-                <p className="font-sans text-white/80 leading-relaxed text-sm sm:text-base md:text-lg font-light relative z-10">
-                  {problem.description}
-                </p>
               </div>
             );
           })}
         </div>
+
+        {/* Disclaimer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center mt-6 sm:mt-8"
+        >
+          <p className="font-sans text-white/50 text-xs sm:text-sm font-light">
+            * Statistics represent averages from the 2025 fiscal year across 7 major door-to-door sales companies.
+          </p>
+        </motion.div>
       </div>
     </section>
   );
@@ -1183,7 +1175,7 @@ function StatsSection() {
               transition={{ delay: index * 0.1, duration: 0.6 }}
               className="text-center"
             >
-              <div className="font-space text-5xl sm:text-5xl md:text-5xl lg:text-7xl xl:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-light tracking-tight mb-3 sm:mb-4">
+              <div className="font-space text-5xl sm:text-5xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight mb-3 sm:mb-4">
                 {stat.value === 10 ? (
                   <>
                     <AnimatedCounter end={stat.value} suffix="" />
