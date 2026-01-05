@@ -4,9 +4,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
@@ -22,6 +29,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: 'Missing signature or webhook secret' },
       { status: 400 }
+    )
+  }
+
+  const stripe = getStripeClient()
+  if (!stripe) {
+    return NextResponse.json(
+      { error: 'Stripe is not configured' },
+      { status: 500 }
     )
   }
 
@@ -138,6 +153,13 @@ async function handleTeamPlanCheckout(
     return
   }
 
+  const stripe = getStripeClient()
+  if (!stripe) {
+    return NextResponse.json(
+      { error: 'Stripe is not configured' },
+      { status: 500 }
+    )
+  }
   const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
     expand: ['items.data.price'],
   })
@@ -220,6 +242,11 @@ async function handleIndividualPlanCheckout(
   }
 
   // Get user ID from customer metadata or subscription metadata
+  const stripe = getStripeClient()
+  if (!stripe) {
+    console.error('Stripe is not configured')
+    return
+  }
   const customer = await stripe.customers.retrieve(customerId)
   const userId = (customer as Stripe.Customer).metadata?.supabase_user_id
 
@@ -268,6 +295,11 @@ async function handleAddSeatsCheckout(
     return
   }
 
+  const stripe = getStripeClient()
+  if (!stripe) {
+    console.error('Stripe is not configured')
+    return
+  }
   try {
     // Update the subscription quantity in Stripe
     await stripe.subscriptionItems.update(subscriptionItemId, {
@@ -316,6 +348,11 @@ async function handleSwitchBillingIntervalCheckout(
     return
   }
 
+  const stripe = getStripeClient()
+  if (!stripe) {
+    console.error('Stripe is not configured')
+    return
+  }
   try {
     // Get the new subscription to get subscription item ID
     const newSubscription = await stripe.subscriptions.retrieve(newSubscriptionId, {
@@ -391,6 +428,11 @@ async function handleSubscriptionCreated(
   }
 
   // Individual subscription - grant credits
+  const stripe = getStripeClient()
+  if (!stripe) {
+    console.error('Stripe is not configured')
+    return
+  }
   const customer = await stripe.customers.retrieve(customerId)
   const userId = (customer as Stripe.Customer).metadata?.supabase_user_id
 
@@ -490,6 +532,11 @@ async function handleSubscriptionDeleted(
       .eq('stripe_customer_id', customerId)
   } else {
     // Update individual subscription status
+    const stripe = getStripeClient()
+    if (!stripe) {
+      console.error('Stripe is not configured')
+      return
+    }
     const customer = await stripe.customers.retrieve(customerId)
     const userId = (customer as Stripe.Customer).metadata?.supabase_user_id
 
@@ -547,7 +594,7 @@ async function handleInvoicePaymentSucceeded(
       }
     } else {
       // Individual payment - update subscription status
-      const customer = await stripe.customers.retrieve(customerId)
+      const customer = await stripe!.customers.retrieve(customerId)
       userId = (customer as Stripe.Customer).metadata?.supabase_user_id
 
       if (userId) {
@@ -608,6 +655,11 @@ async function handleInvoicePaymentFailed(
   const subscriptionId = invoice.subscription as string
   if (!subscriptionId) return
 
+  const stripe = getStripeClient()
+  if (!stripe) {
+    console.error('Stripe is not configured')
+    return
+  }
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
   const planType = subscription.metadata?.plan_type
 

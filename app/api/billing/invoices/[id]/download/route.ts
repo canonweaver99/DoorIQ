@@ -3,9 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 export async function GET(
   request: NextRequest,
@@ -55,6 +62,13 @@ export async function GET(
     }
 
     // Retrieve invoice from Stripe
+    const stripe = getStripeClient()
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured' },
+        { status: 500 }
+      )
+    }
     const invoice = await stripe.invoices.retrieve(id)
 
     // Verify invoice belongs to customer

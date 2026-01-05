@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialize Resend to avoid build-time errors
+function getResendClient() {
+  if (!process.env.RESEND_API_KEY) {
+    return null
+  }
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 // Email templates for different subscription events
 const EMAIL_TEMPLATES = {
@@ -258,7 +264,8 @@ export async function POST(request: NextRequest) {
     const { subject, html } = template(data)
 
     // Send email using Resend
-    if (process.env.RESEND_API_KEY) {
+    const resend = getResendClient()
+    if (resend) {
       // Use welcome@dooriq.ai for welcome emails, otherwise use notifications@dooriq.ai
       const fromEmail = eventType === 'individual_plan_welcome' 
         ? 'Canon Weaver <welcome@dooriq.ai>'

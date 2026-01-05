@@ -6,11 +6,17 @@ import { logger } from '@/lib/logger'
 export const dynamic = "force-dynamic";
 export const maxDuration = 60 // 60 seconds max
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  timeout: 60000,
-  maxRetries: 3
-})
+// Lazy initialize OpenAI to avoid build-time errors
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    return null
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: 60000,
+    maxRetries: 3
+  })
+}
 
 /**
  * Detect inappropriate/profane language in transcript
@@ -204,6 +210,14 @@ Return ONLY valid JSON matching this structure:
 }`
 
     logger.info('🤖 Starting simple grading', { sessionId, transcriptLength: transcript.length })
+    
+    const openai = getOpenAIClient()
+    if (!openai) {
+      return NextResponse.json(
+        { error: 'OpenAI API key not configured' },
+        { status: 500 }
+      )
+    }
     
     // Single OpenAI call
     const response = await openai.chat.completions.create({

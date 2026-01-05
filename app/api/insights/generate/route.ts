@@ -3,9 +3,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+// Lazy initialize OpenAI to avoid build-time errors
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    return null
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -132,6 +138,21 @@ Return ONLY valid JSON array, no markdown, no code blocks:
   },
   ...
 ]`
+
+    const openai = getOpenAIClient()
+    if (!openai) {
+      return NextResponse.json({
+        insights: [
+          {
+            title: 'Keep practicing',
+            message: 'Complete more sessions to see personalized insights',
+            icon: 'trending-up',
+            iconColor: '#10b981',
+            iconBgColor: 'rgba(16, 185, 129, 0.2)'
+          }
+        ]
+      })
+    }
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',

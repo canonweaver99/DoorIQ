@@ -4,9 +4,16 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 import { STRIPE_CONFIG } from '@/lib/stripe/config'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -105,6 +112,13 @@ export async function POST(request: NextRequest) {
     // Create checkout session for upgrade
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
+    const stripe = getStripeClient()
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured' },
+        { status: 500 }
+      )
+    }
     const session = await stripe.checkout.sessions.create({
       customer: org.stripe_customer_id,
       mode: 'subscription',

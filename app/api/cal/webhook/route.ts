@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialize Resend to avoid build-time errors
+function getResendClient() {
+  if (!process.env.RESEND_API_KEY) {
+    return null
+  }
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 // Cal.com webhook handler
 // This receives booking notifications from Cal.com
@@ -175,7 +181,8 @@ line-height: 1.7; color: #333; margin: 0; padding: 0; background: #f5f5f5; }
       </html>
     `
 
-    if (process.env.RESEND_API_KEY) {
+    const resend = getResendClient()
+    if (resend) {
       await resend.emails.send({
         from: 'DoorIQ <notifications@dooriq.ai>',
         to: organizerEmail,

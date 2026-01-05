@@ -3,9 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,13 +62,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Cancel subscription in Stripe
-    if (cancelImmediately) {
-      await stripe.subscriptions.cancel(org.stripe_subscription_id)
-    } else {
-      // Cancel at period end
-      await stripe.subscriptions.update(org.stripe_subscription_id, {
-        cancel_at_period_end: true,
-      })
+    const stripe = getStripeClient()
+    if (stripe) {
+      if (cancelImmediately) {
+        await stripe.subscriptions.cancel(org.stripe_subscription_id)
+      } else {
+        // Cancel at period end
+        await stripe.subscriptions.update(org.stripe_subscription_id, {
+          cancel_at_period_end: true,
+        })
+      }
     }
 
     // Update organization subscription status

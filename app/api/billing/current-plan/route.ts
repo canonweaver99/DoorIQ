@@ -3,9 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,21 +74,24 @@ export async function GET(request: NextRequest) {
     // Get subscription details from Stripe if subscription exists
     let subscriptionDetails = null
     if (org.stripe_subscription_id) {
-      try {
-        const subscription = await stripe.subscriptions.retrieve(
-          org.stripe_subscription_id,
-          { expand: ['items.data.price'] }
-        )
+      const stripe = getStripeClient()
+      if (stripe) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(
+            org.stripe_subscription_id,
+            { expand: ['items.data.price'] }
+          )
         
-        subscriptionDetails = {
-          status: subscription.status,
-          currentPeriodStart: new Date(subscription.current_period_start * 1000).toISOString(),
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-          cancelAtPeriodEnd: subscription.cancel_at_period_end,
-          quantity: subscription.items.data[0]?.quantity || 0,
+          subscriptionDetails = {
+            status: subscription.status,
+            currentPeriodStart: new Date(subscription.current_period_start * 1000).toISOString(),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            quantity: subscription.items.data[0]?.quantity || 0,
+          }
+        } catch (stripeError) {
+          console.error('Error fetching Stripe subscription:', stripeError)
         }
-      } catch (stripeError) {
-        console.error('Error fetching Stripe subscription:', stripeError)
       }
     }
 

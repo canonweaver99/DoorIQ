@@ -3,9 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,6 +83,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current subscription from Stripe
+    const stripe = getStripeClient()
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured' },
+        { status: 500 }
+      )
+    }
     const subscription = await stripe.subscriptions.retrieve(
       org.stripe_subscription_id,
       { expand: ['items.data.price'] }
@@ -106,7 +120,7 @@ export async function POST(request: NextRequest) {
       // Create discount coupon for annual billing (16.67% = 2 months free)
       let discountId: string | undefined
       try {
-        const coupons = await stripe.coupons.list({ limit: 100 })
+        const coupons = await stripe!.coupons.list({ limit: 100 })
         const existingCoupon = coupons.data.find(
           (c) => c.percent_off === 16.67 && c.name === 'Annual Billing - 2 Months Free'
         )
@@ -114,7 +128,7 @@ export async function POST(request: NextRequest) {
         if (existingCoupon) {
           discountId = existingCoupon.id
         } else {
-          const coupon = await stripe.coupons.create({
+          const coupon = await stripe!.coupons.create({
             name: 'Annual Billing - 2 Months Free',
             percent_off: 16.67,
             duration: 'forever',
@@ -131,7 +145,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Create checkout session to update subscription to annual billing
-      const session = await stripe.checkout.sessions.create({
+      const session = await stripe!.checkout.sessions.create({
         customer: org.stripe_customer_id,
         mode: 'subscription',
         line_items: [

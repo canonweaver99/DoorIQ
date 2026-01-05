@@ -4,9 +4,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+// Lazy initialize OpenAI to avoid build-time errors
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    return null
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +34,14 @@ export async function POST(request: NextRequest) {
     const file = new File([blob], filename, { type: blob.type })
 
     console.log('Transcribing file:', filename, 'Size:', blob.size)
+
+    const openai = getOpenAIClient()
+    if (!openai) {
+      return NextResponse.json(
+        { error: 'OpenAI API key not configured' },
+        { status: 500 }
+      )
+    }
 
     // Transcribe with OpenAI Whisper
     const transcription = await openai.audio.transcriptions.create({

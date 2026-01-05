@@ -4,9 +4,16 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 import { STRIPE_CONFIG } from '@/lib/stripe/config'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,23 +67,29 @@ export async function POST(request: NextRequest) {
     let subscriptionItem = null
 
     if (org.stripe_subscription_id && org.stripe_subscription_item_id) {
-      try {
-        // Get current subscription
-        const subscription = await stripe.subscriptions.retrieve(
-          org.stripe_subscription_id
-        )
+      const stripe = getStripeClient()
+      if (!stripe) {
+        // If Stripe is not configured, just use current seat_limit from database
+        currentQuantity = org.seat_limit || 0
+      } else {
+        try {
+          // Get current subscription
+          const subscription = await stripe.subscriptions.retrieve(
+            org.stripe_subscription_id
+          )
 
         subscriptionItem = subscription.items.data.find(
           (item) => item.id === org.stripe_subscription_item_id
         )
 
-        if (subscriptionItem) {
-          currentQuantity = subscriptionItem.quantity || 0
+          if (subscriptionItem) {
+            currentQuantity = subscriptionItem.quantity || 0
+          }
+        } catch (stripeError) {
+          // If Stripe fails, just use current seat_limit from database
+          console.log('Stripe subscription check skipped (fake paywall mode)')
+          currentQuantity = org.seat_limit || 0
         }
-      } catch (stripeError) {
-        // If Stripe fails, just use current seat_limit from database
-        console.log('Stripe subscription check skipped (fake paywall mode)')
-        currentQuantity = org.seat_limit || 0
       }
     } else {
       // No Stripe subscription - use current seat_limit from database
@@ -115,13 +128,16 @@ export async function POST(request: NextRequest) {
     try {
       // Update subscription quantity directly (if subscription exists)
       if (subscriptionItem && org.stripe_subscription_item_id) {
-        try {
-          await stripe.subscriptionItems.update(org.stripe_subscription_item_id, {
-            quantity: newQuantity,
-          })
-        } catch (stripeError) {
-          // If Stripe update fails, just update database (for testing without Stripe)
-          console.log('Stripe update skipped (fake paywall mode)')
+        const stripe = getStripeClient()
+        if (stripe) {
+          try {
+            await stripe.subscriptionItems.update(org.stripe_subscription_item_id, {
+              quantity: newQuantity,
+            })
+          } catch (stripeError) {
+            // If Stripe update fails, just update database (for testing without Stripe)
+            console.log('Stripe update skipped (fake paywall mode)')
+          }
         }
       }
 

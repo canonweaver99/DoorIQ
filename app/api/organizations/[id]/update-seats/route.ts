@@ -3,9 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 /**
  * PATCH /api/organizations/[id]/update-seats
@@ -81,20 +88,23 @@ export async function PATCH(
     
     // Update Stripe subscription if exists
     if (organization.stripe_subscription_id && organization.stripe_subscription_item_id) {
-      try {
-        await stripe.subscriptions.update(organization.stripe_subscription_id, {
-          items: [{
-            id: organization.stripe_subscription_item_id,
-            quantity: seat_limit,
-          }],
-          proration_behavior: 'always_invoice',
-        })
-      } catch (stripeError: any) {
-        console.error('Stripe error:', stripeError)
-        return NextResponse.json(
-          { error: `Failed to update Stripe subscription: ${stripeError.message}` },
-          { status: 500 }
-        )
+      const stripe = getStripeClient()
+      if (stripe) {
+        try {
+          await stripe.subscriptions.update(organization.stripe_subscription_id, {
+            items: [{
+              id: organization.stripe_subscription_item_id,
+              quantity: seat_limit,
+            }],
+            proration_behavior: 'always_invoice',
+          })
+        } catch (stripeError: any) {
+          console.error('Stripe error:', stripeError)
+          return NextResponse.json(
+            { error: `Failed to update Stripe subscription: ${stripeError.message}` },
+            { status: 500 }
+          )
+        }
       }
     }
     

@@ -7,11 +7,17 @@ export const dynamic = "force-dynamic";
 // Increased timeout for reliable grading (Vercel Pro allows up to 300s)
 export const maxDuration = 60 // 60 seconds - allows for longer sessions
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  timeout: 30000, // 30 second timeout - faster failure detection
-  maxRetries: 2 // Increased retries for reliability
-})
+// Lazy initialize OpenAI to avoid build-time errors
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    return null
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: 30000, // 30 second timeout - faster failure detection
+    maxRetries: 2 // Increased retries for reliability
+  })
+}
 
 type JsonSchema = Record<string, any>
 

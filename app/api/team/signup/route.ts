@@ -4,9 +4,16 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 import { STRIPE_CONFIG } from '@/lib/stripe/config'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-})
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return null
+  }
+  return new Stripe(stripeKey, {
+    apiVersion: '2024-11-20.acacia',
+  })
+}
 
 /**
  * POST /api/team/signup
@@ -70,6 +77,13 @@ export async function POST(request: NextRequest) {
     let customerId = userProfile.stripe_customer_id
 
     if (!customerId) {
+      const stripe = getStripeClient()
+      if (!stripe) {
+        return NextResponse.json(
+          { error: 'Stripe is not configured' },
+          { status: 500 }
+        )
+      }
       const customer = await stripe.customers.create({
         email: email,
         name: name,
@@ -104,7 +118,7 @@ export async function POST(request: NextRequest) {
     if (isAnnual && discountPercent > 0) {
       try {
         // Try to find existing annual discount coupon
-        const coupons = await stripe.coupons.list({ limit: 100 })
+        const coupons = await stripe!.coupons.list({ limit: 100 })
         const existingCoupon = coupons.data.find(
           c => c.percent_off === discountPercent && c.name === 'Annual Billing - 2 Months Free'
         )
@@ -113,7 +127,7 @@ export async function POST(request: NextRequest) {
           discountId = existingCoupon.id
         } else {
           // Create new coupon for annual billing
-          const coupon = await stripe.coupons.create({
+          const coupon = await stripe!.coupons.create({
             name: 'Annual Billing - 2 Months Free',
             percent_off: discountPercent,
             duration: 'forever', // Can be reused
@@ -168,7 +182,7 @@ export async function POST(request: NextRequest) {
       sessionConfig.discounts = [{ coupon: discountId }]
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig)
+    const session = await stripe!.checkout.sessions.create(sessionConfig)
 
     return NextResponse.json({ 
       url: session.url,
