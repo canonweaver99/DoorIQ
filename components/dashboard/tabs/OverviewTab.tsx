@@ -224,6 +224,7 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
                             sessionId={session.id}
                             agentName={session.agent_name}
                             maxMessages={2}
+                            keyMoments={session.key_moments}
                           />
                         </div>
                       )}

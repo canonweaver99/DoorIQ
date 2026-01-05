@@ -1068,6 +1068,7 @@ export default function SessionsPage() {
                                   sessionId={session.id}
                                   agentName={agentName}
                                   maxMessages={3}
+                                  keyMoments={session.key_moments}
                                 />
                               </div>
                             )}

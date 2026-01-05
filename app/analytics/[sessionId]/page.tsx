@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import dynamic from 'next/dynamic'
 import { AnalyticsErrorBoundary } from '@/components/analytics/AnalyticsErrorBoundary'
+import { cn } from '@/lib/utils'
 
 // Dynamically import heavy analytics components to reduce initial bundle size
 const HeroSection = dynamic(() => import('@/components/analytics/HeroSection').then(mod => ({ default: mod.HeroSection })), {
@@ -35,6 +36,10 @@ const ConversationFlow = dynamic(() => import('@/components/analytics/Conversati
 })
 const ObjectionAnalysis = dynamic(() => import('@/components/analytics/ObjectionAnalysis').then(mod => ({ default: mod.default })), {
   loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
+  ssr: false
+})
+const TranscriptViewV2 = dynamic(() => import('@/components/analytics/TranscriptViewV2').then(mod => ({ default: mod.default })), {
+  loading: () => <div className="h-96 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
   ssr: false
 })
 
@@ -296,6 +301,7 @@ export default function AnalyticsPage() {
   const [comparison, setComparison] = useState<ComparisonData | null>(null)
   const [userName, setUserName] = useState<string>('You')
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'analysis' | 'transcript'>('analysis')
   const [loadingStates, setLoadingStates] = useState({
     hero: false,
     insights: false,
@@ -582,6 +588,53 @@ export default function AnalyticsPage() {
     <AnalyticsErrorBoundary>
       <div className="min-h-screen bg-black">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-6 sm:pt-8 lg:pt-20 pb-8 sm:pb-10 lg:pb-12">
+        {/* Tabs */}
+        <div className="mb-6 sm:mb-8 flex items-center gap-2 border-b border-slate-800">
+          <button
+            onClick={() => setActiveTab('analysis')}
+            className={cn(
+              "px-4 py-2 text-sm sm:text-base font-medium transition-colors border-b-2",
+              activeTab === 'analysis'
+                ? "text-white border-purple-500"
+                : "text-slate-400 border-transparent hover:text-slate-300"
+            )}
+          >
+            Analysis
+          </button>
+          <button
+            onClick={() => setActiveTab('transcript')}
+            className={cn(
+              "px-4 py-2 text-sm sm:text-base font-medium transition-colors border-b-2",
+              activeTab === 'transcript'
+                ? "text-white border-purple-500"
+                : "text-slate-400 border-transparent hover:text-slate-300"
+            )}
+          >
+            Full Transcript
+          </button>
+        </div>
+
+        {/* Transcript Tab Content */}
+        {activeTab === 'transcript' && (
+          <div className="mb-8">
+            {session.full_transcript && Array.isArray(session.full_transcript) && session.full_transcript.length > 0 ? (
+              <TranscriptViewV2
+                transcript={session.full_transcript}
+                duration={session.duration_seconds || 600}
+                sessionId={sessionId}
+                agentName={(session as any).agent_name}
+              />
+            ) : (
+              <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 text-center">
+                <p className="text-slate-400">No transcript available</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Analysis Tab Content */}
+        {activeTab === 'analysis' && (
+          <>
         {/* Hero Section - Only show when we have all required data */}
         {loadingStates.hero && session.overall_score !== null && session.overall_score !== undefined && (
           <HeroSection
@@ -779,6 +832,8 @@ export default function AnalyticsPage() {
             <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
           )
         ) : null}
+          </>
+        )}
         
         </div>
       </div>

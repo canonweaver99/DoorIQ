@@ -246,11 +246,43 @@ export function LiveFeedbackFeed({ feedbackItems, sessionActive = false }: LiveF
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [dismissedItems, setDismissedItems] = useState<Set<string>>(new Set())
 
-  // Simple deduplication: only filter out dismissed items
-  // Items stay visible and scroll up like transcript (no disappearing)
+  // Deduplication: filter out dismissed items and ensure only one objection card at a time
   const deduplicatedItems = useMemo(() => {
-    // Just filter out dismissed items - all others stay visible
-    return feedbackItems.filter(item => !dismissedItems.has(item.id))
+    // First filter out dismissed items
+    const activeItems = feedbackItems.filter(item => !dismissedItems.has(item.id))
+    
+    // Track objection-related items (objection_detected and objection_handling)
+    const objectionTypes = ['objection_detected', 'objection_handling']
+    const objectionItems: FeedbackItem[] = []
+    const nonObjectionItems: FeedbackItem[] = []
+    
+    // Separate objection items from others
+    activeItems.forEach(item => {
+      if (objectionTypes.includes(item.type)) {
+        objectionItems.push(item)
+      } else {
+        nonObjectionItems.push(item)
+      }
+    })
+    
+    // If there are multiple objection items, only keep the most recent one
+    let finalObjectionItem: FeedbackItem | null = null
+    if (objectionItems.length > 0) {
+      // Sort by timestamp (most recent first) and take the first one
+      finalObjectionItem = [...objectionItems].sort((a, b) => 
+        b.timestamp.getTime() - a.timestamp.getTime()
+      )[0]
+    }
+    
+    // Combine: most recent objection item (if any) + all non-objection items
+    const result: FeedbackItem[] = []
+    if (finalObjectionItem) {
+      result.push(finalObjectionItem)
+    }
+    result.push(...nonObjectionItems)
+    
+    // Sort all items by timestamp (most recent last, so they appear in chronological order)
+    return result.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
   }, [feedbackItems, dismissedItems])
 
   const handleDismiss = (id: string) => {

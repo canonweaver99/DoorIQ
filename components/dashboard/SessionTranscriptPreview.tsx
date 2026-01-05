@@ -11,6 +11,7 @@ interface SessionTranscriptPreviewProps {
   agentName?: string | null
   maxMessages?: number // Number of messages to show in preview
   className?: string
+  keyMoments?: Array<{ startIndex?: number; endIndex?: number; transcript?: string }> // Key moments to show instead of beginning
 }
 
 export function SessionTranscriptPreview({
@@ -18,7 +19,8 @@ export function SessionTranscriptPreview({
   sessionId,
   agentName,
   maxMessages = 3,
-  className
+  className,
+  keyMoments
 }: SessionTranscriptPreviewProps) {
   // Handle empty or null transcript
   if (!transcript || transcript.length === 0) {
@@ -29,9 +31,42 @@ export function SessionTranscriptPreview({
     )
   }
 
-  // Get first few messages for preview
-  const previewMessages = transcript.slice(0, maxMessages)
-  const hasMore = transcript.length > maxMessages
+  // Get messages from key moments if available, otherwise from beginning
+  let previewMessages: TranscriptEntry[] = []
+  let hasMore = false
+
+  if (keyMoments && keyMoments.length > 0 && transcript.length > 0) {
+    // Use key moments to get relevant transcript snippets
+    const momentIndices = new Set<number>()
+    
+    keyMoments.slice(0, 2).forEach(moment => {
+      if (moment.startIndex !== undefined) {
+        const startIdx = Math.max(0, moment.startIndex)
+        const endIdx = moment.endIndex !== undefined 
+          ? Math.min(transcript.length - 1, moment.endIndex)
+          : Math.min(transcript.length - 1, startIdx + 2)
+        
+        // Get a few lines before and after for context
+        const contextStart = Math.max(0, startIdx - 1)
+        for (let i = contextStart; i <= endIdx && i < transcript.length; i++) {
+          momentIndices.add(i)
+        }
+      }
+    })
+    
+    // Convert indices to array and sort, then take first maxMessages
+    previewMessages = Array.from(momentIndices)
+      .sort((a, b) => a - b)
+      .slice(0, maxMessages)
+      .map(idx => transcript[idx])
+      .filter(Boolean)
+    
+    hasMore = momentIndices.size > maxMessages || transcript.length > Math.max(...Array.from(momentIndices))
+  } else {
+    // Fallback to first few messages
+    previewMessages = transcript.slice(0, maxMessages)
+    hasMore = transcript.length > maxMessages
+  }
 
   return (
     <div className={cn("space-y-2", className)}>
