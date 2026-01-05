@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/supabase/database.types'
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
+import { SessionTranscriptPreview } from '../SessionTranscriptPreview'
 
 type LiveSession = Database['public']['Tables']['live_sessions']['Row']
 
@@ -58,7 +59,7 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
     // Fetch recent sessions (last 4)
     const { data: sessionsData } = await supabase
       .from('live_sessions')
-      .select('*')
+      .select('*, full_transcript')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(4)
@@ -215,6 +216,17 @@ export default function OverviewTab({ metrics, recentSessions, insights }: Overv
                           {session.duration_seconds ? `${Math.round(session.duration_seconds / 60)} min` : 'N/A'}
                         </span>
                       </div>
+                      {/* Transcript Preview */}
+                      {session.full_transcript && Array.isArray(session.full_transcript) && session.full_transcript.length > 0 && (
+                        <div className="mb-2">
+                          <SessionTranscriptPreview
+                            transcript={session.full_transcript}
+                            sessionId={session.id}
+                            agentName={session.agent_name}
+                            maxMessages={2}
+                          />
+                        </div>
+                      )}
                       {/* Key Insight */}
                       {insight && (
                         <div className={`flex items-start gap-2 text-xs ${

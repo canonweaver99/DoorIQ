@@ -25,15 +25,18 @@ const LiveMetricsPanel = dynamicImport(() => import('@/components/trainer/LiveMe
 const LiveTranscript = dynamicImport(() => import('@/components/trainer/LiveTranscript').then(mod => ({ default: mod.LiveTranscript })), { 
   ssr: false 
 })
-import { LiveFeedbackFeed } from '@/components/trainer/LiveFeedbackFeed'
-import { VideoControls } from '@/components/trainer/VideoControls'
-import { WebcamPIP, type WebcamPIPRef } from '@/components/trainer/WebcamPIP'
-import { StrikeCounter } from '@/components/trainer/StrikeCounter'
+// Lazy load non-critical components for better performance
+const LiveFeedbackFeed = dynamicImport(() => import('@/components/trainer/LiveFeedbackFeed').then(mod => ({ default: mod.LiveFeedbackFeed })), { ssr: false })
+const VideoControls = dynamicImport(() => import('@/components/trainer/VideoControls').then(mod => ({ default: mod.VideoControls })), { ssr: false })
+const WebcamPIP = dynamicImport(() => import('@/components/trainer/WebcamPIP').then(mod => ({ default: mod.WebcamPIP })), { ssr: false })
+const StrikeCounter = dynamicImport(() => import('@/components/trainer/StrikeCounter').then(mod => ({ default: mod.StrikeCounter })), { ssr: false })
+const RotatingCardView = dynamicImport(() => import('@/components/trainer/RotatingCardView').then(mod => ({ default: mod.RotatingCardView })), { ssr: false })
 import { LeverSwitch } from '@/components/ui/lever-switch'
-import { RotatingCardView } from '@/components/trainer/RotatingCardView'
+import type { WebcamPIPRef } from '@/components/trainer/WebcamPIP'
 import { useSentimentScore } from '@/hooks/useSentimentScore'
-import { CoachSuggestion } from '@/components/trainer/CoachSuggestion'
-import { CoachModeToggle } from '@/components/trainer/CoachModeToggle'
+// Archived: Live coaching feature temporarily disabled
+// import { CoachSuggestion } from '@/components/trainer/CoachSuggestion'
+// import { CoachModeToggle } from '@/components/trainer/CoachModeToggle'
 
 // Dynamic imports for heavy components - only load when needed
 // CRITICAL: Load immediately on mobile to ensure connection works
@@ -168,23 +171,23 @@ function TrainerPageContent() {
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const restartFnRef = useRef<(() => Promise<void>) | null>(null)
 
-  // Coach mode state
-  const [coachModeEnabled, setCoachModeEnabled] = useState(true) // Default enabled
-  const [coachSuggestion, setCoachSuggestion] = useState<{
-    suggestedLine: string
-    explanation?: string
-    reasoning?: string
-    confidence?: 'high' | 'medium' | 'low'
-    tacticalNote?: string
-    alternatives?: string[]
-    isAdapted?: boolean
-  } | null>(null)
-  const [coachSuggestionLoading, setCoachSuggestionLoading] = useState(false)
-  const lastHomeownerTextRef = useRef<string>('') // Track last homeowner text to avoid duplicate requests
+  // Coach mode state - ARCHIVED: Live coaching feature temporarily disabled
+  // const [coachModeEnabled, setCoachModeEnabled] = useState(true) // Default enabled
+  // const [coachSuggestion, setCoachSuggestion] = useState<{
+  //   suggestedLine: string
+  //   explanation?: string
+  //   reasoning?: string
+  //   confidence?: 'high' | 'medium' | 'low'
+  //   tacticalNote?: string
+  //   alternatives?: string[]
+  //   isAdapted?: boolean
+  // } | null>(null)
+  // const [coachSuggestionLoading, setCoachSuggestionLoading] = useState(false)
+  // const lastHomeownerTextRef = useRef<string>('') // Track last homeowner text to avoid duplicate requests
 
   // Shared state for RotatingCardView components to prevent duplicate cards
-  const [leftCardView, setLeftCardView] = useState<'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques' | 'coaching'>('default')
-  const [rightCardView, setRightCardView] = useState<'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques' | 'coaching'>('default')
+  const [leftCardView, setLeftCardView] = useState<'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques'>('default')
+  const [rightCardView, setRightCardView] = useState<'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques'>('default')
 
   // Sync camera/mic state with WebcamPIP
   useEffect(() => {
@@ -219,30 +222,31 @@ function TrainerPageContent() {
     }
   }, [challengeModeEnabled])
 
-  // Disable coach mode when challenge mode is enabled
-  useEffect(() => {
-    if (challengeModeEnabled && coachModeEnabled) {
-      setCoachModeEnabled(false)
-      setCoachSuggestion(null) // Clear active suggestions
-    }
-  }, [challengeModeEnabled])
+  // ARCHIVED: Coach mode disabled
+  // // Disable coach mode when challenge mode is enabled
+  // useEffect(() => {
+  //   if (challengeModeEnabled && coachModeEnabled) {
+  //     setCoachModeEnabled(false)
+  //     setCoachSuggestion(null) // Clear active suggestions
+  //   }
+  // }, [challengeModeEnabled])
 
-  // Load coach mode preference from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('coachModeEnabled')
-      if (saved !== null) {
-        setCoachModeEnabled(saved === 'true')
-      }
-    }
-  }, [])
+  // // Load coach mode preference from localStorage
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined') {
+  //     const saved = localStorage.getItem('coachModeEnabled')
+  //     if (saved !== null) {
+  //       setCoachModeEnabled(saved === 'true')
+  //     }
+  //   }
+  // }, [])
 
-  // Save coach mode preference to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('coachModeEnabled', coachModeEnabled.toString())
-    }
-  }, [coachModeEnabled])
+  // // Save coach mode preference to localStorage
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined') {
+  //     localStorage.setItem('coachModeEnabled', coachModeEnabled.toString())
+  //   }
+  // }, [coachModeEnabled])
 
   // Reset strikes when sessionId changes from null to a new value (new session created)
   // This ensures strikes are reset BEFORE sessionActive becomes true, preventing race conditions
@@ -1199,52 +1203,53 @@ function TrainerPageContent() {
     // Removed auto-scroll behavior - user can manually scroll if needed
   }, [])
 
-  // Fetch coach suggestion when homeowner speaks
-  const fetchCoachSuggestion = useCallback(async (homeownerText: string) => {
-    if (!sessionId || !coachModeEnabled || challengeModeEnabled) return
+  // ARCHIVED: Coach suggestion fetching disabled
+  // // Fetch coach suggestion when homeowner speaks
+  // const fetchCoachSuggestion = useCallback(async (homeownerText: string) => {
+  //   if (!sessionId || !coachModeEnabled || challengeModeEnabled) return
 
-    setCoachSuggestionLoading(true)
-    try {
-      const response = await fetch('/api/coach/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          homeownerText,
-          conversationContext: 'Current practice session',
-          transcript: transcript.map(entry => ({
-            speaker: entry.speaker,
-            text: entry.text,
-            timestamp: entry.timestamp instanceof Date 
-              ? entry.timestamp.toISOString() 
-              : entry.timestamp
-          }))
-        })
-      })
+  //   setCoachSuggestionLoading(true)
+  //   try {
+  //     const response = await fetch('/api/coach/suggest', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({
+  //         sessionId,
+  //         homeownerText,
+  //         conversationContext: 'Current practice session',
+  //         transcript: transcript.map(entry => ({
+  //           speaker: entry.speaker,
+  //           text: entry.text,
+  //           timestamp: entry.timestamp instanceof Date 
+  //             ? entry.timestamp.toISOString() 
+  //             : entry.timestamp
+  //         }))
+  //       })
+  //     })
 
-      if (response.ok) {
-        const data = await response.json()
-        setCoachSuggestion({
-          suggestedLine: data.suggestedLine || 'Continue the conversation naturally.',
-          explanation: data.explanation,
-          reasoning: data.reasoning,
-          confidence: data.confidence,
-          tacticalNote: data.tacticalNote,
-          alternatives: data.alternatives,
-          isAdapted: data.isAdapted
-        })
-      } else {
-        const errorData = await response.json()
-        console.error('Coach suggestion error:', errorData)
-        // Don't show error to user, just don't update suggestion
-      }
-    } catch (error) {
-      console.error('Error fetching coach suggestion:', error)
-      // Don't show error to user
-    } finally {
-      setCoachSuggestionLoading(false)
-    }
-  }, [sessionId, coachModeEnabled, challengeModeEnabled, transcript])
+  //     if (response.ok) {
+  //       const data = await response.json()
+  //       setCoachSuggestion({
+  //         suggestedLine: data.suggestedLine || 'Continue the conversation naturally.',
+  //         explanation: data.explanation,
+  //         reasoning: data.reasoning,
+  //         confidence: data.confidence,
+  //         tacticalNote: data.tacticalNote,
+  //         alternatives: data.alternatives,
+  //         isAdapted: data.isAdapted
+  //       })
+  //     } else {
+  //       const errorData = await response.json()
+  //       console.error('Coach suggestion error:', errorData)
+  //       // Don't show error to user, just don't update suggestion
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching coach suggestion:', error)
+  //     // Don't show error to user
+  //   } finally {
+  //     setCoachSuggestionLoading(false)
+  //   }
+  // }, [sessionId, coachModeEnabled, challengeModeEnabled, transcript])
 
   useEffect(() => {
     // Guard against SSR - only run on client
@@ -1266,15 +1271,16 @@ function TrainerPageContent() {
         pushFinal(e.detail, 'homeowner')
         console.log('✅ Agent transcript added. Current transcript length:', transcript.length + 1)
         
-        // Coach mode: Generate suggestion when homeowner speaks
-        if (coachModeEnabled && !challengeModeEnabled && sessionActive && sessionId) {
-          const homeownerText = e.detail.trim()
-          // Avoid duplicate requests for the same text
-          if (homeownerText !== lastHomeownerTextRef.current) {
-            lastHomeownerTextRef.current = homeownerText
-            fetchCoachSuggestion(homeownerText)
-          }
-        }
+        // ARCHIVED: Coach mode disabled
+        // // Coach mode: Generate suggestion when homeowner speaks
+        // if (coachModeEnabled && !challengeModeEnabled && sessionActive && sessionId) {
+        //   const homeownerText = e.detail.trim()
+        //   // Avoid duplicate requests for the same text
+        //   if (homeownerText !== lastHomeownerTextRef.current) {
+        //     lastHomeownerTextRef.current = homeownerText
+        //     fetchCoachSuggestion(homeownerText)
+        //   }
+        // }
       } else {
         console.warn('⚠️ Invalid agent event:', e)
       }
@@ -1289,7 +1295,7 @@ function TrainerPageContent() {
         window.removeEventListener('agent:response', handleAgentEvent)
       }
     }
-  }, [pushFinal, coachModeEnabled, challengeModeEnabled, sessionActive, sessionId, transcript])
+  }, [pushFinal, challengeModeEnabled, sessionActive, sessionId, transcript])
 
   // Moved to after endSession definition
 
@@ -1446,18 +1452,19 @@ function TrainerPageContent() {
       setSessionActive(true)
       setSessionState('active')
       
-      // Update session with coach mode enabled status
-      if (coachModeEnabled) {
-        try {
-          const supabase = createClient()
-          await supabase
-            .from('live_sessions')
-            .update({ coach_mode_enabled: coachModeEnabled })
-            .eq('id', newId)
-        } catch (error) {
-          console.error('Error updating coach mode on session start:', error)
-        }
-      }
+      // ARCHIVED: Coach mode disabled - keeping database update commented for future use
+      // // Update session with coach mode enabled status
+      // if (coachModeEnabled) {
+      //   try {
+      //     const supabase = createClient()
+      //     await supabase
+      //       .from('live_sessions')
+      //       .update({ coach_mode_enabled: coachModeEnabled })
+      //       .eq('id', newId)
+      //   } catch (error) {
+      //     console.error('Error updating coach mode on session start:', error)
+      //   }
+      // }
       // Session started
       // Start with opening animation if available (Jerry), otherwise start with loop
       if (agentHasVideos(selectedAgent?.name)) {
@@ -3559,12 +3566,7 @@ function TrainerPageContent() {
             {/* Card 3: Transcript - Scrollable (below fold) */}
             {sessionActive && (
               <div className="w-full h-[40vh] min-h-[250px] flex-shrink-0 bg-slate-900 rounded-lg overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-slate-800/50 flex flex-col mb-4">
-                {/* Coach Suggestion - Above transcript */}
-                {coachModeEnabled && !challengeModeEnabled && (
-                  <div className="p-2 border-b border-slate-800/50">
-                    <CoachSuggestion suggestion={coachSuggestion} isLoading={coachSuggestionLoading} />
-                  </div>
-                )}
+                {/* ARCHIVED: Coach Suggestion removed */}
                 <div className="flex-1 overflow-hidden">
                   <RotatingCardView
                     sentimentScore={sentimentScore}
@@ -3572,10 +3574,7 @@ function TrainerPageContent() {
                     speechAnalysis={speechAnalysis}
                     objectionCount={metrics.objectionCount || 0}
                     techniquesUsed={metrics.techniquesUsed || []}
-                    coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
-                    coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
-                    defaultToCoaching={true}
-                    coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                    // ARCHIVED: Coach mode props removed
                     sessionActive={sessionActive}
                   >
                     <LiveTranscript 
@@ -4024,12 +4023,7 @@ function TrainerPageContent() {
 
           {/* BOTTOM LEFT QUADRANT - Transcript - NOW USED FOR ALL SCREEN SIZES */}
           <div className="flex w-full h-full flex-col overflow-hidden">
-            {/* Coach Suggestion - Above transcript */}
-            {sessionActive && coachModeEnabled && !challengeModeEnabled && (
-              <div className="p-3 border-b border-slate-800/50 flex-shrink-0">
-                <CoachSuggestion suggestion={coachSuggestion} isLoading={coachSuggestionLoading} />
-              </div>
-            )}
+            {/* ARCHIVED: Coach Suggestion removed */}
             <div className="flex-1 overflow-hidden">
               <RotatingCardView
                 sentimentScore={sentimentScore}
@@ -4037,10 +4031,7 @@ function TrainerPageContent() {
                 speechAnalysis={speechAnalysis}
                 objectionCount={metrics.objectionCount || 0}
                 techniquesUsed={metrics.techniquesUsed || []}
-                coachSuggestion={coachModeEnabled && !challengeModeEnabled ? coachSuggestion : null}
-                coachSuggestionLoading={coachModeEnabled && !challengeModeEnabled ? coachSuggestionLoading : false}
-                defaultToCoaching={true}
-                coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+                // ARCHIVED: Coach mode props removed
                 sessionActive={sessionActive}
               >
                 <LiveTranscript 
@@ -4062,8 +4053,7 @@ function TrainerPageContent() {
               speechAnalysis={speechAnalysis}
               objectionCount={metrics.objectionCount || 0}
               techniquesUsed={metrics.techniquesUsed || []}
-              defaultToCoaching={false}
-              coachModeEnabled={coachModeEnabled && !challengeModeEnabled}
+              // ARCHIVED: Coach mode props removed
               sessionActive={sessionActive}
             >
               <LiveFeedbackFeed feedbackItems={feedbackItems} sessionActive={sessionActive} />
@@ -4818,28 +4808,9 @@ function TrainerPageContent() {
                     </div>
                   </div>
                   
-                    {/* Challenge Mode and Coach Mode Toggles - Below Videos */}
+                    {/* Challenge Mode Toggle - Coach Mode Archived */}
                   <div className="w-full px-2 py-2 bg-black/50 flex-shrink-0 flex flex-col gap-2">
-                    {/* Coach Mode Toggle */}
-                    <CoachModeToggle
-                      enabled={coachModeEnabled}
-                      onToggle={async (enabled) => {
-                        setCoachModeEnabled(enabled)
-                        // Update session if active
-                        if (sessionId && enabled !== coachModeEnabled) {
-                          try {
-                            const supabase = createClient()
-                            await supabase
-                              .from('live_sessions')
-                              .update({ coach_mode_enabled: enabled })
-                              .eq('id', sessionId)
-                          } catch (error) {
-                            console.error('Error updating coach mode:', error)
-                          }
-                        }
-                      }}
-                      challengeModeEnabled={challengeModeEnabled}
-                    />
+                    {/* ARCHIVED: Coach Mode Toggle removed */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -4953,28 +4924,9 @@ function TrainerPageContent() {
                     </div>
                   </div>
                   
-                  {/* Challenge Mode and Coach Mode Toggles - Below Videos */}
+                  {/* Challenge Mode Toggle - Coach Mode Archived */}
                   <div className="w-full px-2 py-2 bg-black/50 flex-shrink-0 flex flex-col gap-2">
-                    {/* Coach Mode Toggle */}
-                    <CoachModeToggle
-                      enabled={coachModeEnabled}
-                      onToggle={async (enabled) => {
-                        setCoachModeEnabled(enabled)
-                        // Update session if active
-                        if (sessionId && enabled !== coachModeEnabled) {
-                          try {
-                            const supabase = createClient()
-                            await supabase
-                              .from('live_sessions')
-                              .update({ coach_mode_enabled: enabled })
-                              .eq('id', sessionId)
-                          } catch (error) {
-                            console.error('Error updating coach mode:', error)
-                          }
-                        }
-                      }}
-                      challengeModeEnabled={challengeModeEnabled}
-                    />
+                    {/* ARCHIVED: Coach Mode Toggle removed */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}

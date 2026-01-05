@@ -4,7 +4,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { generateSuggestion, CoachAgentContext } from '@/lib/coach/coach-agent'
 
+// ARCHIVED: Live coaching feature temporarily disabled
+// ARCHIVED: Live coaching feature temporarily disabled
 export async function POST(request: NextRequest) {
+  return NextResponse.json(
+    { error: 'Live coaching feature has been temporarily archived' },
+    { status: 410 } // Gone
+  )
+}
+
+// ARCHIVED CODE BELOW - Keep for future re-enablement
+/*
+export async function POST_ARCHIVED(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
     
@@ -136,3 +147,4 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   }
 }
+*/

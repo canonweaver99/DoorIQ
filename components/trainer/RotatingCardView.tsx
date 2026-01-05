@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { CoachSuggestion } from './CoachSuggestion'
+// ARCHIVED: CoachSuggestion removed
+// import { CoachSuggestion } from './CoachSuggestion'
 
-type ViewType = 'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques' | 'coaching'
+type ViewType = 'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques'
 
 interface RotatingCardViewProps {
   children: React.ReactNode // Default view (LiveTranscript or LiveFeedbackFeed)
@@ -21,19 +22,20 @@ interface RotatingCardViewProps {
   } | null
   objectionCount?: number
   techniquesUsed?: string[]
-  coachSuggestion?: {
-    suggestedLine: string
-    explanation?: string
-    reasoning?: string
-    confidence?: 'high' | 'medium' | 'low'
-    tacticalNote?: string
-    alternatives?: string[]
-    isAdapted?: boolean
-  } | null
-  coachSuggestionLoading?: boolean
+  // ARCHIVED: Coach mode props removed
+  // coachSuggestion?: {
+  //   suggestedLine: string
+  //   explanation?: string
+  //   reasoning?: string
+  //   confidence?: 'high' | 'medium' | 'low'
+  //   tacticalNote?: string
+  //   alternatives?: string[]
+  //   isAdapted?: boolean
+  // } | null
+  // coachSuggestionLoading?: boolean
   className?: string
-  defaultToCoaching?: boolean // If true, defaults to coaching when available (for transcript cards)
-  coachModeEnabled?: boolean // If true, always include coaching view even without suggestion
+  // defaultToCoaching?: boolean // ARCHIVED
+  // coachModeEnabled?: boolean // ARCHIVED
   sessionActive?: boolean // Whether a session is currently active
   // Shared state props to prevent duplicate cards
   otherCardView?: ViewType | null // The current view of the other card
@@ -48,24 +50,21 @@ export function RotatingCardView({
   speechAnalysis = null,
   objectionCount = 0,
   techniquesUsed = [],
-  coachSuggestion = null,
-  coachSuggestionLoading = false,
+  // ARCHIVED: Coach mode props removed
+  // coachSuggestion = null,
+  // coachSuggestionLoading = false,
   className,
-  defaultToCoaching = false, // Only transcript cards should default to coaching
-  coachModeEnabled = false, // If true, always include coaching view
+  // defaultToCoaching = false, // ARCHIVED
+  // coachModeEnabled = false, // ARCHIVED
   sessionActive = false, // Whether a session is currently active
   otherCardView = null, // The current view of the other card
   onViewChange, // Callback when view changes
   cardId // Unique identifier for this card instance
 }: RotatingCardViewProps) {
-  // Include coaching view if:
-  // 1. coachSuggestion exists or is loading, OR
-  // 2. defaultToCoaching is true (for transcript cards that should show coaching pre-session)
-  const shouldIncludeCoaching = (coachSuggestion || coachSuggestionLoading) || (defaultToCoaching && coachModeEnabled)
+  // ARCHIVED: Coaching view removed
+  // const shouldIncludeCoaching = (coachSuggestion || coachSuggestionLoading) || (defaultToCoaching && coachModeEnabled)
   
-  const views: ViewType[] = shouldIncludeCoaching
-    ? ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques', 'coaching']
-    : ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques']
+  const views: ViewType[] = ['default', 'sentiment', 'talkTime', 'speechAnalysis', 'objections', 'techniques']
   
   // Filter out views that are currently shown in the other card (except 'default' which can be duplicated)
   const getAvailableViews = () => {
@@ -77,13 +76,10 @@ export function RotatingCardView({
   
   const availableViews = getAvailableViews()
   
-  // Default to coaching if defaultToCoaching is true (even if no suggestion yet)
-  // Otherwise default to 'default' view (transcript or feedback)
+  // ARCHIVED: Default to coaching logic removed
+  // Default to 'default' view (transcript or feedback)
   // If the default view is taken by the other card, pick the first available view
   const getInitialView = (): ViewType => {
-    if (defaultToCoaching && shouldIncludeCoaching) {
-      return 'coaching'
-    }
     // If 'default' is available, use it; otherwise use first available
     if (availableViews.includes('default')) {
       return 'default'
@@ -106,13 +102,7 @@ export function RotatingCardView({
     }
   }, [otherCardView, currentView, onViewChange])
   
-  // Switch to coaching when it becomes available or when defaultToCoaching is true
-  useEffect(() => {
-    if (defaultToCoaching && shouldIncludeCoaching && currentView === 'default') {
-      setCurrentView('coaching')
-      onViewChange?.('coaching')
-    }
-  }, [coachSuggestion, coachSuggestionLoading, currentView, defaultToCoaching, shouldIncludeCoaching])
+  // ARCHIVED: Switch to coaching logic removed
   
   const currentIndex = availableViews.indexOf(currentView)
 
@@ -474,23 +464,7 @@ export function RotatingCardView({
             </motion.div>
           )}
 
-          {currentView === 'coaching' && (
-            <motion.div
-              key="coaching"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="h-full flex flex-col bg-slate-900/50 backdrop-blur-sm rounded-lg border border-slate-800/50 overflow-hidden shadow-lg"
-            >
-              <CoachSuggestion 
-                suggestion={coachSuggestion} 
-                isLoading={coachSuggestionLoading}
-                showPlaceholder={defaultToCoaching && coachModeEnabled && !coachSuggestion && !coachSuggestionLoading}
-                sessionActive={sessionActive}
-              />
-            </motion.div>
-          )}
+          {/* ARCHIVED: Coaching view removed */}
         </AnimatePresence>
       </div>
     </div>

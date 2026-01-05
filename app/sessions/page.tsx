@@ -17,6 +17,7 @@ import { PERSONA_METADATA, type AllowedAgentName } from '@/components/trainer/pe
 import { format, isToday, isYesterday, startOfDay } from 'date-fns'
 import type { GradeInfo, KeyIssue } from '@/app/dashboard/types'
 import { cn } from '@/lib/utils'
+import { SessionTranscriptPreview } from '@/components/dashboard/SessionTranscriptPreview'
 
 // AnimatedGrid component matching landing page style
 const AnimatedGrid = () => (
@@ -184,7 +185,7 @@ export default function SessionsPage() {
 
       let query = supabase
         .from('live_sessions')
-        .select('*')
+        .select('*, full_transcript')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -733,6 +734,18 @@ export default function SessionsPage() {
                             </div>
                           </div>
 
+                          {/* Transcript Preview */}
+                          {session.full_transcript && Array.isArray(session.full_transcript) && session.full_transcript.length > 0 && (
+                            <div className="mb-3">
+                              <SessionTranscriptPreview
+                                transcript={session.full_transcript}
+                                sessionId={session.id}
+                                agentName={agentName}
+                                maxMessages={3}
+                              />
+                            </div>
+                          )}
+
                           {/* Mobile Action Buttons */}
                           <div className="flex flex-col gap-2 mb-3">
                             <motion.button
@@ -1046,6 +1059,18 @@ export default function SessionsPage() {
                                 <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/btn:translate-x-0.5 transition-transform flex-shrink-0" />
                               </motion.button>
                             </div>
+
+                            {/* Transcript Preview */}
+                            {session.full_transcript && Array.isArray(session.full_transcript) && session.full_transcript.length > 0 && (
+                              <div className="mb-3 sm:mb-4">
+                                <SessionTranscriptPreview
+                                  transcript={session.full_transcript}
+                                  sessionId={session.id}
+                                  agentName={agentName}
+                                  maxMessages={3}
+                                />
+                              </div>
+                            )}
 
                             {/* Critical Issue Section - Only show first one */}
                             {criticalIssue && (
