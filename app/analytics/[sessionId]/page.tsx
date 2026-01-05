@@ -641,6 +641,7 @@ export default function AnalyticsPage() {
         {session.key_moments && Array.isArray(session.key_moments) && session.key_moments.length > 0 ? (
           loadingStates.moments ? (
             <CriticalMomentsTimeline 
+              fullTranscript={(session as any).full_transcript || (session as any).transcript}
               moments={session.key_moments.map((moment: any) => {
                 // If moment doesn't have transcript, try to find it from full_transcript
                 if (!moment.transcript && (session as any).full_transcript && Array.isArray((session as any).full_transcript)) {

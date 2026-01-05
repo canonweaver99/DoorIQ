@@ -29,6 +29,7 @@ interface CriticalMomentsTimelineProps {
   sessionStartTime?: string | Date
   durationSeconds?: number
   agentName?: string | null
+  fullTranscript?: Array<{ speaker: string; text: string; timestamp?: Date | string }>
 }
 
 function formatTimestamp(
@@ -102,7 +103,8 @@ export function CriticalMomentsTimeline({
   moments, 
   sessionStartTime, 
   durationSeconds,
-  agentName
+  agentName,
+  fullTranscript
 }: CriticalMomentsTimelineProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
@@ -259,50 +261,115 @@ export function CriticalMomentsTimeline({
                     </div>
                   </div>
                   
-                  {/* Transcript Quote - Single quote only */}
+                  {/* Transcript Quote - Multiple lines with speaker labels */}
                   <div className="mb-4 p-4 sm:p-5 bg-slate-900/50 rounded-lg border border-slate-700/50">
-                    <p className="text-base sm:text-lg text-gray-200 italic mb-2">
-                      "{(() => {
-                        // Use transcript directly - it should already be extracted from conversation
-                        let transcriptText = moment.transcript || ''
+                    {(() => {
+                      // Get dialogue lines from full transcript if available
+                      let dialogueLines: Array<{ speaker: string; text: string }> = []
+                      
+                      if (fullTranscript && Array.isArray(fullTranscript) && moment.startIndex !== undefined) {
+                        // Get multiple lines from transcript using startIndex and endIndex
+                        const startIdx = Math.max(0, moment.startIndex)
+                        // If endIndex is not provided, get 2-3 lines around startIndex for context
+                        const endIdx = moment.endIndex !== undefined 
+                          ? Math.min(fullTranscript.length - 1, moment.endIndex)
+                          : Math.min(fullTranscript.length - 1, startIdx + 2) // Get up to 3 lines if no endIndex
                         
-                        // Replace "homeowner:" with agent name if available (case-insensitive)
-                        if (agentName && transcriptText) {
-                          transcriptText = transcriptText.replace(/homeowner\s*:/gi, `${agentName}:`)
-                        }
+                        // Also get a few lines before startIndex for context (up to 1 line before)
+                        const contextStartIdx = Math.max(0, startIdx - 1)
                         
-                        // Return empty string if no transcript
-                        if (!transcriptText || transcriptText.trim().length === 0) {
-                          return 'No transcript available'
-                        }
-                        
-                        // Clean up the transcript text
-                        transcriptText = transcriptText.trim()
-                        
-                        // Remove any leading/trailing quotes if present
-                        transcriptText = transcriptText.replace(/^["']|["']$/g, '')
-                        
-                        // If it's a long quote, truncate to ~120 chars for better display
-                        if (transcriptText.length > 120) {
-                          // Try to truncate at a sentence boundary
-                          const truncated = transcriptText.slice(0, 120)
-                          const lastPeriod = truncated.lastIndexOf('.')
-                          const lastQuestion = truncated.lastIndexOf('?')
-                          const lastExclamation = truncated.lastIndexOf('!')
-                          const lastPunctuation = Math.max(lastPeriod, lastQuestion, lastExclamation)
-                          
-                          if (lastPunctuation > 80) {
-                            return transcriptText.slice(0, lastPunctuation + 1)
+                        for (let i = contextStartIdx; i <= endIdx && i < fullTranscript.length; i++) {
+                          const entry = fullTranscript[i]
+                          if (entry && (entry.text || entry.message)) {
+                            const speaker = entry.speaker || 'unknown'
+                            const text = entry.text || entry.message || ''
+                            if (text.trim()) {
+                              dialogueLines.push({
+                                speaker: speaker === 'user' || speaker === 'rep' ? 'You' : (agentName || 'Homeowner'),
+                                text: text.trim()
+                              })
+                            }
                           }
-                          return truncated + '...'
                         }
+                      }
+                      
+                      // Fallback to single transcript if no full transcript available
+                      if (dialogueLines.length === 0 && moment.transcript) {
+                        let transcriptText = moment.transcript.trim()
                         
-                        return transcriptText
-                      })()}"
-                    </p>
+                        // Try to detect if it contains speaker labels
+                        if (transcriptText.includes(':') && (transcriptText.includes('homeowner') || transcriptText.includes('rep') || transcriptText.includes('user'))) {
+                          // Split by lines and parse speaker labels
+                          const lines = transcriptText.split('\n').filter(l => l.trim())
+                          lines.forEach(line => {
+                            const colonIndex = line.indexOf(':')
+                            if (colonIndex > 0) {
+                              const speakerLabel = line.substring(0, colonIndex).trim().toLowerCase()
+                              const text = line.substring(colonIndex + 1).trim()
+                              if (text) {
+                                dialogueLines.push({
+                                  speaker: speakerLabel.includes('homeowner') 
+                                    ? (agentName || 'Homeowner')
+                                    : speakerLabel.includes('rep') || speakerLabel.includes('user')
+                                    ? 'You'
+                                    : speakerLabel,
+                                  text
+                                })
+                              }
+                            } else {
+                              dialogueLines.push({ speaker: 'Unknown', text: line.trim() })
+                            }
+                          })
+                        } else {
+                          // Single quote without speaker info - try to infer from context
+                          dialogueLines.push({
+                            speaker: moment.type === 'objection' ? (agentName || 'Homeowner') : 'You',
+                            text: transcriptText.replace(/^["']|["']$/g, '')
+                          })
+                        }
+                      }
+                      
+                      if (dialogueLines.length === 0) {
+                        return (
+                          <p className="text-base sm:text-lg text-gray-400 italic">
+                            No transcript available
+                          </p>
+                        )
+                      }
+                      
+                      return (
+                        <div className="space-y-3">
+                          {dialogueLines.map((line, idx) => {
+                            const isUser = line.speaker === 'You' || line.speaker.toLowerCase().includes('rep') || line.speaker.toLowerCase().includes('user')
+                            return (
+                              <div key={idx} className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={cn(
+                                    "text-xs sm:text-sm font-semibold px-2 py-0.5 rounded",
+                                    isUser 
+                                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                      : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                                  )}>
+                                    {line.speaker}
+                                  </span>
+                                </div>
+                                <p className={cn(
+                                  "text-base sm:text-lg leading-relaxed pl-4 border-l-2",
+                                  isUser 
+                                    ? "text-blue-200 border-blue-500/40"
+                                    : "text-purple-200 border-purple-500/40"
+                                )}>
+                                  "{line.text}"
+                                </p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })()}
                     {/* Success Indicator - Interest Level Change */}
                     {interestChange && interestChange > 0 && (
-                      <div className="mt-2 flex items-center gap-2 text-green-400 text-base sm:text-lg font-semibold">
+                      <div className="mt-3 flex items-center gap-2 text-green-400 text-base sm:text-lg font-semibold">
                         <span>📈</span>
                         <span>Interest Level: +{interestChange}% (They engaged!)</span>
                       </div>
@@ -316,7 +383,28 @@ export function CriticalMomentsTimeline({
                       <div className="flex-1">
                         <div className="text-base sm:text-lg font-semibold text-green-400 mb-2">What Worked</div>
                         <p className="text-base sm:text-lg text-gray-200 leading-relaxed">
-                          {moment.analysis?.whatWorked || 'This moment showed effective communication and engagement.'}
+                          {(() => {
+                            // Generate more specific feedback based on moment type and outcome
+                            if (moment.analysis?.whatWorked) {
+                              return moment.analysis.whatWorked
+                            }
+                            
+                            // Type-specific default feedback
+                            if (moment.type === 'objection' && moment.outcome === 'success') {
+                              return `You effectively addressed the ${agentName || 'homeowner'}'s concern by acknowledging their position and providing a thoughtful response. Your approach showed empathy and maintained the conversation flow.`
+                            }
+                            if (moment.type === 'close_attempt' && moment.outcome === 'success') {
+                              return `Your closing attempt was well-timed and natural. You created a clear path forward without being pushy, which helped move the conversation toward a decision.`
+                            }
+                            if (moment.type === 'rapport' && moment.outcome === 'success') {
+                              return `You built strong rapport by finding common ground and showing genuine interest. This connection helped establish trust and made the ${agentName || 'homeowner'} more receptive to your message.`
+                            }
+                            if (moment.type === 'discovery' && moment.outcome === 'success') {
+                              return `Your discovery questions uncovered important information about the ${agentName || 'homeowner'}'s needs and situation. This insight allowed you to tailor your approach effectively.`
+                            }
+                            
+                            return 'This moment showed effective communication and engagement. You maintained a professional yet personable tone that kept the conversation moving forward.'
+                          })()}
                         </p>
                       </div>
                     </div>

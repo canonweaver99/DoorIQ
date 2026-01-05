@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, MessageSquare, AlertTriangle, Book, Info, Lightbulb, ExternalLink, TrendingUp, CheckCircle2, XCircle } from 'lucide-react'
+import { Mic, MessageSquare, AlertTriangle, Book, Info, Lightbulb, ExternalLink, TrendingUp, CheckCircle2, XCircle, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProgressRing } from './ProgressRing'
 import { detectObjection as detectEnhancedObjection, detectTechnique as detectEnhancedTechnique, assessObjectionHandling } from '@/lib/trainer/enhancedPatternAnalyzer'
@@ -153,6 +153,128 @@ function detectObjection(text: string): { type: string; text: string } | null {
     }
   }
   return null
+}
+
+// Filler Words Card Component
+function FillerWordsCard({ transcript, voiceAnalysis }: { transcript?: Array<{ speaker: string; text: string; id?: string; timestamp?: Date | string }>, voiceAnalysis?: { totalFillerWords?: number; fillerWordsPerMinute?: number } }) {
+  const [showQuotes, setShowQuotes] = useState(false)
+  
+  // Calculate filler words from transcript or voiceAnalysis
+  let totalFillerWords = 0
+  const foundFillerWords = new Set<string>()
+  const fillerWordQuotes: string[] = []
+  
+  if (voiceAnalysis?.totalFillerWords !== undefined) {
+    totalFillerWords = voiceAnalysis.totalFillerWords
+  } else if (transcript && Array.isArray(transcript) && transcript.length > 0) {
+    const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm)\b/gi
+    const userEntries = transcript.filter((entry: any) => 
+      entry.speaker === 'user' || entry.speaker === 'rep'
+    )
+    
+    userEntries.forEach((entry: any) => {
+      const text = entry.text || ''
+      const matches = text.match(fillerPattern)
+      if (matches && matches.length > 0) {
+        matches.forEach((match: string) => foundFillerWords.add(match.toLowerCase()))
+        // Store the full quote if it contains filler words
+        if (text.trim()) {
+          fillerWordQuotes.push(text.trim())
+        }
+      }
+    })
+    
+    totalFillerWords = userEntries.reduce((sum: number, entry: any) => {
+      const text = entry.text || ''
+      const matches = text.match(fillerPattern)
+      return sum + (matches ? matches.length : 0)
+    }, 0)
+  }
+  
+  const fillerStatus = totalFillerWords <= 3
+    ? { label: 'Excellent ✓', color: 'text-emerald-400', borderColor: 'border-emerald-500/40', bgColor: 'bg-emerald-500/20' }
+    : totalFillerWords <= 6
+    ? { label: 'Good', color: 'text-green-400', borderColor: 'border-green-500/40', bgColor: 'bg-green-500/20' }
+    : { label: 'Needs work', color: 'text-amber-400', borderColor: 'border-amber-500/40', bgColor: 'bg-amber-500/20' }
+  
+  // Create display text with quoted filler words
+  const fillerWordsArray = Array.from(foundFillerWords).slice(0, 3)
+  const fillerWordsDisplay = fillerWordsArray.length > 0
+    ? `Words like ${fillerWordsArray.map(fw => `"${fw}"`).join(', ')}`
+    : 'Words like "um" and "uh"'
+  
+  return (
+    <div className="rounded-xl p-5 border-2 border-purple-500/40 bg-purple-500/20">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-3">
+            <MessageSquare className="w-7 h-7 text-purple-400" />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg font-semibold text-white font-space">Filler Words</span>
+                <MetricTooltip content="Filler words like 'um' and 'uh' can undermine your confidence. Target is less than 1 per minute for excellent performance.">
+                  <Info className="w-5 h-5 text-gray-400 hover:text-purple-400 transition-colors" />
+                </MetricTooltip>
+              </div>
+              <div className="text-base text-white font-sans font-medium">{fillerWordsDisplay}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <div className="text-4xl font-bold text-white mb-1 font-space">{totalFillerWords}</div>
+            <div className="text-lg text-white font-sans font-semibold">Total</div>
+          </div>
+          
+          <div className="text-right min-w-[140px]">
+            <div className={cn("text-xl font-bold mb-1 font-space", fillerStatus.color)}>{fillerStatus.label}</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Dropdown for filler word quotes */}
+      {fillerWordQuotes.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-purple-500/20">
+          <button
+            onClick={() => setShowQuotes(!showQuotes)}
+            className="flex items-center justify-between w-full text-left text-sm text-white/80 hover:text-white transition-colors"
+          >
+            <span className="font-medium">
+              {showQuotes ? 'Hide' : 'Show'} quotes with filler words ({fillerWordQuotes.length})
+            </span>
+            <ChevronDown className={cn(
+              "w-4 h-4 transition-transform",
+              showQuotes && "rotate-180"
+            )} />
+          </button>
+          
+          <AnimatePresence>
+            {showQuotes && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                  {fillerWordQuotes.map((quote, index) => (
+                    <div
+                      key={index}
+                      className="text-sm text-white/70 font-sans bg-white/5 rounded-lg p-3 border border-white/10"
+                    >
+                      "{quote}"
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcript, voiceAnalysis }: InstantInsightsGridProps) {
@@ -435,102 +557,7 @@ export function InstantInsightsGrid({ instantMetrics, userName = 'You', transcri
         </div>
         
         {/* Filler Words - Horizontal Card */}
-        {(() => {
-          // Calculate filler words from transcript or voiceAnalysis
-          let totalFillerWords = 0
-          let fillerWordsPerMinute = 0
-          const foundFillerWords = new Set<string>()
-          
-          if (voiceAnalysis?.totalFillerWords !== undefined) {
-            totalFillerWords = voiceAnalysis.totalFillerWords
-            fillerWordsPerMinute = voiceAnalysis.fillerWordsPerMinute || 0
-          } else if (transcript && Array.isArray(transcript) && transcript.length > 0) {
-            const fillerPattern = /\b(um|uhh?|uh|erm|err|hmm)\b/gi
-            const userEntries = transcript.filter((entry: any) => 
-              entry.speaker === 'user' || entry.speaker === 'rep'
-            )
-            
-            totalFillerWords = userEntries.reduce((sum: number, entry: any) => {
-              const text = entry.text || ''
-              const matches = text.match(fillerPattern)
-              if (matches) {
-                matches.forEach((match: string) => foundFillerWords.add(match.toLowerCase()))
-              }
-              return sum + (matches ? matches.length : 0)
-            }, 0)
-            
-            // Calculate duration for per-minute calculation
-            try {
-              const firstEntry = userEntries[0]
-              const lastEntry = userEntries[userEntries.length - 1]
-              const firstTime = firstEntry.timestamp 
-                ? (firstEntry.timestamp instanceof Date 
-                    ? firstEntry.timestamp.getTime()
-                    : typeof firstEntry.timestamp === 'string'
-                      ? new Date(firstEntry.timestamp).getTime()
-                      : Date.now())
-                : Date.now()
-              const lastTime = lastEntry.timestamp
-                ? (lastEntry.timestamp instanceof Date
-                    ? lastEntry.timestamp.getTime()
-                    : typeof lastEntry.timestamp === 'string'
-                      ? new Date(lastEntry.timestamp).getTime()
-                      : Date.now())
-                : Date.now()
-              const durationMinutes = Math.max(0.1, (lastTime - firstTime) / 60000)
-              fillerWordsPerMinute = durationMinutes > 0 ? (totalFillerWords / durationMinutes) : 0
-            } catch (e) {
-              fillerWordsPerMinute = 0
-            }
-          }
-          
-          const fillerStatus = fillerWordsPerMinute < 1
-            ? { label: 'Excellent ✓', color: 'text-emerald-400', borderColor: 'border-emerald-500/40', bgColor: 'bg-emerald-500/20' }
-            : fillerWordsPerMinute < 2
-            ? { label: 'Good', color: 'text-green-400', borderColor: 'border-green-500/40', bgColor: 'bg-green-500/20' }
-            : { label: 'Needs work', color: 'text-amber-400', borderColor: 'border-amber-500/40', bgColor: 'bg-amber-500/20' }
-          
-          // Create display text with quoted filler words
-          const fillerWordsArray = Array.from(foundFillerWords).slice(0, 3)
-          const fillerWordsDisplay = fillerWordsArray.length > 0
-            ? `Words like ${fillerWordsArray.map(fw => `"${fw}"`).join(', ')}`
-            : 'Words like "um" and "uh"'
-          
-          return (
-            <div className="rounded-xl p-5 border-2 border-purple-500/40 bg-purple-500/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="flex items-center gap-3">
-                    <MessageSquare className="w-7 h-7 text-purple-400" />
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg font-semibold text-white font-space">Filler Words</span>
-                        <MetricTooltip content="Filler words like 'um' and 'uh' can undermine your confidence. Target is less than 1 per minute for excellent performance.">
-                          <Info className="w-5 h-5 text-gray-400 hover:text-purple-400 transition-colors" />
-                        </MetricTooltip>
-                      </div>
-                      <div className="text-base text-white font-sans font-medium">{fillerWordsDisplay}</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <div className="text-4xl font-bold text-white mb-1 font-space">{totalFillerWords}</div>
-                    <div className="text-lg text-white font-sans font-semibold">Total</div>
-                  </div>
-                  
-                  <div className="text-right min-w-[140px]">
-                    <div className={cn("text-xl font-bold mb-1 font-space", fillerStatus.color)}>{fillerStatus.label}</div>
-                    <div className="text-base text-white font-sans font-medium">
-                      {fillerWordsPerMinute.toFixed(1)}/min
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })()}
+        <FillerWordsCard transcript={transcript} voiceAnalysis={voiceAnalysis} />
         
         {/* Time-Talk Ratio - Horizontal Card - Fixed Indigo Color */}
         <div className="rounded-xl p-5 border-2 border-indigo-500/40 bg-indigo-500/20">
