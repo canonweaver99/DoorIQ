@@ -587,7 +587,7 @@ export default function AnalyticsPage() {
   return (
     <AnalyticsErrorBoundary>
       <div className="min-h-screen bg-black">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-6 sm:pt-8 lg:pt-20 pb-8 sm:pb-10 lg:pb-12">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 pt-8 sm:pt-12 lg:pt-24 pb-8 sm:pb-10 lg:pb-12">
         {/* Tabs */}
         <div className="mb-6 sm:mb-8 flex items-center gap-2 border-b border-slate-800">
           <button
