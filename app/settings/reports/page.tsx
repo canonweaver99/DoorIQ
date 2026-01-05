@@ -104,7 +104,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-[#00d4aa]" />
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     )
   }
@@ -113,7 +113,7 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-8">
         <div className="flex items-center gap-3 mb-4">
-          <Download className="w-6 h-6 text-[#00d4aa]" />
+          <Download className="w-6 h-6 text-white" />
           <h2 className="text-2xl font-semibold text-white font-space">Download Reports</h2>
         </div>
         <p className="text-sm text-[#a0a0a0] font-sans mb-6">

@@ -172,18 +172,18 @@ function TrainerPageContent() {
   const restartFnRef = useRef<(() => Promise<void>) | null>(null)
 
   // Coach mode state - ARCHIVED: Live coaching feature temporarily disabled
-  // const [coachModeEnabled, setCoachModeEnabled] = useState(true) // Default enabled
-  // const [coachSuggestion, setCoachSuggestion] = useState<{
-  //   suggestedLine: string
-  //   explanation?: string
-  //   reasoning?: string
-  //   confidence?: 'high' | 'medium' | 'low'
-  //   tacticalNote?: string
-  //   alternatives?: string[]
-  //   isAdapted?: boolean
-  // } | null>(null)
-  // const [coachSuggestionLoading, setCoachSuggestionLoading] = useState(false)
-  // const lastHomeownerTextRef = useRef<string>('') // Track last homeowner text to avoid duplicate requests
+  const [coachModeEnabled, setCoachModeEnabled] = useState(false) // Disabled by default (archived feature)
+  const [coachSuggestion, setCoachSuggestion] = useState<{
+    suggestedLine: string
+    explanation?: string
+    reasoning?: string
+    confidence?: 'high' | 'medium' | 'low'
+    tacticalNote?: string
+    alternatives?: string[]
+    isAdapted?: boolean
+  } | null>(null)
+  const [coachSuggestionLoading, setCoachSuggestionLoading] = useState(false)
+  const lastHomeownerTextRef = useRef<string>('') // Track last homeowner text to avoid duplicate requests
 
   // Shared state for RotatingCardView components to prevent duplicate cards
   const [leftCardView, setLeftCardView] = useState<'default' | 'sentiment' | 'talkTime' | 'speechAnalysis' | 'objections' | 'techniques'>('default')

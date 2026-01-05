@@ -107,11 +107,11 @@ export function ReportsList({ reports, userRole }: ReportsListProps) {
         return (
           <div
             key={report.id}
-            className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-6 hover:border-[#00d4aa]/30 transition-all"
+            className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-6 hover:border-white/30 transition-all"
           >
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
-                <Icon className="w-6 h-6 text-[#00d4aa]" />
+                <Icon className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-lg font-semibold text-white mb-1 font-space">
@@ -152,7 +152,7 @@ export function ReportsList({ reports, userRole }: ReportsListProps) {
                   <Button
                     onClick={() => handleDownload(report, currentFormat)}
                     disabled={isDownloading}
-                    className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium font-sans"
+                    className="bg-white hover:bg-gray-200 text-black font-medium font-sans"
                     size="sm"
                   >
                     {isDownloading ? (
