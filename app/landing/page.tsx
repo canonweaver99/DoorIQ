@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, useInView, useAnimation } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 // Code split heavy components to reduce initial bundle size
 import dynamic from 'next/dynamic';
 
@@ -112,10 +112,19 @@ function AnimatedCounter({ end, suffix = "", prefix = "" }: { end: number; suffi
 }
 
 // Navigation Component
-function Navigation() {
+export function Navigation() {
   const isMobile = useIsMobile();
+  const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+
+  useEffect(() => {
+    // Set active section to "pricing" if on pricing page
+    if (pathname === '/landing/pricing') {
+      setActiveSection('pricing');
+    }
+  }, [pathname]);
 
   useEffect(() => {
     // Throttle scroll handler for better performance
@@ -127,7 +136,8 @@ function Navigation() {
           setScrolled(window.scrollY > 20);
           
           // Only update active section on desktop (less important on mobile)
-          if (!isMobile) {
+          // Skip if on pricing page
+          if (!isMobile && pathname !== '/landing/pricing') {
             const sections = ["hero", "problem", "solution", "features", "stats", "testimonials", "cta"];
             const scrollPosition = window.scrollY + 100;
             
@@ -152,9 +162,29 @@ function Navigation() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll(); // Initial check
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isMobile]);
+  }, [isMobile, pathname]);
 
   const scrollToSection = (sectionId: string) => {
+    // If we're on the pricing page, navigate to landing first
+    if (pathname === '/landing/pricing') {
+      router.push(`/landing#${sectionId}`);
+      // Wait for navigation, then scroll
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const offset = 80;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - offset;
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+          });
+        }
+      }, 100);
+      return;
+    }
+
+    // Normal scroll behavior when already on landing page
     const element = document.getElementById(sectionId);
     if (element) {
       const offset = 80; // Account for fixed header
@@ -168,11 +198,12 @@ function Navigation() {
     }
   };
 
-  const navItems = [
+  const navItems: Array<{ id: string; label: string; href?: string }> = [
     { id: "features", label: "Features" },
     { id: "solution", label: "How It Works" },
     { id: "stats", label: "Results" },
     { id: "testimonials", label: "Testimonials" },
+    { id: "pricing", label: "Pricing", href: "/landing/pricing" },
   ];
 
   return (
@@ -198,19 +229,58 @@ function Navigation() {
 
           {/* Navigation Tabs - Hidden on mobile */}
           <div className="hidden lg:flex items-center gap-2">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className={`px-4 xl:px-5 py-2 xl:py-2.5 text-sm xl:text-base font-medium tracking-tight transition-all rounded-md ${
-                  activeSection === item.id
-                    ? "text-white bg-white/10"
-                    : "text-white/80 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+            {navItems.map((item) => {
+              if (item.href) {
+                // External link (Pricing)
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={`px-4 xl:px-5 py-2 xl:py-2.5 text-sm xl:text-base font-medium tracking-tight transition-all rounded-md ${
+                      activeSection === item.id
+                        ? "text-white bg-white/10"
+                        : "text-white/80 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              }
+              // Scroll to section - handle navigation from pricing page
+              if (pathname === '/landing/pricing') {
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/landing#${item.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      scrollToSection(item.id);
+                    }}
+                    className={`px-4 xl:px-5 py-2 xl:py-2.5 text-sm xl:text-base font-medium tracking-tight transition-all rounded-md ${
+                      activeSection === item.id
+                        ? "text-white bg-white/10"
+                        : "text-white/80 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              }
+              // Normal button for landing page
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  className={`px-4 xl:px-5 py-2 xl:py-2.5 text-sm xl:text-base font-medium tracking-tight transition-all rounded-md ${
+                    activeSection === item.id
+                      ? "text-white bg-white/10"
+                      : "text-white/80 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
           </div>
 
           {/* CTA Buttons */}
@@ -1283,14 +1353,14 @@ function CTASection() {
         className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent rounded-full blur-[120px]"
       />
 
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 text-center">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
           {/* Headline */}
-          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4 text-center">
             Ready to
             <br />
             Transform
@@ -1299,17 +1369,85 @@ function CTASection() {
           </h2>
 
           {/* Description */}
-          <p className="font-sans text-white/80 mt-4 sm:mt-6 text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed font-light px-4">
+          <p className="font-sans text-white/80 mt-4 sm:mt-6 text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed font-light px-4 text-center">
             Join 500+ companies training reps to dominate their markets.
           </p>
 
-          {/* CTA Button */}
-          <div className="mt-6 sm:mt-8">
+          {/* Pricing Preview Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="mt-8 sm:mt-10 md:mt-12 mb-8"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
+              {/* Starter Plan */}
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 sm:p-6">
+                <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2">Starter</h3>
+                <div className="mb-3">
+                  <span className="text-2xl sm:text-3xl font-bold text-white">$99</span>
+                  <span className="text-sm text-white/60 ml-1">/rep/month</span>
+                </div>
+                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">1-20 reps</p>
+                <ul className="text-xs text-white/60 font-sans space-y-1">
+                  <li>• Unlimited practice sessions</li>
+                  <li>• All 12 AI training agents</li>
+                  <li>• Basic analytics</li>
+                </ul>
+              </div>
+
+              {/* Team Plan - Most Popular */}
+              <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-sm border-2 border-indigo-500/30 rounded-lg p-4 sm:p-6 relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    Most Popular
+                  </span>
+                </div>
+                <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2 mt-2">Team</h3>
+                <div className="mb-3">
+                  <span className="text-2xl sm:text-3xl font-bold text-white">$69</span>
+                  <span className="text-sm text-white/60 ml-1">/rep/month</span>
+                </div>
+                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">21-100 reps</p>
+                <ul className="text-xs text-white/60 font-sans space-y-1">
+                  <li>• Everything in Starter</li>
+                  <li>• Advanced analytics</li>
+                  <li>• Custom playbooks</li>
+                </ul>
+              </div>
+
+              {/* Enterprise Plan */}
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 sm:p-6">
+                <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2">Enterprise</h3>
+                <div className="mb-3">
+                  <span className="text-2xl sm:text-3xl font-bold text-white">$49</span>
+                  <span className="text-sm text-white/60 ml-1">/rep/month</span>
+                </div>
+                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">100+ reps</p>
+                <ul className="text-xs text-white/60 font-sans space-y-1">
+                  <li>• Everything in Team</li>
+                  <li>• Custom AI personas</li>
+                  <li>• Dedicated support</li>
+                </ul>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* CTA Buttons - Side by Side */}
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
             <Link
               href="/book-demo"
-              className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-gray-200 text-gray-900 font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-gray-300 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-gray-200 text-gray-900 font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:bg-gray-300 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
             >
               Schedule a Demo
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+            <Link
+              href="/landing/pricing"
+              className="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 bg-transparent border-2 border-white/20 text-white font-medium rounded-md text-sm sm:text-base md:text-lg tracking-tight hover:border-white/40 hover:bg-white/5 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
+            >
+              See Full Pricing
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
@@ -1555,6 +1693,26 @@ function LandingFooter() {
 
 // Main Landing Page
 export default function LandingPage() {
+  useEffect(() => {
+    // Handle hash navigation when landing on page with hash
+    const hash = window.location.hash;
+    if (hash) {
+      const sectionId = hash.substring(1); // Remove the #
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const offset = 80;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - offset;
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth"
+          });
+        }
+      }, 100);
+    }
+  }, []);
+
   return (
     <main className="bg-black min-h-screen text-white relative">
       <Navigation />

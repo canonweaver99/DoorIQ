@@ -209,6 +209,7 @@ interface PricingPlan {
   repPrice?: number;
   yearlyRepPrice?: number;
   minReps?: number;
+  maxReps?: number;
 }
 
 interface PricingSectionProps {
@@ -218,8 +219,48 @@ interface PricingSectionProps {
   hideToggle?: boolean;
 }
 
-// Context for state management (simplified - no monthly/yearly toggle)
-const PricingContext = createContext<{}>({});
+// Context for state management
+interface PricingContextType {
+  billingPeriod: 'monthly' | 'annual';
+  setBillingPeriod: (period: 'monthly' | 'annual') => void;
+}
+
+const PricingContext = createContext<PricingContextType>({
+  billingPeriod: 'monthly',
+  setBillingPeriod: () => {},
+});
+
+// Pricing Toggle Component
+function PricingToggle({ hideToggle }: { hideToggle?: boolean }) {
+  const { billingPeriod, setBillingPeriod } = useContext(PricingContext);
+  
+  if (hideToggle) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-4 mb-6">
+      <span className={`text-sm font-medium transition-colors ${billingPeriod === 'monthly' ? 'text-white' : 'text-white/60'}`}>
+        Monthly
+      </span>
+      <button
+        onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'annual' : 'monthly')}
+        className="relative inline-flex h-6 w-11 items-center rounded-full bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+        role="switch"
+        aria-checked={billingPeriod === 'annual'}
+        aria-label="Toggle billing period"
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            billingPeriod === 'annual' ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+      <span className={`text-sm font-medium transition-colors ${billingPeriod === 'annual' ? 'text-white' : 'text-white/60'}`}>
+        Annual
+        <span className="ml-2 text-xs text-green-400">Save 20%</span>
+      </span>
+    </div>
+  );
+}
 
 // Main PricingSection Component
 export function PricingSection({
@@ -229,6 +270,7 @@ export function PricingSection({
   hideToggle = false,
 }: PricingSectionProps) {
   const [selectedPlanIndex, setSelectedPlanIndex] = useState<number | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const containerRef = useRef<HTMLDivElement>(null!) as React.RefObject<HTMLDivElement>;
   const [mousePosition, setMousePosition] = useState<{
     x: number | null;
@@ -245,12 +287,12 @@ export function PricingSection({
   const maxWidth = plans.length === 2 ? 'max-w-4xl' : 'max-w-6xl';
 
   return (
-    <PricingContext.Provider value={{}}>
+    <PricingContext.Provider value={{ billingPeriod, setBillingPeriod }}>
       <motion.div
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePosition({ x: null, y: null })}
-        className="relative w-full min-h-screen bg-background dark:bg-neutral-950 pt-4 sm:pt-6 2xl:pt-16 pb-12 sm:pb-16 flex items-center 2xl:items-start"
+        className="relative w-full bg-background dark:bg-neutral-950 pt-0 pb-12 sm:pb-16 flex items-center 2xl:items-start"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, ease: "easeOut" }}
@@ -260,15 +302,25 @@ export function PricingSection({
           containerRef={containerRef}
         />
         <div className="relative z-10 container-responsive">
-          <div className={`${maxWidth} mx-auto text-center space-y-1 mb-3`}>
-            <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl lg:text-5xl text-neutral-900 dark:text-white">
-              {title}
-            </h2>
-            <p className="text-muted-foreground text-xs sm:text-sm lg:text-base whitespace-pre-line">
-              {description}
-            </p>
+          {title && (
+            <div className={`${maxWidth} mx-auto text-center space-y-1 mb-3 pt-24 pb-4`}>
+              <h2 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight mb-4 text-white text-center">
+                {title.split(' ').slice(0, -1).join(' ')}{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+                  {title.split(' ').slice(-1)[0]}
+                </span>
+              </h2>
+              {description && (
+                <p className="font-sans text-lg sm:text-xl text-white/80 mx-auto whitespace-nowrap text-center">
+                  {description}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="mb-8 sm:mb-10 md:mb-12">
+            <PricingToggle hideToggle={hideToggle} />
           </div>
-          <div className={`mt-6 sm:mt-8 grid grid-cols-1 ${gridCols} items-stretch gap-4 lg:gap-6 justify-center`}>
+          <div className={`grid grid-cols-1 ${gridCols} items-stretch gap-4 lg:gap-6 justify-center`}>
             {plans.map((plan, index) => (
               <div key={`card-wrapper-${index}`} className={plans.length === 2 ? "origin-top" : "origin-top scale-[0.855]"}>
                 <PricingCard 
@@ -288,8 +340,6 @@ export function PricingSection({
   );
 }
 
-// Pricing Toggle Component - Removed (annual-only pricing)
-
 // Pricing Card Component
 function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: { 
   plan: PricingPlan; 
@@ -298,6 +348,7 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
   onSelect: () => void;
   isCenterCard?: boolean;
 }) {
+  const { billingPeriod } = useContext(PricingContext);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const minReps = plan.minReps || 0;
   const [repCount, setRepCount] = useState(minReps);
@@ -308,20 +359,53 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
     // Confetti is triggered on successful return, not here
   };
 
-  // Calculate total price for Manager plan with reps (annual-only)
+  // Calculate total price based on billing period
   const calculateTotalPrice = () => {
+    const isAnnual = billingPeriod === 'annual';
     // Check if price is a string (e.g., "Contact Sales")
-    const priceValue = plan.yearlyPrice || plan.price;
-    if (isNaN(Number(priceValue))) {
-      return priceValue;
+    const basePrice = Number(plan.price);
+    if (isNaN(basePrice)) {
+      return plan.price;
     }
     
+    // Apply 20% discount for annual billing
+    const monthlyPrice = basePrice;
+    const annualPrice = isAnnual ? monthlyPrice * 0.8 : monthlyPrice; // 20% discount
+    
     if (!plan.hasRepSelector) {
-      return Number(priceValue);
+      return Math.round(annualPrice);
     }
-    const base = plan.yearlyBasePrice || plan.basePrice || 0;
-    const perRep = plan.yearlyRepPrice || plan.repPrice || 0;
-    return base + (repCount * perRep);
+    
+    // For rep selector plans, calculate based on billing period
+    if (isAnnual) {
+      const base = plan.yearlyBasePrice || plan.basePrice || 0;
+      const perRep = plan.yearlyRepPrice || plan.repPrice || 0;
+      const total = base + (repCount * perRep);
+      // Apply 20% annual discount
+      return Math.round(total * 0.8);
+    } else {
+      const base = plan.basePrice || 0;
+      const perRep = plan.repPrice || 0;
+      return Math.round(base + (repCount * perRep));
+    }
+  };
+
+  // Store calculated price in state to ensure NumberFlow animates on change
+  const calculatedPrice = calculateTotalPrice();
+  const [displayPrice, setDisplayPrice] = useState(calculatedPrice);
+  
+  // Calculate price per rep for display (always shows base price, discount applied to total)
+  const getPricePerRep = () => {
+    const basePrice = Number(plan.price);
+    return billingPeriod === 'annual' ? Math.round(basePrice * 0.8) : basePrice;
+  };
+
+  useEffect(() => {
+    setDisplayPrice(calculatedPrice);
+  }, [calculatedPrice, billingPeriod, repCount]);
+
+  const getPeriod = () => {
+    return billingPeriod === 'annual' ? 'year' : 'month';
   };
 
   const handleCardClick = () => {
@@ -331,13 +415,17 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
       clearTimeout(tapTimeoutRef.current);
     }
 
-    if (tapCount === 1) {
+      if (tapCount === 1) {
       // Double tap detected
       const hasDualHandlers = plan.onClickMonthly || plan.onClickYearly;
       if (hasDualHandlers) {
         handleCtaClick();
-        // Always use yearly handler (or fallback to onClick)
-        (plan.onClickYearly || plan.onClick || (() => {}))();
+        // Use appropriate handler based on billing period
+        if (billingPeriod === 'annual') {
+          (plan.onClickYearly || plan.onClick || (() => {}))();
+        } else {
+          (plan.onClickMonthly || plan.onClick || (() => {}))();
+        }
       } else if (plan.onClick) {
         handleCtaClick();
         plan.onClick();
@@ -398,8 +486,8 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
         </div>
       )}
       <div className="flex-1 flex flex-col text-center">
-        <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">{plan.name}</h3>
-        <p className="mt-1.5 text-xs sm:text-sm font-medium text-slate-400">
+        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1">{plan.name}</h3>
+        <p className="mt-1.5 text-sm sm:text-base font-medium text-slate-400">
           {plan.description}
         </p>
         <div className="mt-3 flex flex-col items-center gap-1">
@@ -408,23 +496,30 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
               <div className="flex items-baseline justify-center gap-x-1">
                 <span className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
                   <NumberFlow
-                    value={calculateTotalPrice() as number}
+                    value={displayPrice as number}
                     format={{
                       style: "currency",
                       currency: "USD",
                       minimumFractionDigits: 0,
                     }}
                     className="font-variant-numeric: tabular-nums"
+                    duration={800}
+                    easing="easeOut"
                   />
                 </span>
                 <span className="text-xs sm:text-sm font-semibold leading-6 tracking-wide text-slate-400">
-                  / {plan.period}
+                  /rep/{getPeriod()}
                 </span>
               </div>
-              {plan.yearlyTotal && (
-                <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-                  ${plan.yearlyTotal} / year
-                </p>
+              {billingPeriod === 'annual' && (
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs sm:text-sm font-medium text-slate-500 line-through">
+                    ${Number(plan.price).toLocaleString()}/rep/month
+                  </span>
+                  <span className="text-xs sm:text-sm font-medium text-green-400">
+                    Save 20%
+                  </span>
+                </div>
               )}
             </>
           ) : (
@@ -434,11 +529,6 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
           )}
         </div>
         
-        {typeof calculateTotalPrice() === 'number' && (
-          <p className="text-sm font-medium text-slate-400 mt-2">
-            Billed Annually
-          </p>
-        )}
 
         {/* Rep Selector for Manager Plan */}
         {plan.hasRepSelector && (
@@ -475,7 +565,7 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
             <p className="text-xs text-muted-foreground mt-1.5">
               {repCount > minReps ? (
                 <>
-                  Base: ${plan.yearlyBasePrice || plan.basePrice || 0} + {repCount} rep{repCount !== 1 ? 's' : ''} × ${plan.yearlyRepPrice || plan.repPrice || 0}
+                  Base: ${billingPeriod === 'annual' ? (plan.yearlyBasePrice || plan.basePrice || 0) : (plan.basePrice || 0)} + {repCount} rep{repCount !== 1 ? 's' : ''} × ${billingPeriod === 'annual' ? (plan.yearlyRepPrice || plan.repPrice || 0) : (plan.repPrice || 0)}
                 </>
               ) : (
                 <>
@@ -508,8 +598,12 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
                 e.stopPropagation();
                 handleCtaClick();
                 if (plan.onClickMonthly || plan.onClickYearly) {
-                  // Always use yearly handler (or fallback to onClick)
-                  plan.onClickYearly?.() || plan.onClick?.();
+                  // Use appropriate handler based on billing period
+                  if (billingPeriod === 'annual') {
+                    plan.onClickYearly?.() || plan.onClick?.();
+                  } else {
+                    plan.onClickMonthly?.() || plan.onClick?.();
+                  }
                 } else {
                   plan.onClick?.();
                 }

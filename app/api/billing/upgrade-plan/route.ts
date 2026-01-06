@@ -11,7 +11,7 @@ function getStripeClient() {
     return null
   }
   return new Stripe(stripeKey, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: '2025-09-30.clover',
   })
 }
 
@@ -31,7 +31,13 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!userData || (userData.role !== 'manager' && userData.role !== 'admin')) {
+    // Type assertion for user data
+    const userDataTyped = userData as {
+      organization_id: string | null
+      role: string | null
+    } | null
+
+    if (!userDataTyped || (userDataTyped.role !== 'manager' && userDataTyped.role !== 'admin')) {
       return NextResponse.json(
         { error: 'Only managers can upgrade plans' },
         { status: 403 }
@@ -52,7 +58,7 @@ export async function POST(request: NextRequest) {
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('*')
-      .eq('id', userData.organization_id)
+      .eq('id', userDataTyped.organization_id!)
       .single()
 
     if (orgError || !org) {
@@ -62,15 +68,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Type assertion for organization data
+    const orgData = org as {
+      id: string
+      plan_tier: string | null
+      seat_limit: number | null
+      stripe_customer_id: string | null
+    }
+
     // Check if upgrade is valid
-    if (org.plan_tier === 'enterprise') {
+    if (orgData.plan_tier === 'enterprise') {
       return NextResponse.json(
         { error: 'Already on Enterprise plan' },
         { status: 400 }
       )
     }
 
-    if (org.plan_tier === 'team' && targetTier === 'starter') {
+    if (orgData.plan_tier === 'team' && targetTier === 'starter') {
       return NextResponse.json(
         { error: 'Cannot downgrade to Starter plan. Use downgrade-plan endpoint.' },
         { status: 400 }
@@ -78,14 +92,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check seat count requirements
-    if (targetTier === 'team' && org.seat_limit < 21) {
+    if (targetTier === 'team' && (orgData.seat_limit || 0) < 21) {
       return NextResponse.json(
         { error: 'Team plan requires at least 21 seats. Please add seats first.' },
         { status: 400 }
       )
     }
 
-    if (targetTier === 'enterprise' && org.seat_limit < 100) {
+    if (targetTier === 'enterprise' && (orgData.seat_limit || 0) < 100) {
       return NextResponse.json(
         { error: 'Enterprise plan requires at least 100 seats. Please add seats first.' },
         { status: 400 }
@@ -93,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get Stripe customer
-    if (!org.stripe_customer_id) {
+    if (!orgData.stripe_customer_id) {
       return NextResponse.json(
         { error: 'No Stripe customer found' },
         { status: 400 }
@@ -120,28 +134,28 @@ export async function POST(request: NextRequest) {
       )
     }
     const session = await stripe.checkout.sessions.create({
-      customer: org.stripe_customer_id,
+      customer: orgData.stripe_customer_id,
       mode: 'subscription',
       line_items: [
         {
           price: priceId,
-          quantity: org.seat_limit,
+          quantity: orgData.seat_limit || 1,
         },
       ],
       subscription_data: {
         metadata: {
           plan_type: targetTier,
           billing_period: billingInterval,
-          organization_id: org.id,
+          organization_id: orgData.id,
           supabase_user_id: user.id,
-          upgrade_from: org.plan_tier || 'starter',
+          upgrade_from: orgData.plan_tier || 'starter',
         },
       },
       metadata: {
         plan_type: targetTier,
         billing_period: billingInterval,
-        organization_id: org.id,
-        upgrade_from: org.plan_tier || 'starter',
+        organization_id: orgData.id,
+        upgrade_from: orgData.plan_tier || 'starter',
       },
       success_url: `${origin}/settings/billing?upgrade=success`,
       cancel_url: `${origin}/settings/billing?upgrade=canceled`,

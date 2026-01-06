@@ -7,11 +7,12 @@ import { Suspense } from "react";
 export function ConditionalHeader() {
   const pathname = usePathname();
   const isLandingPage = pathname === "/landing";
+  const isLandingPricingPage = pathname === "/landing/pricing";
   const isFeedbackPage = pathname?.startsWith("/trainer/feedback/");
   const isGradingPage = pathname?.startsWith("/trainer/loading/");
   const isTrainerPage = pathname === "/trainer";
 
-  if (isLandingPage || isFeedbackPage || isGradingPage || isTrainerPage) {
+  if (isLandingPage || isLandingPricingPage || isFeedbackPage || isGradingPage || isTrainerPage) {
     return null;
   }
 

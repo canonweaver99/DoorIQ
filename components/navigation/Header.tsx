@@ -38,6 +38,7 @@ import {
   Info,
   MessageSquare,
   Calendar,
+  Tag,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
@@ -283,6 +284,11 @@ function HeaderContent() {
       { name: 'Home', href: isSignedIn ? '/home' : '/landing', icon: Home },
       { name: 'Practice', href: '/trainer/select-homeowner', icon: Mic },
     ]
+
+    // Pricing - Show only for non-signed-in users
+    if (!isSignedIn) {
+      navItems.push({ name: 'Pricing', href: '/landing/pricing', icon: Tag })
+    }
 
     // Sessions - Always show for signed-in users
     if (isSignedIn) {

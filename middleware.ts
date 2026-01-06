@@ -14,11 +14,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Block access to pricing page - redirect to home
+  // Pricing page is now accessible - removed redirect block
   const pathname = request.nextUrl.pathname
-  if (pathname === '/pricing' || pathname.startsWith('/pricing/')) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
 
   // Auth temporarily disabled; allow all routes to pass through
   const response = NextResponse.next()
@@ -46,7 +43,7 @@ export async function middleware(request: NextRequest) {
   }
   
   // Add preconnect hints for external resources on critical pages
-  if (pathname === '/' || pathname === '/home' || pathname === '/dashboard' || pathname.startsWith('/pricing')) {
+  if (pathname === '/' || pathname === '/home' || pathname === '/dashboard' || pathname.startsWith('/landing/pricing')) {
     const linkHeaders = [
       '</fonts.googleapis.com>; rel=preconnect',
       '</fonts.gstatic.com>; rel=preconnect; crossorigin',
