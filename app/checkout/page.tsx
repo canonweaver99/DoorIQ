@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,7 +9,7 @@ import { Navigation } from '@/app/landing/page'
 import { ArrowLeft, CreditCard, Building2, User, Mail, Phone, Users } from 'lucide-react'
 import Link from 'next/link'
 
-export default function CheckoutPage() {
+function CheckoutForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialPlan = searchParams.get('plan') || 'starter'
@@ -431,6 +431,20 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-white/70">Loading checkout...</p>
+        </div>
+      </div>
+    }>
+      <CheckoutForm />
+    </Suspense>
   )
 }
 
