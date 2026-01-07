@@ -39,6 +39,8 @@ function CheckoutForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(billing === 'annual' ? 'annual' : 'monthly')
 
   // Auto-detect plan tier based on rep count
@@ -112,6 +114,7 @@ function CheckoutForm() {
       return
     }
 
+    // Show confirmation first
     setIsSubmitting(true)
     setErrors({})
 
@@ -139,15 +142,28 @@ function CheckoutForm() {
         throw new Error(data.error || 'Failed to create checkout session')
       }
 
-      // Redirect to Stripe Checkout
+      // Store checkout URL and show confirmation
       if (data.url) {
-        window.location.href = data.url
+        setCheckoutUrl(data.url)
+        setShowConfirmation(true)
+        setIsSubmitting(false)
       }
     } catch (error: any) {
       console.error('Error creating checkout session:', error)
       setErrors({ submit: error.message || 'Failed to process checkout. Please try again.' })
       setIsSubmitting(false)
     }
+  }
+
+  const handleConfirmPayment = () => {
+    if (checkoutUrl) {
+      window.location.href = checkoutUrl
+    }
+  }
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false)
+    setCheckoutUrl(null)
   }
 
   return (
@@ -299,7 +315,7 @@ function CheckoutForm() {
                   disabled={isSubmitting}
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 text-base mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Processing...' : 'Complete Purchase'}
+                  {isSubmitting ? 'Preparing Checkout...' : 'Continue to Payment'}
                 </Button>
               </form>
             </div>
@@ -430,6 +446,57 @@ function CheckoutForm() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-6 sm:p-8 max-w-md w-full">
+            <h2 className="text-2xl font-space font-bold text-white mb-4">Confirm Your Purchase</h2>
+            <p className="text-white/80 font-sans mb-6">
+              You're about to proceed to secure payment processing. Please review your order details:
+            </p>
+            
+            <div className="bg-white/5 rounded-lg p-4 mb-6 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-white/70 font-sans">Plan:</span>
+                <span className="text-white font-semibold">{selectedPlan.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/70 font-sans">Reps:</span>
+                <span className="text-white font-semibold">{repCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/70 font-sans">Billing:</span>
+                <span className="text-white font-semibold capitalize">{billingPeriod}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-white/10">
+                <span className="text-white font-semibold">Total:</span>
+                <span className="text-white font-bold text-lg">
+                  {billingPeriod === 'annual' 
+                    ? `$${totalAnnual.toLocaleString()}/year`
+                    : `$${totalMonthly.toLocaleString()}/month`
+                  }
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={handleCancelConfirmation}
+                className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmPayment}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              >
+                Proceed to Payment
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
