@@ -1293,10 +1293,10 @@ function HeaderContent() {
                   </div>
 
                   <div className="px-[19px]">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-[14px]">
+                    <div className="rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 p-[14px]">
                       <div className="flex items-center gap-[12px]">
                         {profileAvatar && !avatarError ? (
-                          <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border border-white/20">
+                          <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border-2 border-purple-500/40 ring-2 ring-purple-500/20">
                             <img 
                               src={profileAvatar} 
                               alt={profileName}
@@ -1308,7 +1308,7 @@ function HeaderContent() {
                             />
                           </div>
                         ) : (
-                          <div className="h-[37px] w-[37px] rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white text-[14px] font-semibold">
+                          <div className="h-[37px] w-[37px] rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/30 border-2 border-purple-500/40 flex items-center justify-center text-white text-[14px] font-semibold">
                             {profileInitial}
                           </div>
                         )}
@@ -1319,12 +1319,12 @@ function HeaderContent() {
                       </div>
                         <div className="mt-[12px] flex items-center justify-between text-sm sm:text-base text-white/70">
                           <div>
-                            <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/50 font-space">Earnings</p>
-                            <p className="mt-[2px] text-base sm:text-lg font-semibold text-white font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
+                            <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-emerald-400/80 font-space">Earnings</p>
+                            <p className="mt-[2px] text-base sm:text-lg font-semibold text-emerald-300 font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                           </div>
                           <button
                             onClick={() => router.push('/settings')}
-                            className="inline-flex items-center gap-[5px] rounded-full border border-white/10 bg-white/5 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-white/80 hover:bg-white/10 transition font-space"
+                            className="inline-flex items-center gap-[5px] rounded-full border border-purple-500/30 bg-purple-500/20 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-purple-200 hover:bg-purple-500/30 hover:border-purple-500/40 transition font-space"
                           >
                           Manage Account
                           <ArrowRight className="h-[12px] w-[12px]" />
@@ -1335,8 +1335,15 @@ function HeaderContent() {
 
                   <div className="px-[19px] pt-[14px]">
                     <div className="grid grid-cols-3 gap-[9px]">
-                      {quickActions.map((action) => {
+                      {quickActions.map((action, index) => {
                         const Icon = action.icon
+                        // Assign colors to each quick action
+                        const colors = [
+                          { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40' },
+                          { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40' },
+                          { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40' },
+                        ]
+                        const colorScheme = colors[index % colors.length]
                         return (
                           <button
                             key={action.label}
@@ -1344,9 +1351,9 @@ function HeaderContent() {
                               router.push(action.href)
                               setIsSidebarOpen(false)
                             }}
-                            className="group flex flex-col items-center justify-center gap-[7px] rounded-xl border border-white/5 bg-white/5 px-[9px] py-[12px] text-xs sm:text-sm text-white/80 transition hover:bg-white/10 hover:border-white/15 font-space"
+                            className={`group flex flex-col items-center justify-center gap-[7px] rounded-xl border ${colorScheme.border} ${colorScheme.bg} px-[9px] py-[12px] text-xs sm:text-sm text-white/80 transition ${colorScheme.hover} font-space`}
                           >
-                            <span className="flex h-[33px] w-[33px] items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white">
+                            <span className={`flex h-[33px] w-[33px] items-center justify-center rounded-lg ${colorScheme.iconBg} border ${colorScheme.iconBorder} ${colorScheme.iconColor}`}>
                               <Icon className="h-[16.5px] w-[16.5px]" />
                             </span>
                             <span className="text-center leading-tight font-medium">{action.label}</span>
@@ -1361,11 +1368,24 @@ function HeaderContent() {
                       {/* Overflow navigation items from header */}
                       {overflowNavItems.length > 0 && (
                         <div>
-                          <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-white/50 mb-[7px] font-space">Navigation</p>
+                          <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-blue-400/80 mb-[7px] font-space">Navigation</p>
                           <div className="space-y-[5px]">
-                            {overflowNavItems.map((item) => {
+                            {overflowNavItems.map((item, index) => {
                               const Icon = item.icon
                               const active = isActive(item.href)
+                              // Assign colors based on item name or index
+                              const getColorScheme = (name: string, idx: number) => {
+                                if (name.toLowerCase().includes('home')) return { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40', activeBg: 'bg-purple-500/30', activeBorder: 'border-purple-500/50' }
+                                if (name.toLowerCase().includes('practice') || name.toLowerCase().includes('training')) return { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40', activeBg: 'bg-emerald-500/30', activeBorder: 'border-emerald-500/50' }
+                                if (name.toLowerCase().includes('dashboard') || name.toLowerCase().includes('analytics')) return { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40', activeBg: 'bg-blue-500/30', activeBorder: 'border-blue-500/50' }
+                                const colors = [
+                                  { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40', activeBg: 'bg-purple-500/30', activeBorder: 'border-purple-500/50' },
+                                  { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40', activeBg: 'bg-emerald-500/30', activeBorder: 'border-emerald-500/50' },
+                                  { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40', activeBg: 'bg-blue-500/30', activeBorder: 'border-blue-500/50' },
+                                ]
+                                return colors[idx % colors.length]
+                              }
+                              const colorScheme = getColorScheme(item.name, index)
                               return (
                                 <button
                                   key={item.name}
@@ -1373,12 +1393,10 @@ function HeaderContent() {
                                     router.push(item.href)
                                     setIsSidebarOpen(false)
                                   }}
-                                  className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:border-white/15 hover:bg-white/5 font-space ${
-                                    active ? 'bg-white/10 border-white/15' : ''
-                                  }`}
+                                  className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${active ? colorScheme.activeBorder : colorScheme.border} ${active ? colorScheme.activeBg : colorScheme.bg} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all ${colorScheme.hover} font-space`}
                                 >
                                   <span className="flex items-center gap-[12px]">
-                                    <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white shrink-0">
+                                    <span className={`flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg ${colorScheme.iconBg} border ${colorScheme.iconBorder} ${colorScheme.iconColor} shrink-0`}>
                                       <Icon className="h-[16.5px] w-[16.5px]" />
                                     </span>
                                     <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
@@ -1411,10 +1429,32 @@ function HeaderContent() {
 
                         return (
                           <div key={section.title}>
-                            <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-white/50 mb-[7px] font-space">{section.title}</p>
+                            <p className={`text-xs sm:text-sm uppercase tracking-[0.25em] mb-[7px] font-space ${
+                              section.title === 'Workspace' ? 'text-purple-400/80' :
+                              section.title === 'Training' ? 'text-emerald-400/80' :
+                              section.title === 'Navigation' ? 'text-blue-400/80' :
+                              'text-white/50'
+                            }`}>{section.title}</p>
                             <div className="space-y-[5px]">
-                              {visibleItems.map((item) => {
+                              {visibleItems.map((item, itemIndex) => {
                                 const Icon = item.icon
+                                const isActiveItem = isActive(item.href)
+                                // Assign colors based on item name or index
+                                const getColorScheme = (name: string, idx: number) => {
+                                  if (name.toLowerCase().includes('home')) return { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40', activeBg: 'bg-purple-500/30', activeBorder: 'border-purple-500/50' }
+                                  if (name.toLowerCase().includes('practice') || name.toLowerCase().includes('training') || name.toLowerCase().includes('session')) return { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40', activeBg: 'bg-emerald-500/30', activeBorder: 'border-emerald-500/50' }
+                                  if (name.toLowerCase().includes('dashboard') || name.toLowerCase().includes('analytics') || name.toLowerCase().includes('leaderboard')) return { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40', activeBg: 'bg-blue-500/30', activeBorder: 'border-blue-500/50' }
+                                  if (name.toLowerCase().includes('learning')) return { bg: 'bg-indigo-500/20', border: 'border-indigo-500/30', iconBg: 'bg-indigo-500/30', iconBorder: 'border-indigo-500/40', iconColor: 'text-indigo-300', hover: 'hover:bg-indigo-500/30 hover:border-indigo-500/40', activeBg: 'bg-indigo-500/30', activeBorder: 'border-indigo-500/50' }
+                                  if (name.toLowerCase().includes('admin') || name.toLowerCase().includes('team') || name.toLowerCase().includes('organization')) return { bg: 'bg-orange-500/20', border: 'border-orange-500/30', iconBg: 'bg-orange-500/30', iconBorder: 'border-orange-500/40', iconColor: 'text-orange-300', hover: 'hover:bg-orange-500/30 hover:border-orange-500/40', activeBg: 'bg-orange-500/30', activeBorder: 'border-orange-500/50' }
+                                  if (name.toLowerCase().includes('settings') || name.toLowerCase().includes('profile')) return { bg: 'bg-pink-500/20', border: 'border-pink-500/30', iconBg: 'bg-pink-500/30', iconBorder: 'border-pink-500/40', iconColor: 'text-pink-300', hover: 'hover:bg-pink-500/30 hover:border-pink-500/40', activeBg: 'bg-pink-500/30', activeBorder: 'border-pink-500/50' }
+                                  const colors = [
+                                    { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40', activeBg: 'bg-purple-500/30', activeBorder: 'border-purple-500/50' },
+                                    { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40', activeBg: 'bg-emerald-500/30', activeBorder: 'border-emerald-500/50' },
+                                    { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40', activeBg: 'bg-blue-500/30', activeBorder: 'border-blue-500/50' },
+                                  ]
+                                  return colors[idx % colors.length]
+                                }
+                                const colorScheme = getColorScheme(item.name, itemIndex)
                                 return (
                                   <button
                                     key={item.name}
@@ -1422,10 +1462,10 @@ function HeaderContent() {
                                       router.push(item.href)
                                       setIsSidebarOpen(false)
                                     }}
-                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border border-white/5 px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:border-white/15 hover:bg-white/5 font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
+                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${isActiveItem ? colorScheme.activeBorder : colorScheme.border} ${isActiveItem ? colorScheme.activeBg : colorScheme.bg} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all ${colorScheme.hover} font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
                                   >
                                     <span className="flex items-center gap-[12px]">
-                                      <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white shrink-0">
+                                      <span className={`flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg ${colorScheme.iconBg} border ${colorScheme.iconBorder} ${colorScheme.iconColor} shrink-0`}>
                                         <Icon className="h-[16.5px] w-[16.5px]" />
                                       </span>
                                       <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
