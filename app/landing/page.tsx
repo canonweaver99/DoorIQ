@@ -1386,7 +1386,7 @@ function CTASection() {
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 sm:p-6">
                 <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2">Starter</h3>
                 <div className="mb-3">
-                  <span className="text-2xl sm:text-3xl font-bold text-white">$99</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-white">$49</span>
                   <span className="text-sm text-white/60 ml-1">/rep/month</span>
                 </div>
                 <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">1-20 reps</p>
@@ -1406,7 +1406,7 @@ function CTASection() {
                 </div>
                 <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2 mt-2">Team</h3>
                 <div className="mb-3">
-                  <span className="text-2xl sm:text-3xl font-bold text-white">$69</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-white">$39</span>
                   <span className="text-sm text-white/60 ml-1">/rep/month</span>
                 </div>
                 <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">21-100 reps</p>
@@ -1421,10 +1421,10 @@ function CTASection() {
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 sm:p-6">
                 <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2">Enterprise</h3>
                 <div className="mb-3">
-                  <span className="text-2xl sm:text-3xl font-bold text-white">$49</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-white">$29</span>
                   <span className="text-sm text-white/60 ml-1">/rep/month</span>
                 </div>
-                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">100+ reps</p>
+                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">101+ reps</p>
                 <ul className="text-xs text-white/60 font-sans space-y-1">
                   <li>• Everything in Team</li>
                   <li>• Custom AI personas</li>
