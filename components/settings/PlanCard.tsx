@@ -99,7 +99,7 @@ export function PlanCard({
           <div className="min-w-0">
             <h3 className="text-lg sm:text-xl font-bold text-foreground font-space">{config.name}</h3>
             <p className="text-xs sm:text-sm text-foreground/60 font-sans">
-              {minSeats}-{maxSeats === 500 ? '500+' : maxSeats} reps
+              {tier === 'enterprise' && minSeats === 101 ? '101+ reps' : `${minSeats}-${maxSeats === 500 ? '500+' : maxSeats} reps`}
             </p>
           </div>
         </div>

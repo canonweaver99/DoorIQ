@@ -554,7 +554,7 @@ function BillingSettingsPage() {
             <PlanCard
               tier="starter"
               currentTier={plan.tier}
-              pricePerSeat={99}
+              pricePerSeat={49}
               minSeats={1}
               maxSeats={20}
               features={[
@@ -570,7 +570,7 @@ function BillingSettingsPage() {
             <PlanCard
               tier="team"
               currentTier={plan.tier}
-              pricePerSeat={69}
+              pricePerSeat={39}
               minSeats={21}
               maxSeats={100}
               features={[
@@ -585,15 +585,16 @@ function BillingSettingsPage() {
             <PlanCard
               tier="enterprise"
               currentTier={plan.tier}
-              pricePerSeat={49}
-              minSeats={100}
+              pricePerSeat={29}
+              minSeats={101}
               maxSeats={500}
               features={[
                 'Everything in Team',
                 'Custom AI personas',
-                'White-label option',
                 'Dedicated account team',
-                'Volume discounts',
+                'Custom integrations',
+                'SSO',
+                'API access',
               ]}
               onContactSales={() => setIsCalendarModalOpen(true)}
             />

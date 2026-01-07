@@ -73,7 +73,7 @@ export function BillingIntervalToggle({
           disabled={disabled || switching}
           className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 h-auto"
         >
-          Save 15% switching to an annual plan
+          Save 20% switching to an annual plan
         </Button>
       )}
 
