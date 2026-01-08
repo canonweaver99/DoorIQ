@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
-import { addLineRatingJob } from '@/lib/queue/supabase-queue'
 import { splitTranscriptIntoBatches } from '@/lib/queue/supabase-worker'
 import { logger } from '@/lib/logger'
+import { processGradingJob } from '@/trigger/session-grading'
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId } = await request.json()
+    const { sessionId, useTriggerDev = true } = await request.json()
 
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
@@ -50,22 +50,8 @@ export async function POST(request: NextRequest) {
       sessionId,
       totalBatches,
       totalLines: transcript.length,
+      useTriggerDev,
     })
-
-    // Queue each batch
-    const jobPromises = batches.map((batch, batchIndex) =>
-      addLineRatingJob({
-        sessionId,
-        transcript: batch,
-        batchIndex,
-        batchSize: batch.length,
-        salesRepName,
-        customerName,
-        totalBatches,
-      })
-    )
-
-    const jobs = await Promise.all(jobPromises)
 
     // Update session to mark line-by-line grading as queued
     await supabase
@@ -80,13 +66,57 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', sessionId)
 
-    return NextResponse.json({
-      success: true,
-      sessionId,
-      totalBatches,
-      jobsQueued: jobs.length,
-      jobIds: jobs.map((j) => j.id),
-    })
+    if (useTriggerDev) {
+      // Use Trigger.dev to process batches
+      const triggerPromises = batches.map((batch, batchIndex) =>
+        processGradingJob.trigger({
+          sessionId,
+          transcript: batch,
+          batchIndex,
+          batchSize: batch.length,
+          salesRepName,
+          customerName,
+          totalBatches,
+        })
+      )
+
+      const triggers = await Promise.all(triggerPromises)
+
+      return NextResponse.json({
+        success: true,
+        sessionId,
+        totalBatches,
+        jobsQueued: triggers.length,
+        jobIds: triggers.map((t) => t.id),
+        method: 'trigger.dev',
+      })
+    } else {
+      // Fallback to Supabase queue (backward compatibility)
+      const { addLineRatingJob } = await import('@/lib/queue/supabase-queue')
+      
+      const jobPromises = batches.map((batch, batchIndex) =>
+        addLineRatingJob({
+          sessionId,
+          transcript: batch,
+          batchIndex,
+          batchSize: batch.length,
+          salesRepName,
+          customerName,
+          totalBatches,
+        })
+      )
+
+      const jobs = await Promise.all(jobPromises)
+
+      return NextResponse.json({
+        success: true,
+        sessionId,
+        totalBatches,
+        jobsQueued: jobs.length,
+        jobIds: jobs.map((j) => j.id),
+        method: 'supabase-queue',
+      })
+    }
   } catch (error: any) {
     logger.error('Failed to queue line-by-line grading', error)
     return NextResponse.json(

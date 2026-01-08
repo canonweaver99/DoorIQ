@@ -12,7 +12,9 @@
     "test:grading": "tsx scripts/test-grading-pipeline.ts",
     "mobile": "cd mobile && npm start",
     "mobile:ios": "cd mobile && npm run ios",
-    "mobile:android": "cd mobile && npm run android"
+    "mobile:android": "cd mobile && npm run android",
+    "trigger:dev": "trigger.dev dev",
+    "trigger:deploy": "trigger.dev deploy"
   },
   "dependencies": {
     "@calcom/atoms": "^1.10.0",
@@ -42,6 +44,7 @@
     "@stripe/stripe-js": "^8.0.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.4",
+    "@trigger.dev/sdk": "^4.3.2",
     "@types/js-yaml": "^4.0.9",
     "@types/pdf-parse": "^1.1.5",
     "@types/three": "^0.180.0",
@@ -81,7 +84,8 @@
     "stripe": "^19.1.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "trigger.dev": "^4.3.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.0",
