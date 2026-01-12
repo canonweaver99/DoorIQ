@@ -40,6 +40,26 @@ export default function Last20SessionsBreakdown() {
 
   useEffect(() => {
     fetchSessionsData()
+
+    // Refresh data when page becomes visible (user navigates back to tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchSessionsData()
+      }
+    }
+
+    // Refresh data on window focus
+    const handleFocus = () => {
+      fetchSessionsData()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   const generateFakeData = (): SessionBreakdown[] => {

@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
       totalSessions
     }, {
       headers: {
-        'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'private, no-cache, no-store, must-revalidate',
       },
     })
   } catch (error: any) {

@@ -448,9 +448,9 @@ export async function GET(request: NextRequest) {
       session
     }, {
       headers: {
-        'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600',
-        'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+        'CDN-Cache-Control': 'private, no-cache, no-store, must-revalidate',
+        'Vercel-CDN-Cache-Control': 'private, no-cache, no-store, must-revalidate',
       },
     })
   } catch (error: any) {
