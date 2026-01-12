@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
         user_email: workEmail.trim(),
         source: 'checkout_page',
       },
-      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}&reps=${repCount}&billing=${billingPeriod}&email=${encodeURIComponent(workEmail)}`,
+      success_url: `${origin}/onboarding?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(workEmail)}`,
       cancel_url: `${origin}/checkout?plan=${plan}&billing=${billingPeriod}&canceled=true`,
       allow_promotion_codes: true,
       // Don't include customer_email when customer is already set

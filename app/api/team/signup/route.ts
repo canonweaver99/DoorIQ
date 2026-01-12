@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
         supabase_user_id: user.id,
         redirect: redirect || '',
       },
-      success_url: `${origin}/team?session_id={CHECKOUT_SESSION_ID}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`,
+      success_url: `${origin}/onboarding?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(user.email || '')}`,
       cancel_url: `${origin}/team/signup?plan=${planType}&canceled=true${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`,
       allow_promotion_codes: true,
     }

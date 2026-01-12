@@ -6,8 +6,9 @@ import { Footer } from "@/components/ui/footer-section";
 export function ConditionalFooter() {
   const pathname = usePathname();
   const isLandingPage = pathname === "/landing";
+  const isOnboardingPage = pathname?.startsWith("/onboarding");
 
-  if (isLandingPage) {
+  if (isLandingPage || isOnboardingPage) {
     return null;
   }
 

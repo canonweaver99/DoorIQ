@@ -11,8 +11,9 @@ export function ConditionalHeader() {
   const isFeedbackPage = pathname?.startsWith("/trainer/feedback/");
   const isGradingPage = pathname?.startsWith("/trainer/loading/");
   const isTrainerPage = pathname === "/trainer";
+  const isOnboardingPage = pathname?.startsWith("/onboarding");
 
-  if (isLandingPage || isLandingPricingPage || isFeedbackPage || isGradingPage || isTrainerPage) {
+  if (isLandingPage || isLandingPricingPage || isFeedbackPage || isGradingPage || isTrainerPage || isOnboardingPage) {
     return null;
   }
 

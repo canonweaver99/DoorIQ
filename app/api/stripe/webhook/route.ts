@@ -212,79 +212,9 @@ async function handleTeamPlanCheckout(
             last_reset_date: today,
           })
 
-        // Send password setup email
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
-        const { data: linkData, error: linkError } = await (serviceSupabase as any).auth.admin.generateLink({
-          type: 'recovery',
-          email: userEmail.toLowerCase(),
-          options: {
-            redirectTo: `${siteUrl}/auth/reset-password?setup=true`,
-          },
-        })
-
-        if (!linkError && linkData?.properties?.action_link) {
-          // Send password setup email (we'll use Resend if available)
-          if (process.env.RESEND_API_KEY) {
-            try {
-              const { Resend } = await import('resend')
-              const resend = new Resend(process.env.RESEND_API_KEY)
-              const fromEmail = process.env.RESEND_FROM_EMAIL || 'DoorIQ <notifications@dooriq.ai>'
-              
-              await resend.emails.send({
-                from: fromEmail,
-                to: userEmail.toLowerCase(),
-                subject: 'Set up your DoorIQ account password',
-                html: `
-                  <!DOCTYPE html>
-                  <html>
-                    <head>
-                      <meta charset="utf-8">
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                      <style>
-                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #e2e8f0; margin: 0; padding: 0; background: #02010A; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background: linear-gradient(135deg, #0A0420 0%, #120836 100%); border: 1px solid rgba(168, 85, 247, 0.2); padding: 50px 40px; text-align: center; border-radius: 12px 12px 0 0; }
-                        .logo { max-width: 180px; height: auto; margin: 0 auto 20px; }
-                        .header-text { color: white; font-size: 28px; font-weight: 700; margin: 16px 0 8px 0; }
-                        .content { background: #0A0420; border: 1px solid rgba(168, 85, 247, 0.1); border-top: none; padding: 50px 40px; border-radius: 0 0 12px 12px; }
-                        .content p { color: #cbd5e1; font-size: 16px; line-height: 1.7; margin: 16px 0; }
-                        .button-container { text-align: center; margin: 40px 0; }
-                        .button { display: inline-block; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; }
-                        .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 12px; }
-                      </style>
-                    </head>
-                    <body>
-                      <div class="container">
-                        <div class="header">
-                          <img src="https://dooriq.ai/dooriqlogo.png" alt="DoorIQ" class="logo" />
-                          <h1 class="header-text">Welcome to DoorIQ!</h1>
-                        </div>
-                        <div class="content">
-                          <p>Thank you for your purchase! Your subscription is now active.</p>
-                          <p>To get started, please set up your account password by clicking the button below:</p>
-                          <div class="button-container">
-                            <a href="${linkData.properties.action_link}" class="button">Set Up Password</a>
-                          </div>
-                          <p style="margin-top: 32px; color: #94a3b8; font-size: 14px;">
-                            If the button doesn't work, copy and paste this link into your browser:<br>
-                            <a href="${linkData.properties.action_link}" style="color: #a855f7; word-break: break-all;">${linkData.properties.action_link}</a>
-                          </p>
-                        </div>
-                        <div class="footer">
-                          <p>© ${new Date().getFullYear()} DoorIQ. All rights reserved.</p>
-                        </div>
-                      </div>
-                    </body>
-                  </html>
-                `,
-              })
-              console.log('✅ Password setup email sent to:', userEmail)
-            } catch (emailError) {
-              console.error('⚠️ Failed to send password setup email:', emailError)
-              // Don't fail the webhook if email fails
-            }
-          }
-        }
+        // Note: Password setup is now handled in the onboarding flow
+        // Users are redirected to /onboarding after checkout where they set their password
+        console.log('✅ User account created for guest checkout. Password will be set in onboarding flow.')
       }
     } catch (error: any) {
       console.error('❌ Error creating user for guest checkout:', error)
