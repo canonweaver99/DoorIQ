@@ -203,6 +203,7 @@ interface PricingPlan {
   onClickYearly?: () => void;
   isPopular?: boolean;
   hasFreeTrial?: boolean;
+  isBestValue?: boolean;
   isCurrentPlan?: boolean;
   hasRepSelector?: boolean;
   basePrice?: number;
@@ -486,11 +487,20 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
           </div>
         </div>
       )}
-      {plan.hasFreeTrial && !plan.isCurrentPlan && !plan.isPopular && (
+      {plan.hasFreeTrial && !plan.isCurrentPlan && !plan.isPopular && !plan.isBestValue && (
         <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2">
           <div className="bg-gradient-to-r from-green-600 to-emerald-600 py-1 px-3 rounded-full flex items-center gap-1 shadow-lg">
             <span className="text-white text-xs font-semibold">
               Free Trial
+            </span>
+          </div>
+        </div>
+      )}
+      {plan.isBestValue && !plan.isCurrentPlan && !plan.isPopular && (
+        <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 py-1 px-3 rounded-full flex items-center gap-1 shadow-lg">
+            <span className="text-white text-xs font-semibold">
+              Best Value
             </span>
           </div>
         </div>

@@ -131,7 +131,7 @@ export default function PricingPage() {
         'Priority support',
         'Custom sales playbook',
       ],
-      buttonText: 'Start your free trial',
+      buttonText: 'Purchase',
       href: '/team/signup?plan=team',
       onClickMonthly: () => {
         router.push('/checkout?plan=team&billing=monthly')
@@ -162,6 +162,7 @@ export default function PricingPage() {
       onClick: () => {
         router.push('/contact-sales')
       },
+      isBestValue: true,
       minReps: 101,
       maxReps: 500,
     },
