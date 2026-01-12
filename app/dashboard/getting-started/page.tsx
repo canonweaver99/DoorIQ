@@ -538,9 +538,6 @@ export default function GettingStartedPage() {
     }
   }
 
-  const handleSkipToInviteTeam = () => {
-    router.push('/onboarding/invite-team')
-  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-4">
@@ -633,18 +630,6 @@ export default function GettingStartedPage() {
                   </motion.button>
                 </motion.div>
 
-                {/* Skip to invite team option for managers */}
-                {!loadingRole && isManager && (
-                  <motion.button
-                    onClick={handleSkipToInviteTeam}
-                    className="text-zinc-500 hover:text-emerald-400 transition-colors text-sm mt-4"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    Skip to invite teammates →
-                  </motion.button>
-                )}
                 
                 {/* Stats ticker */}
                 <motion.div
@@ -761,19 +746,6 @@ export default function GettingStartedPage() {
                   >
                     ← Back
                   </button>
-                  
-                  {/* Skip to invite team option for managers */}
-                  {!loadingRole && isManager && (
-                    <motion.button
-                      onClick={handleSkipToInviteTeam}
-                      className="text-zinc-500 hover:text-emerald-400 transition-colors text-sm"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      Skip to invite teammates →
-                    </motion.button>
-                  )}
                 </motion.div>
               </motion.div>
             )}
@@ -957,18 +929,6 @@ export default function GettingStartedPage() {
                         ← Choose a different persona
                       </button>
 
-                      {/* Skip to invite team option for managers */}
-                      {!loadingRole && isManager && (
-                        <motion.button
-                          onClick={handleSkipToInviteTeam}
-                          className="text-zinc-500 hover:text-emerald-400 transition-colors text-sm mt-2"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.3 }}
-                        >
-                          Skip to invite teammates →
-                        </motion.button>
-                      )}
             </div>
                   </motion.div>
                 )}

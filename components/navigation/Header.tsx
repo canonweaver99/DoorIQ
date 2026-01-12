@@ -1337,13 +1337,8 @@ function HeaderContent() {
                     <div className="grid grid-cols-3 gap-[9px]">
                       {quickActions.map((action, index) => {
                         const Icon = action.icon
-                        // Assign colors to each quick action
-                        const colors = [
-                          { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40' },
-                          { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40' },
-                          { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40' },
-                        ]
-                        const colorScheme = colors[index % colors.length]
+                        // All buttons use consistent dark purple theme
+                        const colorScheme = { bg: 'bg-purple-600/20', border: 'border-purple-600/30', iconBg: 'bg-purple-600/30', iconBorder: 'border-purple-600/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-600/30 hover:border-purple-600/40' }
                         return (
                           <button
                             key={action.label}
@@ -1351,9 +1346,9 @@ function HeaderContent() {
                               router.push(action.href)
                               setIsSidebarOpen(false)
                             }}
-                            className={`group flex flex-col items-center justify-center gap-[7px] rounded-xl border ${colorScheme.border} ${colorScheme.bg} px-[9px] py-[12px] text-xs sm:text-sm text-white/80 transition ${colorScheme.hover} font-space`}
+                            className="group flex flex-col items-center justify-center gap-[7px] rounded-xl border border-purple-600/30 bg-purple-600/20 px-[9px] py-[12px] text-xs sm:text-sm text-white/80 transition hover:bg-purple-600/30 hover:border-purple-600/40 font-space"
                           >
-                            <span className={`flex h-[33px] w-[33px] items-center justify-center rounded-lg ${colorScheme.iconBg} border ${colorScheme.iconBorder} ${colorScheme.iconColor}`}>
+                            <span className="flex h-[33px] w-[33px] items-center justify-center rounded-lg bg-purple-600/30 border border-purple-600/40 text-purple-300">
                               <Icon className="h-[16.5px] w-[16.5px]" />
                             </span>
                             <span className="text-center leading-tight font-medium">{action.label}</span>
@@ -1373,19 +1368,8 @@ function HeaderContent() {
                             {overflowNavItems.map((item, index) => {
                               const Icon = item.icon
                               const active = isActive(item.href)
-                              // Assign colors based on item name or index
-                              const getColorScheme = (name: string, idx: number) => {
-                                if (name.toLowerCase().includes('home')) return { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40', activeBg: 'bg-purple-500/30', activeBorder: 'border-purple-500/50' }
-                                if (name.toLowerCase().includes('practice') || name.toLowerCase().includes('training')) return { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40', activeBg: 'bg-emerald-500/30', activeBorder: 'border-emerald-500/50' }
-                                if (name.toLowerCase().includes('dashboard') || name.toLowerCase().includes('analytics')) return { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40', activeBg: 'bg-blue-500/30', activeBorder: 'border-blue-500/50' }
-                                const colors = [
-                                  { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40', activeBg: 'bg-purple-500/30', activeBorder: 'border-purple-500/50' },
-                                  { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40', activeBg: 'bg-emerald-500/30', activeBorder: 'border-emerald-500/50' },
-                                  { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40', activeBg: 'bg-blue-500/30', activeBorder: 'border-blue-500/50' },
-                                ]
-                                return colors[idx % colors.length]
-                              }
-                              const colorScheme = getColorScheme(item.name, index)
+                              // All buttons use consistent dark purple theme
+                              const colorScheme = { bg: 'bg-purple-600/20', border: 'border-purple-600/30', iconBg: 'bg-purple-600/30', iconBorder: 'border-purple-600/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-600/30 hover:border-purple-600/40', activeBg: 'bg-purple-600/30', activeBorder: 'border-purple-600/50' }
                               return (
                                 <button
                                   key={item.name}
@@ -1393,10 +1377,10 @@ function HeaderContent() {
                                     router.push(item.href)
                                     setIsSidebarOpen(false)
                                   }}
-                                  className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${active ? colorScheme.activeBorder : colorScheme.border} ${active ? colorScheme.activeBg : colorScheme.bg} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all ${colorScheme.hover} font-space`}
+                                  className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${active ? 'border-purple-600/50' : 'border-purple-600/30'} ${active ? 'bg-purple-600/30' : 'bg-purple-600/20'} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:bg-purple-600/30 hover:border-purple-600/40 font-space`}
                                 >
                                   <span className="flex items-center gap-[12px]">
-                                    <span className={`flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg ${colorScheme.iconBg} border ${colorScheme.iconBorder} ${colorScheme.iconColor} shrink-0`}>
+                                    <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-purple-600/30 border border-purple-600/40 text-purple-300 shrink-0">
                                       <Icon className="h-[16.5px] w-[16.5px]" />
                                     </span>
                                     <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
@@ -1439,22 +1423,8 @@ function HeaderContent() {
                               {visibleItems.map((item, itemIndex) => {
                                 const Icon = item.icon
                                 const isActiveItem = isActive(item.href)
-                                // Assign colors based on item name or index
-                                const getColorScheme = (name: string, idx: number) => {
-                                  if (name.toLowerCase().includes('home')) return { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40', activeBg: 'bg-purple-500/30', activeBorder: 'border-purple-500/50' }
-                                  if (name.toLowerCase().includes('practice') || name.toLowerCase().includes('training') || name.toLowerCase().includes('session')) return { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40', activeBg: 'bg-emerald-500/30', activeBorder: 'border-emerald-500/50' }
-                                  if (name.toLowerCase().includes('dashboard') || name.toLowerCase().includes('analytics') || name.toLowerCase().includes('leaderboard')) return { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40', activeBg: 'bg-blue-500/30', activeBorder: 'border-blue-500/50' }
-                                  if (name.toLowerCase().includes('learning')) return { bg: 'bg-indigo-500/20', border: 'border-indigo-500/30', iconBg: 'bg-indigo-500/30', iconBorder: 'border-indigo-500/40', iconColor: 'text-indigo-300', hover: 'hover:bg-indigo-500/30 hover:border-indigo-500/40', activeBg: 'bg-indigo-500/30', activeBorder: 'border-indigo-500/50' }
-                                  if (name.toLowerCase().includes('admin') || name.toLowerCase().includes('team') || name.toLowerCase().includes('organization')) return { bg: 'bg-orange-500/20', border: 'border-orange-500/30', iconBg: 'bg-orange-500/30', iconBorder: 'border-orange-500/40', iconColor: 'text-orange-300', hover: 'hover:bg-orange-500/30 hover:border-orange-500/40', activeBg: 'bg-orange-500/30', activeBorder: 'border-orange-500/50' }
-                                  if (name.toLowerCase().includes('settings') || name.toLowerCase().includes('profile')) return { bg: 'bg-pink-500/20', border: 'border-pink-500/30', iconBg: 'bg-pink-500/30', iconBorder: 'border-pink-500/40', iconColor: 'text-pink-300', hover: 'hover:bg-pink-500/30 hover:border-pink-500/40', activeBg: 'bg-pink-500/30', activeBorder: 'border-pink-500/50' }
-                                  const colors = [
-                                    { bg: 'bg-purple-500/20', border: 'border-purple-500/30', iconBg: 'bg-purple-500/30', iconBorder: 'border-purple-500/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-500/30 hover:border-purple-500/40', activeBg: 'bg-purple-500/30', activeBorder: 'border-purple-500/50' },
-                                    { bg: 'bg-emerald-500/20', border: 'border-emerald-500/30', iconBg: 'bg-emerald-500/30', iconBorder: 'border-emerald-500/40', iconColor: 'text-emerald-300', hover: 'hover:bg-emerald-500/30 hover:border-emerald-500/40', activeBg: 'bg-emerald-500/30', activeBorder: 'border-emerald-500/50' },
-                                    { bg: 'bg-blue-500/20', border: 'border-blue-500/30', iconBg: 'bg-blue-500/30', iconBorder: 'border-blue-500/40', iconColor: 'text-blue-300', hover: 'hover:bg-blue-500/30 hover:border-blue-500/40', activeBg: 'bg-blue-500/30', activeBorder: 'border-blue-500/50' },
-                                  ]
-                                  return colors[idx % colors.length]
-                                }
-                                const colorScheme = getColorScheme(item.name, itemIndex)
+                                // All buttons use consistent dark purple theme
+                                const colorScheme = { bg: 'bg-purple-600/20', border: 'border-purple-600/30', iconBg: 'bg-purple-600/30', iconBorder: 'border-purple-600/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-600/30 hover:border-purple-600/40', activeBg: 'bg-purple-600/30', activeBorder: 'border-purple-600/50' }
                                 return (
                                   <button
                                     key={item.name}
@@ -1462,10 +1432,10 @@ function HeaderContent() {
                                       router.push(item.href)
                                       setIsSidebarOpen(false)
                                     }}
-                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${isActiveItem ? colorScheme.activeBorder : colorScheme.border} ${isActiveItem ? colorScheme.activeBg : colorScheme.bg} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all ${colorScheme.hover} font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
+                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${isActiveItem ? 'border-purple-600/50' : 'border-purple-600/30'} ${isActiveItem ? 'bg-purple-600/30' : 'bg-purple-600/20'} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:bg-purple-600/30 hover:border-purple-600/40 font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
                                   >
                                     <span className="flex items-center gap-[12px]">
-                                      <span className={`flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg ${colorScheme.iconBg} border ${colorScheme.iconBorder} ${colorScheme.iconColor} shrink-0`}>
+                                      <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-purple-600/30 border border-purple-600/40 text-purple-300 shrink-0">
                                         <Icon className="h-[16.5px] w-[16.5px]" />
                                       </span>
                                       <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>

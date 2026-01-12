@@ -64,13 +64,6 @@ export default function LoadingPage() {
 
           const isFirstCompletedSession = (completedSessionsCount || 0) === 0
 
-          // If manager, first completed session, and hasn't invited team yet, redirect to invite page
-          if (isManager && isFirstCompletedSession && !hasInvitedTeam) {
-            console.log('👋 Manager first completed session - redirecting to invite page')
-            router.push(`/onboarding/invite-team`)
-            return
-          }
-
           // If first completed session, redirect to book demo
           if (isFirstCompletedSession) {
             console.log('👋 First completed session - redirecting to book demo')
@@ -144,19 +137,6 @@ export default function LoadingPage() {
             const isFirstCompletedSession = (completedSessionsCount || 0) === 0
 
             // If manager, first completed session, and hasn't invited team yet, redirect to invite page
-            if (isManager && isFirstCompletedSession && !hasInvitedTeam) {
-              console.log('👋 Manager first completed session - redirecting to invite page')
-              if (!stepsCompleted.first_session) {
-                await fetch('/api/onboarding/complete-step', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ step: 'first_session' }),
-                })
-              }
-              router.push(`/onboarding/invite-team`)
-              return
-            }
-
             // If first completed session, redirect to book demo
             if (isFirstCompletedSession) {
               console.log('👋 First completed session - redirecting to book demo')
@@ -206,20 +186,6 @@ export default function LoadingPage() {
 
         const isFirstCompletedSession = (completedSessionsCount || 0) === 0
 
-        // If manager, first completed session, and hasn't invited team yet, redirect to invite page (skip grading)
-        if (isManager && isFirstCompletedSession && !hasInvitedTeam) {
-          console.log('👋 Manager first completed session detected - redirecting to invite page')
-          // Mark first_session as complete before redirecting (if not already marked)
-          if (!stepsCompleted.first_session) {
-            await fetch('/api/onboarding/complete-step', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ step: 'first_session' }),
-            })
-          }
-          router.push(`/onboarding/invite-team`)
-          return
-        }
 
         // Don't redirect here - wait for grading to complete
         // The redirect will happen in handleStreamingComplete after grading finishes
