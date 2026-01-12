@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Navigation } from '@/app/landing/page'
-import { ArrowLeft, CreditCard, Building2, User, Mail, Phone, Users } from 'lucide-react'
+import { ArrowLeft, CreditCard, Building2, User, Mail, Phone, Users, Tag } from 'lucide-react'
 import Link from 'next/link'
 
 function CheckoutForm() {
@@ -35,6 +35,7 @@ function CheckoutForm() {
     workEmail: '',
     phone: '',
     numberOfReps: getInitialReps(),
+    discountCode: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -42,6 +43,8 @@ function CheckoutForm() {
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(billing === 'annual' ? 'annual' : 'monthly')
+  const [discountApplied, setDiscountApplied] = useState(false)
+  const [discountError, setDiscountError] = useState<string | null>(null)
 
   // Auto-detect plan tier based on rep count
   const repCount = parseInt(formData.numberOfReps) || 0
@@ -313,7 +316,7 @@ function CheckoutForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 text-base mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-white hover:bg-gray-100 text-gray-900 font-medium py-3 text-base mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Preparing Checkout...' : 'Continue to Payment'}
                 </Button>
@@ -411,27 +414,54 @@ function CheckoutForm() {
                   </div>
                   {billingPeriod === 'monthly' && (
                     <div className="mt-3 bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                      <p className="text-green-400 text-sm text-center">
+                      <p className="text-green-400 text-sm text-center font-bold">
                         💰 Switch to annual billing to save 20% (${Math.round(totalMonthly * 0.2 * 12).toLocaleString()}/year savings)
                       </p>
                     </div>
                   )}
                 </div>
 
-                {/* Payment Info Placeholder */}
+                {/* Discount Code */}
                 <div className="pt-4 border-t border-white/10">
                   <Label className="text-white/80 font-sans mb-2 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4" />
-                    Payment Information *
+                    <Tag className="w-4 h-4" />
+                    Discount Code
                   </Label>
-                  <div className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
-                    <p className="text-white/60 text-sm">
-                      Payment processing will be integrated here
-                    </p>
-                    <p className="text-white/40 text-xs mt-2">
-                      (Stripe, PayPal, or other payment gateway)
-                    </p>
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Enter discount code"
+                      value={formData.discountCode}
+                      onChange={(e) => {
+                        setFormData({ ...formData, discountCode: e.target.value })
+                        setDiscountError(null)
+                        setDiscountApplied(false)
+                      }}
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-purple-500/50"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (formData.discountCode.trim()) {
+                          // TODO: Validate discount code with API
+                          setDiscountApplied(true)
+                          setDiscountError(null)
+                        } else {
+                          setDiscountError('Please enter a discount code')
+                        }
+                      }}
+                      disabled={discountApplied || !formData.discountCode.trim()}
+                      className="bg-white hover:bg-gray-100 text-gray-900 border-0 font-medium"
+                    >
+                      {discountApplied ? 'Applied' : 'Apply'}
+                    </Button>
                   </div>
+                  {discountError && (
+                    <p className="text-red-400 text-sm mt-2">{discountError}</p>
+                  )}
+                  {discountApplied && (
+                    <p className="text-green-400 text-sm mt-2">Discount code applied successfully!</p>
+                  )}
                 </div>
 
                 {billingPeriod === 'annual' && (
@@ -483,13 +513,13 @@ function CheckoutForm() {
             <div className="flex gap-3">
               <Button
                 onClick={handleCancelConfirmation}
-                className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                className="flex-1 bg-white hover:bg-gray-100 text-gray-900 border-0 font-medium"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleConfirmPayment}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+                className="flex-1 bg-white hover:bg-gray-100 text-gray-900 font-medium border-0"
               >
                 Proceed to Payment
               </Button>
