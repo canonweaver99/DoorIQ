@@ -119,11 +119,11 @@ function CheckoutSuccessContent() {
             <ul className="space-y-2 text-white/80 font-sans">
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-1">•</span>
-                <span>Check your email ({orderDetails?.email || 'your email'}) for account setup instructions</span>
+                <span>Check your email ({orderDetails?.email || 'your email'}) for a password setup link</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-1">•</span>
-                <span>You'll receive login credentials within the next few minutes</span>
+                <span>Click the link in the email to set your password and access your account</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-1">•</span>

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase/server'
 
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
@@ -11,7 +11,7 @@ function getStripeClient() {
     return null
   }
   return new Stripe(stripeKey, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: '2025-09-30.clover',
   })
 }
 
@@ -139,10 +139,167 @@ async function handleTeamPlanCheckout(
   const metadata = session.metadata || session.subscription_data?.metadata || {}
   const organizationName = metadata.organization_name
   const seatCount = parseInt(metadata.seat_count || '1', 10)
-  const userId = metadata.supabase_user_id
+  let userId = metadata.supabase_user_id
+  const userEmail = metadata.user_email || session.customer_email
+  const userName = metadata.user_name
 
-  if (!organizationName || !userId) {
-    console.error('Missing required metadata for team plan checkout:', { organizationName, userId })
+  // For guest checkouts, we need to create the user account
+  if (!userId && userEmail) {
+    console.log('🔐 Guest checkout detected - creating user account for:', userEmail)
+    const serviceSupabase = await createServiceSupabaseClient()
+    
+    try {
+      // Check if user already exists by email
+      const { data: usersData } = await (serviceSupabase as any).auth.admin.listUsers()
+      const existingUser = usersData?.users?.find((u: any) => u.email?.toLowerCase() === userEmail.toLowerCase())
+      
+      if (existingUser) {
+        userId = existingUser.id
+        console.log('✅ Found existing user:', userId)
+      } else {
+        // Create new auth user (unconfirmed - they'll set password via email)
+        const { data: authData, error: authError } = await (serviceSupabase as any).auth.admin.createUser({
+          email: userEmail.toLowerCase(),
+          email_confirm: false, // They'll confirm via password setup email
+          user_metadata: {
+            full_name: userName || userEmail.split('@')[0],
+            source: 'stripe_checkout',
+          },
+        })
+
+        if (authError) {
+          console.error('❌ Error creating auth user:', authError)
+          throw authError
+        }
+
+        if (!authData?.user) {
+          throw new Error('Failed to create auth user')
+        }
+
+        userId = authData.user.id
+        console.log('✅ Created new auth user:', userId)
+
+        // Generate rep ID
+        const repId = `REP-${Date.now().toString().slice(-6)}`
+
+        // Create user profile
+        const { error: profileError } = await serviceSupabase
+          .from('users')
+          .insert({
+            id: userId,
+            email: userEmail.toLowerCase(),
+            full_name: userName || userEmail.split('@')[0],
+            rep_id: repId,
+            role: 'rep', // Will be updated to manager below
+            virtual_earnings: 0,
+          })
+
+        if (profileError) {
+          console.error('❌ Error creating user profile:', profileError)
+          // Try to clean up auth user
+          await (serviceSupabase as any).auth.admin.deleteUser(userId)
+          throw profileError
+        }
+
+        // Create session limits record
+        const today = new Date().toISOString().split('T')[0]
+        await serviceSupabase
+          .from('user_session_limits')
+          .insert({
+            user_id: userId,
+            sessions_this_month: 0,
+            sessions_limit: 75,
+            last_reset_date: today,
+          })
+
+        // Send password setup email
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dooriq.ai'
+        const { data: linkData, error: linkError } = await (serviceSupabase as any).auth.admin.generateLink({
+          type: 'recovery',
+          email: userEmail.toLowerCase(),
+          options: {
+            redirectTo: `${siteUrl}/auth/reset-password?setup=true`,
+          },
+        })
+
+        if (!linkError && linkData?.properties?.action_link) {
+          // Send password setup email (we'll use Resend if available)
+          if (process.env.RESEND_API_KEY) {
+            try {
+              const { Resend } = await import('resend')
+              const resend = new Resend(process.env.RESEND_API_KEY)
+              const fromEmail = process.env.RESEND_FROM_EMAIL || 'DoorIQ <notifications@dooriq.ai>'
+              
+              await resend.emails.send({
+                from: fromEmail,
+                to: userEmail.toLowerCase(),
+                subject: 'Set up your DoorIQ account password',
+                html: `
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <meta charset="utf-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                      <style>
+                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #e2e8f0; margin: 0; padding: 0; background: #02010A; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #0A0420 0%, #120836 100%); border: 1px solid rgba(168, 85, 247, 0.2); padding: 50px 40px; text-align: center; border-radius: 12px 12px 0 0; }
+                        .logo { max-width: 180px; height: auto; margin: 0 auto 20px; }
+                        .header-text { color: white; font-size: 28px; font-weight: 700; margin: 16px 0 8px 0; }
+                        .content { background: #0A0420; border: 1px solid rgba(168, 85, 247, 0.1); border-top: none; padding: 50px 40px; border-radius: 0 0 12px 12px; }
+                        .content p { color: #cbd5e1; font-size: 16px; line-height: 1.7; margin: 16px 0; }
+                        .button-container { text-align: center; margin: 40px 0; }
+                        .button { display: inline-block; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; }
+                        .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 12px; }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="container">
+                        <div class="header">
+                          <img src="https://dooriq.ai/dooriqlogo.png" alt="DoorIQ" class="logo" />
+                          <h1 class="header-text">Welcome to DoorIQ!</h1>
+                        </div>
+                        <div class="content">
+                          <p>Thank you for your purchase! Your subscription is now active.</p>
+                          <p>To get started, please set up your account password by clicking the button below:</p>
+                          <div class="button-container">
+                            <a href="${linkData.properties.action_link}" class="button">Set Up Password</a>
+                          </div>
+                          <p style="margin-top: 32px; color: #94a3b8; font-size: 14px;">
+                            If the button doesn't work, copy and paste this link into your browser:<br>
+                            <a href="${linkData.properties.action_link}" style="color: #a855f7; word-break: break-all;">${linkData.properties.action_link}</a>
+                          </p>
+                        </div>
+                        <div class="footer">
+                          <p>© ${new Date().getFullYear()} DoorIQ. All rights reserved.</p>
+                        </div>
+                      </div>
+                    </body>
+                  </html>
+                `,
+              })
+              console.log('✅ Password setup email sent to:', userEmail)
+            } catch (emailError) {
+              console.error('⚠️ Failed to send password setup email:', emailError)
+              // Don't fail the webhook if email fails
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('❌ Error creating user for guest checkout:', error)
+      // Don't throw - we'll try to continue with organization creation
+      // The user can be created manually if needed
+    }
+  }
+
+  if (!organizationName) {
+    console.error('Missing required metadata for team plan checkout: organizationName')
+    return
+  }
+
+  if (!userId) {
+    console.error('Missing userId - cannot link user to organization')
     return
   }
 
@@ -202,8 +359,11 @@ async function handleTeamPlanCheckout(
     ? new Date(subscription.trial_end * 1000).toISOString()
     : null
 
+  // Use service client for webhook operations (no user session)
+  const serviceSupabase = await createServiceSupabaseClient()
+
   // Link user to organization as manager/admin and set subscription status
-  const { error: userError } = await supabase
+  const { error: userError } = await serviceSupabase
     .from('users')
     .update({
       organization_id: organization.id,
@@ -217,7 +377,33 @@ async function handleTeamPlanCheckout(
 
   if (userError) {
     console.error('Error updating user:', userError)
-    throw userError
+    // If user doesn't exist, try to create it
+    if (userError.code === 'PGRST116' || userError.message?.includes('not found')) {
+      console.log('⚠️ User not found, creating user profile...')
+      const repId = `REP-${Date.now().toString().slice(-6)}`
+      const { error: insertError } = await serviceSupabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: userEmail?.toLowerCase() || '',
+          full_name: userName || userEmail?.split('@')[0] || 'User',
+          rep_id: repId,
+          role: 'manager',
+          is_active: true,
+          organization_id: organization.id,
+          stripe_customer_id: customerId,
+          subscription_status: subscription.status === 'trialing' ? 'trialing' : 'active',
+          trial_ends_at: trialEndsAt,
+          virtual_earnings: 0,
+        })
+
+      if (insertError) {
+        console.error('Error creating user profile:', insertError)
+        throw insertError
+      }
+    } else {
+      throw userError
+    }
   }
 
   console.log(`✅ Team plan checkout completed: Organization ${organization.id} created with ${actualQuantity} seats, subscription_status: ${subscription.status}`)
