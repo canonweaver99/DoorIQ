@@ -1,6 +1,8 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 import {
   ArrowRight,
   ArrowLeft,
@@ -8,7 +10,7 @@ import {
   Play,
   MessageSquare,
   BarChart3,
-  Volume2,
+  Lightbulb,
 } from 'lucide-react'
 
 interface FirstSessionStepProps {
@@ -50,82 +52,122 @@ export function FirstSessionStep({ role, onContinue, onBack }: FirstSessionStepP
   ]
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4">
-      <div className="text-center mb-10">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 flex items-center justify-center mx-auto mb-6">
-          <Volume2 className="w-8 h-8 text-green-400" />
-        </div>
-        <h1 className="font-space text-3xl md:text-4xl font-bold text-white mb-4">
-          Your First Practice Session
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-center mb-12 md:mb-16"
+      >
+        {/* Austin's Avatar */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="relative mx-auto mb-8 flex justify-center"
+        >
+          <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl">
+            <Image
+              src="/Austin Boss.png"
+              alt="Average Austin"
+              width={160}
+              height={160}
+              className="w-full h-full object-cover"
+              priority
+            />
+          </div>
+          {/* Subtle glow effect */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500/30 via-purple-500/30 to-pink-500/30 blur-2xl -z-10"></div>
+        </motion.div>
+
+        <h1 className="font-space text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
+          Your First <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Practice Session</span>
         </h1>
-        <p className="text-white/70 text-lg max-w-xl mx-auto">
+        <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto font-medium leading-relaxed">
           {role === 'manager'
             ? "Here's how your reps will practice their pitch with DoorIQ."
             : "Here's how to get started with AI-powered practice."}
         </p>
-      </div>
+      </motion.div>
 
       {/* Steps */}
-      <div className="space-y-4 mb-10">
+      <div className="space-y-6 mb-12">
         {steps.map((step, index) => {
           const Icon = step.icon
           return (
-            <div
+            <motion.div
               key={index}
-              className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/[0.07] transition-colors"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+              className="bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-2xl p-6 md:p-8 hover:bg-white/[0.05] hover:border-white/20 transition-all duration-300"
             >
-              <div className="flex gap-4">
-                {/* Step number */}
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Step number and icon */}
+                <div className="flex items-start gap-4 flex-shrink-0">
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-bold text-white text-lg md:text-xl shadow-lg">
                     {index + 1}
+                  </div>
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                    <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon className="w-5 h-5 text-purple-400" />
-                    <h3 className="font-space text-lg font-semibold text-white">
-                      {step.title}
-                    </h3>
+                  <h3 className="font-space text-xl md:text-2xl font-semibold text-white mb-3">
+                    {step.title}
+                  </h3>
+                  <p className="text-white/80 text-base md:text-lg mb-4 leading-relaxed">{step.description}</p>
+                  <div className="flex items-start gap-2 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-white/10 rounded-xl p-4">
+                    <Lightbulb className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-white/90 text-sm md:text-base font-medium">
+                      {step.tip}
+                    </p>
                   </div>
-                  <p className="text-white/60 text-sm mb-2">{step.description}</p>
-                  <p className="text-purple-400/80 text-sm italic">
-                    💡 {step.tip}
-                  </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )
         })}
       </div>
 
       {/* Quick start box */}
-      <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-5 mb-8">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
-            <Play className="w-6 h-6 text-green-400" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.7 }}
+        className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-white/10 rounded-2xl p-6 md:p-8 mb-8"
+      >
+        <div className="flex items-start gap-6">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+            <Play className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h3 className="font-space text-lg font-semibold text-white mb-1">
+            <h3 className="font-space text-xl md:text-2xl font-semibold text-white mb-2">
               Ready to try it?
             </h3>
-            <p className="text-white/60 text-sm">
+            <p className="text-white/80 text-base md:text-lg leading-relaxed">
               After completing this setup, you'll be able to start your first
               practice session right away. Most reps see improvement after just
               3-5 sessions!
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Navigation */}
-      <div className="flex justify-between items-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+        className="flex justify-between items-center"
+      >
         <Button
           variant="outline"
           onClick={onBack}
-          className="h-12 px-6 bg-white/5 border-white/20 text-white hover:bg-white/10"
+          className="h-12 px-6 bg-white/[0.06] border-2 border-white/12 text-white hover:bg-white/[0.08] hover:border-white/20"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
@@ -133,12 +175,12 @@ export function FirstSessionStep({ role, onContinue, onBack }: FirstSessionStepP
 
         <Button
           onClick={onContinue}
-          className="h-12 px-8 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+          className="h-12 px-8 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white font-medium transition-all rounded-xl"
         >
-          Continue
+          Start Your First Session
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
-      </div>
+      </motion.div>
     </div>
   )
 }

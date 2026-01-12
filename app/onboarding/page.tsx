@@ -12,7 +12,7 @@ import { WelcomeStep } from '@/components/onboarding/WelcomeStep'
 import { FeaturesStep } from '@/components/onboarding/FeaturesStep'
 import { TeamInviteStep } from '@/components/onboarding/TeamInviteStep'
 import { FirstSessionStep } from '@/components/onboarding/FirstSessionStep'
-import { ProTipsStep } from '@/components/onboarding/ProTipsStep'
+import { PERSONA_METADATA } from '@/components/trainer/personas'
 
 // Step IDs for both flows
 const MANAGER_STEPS: OnboardingStep[] = [
@@ -22,7 +22,6 @@ const MANAGER_STEPS: OnboardingStep[] = [
   { id: 'features', title: 'Features' },
   { id: 'team', title: 'Team' },
   { id: 'session', title: 'First Session' },
-  { id: 'tips', title: 'Pro Tips' },
 ]
 
 const REP_STEPS: OnboardingStep[] = [
@@ -31,7 +30,6 @@ const REP_STEPS: OnboardingStep[] = [
   { id: 'welcome', title: 'Welcome' },
   { id: 'features', title: 'Features' },
   { id: 'session', title: 'First Session' },
-  { id: 'tips', title: 'Pro Tips' },
 ]
 
 function OnboardingContent() {
@@ -50,6 +48,7 @@ function OnboardingContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
+  const [planName, setPlanName] = useState<string>('Team Plan')
 
   // Determine steps based on role
   const steps = role === 'manager' ? MANAGER_STEPS : REP_STEPS
@@ -73,6 +72,42 @@ function OnboardingContent() {
 
         if (profile) {
           setUserName(profile.full_name || '')
+
+          // Fetch organization seat limit to determine plan name
+          const { data: userData } = await supabase
+            .from('users')
+            .select('organization_id')
+            .eq('id', user.id)
+            .single()
+
+          if (userData?.organization_id) {
+            const { data: org } = await supabase
+              .from('organizations')
+              .select('seat_limit')
+              .eq('id', userData.organization_id)
+              .single()
+
+            if (org?.seat_limit) {
+              setPlanName(org.seat_limit === 1 ? 'Individual Plan' : 'Team Plan')
+            }
+          } else if (sessionId) {
+            // If organization doesn't exist yet, check checkout session metadata
+            try {
+              const response = await fetch(`/api/checkout/session?session_id=${sessionId}`)
+              if (response.ok) {
+                const sessionData = await response.json()
+                const seatCount = parseInt(
+                  sessionData.metadata?.seat_count || 
+                  sessionData.subscription_data?.metadata?.seat_count || 
+                  '1', 
+                  10
+                )
+                setPlanName(seatCount === 1 ? 'Individual Plan' : 'Team Plan')
+              }
+            } catch (error) {
+              console.error('Error fetching checkout session:', error)
+            }
+          }
 
           // If onboarding is completed, redirect to home
           if (profile.onboarding_completed) {
@@ -143,12 +178,42 @@ function OnboardingContent() {
     if (user) {
       const { data: profile } = await supabase
         .from('users')
-        .select('full_name')
+        .select('full_name, organization_id')
         .eq('id', user.id)
         .single()
 
       if (profile) {
         setUserName(profile.full_name || '')
+
+        // Fetch organization seat limit to determine plan name
+        if (profile.organization_id) {
+          const { data: org } = await supabase
+            .from('organizations')
+            .select('seat_limit')
+            .eq('id', profile.organization_id)
+            .single()
+
+          if (org?.seat_limit) {
+            setPlanName(org.seat_limit === 1 ? 'Individual Plan' : 'Team Plan')
+          }
+        } else if (sessionId) {
+          // If organization doesn't exist yet, check checkout session metadata
+          try {
+            const response = await fetch(`/api/checkout/session?session_id=${sessionId}`)
+            if (response.ok) {
+              const sessionData = await response.json()
+              const seatCount = parseInt(
+                sessionData.metadata?.seat_count || 
+                sessionData.subscription_data?.metadata?.seat_count || 
+                '1', 
+                10
+              )
+              setPlanName(seatCount === 1 ? 'Individual Plan' : 'Team Plan')
+            }
+          } catch (error) {
+            console.error('Error fetching checkout session:', error)
+          }
+        }
       }
 
       // Mark account setup complete
@@ -197,14 +262,13 @@ function OnboardingContent() {
   const nextStep = () => goToStep(currentStep + 1)
   const prevStep = () => goToStep(Math.max(0, currentStep - 1))
 
-  // Complete onboarding
-  const completeOnboarding = async () => {
-    setCompleting(true)
-
+  // Handle starting first session - navigate to trainer with Average Austin
+  const handleStartFirstSession = async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
+      // Mark onboarding as completed
       await supabase
         .from('users')
         .update({
@@ -212,10 +276,27 @@ function OnboardingContent() {
           onboarding_completed_at: new Date().toISOString(),
         })
         .eq('id', user.id)
+
+      // Mark first_session step as completed
+      try {
+        await fetch('/api/onboarding/complete-step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ step: 'first_session' }),
+        })
+      } catch (error) {
+        console.error('Error marking onboarding step complete:', error)
+      }
     }
 
-    // Redirect to home
-    router.push('/home')
+    // Navigate to trainer with Average Austin
+    const austinAgentId = PERSONA_METADATA['Average Austin']?.card?.elevenAgentId
+    if (austinAgentId) {
+      router.push(`/trainer?agent=${encodeURIComponent(austinAgentId)}`)
+    } else {
+      // Fallback to trainer page without agent selection
+      router.push('/trainer')
+    }
   }
 
   if (loading) {
@@ -236,7 +317,7 @@ function OnboardingContent() {
 
     // After role selection, use role-specific steps
     const roleSteps = role === 'manager' ? MANAGER_STEPS : REP_STEPS
-    return roleSteps[currentStep]?.id || 'tips'
+    return roleSteps[currentStep]?.id || 'session'
   }
 
   const currentStepId = getCurrentStepId()
@@ -268,6 +349,7 @@ function OnboardingContent() {
           <WelcomeStep
             userName={userName}
             role={role}
+            planName={planName}
             onContinue={nextStep}
           />
         )}
@@ -291,17 +373,8 @@ function OnboardingContent() {
         {currentStepId === 'session' && role && (
           <FirstSessionStep
             role={role}
-            onContinue={nextStep}
+            onContinue={handleStartFirstSession}
             onBack={prevStep}
-          />
-        )}
-
-        {currentStepId === 'tips' && role && (
-          <ProTipsStep
-            role={role}
-            onComplete={completeOnboarding}
-            onBack={prevStep}
-            loading={completing}
           />
         )}
       </div>
