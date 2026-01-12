@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 
 // Lazy initialize Stripe
@@ -10,6 +11,23 @@ function getStripeClient() {
   }
   return new Stripe(stripeKey, {
     apiVersion: '2025-09-30.clover',
+  })
+}
+
+// Create Supabase Admin client for auth operations
+function getSupabaseAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Missing Supabase configuration')
+  }
+  
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
   })
 }
 
@@ -32,12 +50,19 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createServiceSupabaseClient()
+    const adminClient = getSupabaseAdminClient()
 
-    // Find the user by email
-    let { data: usersData } = await (supabase as any).auth.admin.listUsers()
-    let existingUser = usersData?.users?.find(
-      (u: any) => u.email?.toLowerCase() === email.toLowerCase()
-    )
+    // Find the user by email using admin client
+    let existingUser = null
+    try {
+      const { data: userData, error: getUserError } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
+      if (!getUserError && userData?.user) {
+        existingUser = userData.user
+        console.log('✅ Found existing user:', existingUser.id)
+      }
+    } catch (error) {
+      console.log('User not found by email, will check Stripe session')
+    }
 
     // If user doesn't exist, check if checkout session is completed and create user
     if (!existingUser && sessionId) {
@@ -57,8 +82,8 @@ export async function POST(request: NextRequest) {
             const metadata = session.metadata || {}
             const userName = metadata.user_name || email.split('@')[0]
             
-            // Create auth user
-            const { data: authData, error: authError } = await (supabase as any).auth.admin.createUser({
+            // Create auth user using admin client
+            const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
               email: email.toLowerCase(),
               email_confirm: false,
               user_metadata: {
@@ -69,7 +94,7 @@ export async function POST(request: NextRequest) {
 
             if (authError) {
               console.error('❌ Error creating auth user:', authError)
-              // Continue to try finding user again (might have been created by webhook)
+              throw new Error(`Failed to create user: ${authError.message}`)
             } else if (authData?.user) {
               existingUser = authData.user
               console.log('✅ Created new auth user:', existingUser.id)
@@ -77,8 +102,8 @@ export async function POST(request: NextRequest) {
               // Generate rep ID
               const repId = `REP-${Date.now().toString().slice(-6)}`
 
-              // Create user profile
-              await supabase
+              // Create user profile using service client (bypasses RLS)
+              const { error: profileError } = await supabase
                 .from('users')
                 .insert({
                   id: existingUser.id,
@@ -90,9 +115,16 @@ export async function POST(request: NextRequest) {
                   checkout_session_id: sessionId,
                 })
 
+              if (profileError) {
+                console.error('❌ Error creating user profile:', profileError)
+                // Try to clean up auth user
+                await adminClient.auth.admin.deleteUser(existingUser.id)
+                throw new Error(`Failed to create user profile: ${profileError.message}`)
+              }
+
               // Create session limits record
               const today = new Date().toISOString().split('T')[0]
-              await supabase
+              const { error: limitsError } = await supabase
                 .from('user_session_limits')
                 .insert({
                   user_id: existingUser.id,
@@ -100,6 +132,11 @@ export async function POST(request: NextRequest) {
                   sessions_limit: 75,
                   last_reset_date: today,
                 })
+
+              if (limitsError) {
+                console.error('⚠️ Error creating session limits:', limitsError)
+                // Don't fail - this is not critical
+              }
             }
           } else {
             console.log('⚠️ Checkout session not completed or email mismatch')
@@ -112,11 +149,18 @@ export async function POST(request: NextRequest) {
 
       // Retry finding user (webhook might have created it)
       if (!existingUser) {
+        console.log('Waiting for webhook to complete...')
         await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds
-        const { data: retryUsersData } = await (supabase as any).auth.admin.listUsers()
-        existingUser = retryUsersData?.users?.find(
-          (u: any) => u.email?.toLowerCase() === email.toLowerCase()
-        )
+        
+        try {
+          const { data: retryUserData, error: retryError } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
+          if (!retryError && retryUserData?.user) {
+            existingUser = retryUserData.user
+            console.log('✅ Found user after retry:', existingUser.id)
+          }
+        } catch (retryError) {
+          console.log('User still not found after retry')
+        }
       }
     }
 
@@ -127,8 +171,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update the user's password
-    const { error: updateError } = await (supabase as any).auth.admin.updateUserById(
+    // Update the user's password using admin client
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(
       existingUser.id,
       {
         password,
