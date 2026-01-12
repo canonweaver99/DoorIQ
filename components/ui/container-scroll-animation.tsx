@@ -16,8 +16,8 @@ export const ContainerScroll = ({
   const isMobile = useIsMobile(768);
   const prefersReducedMotion = useReducedMotion();
   
-  // Disable scroll animations only if user prefers reduced motion
-  const shouldAnimate = !prefersReducedMotion;
+  // Disable scroll animations on mobile or if user prefers reduced motion
+  const shouldAnimate = !isMobile && !prefersReducedMotion;
   
   const { scrollYProgress } = useScroll({
     target: containerRef,

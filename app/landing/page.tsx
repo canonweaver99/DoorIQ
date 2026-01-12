@@ -653,6 +653,7 @@ function HeroSection() {
 
 // Problem Section
 function ProblemSection() {
+  const isMobile = useIsMobile();
   const problems = [
     {
       stat: "38%",
@@ -684,12 +685,12 @@ function ProblemSection() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={isMobile ? {} : { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="text-center mb-8 sm:mb-10 md:mb-12"
-          style={{ willChange: 'transform, opacity' }}
+          style={isMobile ? {} : { willChange: 'transform, opacity' }}
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Problem
@@ -731,10 +732,10 @@ function ProblemSection() {
 
         {/* Disclaimer */}
         <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+          initial={isMobile ? false : { opacity: 0 }}
+          whileInView={isMobile ? false : { opacity: 1 }}
           viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={isMobile ? {} : { duration: 0.6, delay: 0.3 }}
           className="text-center mt-6 sm:mt-8"
         >
           <p className="font-sans text-white/50 text-xs sm:text-sm font-light">
@@ -748,6 +749,7 @@ function ProblemSection() {
 
 // Solution Section with Timeline
 function SolutionSection() {
+  const isMobile = useIsMobile();
   const timelineData = [
     {
       title: "01",
@@ -834,42 +836,46 @@ function SolutionSection() {
   return (
     <section id="solution" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
       {/* Animated background gradients */}
-      <motion.div
-        animate={{
-          x: [0, 50, 0],
-          y: [0, 30, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute top-1/2 left-0 w-[600px] h-[600px] bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent rounded-full blur-[150px] -translate-y-1/2"
-      />
-      <motion.div
-        animate={{
-          x: [0, -40, 0],
-          y: [0, -50, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-pink-500/10 via-purple-500/10 to-transparent rounded-full blur-[120px]"
-      />
+      {!isMobile && (
+        <>
+          <motion.div
+            animate={{
+              x: [0, 50, 0],
+              y: [0, 30, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 15,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-1/2 left-0 w-[600px] h-[600px] bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent rounded-full blur-[150px] -translate-y-1/2"
+          />
+          <motion.div
+            animate={{
+              x: [0, -40, 0],
+              y: [0, -50, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-pink-500/10 via-purple-500/10 to-transparent rounded-full blur-[120px]"
+          />
+        </>
+      )}
 
       <div className="relative max-w-7xl mx-auto px-0 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={isMobile ? {} : { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="text-center mb-6 sm:mb-8 px-4 sm:px-0"
-          style={{ willChange: 'transform, opacity' }}
+          style={isMobile ? {} : { willChange: 'transform, opacity' }}
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Solution
@@ -893,17 +899,18 @@ function SolutionSection() {
 
 // Features Section
 function FeaturesSection() {
+  const isMobile = useIsMobile();
   return (
     <section id="features" className="relative bg-black pt-12 sm:pt-16 md:pt-20 pb-24 sm:pb-20 md:pb-24">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={isMobile ? {} : { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="text-center mb-6 sm:mb-8"
-          style={{ willChange: 'transform, opacity' }}
+          style={isMobile ? {} : { willChange: 'transform, opacity' }}
         >
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Features
@@ -1118,13 +1125,14 @@ InlineAgentCarousel.displayName = "InlineAgentCarousel";
 
 // Meet the Trainer Section
 function MeetTrainerSection() {
+  const isMobile = useIsMobile();
   return (
     <section id="trainers" className="relative bg-black pt-10 sm:pt-12 md:pt-16 pb-10 sm:pb-12 md:pb-16 overflow-hidden">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-5 sm:mb-6 md:mb-8"
         >
@@ -1144,24 +1152,24 @@ function MeetTrainerSection() {
 
       {/* Agent Carousel - Full Width */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={isMobile ? false : { opacity: 0, y: 30 }}
+        whileInView={isMobile ? false : { opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-50px" }}
-        transition={{ delay: 0.2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={isMobile ? {} : { delay: 0.2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="relative w-full -mt-4 md:-mt-6"
-        style={{ willChange: 'transform, opacity' }}
+        style={isMobile ? {} : { willChange: 'transform, opacity' }}
       >
         <InlineAgentCarousel />
       </motion.div>
 
       {/* AI Voice Input - Hear a snippet from the agents */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={isMobile ? false : { opacity: 0, y: 30 }}
+        whileInView={isMobile ? false : { opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-50px" }}
-        transition={{ delay: 0.4, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={isMobile ? {} : { delay: 0.4, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 mt-3 sm:mt-4 md:mt-6"
-        style={{ willChange: 'transform, opacity' }}
+        style={isMobile ? {} : { willChange: 'transform, opacity' }}
       >
         <div className="flex justify-center dark">
           <AIVoiceInput 
@@ -1177,6 +1185,7 @@ function MeetTrainerSection() {
 
 // Stats Section
 function StatsSection() {
+  const isMobile = useIsMobile();
   const stats = [
     { value: 40, suffix: "%", label: "Less Shadowing" },
     { value: 10, suffix: "", label: "Hours Saved Per Manager Weekly" },
@@ -1187,34 +1196,36 @@ function StatsSection() {
   return (
     <section id="stats" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
       {/* Animated background elements */}
-      <div className="absolute inset-0">
-        <motion.div
-          animate={{
-            x: [0, 30, 0],
-            y: [0, 40, 0],
-            scale: [1, 1.15, 1],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            x: [0, -25, 0],
-            y: [0, -35, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 22,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
-        />
-      </div>
+      {!isMobile && (
+        <div className="absolute inset-0">
+          <motion.div
+            animate={{
+              x: [0, 30, 0],
+              y: [0, 40, 0],
+              scale: [1, 1.15, 1],
+            }}
+            transition={{
+              duration: 18,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
+          />
+          <motion.div
+            animate={{
+              x: [0, -25, 0],
+              y: [0, -35, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 22,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
+          />
+        </div>
+      )}
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
@@ -1239,10 +1250,10 @@ function StatsSection() {
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={isMobile ? false : { opacity: 0, y: 30 }}
+              whileInView={isMobile ? false : { opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
+              transition={isMobile ? {} : { delay: index * 0.1, duration: 0.6 }}
               className="text-center"
             >
               <div className="font-space text-5xl sm:text-5xl md:text-5xl lg:text-7xl xl:text-8xl text-white font-light tracking-tight mb-3 sm:mb-4">
@@ -1264,8 +1275,8 @@ function StatsSection() {
 
         {/* Early Access CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="mt-16 text-center"
         >
@@ -1286,6 +1297,7 @@ function StatsSection() {
 
 // Testimonials Section
 function TestimonialsSection() {
+  const isMobile = useIsMobile();
   // Split testimonials into 3 columns
   const column1 = testimonialsData.slice(0, 4);
   const column2 = testimonialsData.slice(4, 7);
@@ -1296,8 +1308,8 @@ function TestimonialsSection() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-8 sm:mb-10 md:mb-12"
         >
@@ -1322,41 +1334,46 @@ function TestimonialsSection() {
 
 // Final CTA Section
 function CTASection() {
+  const isMobile = useIsMobile();
   return (
     <section className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
       {/* Animated background gradients - reduced glow */}
       <div className="absolute inset-0 bg-gradient-to-t from-white/[0.02] via-transparent to-transparent" />
-      <motion.div
-        animate={{
-          x: [0, 50, 0],
-          y: [0, 30, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-indigo-500/8 via-purple-500/6 to-pink-500/4 rounded-full blur-[150px]"
-      />
-      <motion.div
-        animate={{
-          x: [0, -40, 0],
-          y: [0, -20, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 25,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent rounded-full blur-[120px]"
-      />
+      {!isMobile && (
+        <>
+          <motion.div
+            animate={{
+              x: [0, 50, 0],
+              y: [0, 30, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-indigo-500/8 via-purple-500/6 to-pink-500/4 rounded-full blur-[150px]"
+          />
+          <motion.div
+            animate={{
+              x: [0, -40, 0],
+              y: [0, -20, 0],
+              scale: [1, 1.15, 1],
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent rounded-full blur-[120px]"
+          />
+        </>
+      )}
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
           {/* Headline */}
@@ -1375,10 +1392,10 @@ function CTASection() {
 
           {/* Pricing Preview Section */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={isMobile ? false : { opacity: 0, y: 20 }}
+            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
+            transition={isMobile ? {} : { delay: 0.2 }}
             className="mt-8 sm:mt-10 md:mt-12 mb-8"
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
