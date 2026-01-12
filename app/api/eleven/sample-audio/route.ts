@@ -28,8 +28,18 @@ export async function GET(request: NextRequest) {
     // Get active agents from PERSONA_METADATA (excluding Tag Team for simplicity)
     const activeAgents = ALLOWED_AGENT_ORDER.filter(name => name !== 'Tag Team Tanya & Tom')
     
+    // Reorder to put "Too Expensive Tim" first
+    const timIndex = activeAgents.indexOf('Too Expensive Tim')
+    const reorderedAgents = timIndex >= 0
+      ? [
+          activeAgents[timIndex],
+          ...activeAgents.slice(0, timIndex),
+          ...activeAgents.slice(timIndex + 1)
+        ]
+      : activeAgents
+    
     // Cycle through agents using modulo
-    const agentName = activeAgents[index % activeAgents.length] as AllowedAgentName
+    const agentName = reorderedAgents[index % reorderedAgents.length] as AllowedAgentName
     const agentMetadata = PERSONA_METADATA[agentName]
     
     if (!agentMetadata || !agentMetadata.card.elevenAgentId) {
