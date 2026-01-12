@@ -85,9 +85,46 @@ export async function POST(request: NextRequest) {
           const emailMatches = sessionEmail.toLowerCase() === email.toLowerCase()
           const isComplete = session.status === 'complete' || session.payment_status === 'paid'
           
-          console.log('Session check:', { isComplete, emailMatches, sessionEmail: sessionEmail.toLowerCase(), providedEmail: email.toLowerCase() })
+          // Also check if customer exists in Stripe with this email
+          let customerExists = false
+          if (session.customer) {
+            try {
+              const customerId = typeof session.customer === 'string' ? session.customer : session.customer.id
+              const customer = await stripe.customers.retrieve(customerId)
+              if (customer && !customer.deleted && (customer as Stripe.Customer).email?.toLowerCase() === email.toLowerCase()) {
+                customerExists = true
+                console.log('✅ Customer found in Stripe:', customerId)
+              }
+            } catch (customerError) {
+              console.log('Could not retrieve customer:', customerError)
+            }
+          }
           
-          if (isComplete && emailMatches) {
+          // Also try to find customer by email directly
+          if (!customerExists) {
+            try {
+              const customers = await stripe.customers.list({ email: email.toLowerCase(), limit: 1 })
+              if (customers.data.length > 0 && customers.data[0].email?.toLowerCase() === email.toLowerCase()) {
+                customerExists = true
+                console.log('✅ Customer found by email in Stripe')
+              }
+            } catch (listError) {
+              console.log('Could not list customers:', listError)
+            }
+          }
+          
+          console.log('Session check:', { 
+            isComplete, 
+            emailMatches, 
+            customerExists,
+            sessionEmail: sessionEmail.toLowerCase(), 
+            providedEmail: email.toLowerCase(),
+            sessionStatus: session.status,
+            paymentStatus: session.payment_status
+          })
+          
+          // Create user if session is complete OR if customer exists in Stripe (more lenient)
+          if ((isComplete && emailMatches) || (customerExists && emailMatches)) {
             console.log('✅ Checkout session verified, creating user account')
             
             // Get metadata from session
