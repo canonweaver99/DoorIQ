@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
@@ -148,17 +149,31 @@ async function handleTeamPlanCheckout(
     console.log('🔐 Guest checkout detected - creating user account for:', userEmail)
     const serviceSupabase = await createServiceSupabaseClient()
     
+    // Create admin client for auth operations
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('❌ Missing Supabase configuration for admin client')
+      throw new Error('Missing Supabase configuration')
+    }
+    
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+    
     try {
-      // Check if user already exists by email
-      const { data: usersData } = await (serviceSupabase as any).auth.admin.listUsers()
-      const existingUser = usersData?.users?.find((u: any) => u.email?.toLowerCase() === userEmail.toLowerCase())
+      // Check if user already exists by email using admin client
+      const { data: existingUserData, error: getUserError } = await adminClient.auth.admin.getUserByEmail(userEmail.toLowerCase())
       
-      if (existingUser) {
-        userId = existingUser.id
+      if (!getUserError && existingUserData?.user) {
+        userId = existingUserData.user.id
         console.log('✅ Found existing user:', userId)
       } else {
         // Create new auth user (unconfirmed - they'll set password via email)
-        const { data: authData, error: authError } = await (serviceSupabase as any).auth.admin.createUser({
+        const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
           email: userEmail.toLowerCase(),
           email_confirm: false, // They'll confirm via password setup email
           user_metadata: {
@@ -182,7 +197,7 @@ async function handleTeamPlanCheckout(
         // Generate rep ID
         const repId = `REP-${Date.now().toString().slice(-6)}`
 
-        // Create user profile
+        // Create user profile using service client (bypasses RLS)
         const { error: profileError } = await serviceSupabase
           .from('users')
           .insert({
@@ -192,18 +207,19 @@ async function handleTeamPlanCheckout(
             rep_id: repId,
             role: 'rep', // Will be updated to manager below
             virtual_earnings: 0,
+            checkout_session_id: session.id || null,
           })
 
         if (profileError) {
           console.error('❌ Error creating user profile:', profileError)
           // Try to clean up auth user
-          await (serviceSupabase as any).auth.admin.deleteUser(userId)
+          await adminClient.auth.admin.deleteUser(userId)
           throw profileError
         }
 
         // Create session limits record
         const today = new Date().toISOString().split('T')[0]
-        await serviceSupabase
+        const { error: limitsError } = await serviceSupabase
           .from('user_session_limits')
           .insert({
             user_id: userId,
@@ -212,14 +228,20 @@ async function handleTeamPlanCheckout(
             last_reset_date: today,
           })
 
+        if (limitsError) {
+          console.error('⚠️ Error creating session limits:', limitsError)
+          // Don't fail - this is not critical
+        }
+
         // Note: Password setup is now handled in the onboarding flow
         // Users are redirected to /onboarding after checkout where they set their password
         console.log('✅ User account created for guest checkout. Password will be set in onboarding flow.')
       }
     } catch (error: any) {
       console.error('❌ Error creating user for guest checkout:', error)
-      // Don't throw - we'll try to continue with organization creation
-      // The user can be created manually if needed
+      console.error('❌ Error details:', JSON.stringify(error, null, 2))
+      // Re-throw to ensure webhook fails and Stripe retries
+      throw error
     }
   }
 
