@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceSupabaseClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email/send'
 
 export async function POST(request: NextRequest) {
@@ -33,15 +33,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createServiceSupabaseClient()
-    
-    if (!supabase) {
-      console.error('Failed to create Supabase service client - check SUPABASE_SERVICE_ROLE_KEY environment variable')
+    // Create service client that bypasses RLS
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase configuration - check environment variables')
       return NextResponse.json(
         { error: 'Server configuration error' },
         { status: 500 }
       )
     }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
 
     // Calculate number_of_reps from the range string
     const calculateRepCount = () => {

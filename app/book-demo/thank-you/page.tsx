@@ -24,7 +24,7 @@ export default function ThankYouPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center px-4 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#02010A] via-[#0A0420] to-[#120836] flex items-center justify-center px-4 sm:px-6 pt-20 sm:pt-24">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -128,13 +128,13 @@ export default function ThankYouPage() {
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-5 h-5 text-emerald-400" />
-              <a href="tel:+18555203699" className="hover:text-white transition-colors">
-                (855) 520-3699
+              <a href="tel:+16024461330" className="hover:text-white transition-colors">
+                (602) 446-1330
               </a>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-emerald-400" />
-              <span className="text-sm">Lehi, Utah</span>
+              <span className="text-sm">Austin, Texas</span>
             </div>
           </div>
         </motion.div>
