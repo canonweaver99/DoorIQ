@@ -202,6 +202,7 @@ interface PricingPlan {
   onClickMonthly?: () => void;
   onClickYearly?: () => void;
   isPopular?: boolean;
+  hasFreeTrial?: boolean;
   isCurrentPlan?: boolean;
   hasRepSelector?: boolean;
   basePrice?: number;
@@ -485,6 +486,15 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
           </div>
         </div>
       )}
+      {plan.hasFreeTrial && !plan.isCurrentPlan && !plan.isPopular && (
+        <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2">
+          <div className="bg-gradient-to-r from-green-600 to-emerald-600 py-1 px-3 rounded-full flex items-center gap-1 shadow-lg">
+            <span className="text-white text-xs font-semibold">
+              Free Trial
+            </span>
+          </div>
+        </div>
+      )}
       <div className="flex-1 flex flex-col text-center">
         <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1">{plan.name}</h3>
         <p className="mt-1.5 text-sm sm:text-base font-medium text-slate-300">
@@ -518,14 +528,6 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
                   </span>
                   <span className="text-xs sm:text-sm font-medium text-green-400">
                     Save 20%
-                  </span>
-                </div>
-              )}
-              {/* 7-day free trial indicator */}
-              {plan.buttonText !== 'Contact Sales' && (
-                <div className="mt-2">
-                  <span className="text-xs sm:text-sm font-medium text-purple-400">
-                    7-day free trial
                   </span>
                 </div>
               )}

@@ -113,6 +113,7 @@ export default function PricingPage() {
       onClickYearly: () => {
         router.push('/checkout?plan=starter&billing=annual')
       },
+      hasFreeTrial: true,
       minReps: 1,
       maxReps: 20,
     },
