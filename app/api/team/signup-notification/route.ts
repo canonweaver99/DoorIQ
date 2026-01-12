@@ -107,7 +107,7 @@ line-height: 1.6; color: #333; }
               
               <div class="highlight">
                 <strong>Next Steps:</strong><br>
-                The user has been redirected to Stripe checkout to complete their ${planType === 'starter' ? 'Starter' : 'Team'} plan signup with a 14-day free trial.
+                The user has been redirected to Stripe checkout to complete their ${planType === 'starter' ? 'Starter' : 'Team'} plan signup with a 7-day free trial.
               </div>
               
               <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">

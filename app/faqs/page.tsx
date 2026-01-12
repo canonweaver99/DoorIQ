@@ -7,7 +7,7 @@ import { ChevronRight } from "lucide-react"
 const faqs = [
   {
     question: "Can I try DoorIQ before committing?",
-    answer: "Yes! We offer a 14-day free trial. Try DoorIQ risk-free and see the results for yourself."
+    answer: "Yes! We offer a 7-day free trial. Try DoorIQ risk-free and see the results for yourself."
   },
   {
     question: "How quickly can my team start practicing?",

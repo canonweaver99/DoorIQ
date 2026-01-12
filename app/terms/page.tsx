@@ -118,7 +118,7 @@ export default function TermsPage() {
           <p className="mt-4">Current pricing is available at dooriq.ai/pricing.</p>
 
           <h3 className="text-xl font-semibold mt-6 mb-3">5.2 Free Trial</h3>
-          <p>We may offer a 14-day free trial for new users. No credit card is required for the trial. At the end of the trial, you will be automatically downgraded to a free limited plan unless you upgrade to a paid subscription.</p>
+          <p>We may offer a 7-day free trial for new users. No credit card is required for the trial. At the end of the trial, you will be automatically downgraded to a free limited plan unless you upgrade to a paid subscription.</p>
 
           <h3 className="text-xl font-semibold mt-6 mb-3">5.3 Billing</h3>
           <p><strong>Monthly Billing:</strong></p>

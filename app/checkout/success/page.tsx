@@ -127,7 +127,7 @@ function CheckoutSuccessContent() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-1">•</span>
-                <span>Your 14-day free trial starts now - no charges until the trial ends</span>
+                <span>Your 7-day free trial starts now - no charges until the trial ends</span>
               </li>
             </ul>
           </div>

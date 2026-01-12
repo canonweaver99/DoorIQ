@@ -18,14 +18,14 @@ export default function HelpPage() {
             <li>Go to dooriq.ai</li>
             <li>Click "Start Free Trial" or "Sign Up"</li>
             <li>Enter your name, email, and create a password</li>
-            <li>Choose your plan (or start with 14-day free trial)</li>
+            <li>Choose your plan (or start with 7-day free trial)</li>
             <li>Complete payment information (if selecting paid plan)</li>
             <li>Start training immediately!</li>
           </ol>
           <p className="mt-4"><strong>No credit card required for free trial.</strong></p>
 
           <h3 className="text-xl font-semibold mt-6 mb-3">What's included in the free trial?</h3>
-          <p>Your 14-day free trial includes:</p>
+          <p>Your 7-day free trial includes:</p>
           <ul className="list-disc pl-6 space-y-2">
             <li>Full access to all AI personas</li>
             <li>Unlimited practice sessions</li>

@@ -54,7 +54,7 @@ function TeamSignupContent() {
   // Annual pricing: 2 months free = 10 months payment
   const annualCost = Math.round(monthlyCost * 10)
   const annualSavings = monthlyCost * 12 - annualCost
-  const trialDays = 14
+  const trialDays = 7
 
   // ROI Calculator - matching home page format
   const calculateROI = () => {

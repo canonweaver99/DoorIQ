@@ -13,12 +13,12 @@ function getResendClient() {
 // Email templates for different subscription events
 const EMAIL_TEMPLATES = {
   trial_started: (data: any) => ({
-    subject: '🎉 Welcome to DoorIQ - Your 14-Day Free Trial Starts Now!',
+    subject: '🎉 Welcome to DoorIQ - Your 7-Day Free Trial Starts Now!',
     html: `
       <div style="font-family: Arial, sans-serif; 
 max-width: 600px; margin: 0 auto;">
         <h1 style="color: #8b5cf6;">Welcome to DoorIQ!</h1>
-        <p>Your 14-day free trial has started! You now have full access to all premium features:</p>
+        <p>Your 7-day free trial has started! You now have full access to all premium features:</p>
         <ul>
           <li>✅ Access to ALL 12 AI training agents</li>
           <li>✅ Unlimited practice sessions</li>
@@ -44,7 +44,7 @@ max-width: 600px; margin: 0 auto;">
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #f59e0b;">Your Trial is Ending Soon</h1>
-        <p>Your 14-day free trial of DoorIQ will end in <strong>${data.daysRemaining} day${data.daysRemaining !== 1 ? 's' : ''}</strong>.</p>
+        <p>Your 7-day free trial of DoorIQ will end in <strong>${data.daysRemaining} day${data.daysRemaining !== 1 ? 's' : ''}</strong>.</p>
         <p>To continue enjoying unlimited access to all features, your subscription will automatically start on <strong>${new Date(data.trialEndsAt * 1000).toLocaleDateString()}</strong>.</p>
         
         <h3>What happens next?</h3>
