@@ -67,15 +67,27 @@ export async function POST(request: NextRequest) {
     // If user doesn't exist, check if checkout session is completed and create user
     if (!existingUser && sessionId) {
       console.log('User not found, checking Stripe session:', sessionId)
+      console.log('Email being checked:', email.toLowerCase())
       
       const stripe = getStripeClient()
-      if (stripe) {
+      if (!stripe) {
+        console.error('❌ Stripe client not available')
+      } else {
         try {
           // Retrieve the checkout session
           const session = await stripe.checkout.sessions.retrieve(sessionId)
+          console.log('Stripe session status:', session.status)
+          console.log('Stripe session email:', session.customer_email)
+          console.log('Stripe session metadata:', JSON.stringify(session.metadata, null, 2))
           
-          // Verify session is completed and email matches
-          if (session.status === 'complete' && session.customer_email?.toLowerCase() === email.toLowerCase()) {
+          // Verify session is completed and email matches (check both customer_email and metadata)
+          const sessionEmail = session.customer_email || session.metadata?.user_email || ''
+          const emailMatches = sessionEmail.toLowerCase() === email.toLowerCase()
+          const isComplete = session.status === 'complete' || session.payment_status === 'paid'
+          
+          console.log('Session check:', { isComplete, emailMatches, sessionEmail: sessionEmail.toLowerCase(), providedEmail: email.toLowerCase() })
+          
+          if (isComplete && emailMatches) {
             console.log('✅ Checkout session verified, creating user account')
             
             // Get metadata from session
@@ -139,10 +151,16 @@ export async function POST(request: NextRequest) {
               }
             }
           } else {
-            console.log('⚠️ Checkout session not completed or email mismatch')
+            console.log('⚠️ Checkout session not completed or email mismatch', {
+              status: session.status,
+              payment_status: session.payment_status,
+              sessionEmail: sessionEmail.toLowerCase(),
+              providedEmail: email.toLowerCase(),
+            })
           }
         } catch (stripeError: any) {
-          console.error('Error checking Stripe session:', stripeError)
+          console.error('❌ Error checking Stripe session:', stripeError)
+          console.error('Stripe error details:', JSON.stringify(stripeError, null, 2))
           // Continue - webhook might still be processing
         }
       }
