@@ -487,7 +487,7 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
       )}
       <div className="flex-1 flex flex-col text-center">
         <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1">{plan.name}</h3>
-        <p className="mt-1.5 text-sm sm:text-base font-medium text-slate-400">
+        <p className="mt-1.5 text-sm sm:text-base font-medium text-slate-300">
           {plan.description}
         </p>
         <div className="mt-3 flex flex-col items-center gap-1">
@@ -518,6 +518,14 @@ function PricingCard({ plan, index, isSelected, onSelect, isCenterCard }: {
                   </span>
                   <span className="text-xs sm:text-sm font-medium text-green-400">
                     Save 20%
+                  </span>
+                </div>
+              )}
+              {/* 7-day free trial indicator */}
+              {plan.buttonText !== 'Contact Sales' && (
+                <div className="mt-2">
+                  <span className="text-xs sm:text-sm font-medium text-purple-400">
+                    7-day free trial
                   </span>
                 </div>
               )}

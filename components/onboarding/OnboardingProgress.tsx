@@ -19,22 +19,22 @@ export function OnboardingProgress({ steps, currentStep, className }: Onboarding
   return (
     <div className={cn('w-full', className)}>
       {/* Desktop: horizontal progress */}
-      <div className="hidden md:flex items-center justify-center gap-2">
+      <div className="hidden md:flex items-start justify-center gap-2">
         {steps.map((step, index) => {
           const isCompleted = index < currentStep
           const isCurrent = index === currentStep
           const isPending = index > currentStep
 
           return (
-            <div key={step.id} className="flex items-center">
+            <div key={step.id} className="flex items-start">
               {/* Step indicator */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center relative">
                 <div
                   className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300',
-                    isCompleted && 'bg-purple-600 text-white',
-                    isCurrent && 'bg-purple-600 text-white ring-4 ring-purple-600/30',
-                    isPending && 'bg-white/10 text-white/40 border border-white/20'
+                    'w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 relative z-10',
+                    isCompleted && 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white',
+                    isCurrent && 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white ring-4 ring-purple-500/30',
+                    isPending && 'bg-white/[0.06] text-white/40 border-2 border-white/12'
                   )}
                 >
                   {isCompleted ? (
@@ -46,7 +46,7 @@ export function OnboardingProgress({ steps, currentStep, className }: Onboarding
                 <span
                   className={cn(
                     'mt-2 text-xs font-medium transition-colors max-w-[80px] text-center',
-                    isCompleted && 'text-purple-400',
+                    isCompleted && 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400',
                     isCurrent && 'text-white',
                     isPending && 'text-white/40'
                   )}
@@ -55,14 +55,16 @@ export function OnboardingProgress({ steps, currentStep, className }: Onboarding
                 </span>
               </div>
 
-              {/* Connector line */}
+              {/* Connector line - centered with circle */}
               {index < steps.length - 1 && (
-                <div
-                  className={cn(
-                    'w-16 h-0.5 mx-2 transition-colors',
-                    index < currentStep ? 'bg-purple-600' : 'bg-white/20'
-                  )}
-                />
+                <div className="flex items-center mx-2 h-10">
+                  <div
+                    className={cn(
+                      'w-16 h-0.5 transition-colors',
+                      index < currentStep ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500' : 'bg-white/20'
+                    )}
+                  />
+                </div>
               )}
             </div>
           )

@@ -45,6 +45,12 @@ function CheckoutForm() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(billing === 'annual' ? 'annual' : 'monthly')
   const [discountApplied, setDiscountApplied] = useState(false)
   const [discountError, setDiscountError] = useState<string | null>(null)
+  const [validatedDiscount, setValidatedDiscount] = useState<{
+    code: string
+    discount_type: 'percentage' | 'fixed'
+    discount_value: number
+  } | null>(null)
+  const [validatingDiscount, setValidatingDiscount] = useState(false)
 
   // Auto-detect plan tier based on rep count
   const repCount = parseInt(formData.numberOfReps) || 0
@@ -136,6 +142,7 @@ function CheckoutForm() {
           numberOfReps: repCount,
           plan: detectedPlan,
           billingPeriod: billingPeriod,
+          discountCode: validatedDiscount?.code || undefined,
         }),
       })
 
@@ -391,7 +398,11 @@ function CheckoutForm() {
                         <button
                           type="button"
                           onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'annual' : 'monthly')}
-                          className="relative inline-flex h-6 w-11 items-center rounded-full bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                            billingPeriod === 'annual' 
+                              ? 'bg-purple-600 border-2 border-purple-500' 
+                              : 'bg-white/20 border-2 border-transparent'
+                          }`}
                           role="switch"
                           aria-checked={billingPeriod === 'annual'}
                         >
@@ -436,24 +447,57 @@ function CheckoutForm() {
                         setFormData({ ...formData, discountCode: e.target.value })
                         setDiscountError(null)
                         setDiscountApplied(false)
+                        setValidatedDiscount(null)
                       }}
                       className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-purple-500/50"
                     />
                     <Button
                       type="button"
-                      onClick={() => {
-                        if (formData.discountCode.trim()) {
-                          // TODO: Validate discount code with API
+                      onClick={async () => {
+                        if (!formData.discountCode.trim()) {
+                          setDiscountError('Please enter a discount code')
+                          return
+                        }
+
+                        setValidatingDiscount(true)
+                        setDiscountError(null)
+
+                        try {
+                          const response = await fetch('/api/discount/validate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: formData.discountCode.trim() }),
+                          })
+
+                          const data = await response.json()
+
+                          if (!response.ok) {
+                            setDiscountError(data.error || 'Invalid discount code')
+                            setDiscountApplied(false)
+                            setValidatedDiscount(null)
+                            return
+                          }
+
+                          setValidatedDiscount({
+                            code: data.code,
+                            discount_type: data.discount_type,
+                            discount_value: data.discount_value,
+                          })
                           setDiscountApplied(true)
                           setDiscountError(null)
-                        } else {
-                          setDiscountError('Please enter a discount code')
+                        } catch (error) {
+                          console.error('Error validating discount code:', error)
+                          setDiscountError('Failed to validate discount code. Please try again.')
+                          setDiscountApplied(false)
+                          setValidatedDiscount(null)
+                        } finally {
+                          setValidatingDiscount(false)
                         }
                       }}
-                      disabled={discountApplied || !formData.discountCode.trim()}
+                      disabled={discountApplied || !formData.discountCode.trim() || validatingDiscount}
                       className="bg-white hover:bg-gray-100 text-gray-900 border-0 font-medium"
                     >
-                      {discountApplied ? 'Applied' : 'Apply'}
+                      {validatingDiscount ? 'Validating...' : discountApplied ? 'Applied' : 'Apply'}
                     </Button>
                   </div>
                   {discountError && (

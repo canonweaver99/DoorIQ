@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
       numberOfReps,
       plan, // 'starter' | 'team' | 'enterprise'
       billingPeriod, // 'monthly' | 'annual'
+      discountCode, // Optional discount code
     } = body
 
     // Validation
@@ -189,10 +191,69 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build discounts array (only annual discount, no volume discount needed)
+    // Validate and apply discount code if provided
+    let discountCouponId: string | undefined
+    if (discountCode) {
+      try {
+        const supabase = await createServerSupabaseClient()
+        
+        // Validate discount code
+        const { data: discountData, error: discountError } = await supabase
+          .from('discount_codes')
+          .select('*')
+          .eq('code', discountCode.trim().toUpperCase())
+          .eq('is_active', true)
+          .single()
+
+        if (!discountError && discountData) {
+          // Check if code has expired
+          if (!discountData.expires_at || new Date(discountData.expires_at) > new Date()) {
+            // Check if code has reached max uses
+            if (!discountData.max_uses || discountData.uses_count < discountData.max_uses) {
+              // Create Stripe coupon from discount code
+              const couponName = `Discount: ${discountData.code}`
+              const couponConfig: Stripe.CouponCreateParams = {
+                name: couponName,
+                duration: 'once', // Single use per checkout
+                metadata: {
+                  discount_code_id: discountData.id,
+                  discount_code: discountData.code,
+                },
+              }
+
+              if (discountData.discount_type === 'percentage') {
+                couponConfig.percent_off = Number(discountData.discount_value)
+              } else {
+                // For fixed amount, we need to calculate the amount off
+                // Note: Stripe coupons work on the total, so we'll apply it
+                couponConfig.amount_off = Math.round(Number(discountData.discount_value) * 100) // Convert to cents
+                couponConfig.currency = 'usd'
+              }
+
+              const coupon = await stripe.coupons.create(couponConfig)
+              discountCouponId = coupon.id
+
+              // Increment uses_count (we'll verify it was used in webhook)
+              await supabase
+                .from('discount_codes')
+                .update({ uses_count: discountData.uses_count + 1 })
+                .eq('id', discountData.id)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error applying discount code:', error)
+        // Continue without discount code if there's an error
+      }
+    }
+
+    // Build discounts array (annual discount + discount code if applicable)
     const discounts: Array<{ coupon: string }> = []
     if (annualDiscountId) {
       discounts.push({ coupon: annualDiscountId })
+    }
+    if (discountCouponId) {
+      discounts.push({ coupon: discountCouponId })
     }
 
     // Create checkout session

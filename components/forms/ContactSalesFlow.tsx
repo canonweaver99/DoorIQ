@@ -4,18 +4,24 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Cal, { getCalApi } from "@calcom/embed-react"
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const STORAGE_KEY = 'dooriq_contact_sales_flow'
 
 interface FormData {
   salesRepRange: string
   industry: string
+  companyName: string
+  fullName: string
+  workEmail: string
+  phoneNumber: string
 }
 
 const salesRepRanges = [
-  'Under 10 reps',
-  '10-50 reps',
-  '50+ reps'
+  '1-20 reps',
+  '21-100 reps',
+  '101+ reps'
 ]
 
 const industries = [
@@ -32,7 +38,11 @@ export function ContactSalesFlow() {
   const [calLoaded, setCalLoaded] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     salesRepRange: '',
-    industry: ''
+    industry: '',
+    companyName: '',
+    fullName: '',
+    workEmail: '',
+    phoneNumber: ''
   })
 
   // Load saved form data from localStorage on mount
@@ -57,9 +67,30 @@ export function ContactSalesFlow() {
     }))
   }, [formData, currentStep])
 
-  // Initialize Cal.com embed when reaching step 2 (calendar step)
+  // Initialize Cal.com embed when reaching step 3 (calendar step)
   useEffect(() => {
-    if (currentStep === 2) {
+    if (currentStep === 3) {
+      // Store form data in sessionStorage for Cal.com webhook
+      sessionStorage.setItem('dooriq_contact_sales_form', JSON.stringify(formData))
+      
+      // Submit form data to API
+      fetch('/api/contact-sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          workEmail: formData.workEmail,
+          phoneNumber: formData.phoneNumber,
+          companyName: formData.companyName,
+          industry: formData.industry,
+          numberOfReps: formData.salesRepRange,
+          howDidYouHear: 'Pricing Page - Enterprise Plan',
+          preferredContactMethod: 'video',
+        }),
+      }).catch(error => {
+        console.error('Error submitting contact sales form:', error)
+      })
+
       (async function () {
         try {
           const cal = await getCalApi({"namespace":"dooriq"});
@@ -75,10 +106,10 @@ export function ContactSalesFlow() {
     } else {
       setCalLoaded(false)
     }
-  }, [currentStep])
+  }, [currentStep, formData])
 
   const handleNext = () => {
-    if (currentStep < 2) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -121,7 +152,8 @@ export function ContactSalesFlow() {
             >
               {currentStep === 0 && 'How many sales reps does your business have?'}
               {currentStep === 1 && 'What industry are you in?'}
-              {currentStep === 2 && 'Book your personalized demo'}
+              {currentStep === 2 && 'Tell us about your company'}
+              {currentStep === 3 && 'Book your personalized demo'}
             </motion.p>
           </AnimatePresence>
         </motion.div>
@@ -214,6 +246,90 @@ export function ContactSalesFlow() {
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="text-sm">← Back to industry selection</span>
+              </button>
+              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2 font-space">
+                Company Information
+              </h2>
+              <p className="text-neutral-600 dark:text-neutral-400 mb-6 font-sans">
+                Please provide your company details so we can prepare for our call
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Company Name *
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
+                    placeholder="Enter your company name"
+                    className="w-full bg-neutral-50 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Your Full Name *
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                    placeholder="Enter your full name"
+                    className="w-full bg-neutral-50 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Work Email *
+                  </label>
+                  <Input
+                    type="email"
+                    value={formData.workEmail}
+                    onChange={(e) => setFormData(prev => ({ ...prev, workEmail: e.target.value }))}
+                    placeholder="your.email@company.com"
+                    className="w-full bg-neutral-50 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Phone Number (Optional)
+                  </label>
+                  <Input
+                    type="tel"
+                    value={formData.phoneNumber}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                    placeholder="(555) 123-4567"
+                    className="w-full bg-neutral-50 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-white"
+                  />
+                </div>
+                <Button
+                  onClick={handleNext}
+                  disabled={!formData.companyName.trim() || !formData.fullName.trim() || !formData.workEmail.trim()}
+                  className="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  Continue to Schedule Meeting
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {currentStep === 3 && (
+            <motion.div
+              key="step-3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-neutral-100 dark:bg-neutral-800 rounded-2xl p-6 sm:p-8"
+            >
+              <button
+                onClick={handleBack}
+                className="flex items-center gap-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 mb-6 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm">← Back to company information</span>
               </button>
               
               {/* Cal.com Embed */}

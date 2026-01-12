@@ -105,7 +105,7 @@ export default function PricingPage() {
         'Manager dashboard',
         'Email support',
       ],
-      buttonText: 'Get Started',
+      buttonText: 'Start your free trial',
       href: '/team/signup?plan=starter',
       onClickMonthly: () => {
         router.push('/checkout?plan=starter&billing=monthly')
@@ -130,7 +130,7 @@ export default function PricingPage() {
         'Priority support',
         'Custom sales playbook',
       ],
-      buttonText: 'Get Started',
+      buttonText: 'Start your free trial',
       href: '/team/signup?plan=team',
       onClickMonthly: () => {
         router.push('/checkout?plan=team&billing=monthly')
@@ -157,9 +157,9 @@ export default function PricingPage() {
         'API access',
       ],
       buttonText: 'Contact Sales',
-      href: '/enterprise/signup',
+      href: '/contact-sales',
       onClick: () => {
-        router.push('/checkout?plan=enterprise&billing=monthly')
+        router.push('/contact-sales')
       },
       minReps: 101,
       maxReps: 500,
@@ -201,7 +201,7 @@ export default function PricingPage() {
           >
             <div className="inline-flex items-center gap-2 mb-4">
               <Calculator className="w-6 h-6 text-indigo-500" />
-              <h2 className="font-space text-3xl sm:text-4xl font-medium">ROI Calculator</h2>
+              <h2 className="font-space text-3xl sm:text-4xl font-bold">ROI Calculator</h2>
             </div>
             <p className="font-sans text-white/70 text-lg">
               Calculate your return on investment with DoorIQ
@@ -216,7 +216,7 @@ export default function PricingPage() {
               viewport={{ once: true }}
               className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-6"
             >
-              <h3 className="font-space text-xl font-medium mb-6">Your Details</h3>
+              <h3 className="font-space text-xl font-bold mb-6">Your Details</h3>
               
               <div className="space-y-6">
                 <div>
@@ -301,7 +301,7 @@ export default function PricingPage() {
               viewport={{ once: true }}
               className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-sm border border-indigo-500/30 rounded-lg p-6"
             >
-              <h3 className="font-space text-xl font-medium mb-6 flex items-center gap-2">
+              <h3 className="font-space text-xl font-bold mb-6 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-indigo-400" />
                 Your ROI
               </h3>

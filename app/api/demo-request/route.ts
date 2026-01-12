@@ -34,6 +34,36 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createServiceSupabaseClient()
+    
+    if (!supabase) {
+      console.error('Failed to create Supabase service client - check SUPABASE_SERVICE_ROLE_KEY environment variable')
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    // Calculate number_of_reps from the range string
+    const calculateRepCount = () => {
+      let parsedNumber: number
+      if (numberOfReps.includes('+')) {
+        parsedNumber = parseInt(numberOfReps.replace('+', '').trim())
+      } else if (numberOfReps.includes('-')) {
+        parsedNumber = parseInt(numberOfReps.split('-')[0].trim())
+      } else {
+        parsedNumber = parseInt(numberOfReps.trim())
+      }
+      
+      if (isNaN(parsedNumber) || parsedNumber <= 0) {
+        if (numberOfReps.includes('101')) return 101
+        if (numberOfReps.includes('21')) return 21
+        return 1
+      }
+      
+      return parsedNumber
+    }
+
+    const repCount = calculateRepCount()
 
     // Save to sales_leads table (combining first and last name into full_name)
     const { data: lead, error: dbError } = await supabase
@@ -45,7 +75,7 @@ export async function POST(request: NextRequest) {
         job_title: jobTitle,
         company_name: companyName,
         industry: 'Other', // Default since not collected in form
-        number_of_reps: parseInt(numberOfReps.split('-')[0]) || 10, // Extract minimum from range
+        number_of_reps: repCount,
         how_did_you_hear: howDidYouHear,
         additional_comments: meetingGoals || null,
         status: 'lead',
@@ -57,8 +87,34 @@ export async function POST(request: NextRequest) {
 
     if (dbError) {
       console.error('Database error:', dbError)
+      console.error('Error details:', JSON.stringify(dbError, null, 2))
+      console.error('Attempted insert data:', {
+        full_name: `${firstName} ${lastName}`,
+        work_email: workEmail,
+        phone_number: phoneNumber,
+        job_title: jobTitle,
+        company_name: companyName,
+        industry: 'Other',
+        number_of_reps: (() => {
+          if (numberOfReps.includes('+')) {
+            return parseInt(numberOfReps.replace('+', '')) || 101
+          } else if (numberOfReps.includes('-')) {
+            return parseInt(numberOfReps.split('-')[0]) || 1
+          } else {
+            return parseInt(numberOfReps) || 10
+          }
+        })(),
+        how_did_you_hear: howDidYouHear,
+        additional_comments: meetingGoals || null,
+        status: 'lead',
+        preferred_contact_method: 'email',
+        timezone: 'America/New_York'
+      })
       return NextResponse.json(
-        { error: 'Failed to save demo request' },
+        { 
+          error: 'Failed to save demo request',
+          details: dbError.message || dbError.details || 'Unknown database error'
+        },
         { status: 500 }
       )
     }

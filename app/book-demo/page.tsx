@@ -31,11 +31,9 @@ const HOW_DID_YOU_HEAR_OPTIONS = [
 ]
 
 const NUMBER_OF_REPS_OPTIONS = [
-  '10-25',
-  '26-50',
-  '51-100',
-  '101-250',
-  '250+'
+  '1-20',
+  '21-100',
+  '101+'
 ]
 
 const COUNTRY_CODES = [

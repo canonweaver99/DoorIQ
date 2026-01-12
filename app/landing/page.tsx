@@ -455,14 +455,14 @@ function HeroSection() {
             <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
               <AnimatedText
                 text="Unlimited AI Practice for"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-light leading-[1.2] sm:leading-[1.3] w-full"
+                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-bold leading-[1.2] sm:leading-[1.3] w-full"
                 underlineClassName="hidden"
                 duration={0.036}
                 delay={0.014}
               />
               <AnimatedText
                 text="DOOR-TO-DOOR SALES"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
+                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-bold leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
                 underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                 underlineHeight="h-[2px] sm:h-[2px] md:h-[3px]"
                 underlineOffset="-bottom-1 sm:-bottom-2 md:-bottom-3"
@@ -577,14 +577,14 @@ function HeroSection() {
               <div className="flex flex-col items-center gap-2 sm:gap-3 w-full max-w-full pb-2 px-4 sm:px-0">
                 <AnimatedText
                   text="Unlimited AI Practice for"
-                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-white text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full"
+                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-white text-center font-bold leading-[1.2] sm:leading-[1.3] w-full"
                   underlineClassName="hidden"
                   duration={0.036}
                   delay={0.014}
                 />
                 <AnimatedText
                   text="DOOR-TO-DOOR SALES"
-                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-medium md:font-light leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
+                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-center font-bold leading-[1.2] sm:leading-[1.3] w-full whitespace-nowrap"
                   underlineGradient="from-indigo-600 via-purple-600 to-pink-600"
                   underlineHeight="h-[2px] sm:h-[2px]"
                   underlineOffset="-bottom-1 sm:-bottom-2"
@@ -694,7 +694,7 @@ function ProblemSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Problem
           </span>
-          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-bold tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             Your Sales Team Is
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Leaking Money</span>
@@ -721,7 +721,7 @@ function ProblemSection() {
                 </div>
 
                 {/* Title */}
-                <h3 className="font-space font-medium text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 tracking-tight relative z-10">
+                <h3 className="font-space font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 tracking-tight relative z-10">
                   {problem.title}
                 </h3>
               </div>
@@ -759,7 +759,7 @@ function SolutionSection() {
             <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
               <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-light tracking-tight">
+            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-bold tracking-tight">
               Connect Your Team
             </h4>
           </div>
@@ -779,7 +779,7 @@ function SolutionSection() {
             <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
               <Target className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-light tracking-tight">
+            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-bold tracking-tight">
               Practice with AI
             </h4>
           </div>
@@ -799,7 +799,7 @@ function SolutionSection() {
             <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
               <Zap className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-light tracking-tight">
+            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-bold tracking-tight">
               Get Real-Time Feedback
             </h4>
           </div>
@@ -819,7 +819,7 @@ function SolutionSection() {
             <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
               <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
-            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-light tracking-tight">
+            <h4 className="font-space text-2xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-bold tracking-tight">
               Track & Improve
             </h4>
           </div>
@@ -874,7 +874,7 @@ function SolutionSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             The Solution
           </span>
-          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-bold tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
             How DoorIQ Works
           </h2>
           <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
@@ -909,7 +909,7 @@ function FeaturesSection() {
             Features
           </span>
           <div className="mb-4 sm:mb-6">
-            <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[1.1] px-4">
+            <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-bold tracking-tight leading-[1.1] px-4">
               Everything You Need <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">To Win</span>
             </h2>
           </div>
@@ -1131,7 +1131,7 @@ function MeetTrainerSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-2 sm:mb-3 block">
             Meet the Trainers
           </span>
-          <h2 className="font-space text-3xl sm:text-4xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-3 sm:mb-4 px-4">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-bold tracking-tight leading-[0.95] mb-3 sm:mb-4 px-4">
             Practice with
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Hyper-Realistic AI</span>
@@ -1227,7 +1227,7 @@ function StatsSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
             Results
           </span>
-          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] px-4">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-bold tracking-tight leading-[0.95] px-4">
             Real Numbers.
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Real Results.</span>
@@ -1304,7 +1304,7 @@ function TestimonialsSection() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-sm sm:text-base md:text-lg lg:text-xl uppercase tracking-[0.2em] font-space mb-4 sm:mb-5 md:mb-6 block">
             Testimonials
           </span>
-          <h2 className="font-space text-3xl sm:text-4xl md:text-6xl lg:text-8xl xl:text-9xl text-white font-medium md:font-light tracking-tight leading-[0.95] px-4">
+          <h2 className="font-space text-3xl sm:text-4xl md:text-6xl lg:text-8xl xl:text-9xl text-white font-bold tracking-tight leading-[0.95] px-4">
             What Our Users Say
           </h2>
         </motion.div>
@@ -1360,7 +1360,7 @@ function CTASection() {
           viewport={{ once: true }}
         >
           {/* Headline */}
-          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-medium md:font-light tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4 text-center">
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-bold tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4 text-center">
             Ready to
             <br />
             Transform
@@ -1384,7 +1384,7 @@ function CTASection() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
               {/* Starter Plan */}
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 sm:p-6">
-                <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2">Starter</h3>
+                <h3 className="font-space text-lg sm:text-xl text-white font-bold mb-2">Starter</h3>
                 <div className="mb-3">
                   <span className="text-2xl sm:text-3xl font-bold text-white">$49</span>
                   <span className="text-sm text-white/60 ml-1">/rep/month</span>
@@ -1404,7 +1404,7 @@ function CTASection() {
                     Most Popular
                   </span>
                 </div>
-                <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2 mt-2">Team</h3>
+                <h3 className="font-space text-lg sm:text-xl text-white font-bold mb-2 mt-2">Team</h3>
                 <div className="mb-3">
                   <span className="text-2xl sm:text-3xl font-bold text-white">$39</span>
                   <span className="text-sm text-white/60 ml-1">/rep/month</span>
@@ -1419,7 +1419,7 @@ function CTASection() {
 
               {/* Enterprise Plan */}
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 sm:p-6">
-                <h3 className="font-space text-lg sm:text-xl text-white font-medium mb-2">Enterprise</h3>
+                <h3 className="font-space text-lg sm:text-xl text-white font-bold mb-2">Enterprise</h3>
                 <div className="mb-3">
                   <span className="text-2xl sm:text-3xl font-bold text-white">$29</span>
                   <span className="text-sm text-white/60 ml-1">/rep/month</span>
