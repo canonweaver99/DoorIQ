@@ -1415,9 +1415,9 @@ function CTASection() {
               </div>
 
               {/* Team Plan - Most Popular */}
-              <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-sm border-2 border-indigo-500/30 rounded-lg p-4 sm:p-6 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+              <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-sm border-2 border-indigo-500/30 rounded-lg p-4 sm:p-6 relative pt-6 sm:pt-6">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10">
+                  <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
                     Most Popular
                   </span>
                 </div>
