@@ -53,6 +53,7 @@ next-env.d.ts
 # Sensitive files with API keys
 STRIPE_LIVE_KEYS.md
 STRIPE_COMPLETE_CONFIG.md
+STRIPE_PRODUCTION_SETUP.md
 PRODUCTION_ENV_VARS.md
 *.env.backup
 

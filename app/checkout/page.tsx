@@ -65,8 +65,23 @@ function CheckoutForm() {
   // Calculate total
   // Individual plan: $49 flat (not per rep)
   // Team/Enterprise: price per rep
-  const totalMonthly = selectedPlan.name === 'Individual' ? pricePerRep : repCount * pricePerRep
-  const totalAnnual = totalMonthly * 12
+  const baseTotalMonthly = selectedPlan.name === 'Individual' ? pricePerRep : repCount * pricePerRep
+  const baseTotalAnnual = baseTotalMonthly * 12
+
+  // Apply discount if validated
+  const calculateDiscountedPrice = (basePrice: number) => {
+    if (!validatedDiscount) return basePrice
+    
+    if (validatedDiscount.discount_type === 'percentage') {
+      return basePrice * (1 - validatedDiscount.discount_value / 100)
+    } else {
+      // Fixed amount discount
+      return Math.max(0, basePrice - validatedDiscount.discount_value)
+    }
+  }
+
+  const totalMonthly = calculateDiscountedPrice(baseTotalMonthly)
+  const totalAnnual = calculateDiscountedPrice(baseTotalAnnual)
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -365,13 +380,29 @@ function CheckoutForm() {
                   <div className="pt-4 border-t border-white/10">
                     {billingPeriod === 'annual' ? (
                       <>
+                        {validatedDiscount && (
+                          <>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-white/70 font-sans text-sm">Subtotal</span>
+                              <span className="text-white/70 font-sans text-sm line-through">${baseTotalAnnual.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-green-400 font-sans text-sm">
+                                Discount ({validatedDiscount.discount_type === 'percentage' ? `${validatedDiscount.discount_value}%` : `$${validatedDiscount.discount_value}`})
+                              </span>
+                              <span className="text-green-400 font-semibold text-sm">
+                                -${(baseTotalAnnual - totalAnnual).toLocaleString()}
+                              </span>
+                            </div>
+                          </>
+                        )}
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-white/70 font-sans text-sm">Monthly Equivalent</span>
                           <span className="text-white font-semibold">${totalMonthly.toLocaleString()}/month</span>
                         </div>
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-white font-semibold">Due Today</span>
-                          <span className="text-white font-bold text-xl">${totalAnnual.toLocaleString()}</span>
+                          <span className="text-white font-bold text-xl">${Math.round(totalAnnual).toLocaleString()}</span>
                         </div>
                         <p className="text-xs text-white/60 mt-1">
                           Billed annually • ${Math.round(totalAnnual / 12).toLocaleString()}/month equivalent
@@ -379,9 +410,25 @@ function CheckoutForm() {
                       </>
                     ) : (
                       <>
+                        {validatedDiscount && (
+                          <>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-white/70 font-sans text-sm">Subtotal</span>
+                              <span className="text-white/70 font-sans text-sm line-through">${baseTotalMonthly.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-green-400 font-sans text-sm">
+                                Discount ({validatedDiscount.discount_type === 'percentage' ? `${validatedDiscount.discount_value}%` : `$${validatedDiscount.discount_value}`})
+                              </span>
+                              <span className="text-green-400 font-semibold text-sm">
+                                -${(baseTotalMonthly - totalMonthly).toLocaleString()}
+                              </span>
+                            </div>
+                          </>
+                        )}
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-white font-semibold">Due Today</span>
-                          <span className="text-white font-bold text-lg">${totalMonthly.toLocaleString()}</span>
+                          <span className="text-white font-bold text-lg">${Math.round(totalMonthly).toLocaleString()}</span>
                         </div>
                         <p className="text-xs text-white/60 mt-1">
                           Billed monthly • Renews every month
@@ -548,12 +595,34 @@ function CheckoutForm() {
                 <span className="text-white/70 font-sans">Billing:</span>
                 <span className="text-white font-semibold capitalize">{billingPeriod}</span>
               </div>
+              {validatedDiscount && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-white/70 font-sans">Subtotal:</span>
+                    <span className="text-white/70 font-sans line-through">
+                      {billingPeriod === 'annual' 
+                        ? `$${baseTotalAnnual.toLocaleString()}`
+                        : `$${baseTotalMonthly.toLocaleString()}`
+                      }
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-400 font-sans">Discount:</span>
+                    <span className="text-green-400 font-semibold">
+                      {billingPeriod === 'annual' 
+                        ? `-$${(baseTotalAnnual - totalAnnual).toLocaleString()}`
+                        : `-$${(baseTotalMonthly - totalMonthly).toLocaleString()}`
+                      }
+                    </span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between pt-2 border-t border-white/10">
                 <span className="text-white font-semibold">Total:</span>
                 <span className="text-white font-bold text-lg">
                   {billingPeriod === 'annual' 
-                    ? `$${totalAnnual.toLocaleString()}/year`
-                    : `$${totalMonthly.toLocaleString()}/month`
+                    ? `$${Math.round(totalAnnual).toLocaleString()}/year`
+                    : `$${Math.round(totalMonthly).toLocaleString()}/month`
                   }
                 </span>
               </div>

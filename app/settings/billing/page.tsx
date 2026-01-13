@@ -503,7 +503,10 @@ function BillingSettingsPage() {
               Update payment method and view invoices
             </p>
             
-            {subscription && subscription.status === 'active' && !subscription.cancelAtPeriodEnd && (
+            {/* Show cancel button for active or trialing subscriptions that aren't already canceled */}
+            {subscription && 
+             (subscription.status === 'active' || subscription.status === 'trialing') && 
+             !subscription.cancelAtPeriodEnd && (
               <div className="pt-2">
                 <Button
                   onClick={() => setShowCancelModal(true)}
@@ -511,8 +514,13 @@ function BillingSettingsPage() {
                   className="w-full sm:w-auto border-red-500/30 text-red-400 hover:bg-red-500/10 min-h-[48px] sm:min-h-0 touch-manipulation active:scale-95"
                 >
                   <XCircle className="w-4 h-4 mr-2" />
-                  Cancel Subscription
+                  {subscription.status === 'trialing' ? 'Cancel Trial' : 'Cancel Subscription'}
                 </Button>
+                {subscription.status === 'trialing' && (
+                  <p className="text-xs text-foreground/50 font-sans mt-2">
+                    You can cancel your trial at any time. No charges will be made.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -621,6 +629,7 @@ function BillingSettingsPage() {
         onClose={() => setShowCancelModal(false)}
         onConfirm={handleCancelSubscription}
         currentPeriodEnd={subscription?.currentPeriodEnd}
+        isTrial={subscription?.status === 'trialing'}
       />
 
       {upgradePromptData && (

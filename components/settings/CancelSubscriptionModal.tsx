@@ -17,6 +17,7 @@ interface CancelSubscriptionModalProps {
   onClose: () => void
   onConfirm: (cancelImmediately: boolean) => Promise<void>
   currentPeriodEnd?: string | null
+  isTrial?: boolean
 }
 
 export function CancelSubscriptionModal({
@@ -24,6 +25,7 @@ export function CancelSubscriptionModal({
   onClose,
   onConfirm,
   currentPeriodEnd,
+  isTrial = false,
 }: CancelSubscriptionModalProps) {
   const [canceling, setCanceling] = useState(false)
   const [cancelImmediately, setCancelImmediately] = useState(false)
@@ -58,21 +60,37 @@ export function CancelSubscriptionModal({
             Cancel Subscription
           </DialogTitle>
           <DialogDescription className="text-foreground/70 font-sans">
-            Are you sure you want to cancel your subscription?
+            {isTrial 
+              ? 'Are you sure you want to cancel your free trial? You can cancel at any time with no charges.'
+              : 'Are you sure you want to cancel your subscription?'}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
-            <p className="text-sm text-red-400 font-sans mb-2">
-              <strong>What happens when you cancel:</strong>
+          <div className={`p-4 rounded-lg border ${isTrial ? 'bg-blue-500/10 border-blue-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+            <p className={`text-sm font-sans mb-2 ${isTrial ? 'text-blue-400' : 'text-red-400'}`}>
+              <strong>{isTrial ? 'What happens when you cancel your trial:' : 'What happens when you cancel:'}</strong>
             </p>
             <ul className="text-sm text-foreground/80 font-sans space-y-1 list-disc list-inside">
-              <li>You'll lose access to premium features</li>
-              <li>Your team members will lose access</li>
-              <li>All data will be retained for 30 days</li>
-              {currentPeriodEnd && !cancelImmediately && (
-                <li>You'll have access until {formatDate(currentPeriodEnd)}</li>
+              {isTrial ? (
+                <>
+                  <li>No charges will be made to your payment method</li>
+                  <li>You'll lose access immediately (or at trial end if you choose)</li>
+                  <li>Your team members will lose access</li>
+                  <li>All data will be retained for 30 days</li>
+                  {currentPeriodEnd && !cancelImmediately && (
+                    <li>You'll have access until {formatDate(currentPeriodEnd)} (trial end)</li>
+                  )}
+                </>
+              ) : (
+                <>
+                  <li>You'll lose access to premium features</li>
+                  <li>Your team members will lose access</li>
+                  <li>All data will be retained for 30 days</li>
+                  {currentPeriodEnd && !cancelImmediately && (
+                    <li>You'll have access until {formatDate(currentPeriodEnd)}</li>
+                  )}
+                </>
               )}
             </ul>
           </div>
@@ -86,9 +104,12 @@ export function CancelSubscriptionModal({
                 className="mt-1"
               />
               <div>
-                <p className="font-medium text-foreground">Cancel at Period End</p>
+                <p className="font-medium text-foreground">
+                  {isTrial ? 'Cancel at Trial End' : 'Cancel at Period End'}
+                </p>
                 <p className="text-sm text-foreground/60 font-sans">
-                  Keep access until {currentPeriodEnd ? formatDate(currentPeriodEnd) : 'end of billing period'}
+                  Keep access until {currentPeriodEnd ? formatDate(currentPeriodEnd) : (isTrial ? 'end of trial' : 'end of billing period')}
+                  {isTrial && ' (no charges)'}
                 </p>
               </div>
             </label>
@@ -103,7 +124,9 @@ export function CancelSubscriptionModal({
               <div>
                 <p className="font-medium text-foreground">Cancel Immediately</p>
                 <p className="text-sm text-foreground/60 font-sans">
-                  Lose access right away (no refund)
+                  {isTrial 
+                    ? 'Lose access right away (no charges)'
+                    : 'Lose access right away (no refund)'}
                 </p>
               </div>
             </label>
