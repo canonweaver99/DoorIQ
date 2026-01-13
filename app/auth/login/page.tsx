@@ -194,15 +194,8 @@ function LoginForm() {
   }
 
   const handleCreateAccount = () => {
-    // Preserve redirect params when switching to signup
-    let signupUrl = '/auth/signup'
-    if (nextUrl || checkoutIntent) {
-      const params = new URLSearchParams()
-      if (nextUrl) params.set('next', nextUrl)
-      if (checkoutIntent) params.set('checkout', checkoutIntent)
-      signupUrl += `?${params.toString()}`
-    }
-    router.push(signupUrl)
+    // Redirect to pricing page instead of signup
+    router.push('/landing/pricing')
   }
 
   return (

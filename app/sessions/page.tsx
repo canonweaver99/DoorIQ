@@ -291,7 +291,7 @@ export default function SessionsPage() {
   }
 
   const handleCreateAccount = () => {
-    router.push('/auth/signup')
+    router.push('/landing/pricing')
   }
 
   const testimonials: Testimonial[] = [

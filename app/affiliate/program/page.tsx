@@ -42,7 +42,7 @@ export default function AffiliateProgramPage() {
               asChild
               className="border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg"
             >
-              <Link href="/auth/signup">Sign Up for DoorIQ</Link>
+              <Link href="/landing/pricing">Sign Up for DoorIQ</Link>
             </Button>
           </div>
         </motion.div>

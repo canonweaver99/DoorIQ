@@ -143,7 +143,7 @@ export default function AccountSettingsPage() {
                 Sign In
               </Button>
             </Link>
-            <Link href="/auth/signup" className="flex-1">
+            <Link href="/landing/pricing" className="flex-1">
               <Button 
                 variant="default" 
                 className="w-full flex items-center justify-center gap-2"

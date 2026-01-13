@@ -79,7 +79,7 @@ export default function AffiliateLandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="lg"
-              onClick={() => router.push('/auth/signup')}
+              onClick={() => router.push('/landing/pricing')}
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-6 text-lg font-semibold"
             >
               Start for Free
@@ -168,7 +168,7 @@ export default function AffiliateLandingPage() {
           </p>
           <Button
             size="lg"
-            onClick={() => router.push('/auth/signup')}
+            onClick={() => router.push('/landing/pricing')}
             className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-10 py-6 text-lg font-semibold"
           >
             Get Started Free

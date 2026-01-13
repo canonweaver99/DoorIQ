@@ -246,7 +246,7 @@ export default function BookDemoPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6"
           >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-space font-light text-white mb-2 text-center tracking-tight">Ready to see DoorIQ in action?</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-light text-white mb-2 text-center tracking-tight">Ready to see <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span> in action?</h1>
             <p className="text-white/80 text-center font-sans">Pick a time that works best for you</p>
           </motion.div>
 
@@ -297,8 +297,8 @@ export default function BookDemoPage() {
               animate={{ opacity: 1, y: 0 }}
               className="mb-12 text-center"
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-space font-light text-white mb-4 tracking-tight">
-                Ready to see DoorIQ in action?
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-playfair font-light text-white mb-4 tracking-tight">
+                Ready to see <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span> in action?
               </h1>
               <p className="text-white/80 text-lg md:text-xl font-sans font-light">
                 Book a demo and see how we can transform your sales team
