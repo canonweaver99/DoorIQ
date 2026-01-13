@@ -114,10 +114,10 @@ export default function PricingPage() {
       buttonText: 'Start your free trial',
       href: '/team/signup?plan=starter',
       onClickMonthly: () => {
-        router.push('/checkout?plan=starter&billing=monthly&discount=free123')
+        router.push('/checkout?plan=starter&billing=monthly')
       },
       onClickYearly: () => {
-        router.push('/checkout?plan=starter&billing=annual&discount=free123')
+        router.push('/checkout?plan=starter&billing=annual')
       },
       hasFreeTrial: true,
       minReps: 1,

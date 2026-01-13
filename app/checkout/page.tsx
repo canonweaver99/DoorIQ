@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense, useEffect } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,7 +14,6 @@ function CheckoutForm() {
   const searchParams = useSearchParams()
   const initialPlan = searchParams.get('plan') || 'starter'
   const billing = searchParams.get('billing') || 'monthly'
-  const urlDiscountCode = searchParams.get('discount') || ''
 
   const planDetails = {
     starter: { name: 'Individual', price: 49, minReps: 1, maxReps: 1 }, // Individual: 1 seat only
@@ -36,7 +35,7 @@ function CheckoutForm() {
     workEmail: '',
     phone: '',
     numberOfReps: getInitialReps(),
-    discountCode: urlDiscountCode,
+    discountCode: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -126,13 +125,8 @@ function CheckoutForm() {
     }
   }
 
-  // Auto-validate discount code from URL on mount
-  useEffect(() => {
-    if (urlDiscountCode) {
-      validateDiscountCode(urlDiscountCode)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run on mount when discount code is in URL
+  // Check if Individual plan (1 rep) gets free trial
+  const hasFreeTrial = repCount === 1 && selectedPlan.name === 'Individual'
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -453,10 +447,17 @@ function CheckoutForm() {
                         </div>
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-white font-semibold">Due Today</span>
-                          <span className="text-white font-bold text-xl">${Math.round(totalAnnual).toLocaleString()}</span>
+                          {hasFreeTrial ? (
+                            <span className="text-green-400 font-bold text-xl">7 day free trial</span>
+                          ) : (
+                            <span className="text-white font-bold text-xl">${Math.round(totalAnnual).toLocaleString()}</span>
+                          )}
                         </div>
                         <p className="text-xs text-white/60 mt-1">
-                          Billed annually • ${Math.round(totalAnnual / 12).toLocaleString()}/month equivalent
+                          {hasFreeTrial 
+                            ? 'Start your 7-day free trial • No charge until trial ends'
+                            : `Billed annually • ${Math.round(totalAnnual / 12).toLocaleString()}/month equivalent`
+                          }
                         </p>
                       </>
                     ) : (
@@ -479,10 +480,17 @@ function CheckoutForm() {
                         )}
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-white font-semibold">Due Today</span>
-                          <span className="text-white font-bold text-lg">${Math.round(totalMonthly).toLocaleString()}</span>
+                          {hasFreeTrial ? (
+                            <span className="text-green-400 font-bold text-lg">7 day free trial</span>
+                          ) : (
+                            <span className="text-white font-bold text-lg">${Math.round(totalMonthly).toLocaleString()}</span>
+                          )}
                         </div>
                         <p className="text-xs text-white/60 mt-1">
-                          Billed monthly • Renews every month
+                          {hasFreeTrial 
+                            ? 'Start your 7-day free trial • No charge until trial ends'
+                            : 'Billed monthly • Renews every month'
+                          }
                         </p>
                       </>
                     )}
@@ -631,9 +639,11 @@ function CheckoutForm() {
               <div className="flex justify-between pt-2 border-t border-white/10">
                 <span className="text-white font-semibold">Total:</span>
                 <span className="text-white font-bold text-lg">
-                  {billingPeriod === 'annual' 
-                    ? `$${Math.round(totalAnnual).toLocaleString()}/year`
-                    : `$${Math.round(totalMonthly).toLocaleString()}/month`
+                  {hasFreeTrial 
+                    ? '7 day free trial'
+                    : billingPeriod === 'annual' 
+                      ? `$${Math.round(totalAnnual).toLocaleString()}/year`
+                      : `$${Math.round(totalMonthly).toLocaleString()}/month`
                   }
                 </span>
               </div>
