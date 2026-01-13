@@ -339,7 +339,7 @@ export function HeroSection({
                                 {dealDetails?.base_price && dealDetails.base_price > 0 && (
                                   <div className="flex justify-between text-base">
                                     <span className="text-slate-300 font-sans">Initial Service</span>
-                                    <span className="text-white font-medium font-sans">${dealDetails.base_price.toFixed(2)}</span>
+                                    <span className="text-white font-medium font-sans">${Number(dealDetails.base_price).toFixed(2)}</span>
                                   </div>
                                 )}
                                 {dealDetails?.monthly_value && dealDetails.monthly_value > 0 && dealDetails?.contract_length && dealDetails.contract_length > 0 && (
@@ -348,14 +348,14 @@ export function HeroSection({
                                       Monthly ({dealDetails.contract_length} {dealDetails.contract_length === 1 ? 'month' : 'months'})
                                     </span>
                                     <span className="text-white font-medium font-sans">
-                                      ${dealDetails.monthly_value.toFixed(2)}/mo × {dealDetails.contract_length} = ${(dealDetails.monthly_value * dealDetails.contract_length).toFixed(2)}
+                                      ${Number(dealDetails.monthly_value).toFixed(2)}/mo × {dealDetails.contract_length} = ${(Number(dealDetails.monthly_value) * dealDetails.contract_length).toFixed(2)}
                                     </span>
                                   </div>
                                 )}
                                 {dealDetails?.monthly_value && dealDetails.monthly_value > 0 && !dealDetails?.contract_length && (
                                   <div className="flex justify-between text-base">
                                     <span className="text-white/70 font-sans">Monthly</span>
-                                    <span className="text-white font-medium font-sans">${dealDetails.monthly_value.toFixed(2)}/mo</span>
+                                    <span className="text-white font-medium font-sans">${Number(dealDetails.monthly_value).toFixed(2)}/mo</span>
                                   </div>
                                 )}
                               </div>

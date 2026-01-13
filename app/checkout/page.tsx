@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,7 @@ function CheckoutForm() {
   const searchParams = useSearchParams()
   const initialPlan = searchParams.get('plan') || 'starter'
   const billing = searchParams.get('billing') || 'monthly'
+  const urlDiscountCode = searchParams.get('discount') || ''
 
   const planDetails = {
     starter: { name: 'Individual', price: 49, minReps: 1, maxReps: 1 }, // Individual: 1 seat only
@@ -35,7 +36,7 @@ function CheckoutForm() {
     workEmail: '',
     phone: '',
     numberOfReps: getInitialReps(),
-    discountCode: '',
+    discountCode: urlDiscountCode,
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -82,6 +83,56 @@ function CheckoutForm() {
 
   const totalMonthly = calculateDiscountedPrice(baseTotalMonthly)
   const totalAnnual = calculateDiscountedPrice(baseTotalAnnual)
+
+  // Function to validate discount code
+  const validateDiscountCode = async (code: string) => {
+    if (!code.trim()) {
+      return
+    }
+
+    setValidatingDiscount(true)
+    setDiscountError(null)
+
+    try {
+      const response = await fetch('/api/discount/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.trim() }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setDiscountError(data.error || 'Invalid discount code')
+        setDiscountApplied(false)
+        setValidatedDiscount(null)
+        return
+      }
+
+      setValidatedDiscount({
+        code: data.code,
+        discount_type: data.discount_type,
+        discount_value: data.discount_value,
+      })
+      setDiscountApplied(true)
+      setDiscountError(null)
+    } catch (error) {
+      console.error('Error validating discount code:', error)
+      setDiscountError('Failed to validate discount code. Please try again.')
+      setDiscountApplied(false)
+      setValidatedDiscount(null)
+    } finally {
+      setValidatingDiscount(false)
+    }
+  }
+
+  // Auto-validate discount code from URL on mount
+  useEffect(() => {
+    if (urlDiscountCode) {
+      validateDiscountCode(urlDiscountCode)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount when discount code is in URL
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -505,47 +556,7 @@ function CheckoutForm() {
                     />
                     <Button
                       type="button"
-                      onClick={async () => {
-                        if (!formData.discountCode.trim()) {
-                          setDiscountError('Please enter a discount code')
-                          return
-                        }
-
-                        setValidatingDiscount(true)
-                        setDiscountError(null)
-
-                        try {
-                          const response = await fetch('/api/discount/validate', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ code: formData.discountCode.trim() }),
-                          })
-
-                          const data = await response.json()
-
-                          if (!response.ok) {
-                            setDiscountError(data.error || 'Invalid discount code')
-                            setDiscountApplied(false)
-                            setValidatedDiscount(null)
-                            return
-                          }
-
-                          setValidatedDiscount({
-                            code: data.code,
-                            discount_type: data.discount_type,
-                            discount_value: data.discount_value,
-                          })
-                          setDiscountApplied(true)
-                          setDiscountError(null)
-                        } catch (error) {
-                          console.error('Error validating discount code:', error)
-                          setDiscountError('Failed to validate discount code. Please try again.')
-                          setDiscountApplied(false)
-                          setValidatedDiscount(null)
-                        } finally {
-                          setValidatingDiscount(false)
-                        }
-                      }}
+                      onClick={() => validateDiscountCode(formData.discountCode)}
                       disabled={discountApplied || !formData.discountCode.trim() || validatingDiscount}
                       className="bg-white hover:bg-gray-100 text-gray-900 border-0 font-medium"
                     >
