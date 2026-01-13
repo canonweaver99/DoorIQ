@@ -1015,18 +1015,13 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
           <p className="text-base font-medium text-white">Send Team Message</p>
         </Link>
 
-        <button 
-          onClick={generateInviteLink}
-          disabled={inviteLoading}
-          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 hover:border-purple-500/30 transition-all text-center group disabled:opacity-50"
+        <Link 
+          href="/settings/billing"
+          className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 hover:border-purple-500/30 transition-all text-center group"
         >
-          {inviteLoading ? (
-            <div className="w-6 h-6 border-2 border-white border-t-purple-400 rounded-full animate-spin mb-3 mx-auto" />
-          ) : (
-            <UserPlus className="w-6 h-6 text-white mb-3 mx-auto group-hover:text-purple-400 transition-colors" />
-          )}
+          <UserPlus className="w-6 h-6 text-white mb-3 mx-auto group-hover:text-purple-400 transition-colors" />
           <p className="text-base font-medium text-white">Invite a Rep</p>
-        </button>
+        </Link>
 
         <Link href="/dashboard?tab=manager" className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 hover:border-purple-500/30 transition-all text-center group">
           <Trophy className="w-6 h-6 text-white mb-3 mx-auto group-hover:text-purple-400 transition-colors" />

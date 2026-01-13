@@ -760,7 +760,14 @@ export default function SessionsPage() {
                             <motion.button
                               whileHover={{ scale: 1.01 }}
                               whileTap={{ scale: 0.99 }}
-                              onClick={() => router.push('/trainer')}
+                              onClick={() => {
+                                const agentId = agentMetadata?.card?.elevenAgentId
+                                if (agentId) {
+                                  router.push(`/trainer?agent=${encodeURIComponent(agentId)}`)
+                                } else {
+                                  router.push('/trainer')
+                                }
+                              }}
                               className="w-full bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-2xl text-sm tracking-tight transition-all flex items-center justify-center gap-2 py-2.5 px-4 font-space min-h-[44px] shadow-md shadow-purple-500/15"
                             >
                               <span>Practice Again</span>
@@ -1052,7 +1059,14 @@ export default function SessionsPage() {
                               <motion.button
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
-                                onClick={() => router.push('/trainer')}
+                                onClick={() => {
+                                  const agentId = agentMetadata?.card?.elevenAgentId
+                                  if (agentId) {
+                                    router.push(`/trainer?agent=${encodeURIComponent(agentId)}`)
+                                  } else {
+                                    router.push('/trainer')
+                                  }
+                                }}
                                 className="group/btn flex-1 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white font-bold rounded-md text-xs sm:text-sm md:text-base tracking-tight transition-all flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 px-3 sm:px-4 font-space shadow-md shadow-purple-500/15"
                               >
                                 <span className="truncate">Practice Again</span>
