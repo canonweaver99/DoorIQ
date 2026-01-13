@@ -1409,7 +1409,7 @@ function CTASection() {
                 <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">1 seat • 7-day free trial</p>
                 <ul className="text-xs text-white/60 font-sans space-y-1">
                   <li>• Unlimited practice sessions</li>
-                  <li>• All 12 AI training agents</li>
+                  <li>• All 14 AI training agents</li>
                   <li>• Basic analytics</li>
                 </ul>
               </div>

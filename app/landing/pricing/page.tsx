@@ -104,7 +104,7 @@ export default function PricingPage() {
       period: 'month',
       description: 'Perfect for individual sales professionals (1 seat)',
       features: [
-        'All 12 AI training agents',
+        'All 14 AI training agents',
         'Unlimited practice sessions',
         'Basic analytics & reporting',
         'Performance tracking',
@@ -192,28 +192,25 @@ export default function PricingPage() {
     <div className="min-h-screen bg-black text-white">
       <Navigation />
       {/* Free Trial Banner */}
-      <div className="relative pt-24 pb-4 px-4 sm:px-6 md:px-8 lg:px-12">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-500/30 rounded-lg p-4 sm:p-5 flex items-start gap-3 sm:gap-4"
-          >
-            <div className="flex-shrink-0 mt-0.5">
-              <Info className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-space font-semibold text-white text-base sm:text-lg mb-1">
-                7-Day Free Trial Available
-              </h3>
-              <p className="font-sans text-white/80 text-sm sm:text-base leading-relaxed">
-                Individual plans (1 user) include a <span className="font-semibold text-white">7-day free trial</span> with no credit card required. 
-                Plans with 2+ users require immediate payment. Start risk-free and experience all premium features!
-              </p>
-            </div>
-          </motion.div>
-        </div>
+      <div className="relative pt-24 pb-2 w-full">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border-y border-purple-500/30 px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-5 flex items-center gap-3 sm:gap-4 w-full"
+        >
+          <div className="flex-shrink-0">
+            <Info className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-space font-semibold text-white text-base sm:text-lg mb-1">
+              7-Day Free Trial Available
+            </h3>
+            <p className="font-sans text-white/80 text-xs sm:text-sm md:text-base leading-relaxed whitespace-nowrap overflow-hidden">
+              Individual plans (1 user): <span className="font-semibold text-white">7-day free trial</span>, no credit card required. Plans with 2+ users: immediate payment required. Start risk-free!
+            </p>
+          </div>
+        </motion.div>
       </div>
       {/* Merged Hero and Pricing Section */}
       <div className="relative">
@@ -324,7 +321,7 @@ export default function PricingPage() {
               
               <div className="mt-6 pt-6 border-t border-white/10">
                 <p className="text-xs text-white/60 font-sans leading-relaxed">
-                  <span className="text-white/80 font-semibold">*</span> ROI Calculation: DoorIQ provides comprehensive training and unlimited practice sessions with 12 AI agents, enabling sales reps to improve their skills and close more deals. On average, reps using DoorIQ close a minimum of 1 extra deal per month. The calculator multiplies your number of reps by your average deal value to estimate additional monthly revenue, then subtracts your monthly DoorIQ cost to show your net profit and ROI.
+                  <span className="text-white/80 font-semibold">*</span> ROI Calculation: DoorIQ provides comprehensive training and unlimited practice sessions with 14 AI agents, enabling sales reps to improve their skills and close more deals. On average, reps using DoorIQ close a minimum of 1 extra deal per month. The calculator multiplies your number of reps by your average deal value to estimate additional monthly revenue, then subtracts your monthly DoorIQ cost to show your net profit and ROI.
                 </p>
               </div>
             </motion.div>

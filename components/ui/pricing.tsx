@@ -305,8 +305,8 @@ export function PricingSection({
         />
         <div className="relative z-10 container-responsive">
           {title && (
-            <div className={`${maxWidth} mx-auto text-center space-y-1 mb-3 pt-24 pb-4`}>
-              <h2 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight mb-4 text-white text-center">
+            <div className={`${maxWidth} mx-auto text-center space-y-1 mb-3 pt-4 pb-4`}>
+              <h2 className="font-space text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 text-white text-center">
                 {title.split(' ').slice(0, -1).join(' ')}{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                   {title.split(' ').slice(-1)[0]}
