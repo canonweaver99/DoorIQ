@@ -535,9 +535,9 @@ function CheckoutForm() {
                     </div>
                   </div>
                   {billingPeriod === 'monthly' && (
-                    <div className="mt-3 bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                      <p className="text-green-400 text-sm text-center font-bold">
-                        💰 Switch to annual billing to save 20% (${Math.round(totalMonthly * 0.2 * 12).toLocaleString()}/year savings)
+                    <div className="mt-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/40 rounded-lg px-4 py-2.5">
+                      <p className="text-green-300 text-sm text-center font-semibold whitespace-nowrap">
+                        💰 Save ${Math.round(totalMonthly * 0.2 * 12).toLocaleString()}/year with annual billing
                       </p>
                     </div>
                   )}
