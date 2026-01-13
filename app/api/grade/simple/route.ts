@@ -178,7 +178,11 @@ export async function POST(req: NextRequest) {
 6. top_strengths (array) - Top 2-3 strengths with brief description
 7. top_improvements (array) - Top 2-3 areas for improvement
 8. session_highlight (string) - One highlight from the conversation
-9. key_moments (array) - Important moments: [{time: "MM:SS", type: "string", description: "string", transcript: "actual quote from conversation"}]
+9. key_moments (array) - Important moments: [{time: "MM:SS", type: "string", description: "string", transcript: "actual quote from conversation", analysis: {whatWorked: "specific feedback on what worked well in this moment", whatToImprove: "specific actionable feedback on what could be improved"}}]
+   - For each key moment, provide SPECIFIC analysis based on the actual transcript content
+   - whatWorked: Be specific about what the rep did well (e.g., "You acknowledged their concern about price before pivoting to value", "Your assumptive language 'when we get started' created forward momentum")
+   - whatToImprove: Provide actionable feedback (e.g., "Consider asking a discovery question before addressing the objection to better understand their concern", "Try using 'we' language instead of 'you' to create partnership")
+   - Avoid generic phrases like "effective communication" or "consider alternative approaches"
 
 CRITICAL SALE DETECTION RULES:
 - Sale is CLOSED if customer agreed AND (info was collected OR scheduling happened OR payment discussed)
@@ -206,7 +210,7 @@ Return ONLY valid JSON matching this structure:
   "top_strengths": ["string"],
   "top_improvements": ["string"],
   "session_highlight": "string",
-  "key_moments": [{"time": "MM:SS", "type": "string", "description": "string", "transcript": "actual quote from conversation"}]
+  "key_moments": [{"time": "MM:SS", "type": "string", "description": "string", "transcript": "actual quote from conversation", "analysis": {"whatWorked": "string", "whatToImprove": "string"}}]
 }`
 
     logger.info('🤖 Starting simple grading', { sessionId, transcriptLength: transcript.length })
@@ -417,7 +421,9 @@ Return ONLY valid JSON matching this structure:
         description: moment.description || '',
         transcript: transcriptText,
         importance: moment.importance || 5,
-        outcome: moment.outcome || 'neutral'
+        outcome: moment.outcome || 'neutral',
+        // Preserve analysis if it exists
+        analysis: moment.analysis || undefined
       }
     })
     

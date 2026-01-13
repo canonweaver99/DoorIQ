@@ -30,7 +30,15 @@ function SignUpForm() {
   const nextUrl = searchParams.get('next')
   const checkoutIntent = searchParams.get('checkout')
   
-  // Signups are now open to everyone
+  // Redirect to checkout if no checkout intent provided
+  useEffect(() => {
+    if (!checkoutIntent && !inviteToken) {
+      // Account creation requires checkout - redirect to checkout page
+      router.replace('/checkout')
+    }
+  }, [checkoutIntent, inviteToken, router])
+  
+  // Signups are now open to everyone (but require checkout)
   const hasValidAccess = true
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -87,6 +95,13 @@ function SignUpForm() {
   }
 
   const handleGoogleSignUp = async () => {
+    // Account creation requires checkout - redirect if no checkout intent
+    if (!checkoutIntent && !inviteToken) {
+      setError('Please complete checkout first before creating an account with Google.')
+      router.replace('/checkout')
+      return
+    }
+
     setLoading(true)
     setError(null)
 

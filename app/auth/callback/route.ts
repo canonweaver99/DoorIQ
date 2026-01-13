@@ -33,6 +33,45 @@ export async function GET(request: Request) {
     
     console.log('✅ Session created successfully:', data.user.email)
     
+    // Check if this is a new user (first time OAuth signup)
+    const { createServiceSupabaseClient } = await import('@/lib/supabase/server')
+    const serviceSupabase = await createServiceSupabaseClient()
+    const { data: existingUser } = await serviceSupabase
+      .from('users')
+      .select('id')
+      .eq('id', data.user.id)
+      .single()
+    
+    const isNewUser = !existingUser
+    const checkoutIntent = requestUrl.searchParams.get('checkout')
+    
+    // If this is a new user signup (not login), require checkout
+    if (isNewUser && !checkoutIntent) {
+      console.log('⚠️ New OAuth user without checkout - redirecting to checkout')
+      return NextResponse.redirect(new URL('/checkout?error=Please complete checkout before creating an account', requestUrl.origin))
+    }
+    
+    // If checkout intent provided, validate it
+    if (checkoutIntent && isNewUser) {
+      try {
+        const stripeKey = process.env.STRIPE_SECRET_KEY
+        if (stripeKey) {
+          const Stripe = (await import('stripe')).default
+          const stripe = new Stripe(stripeKey, { apiVersion: '2025-09-30.clover' })
+          const session = await stripe.checkout.sessions.retrieve(checkoutIntent)
+          
+          if (session.status !== 'complete' || 
+              (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required')) {
+            console.log('⚠️ Invalid checkout session - redirecting to checkout')
+            return NextResponse.redirect(new URL('/checkout?error=Invalid checkout session', requestUrl.origin))
+          }
+        }
+      } catch (error) {
+        console.error('Error validating checkout session:', error)
+        return NextResponse.redirect(new URL('/checkout?error=Failed to validate checkout', requestUrl.origin))
+      }
+    }
+    
     // Get redirect path from query params or default to /home
     const redirectPath = requestUrl.searchParams.get('next') || '/home'
     const redirectUrl = new URL(redirectPath, requestUrl.origin)

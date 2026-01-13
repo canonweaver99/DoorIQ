@@ -189,13 +189,63 @@ export async function POST(req: Request) {
       inviteData = invite
     }
 
-    // Validate checkout intent if provided
-    // Note: For now, we just check if checkout_intent exists
-    // In production, you might want to verify the Stripe session status
-    if (checkout_intent) {
-      // TODO: Verify Stripe checkout session is completed
-      // For now, just allow if checkout_intent is present
-      console.log('✅ Checkout intent provided:', checkout_intent)
+    // ============================================
+    // CHECKOUT VALIDATION (REQUIRED)
+    // ============================================
+    // Account creation is ONLY allowed through checkout flow
+    // Users must complete checkout before creating an account
+    if (!checkout_intent) {
+      return NextResponse.json({ 
+        error: 'Account creation requires checkout. Please complete checkout first.' 
+      }, { status: 403 })
+    }
+
+    // Verify Stripe checkout session is completed
+    try {
+      const stripe = await import('stripe').then(m => {
+        const stripeKey = process.env.STRIPE_SECRET_KEY
+        if (!stripeKey) return null
+        return new m.default(stripeKey, { apiVersion: '2025-09-30.clover' })
+      })
+
+      if (!stripe) {
+        console.error('❌ Stripe not configured')
+        return NextResponse.json({ 
+          error: 'Payment processing unavailable. Please contact support.' 
+        }, { status: 503 })
+      }
+
+      // Retrieve the checkout session
+      const session = await stripe.checkout.sessions.retrieve(checkout_intent)
+      
+      // Verify session is completed
+      if (session.status !== 'complete') {
+        return NextResponse.json({ 
+          error: 'Checkout session not completed. Please complete checkout first.' 
+        }, { status: 403 })
+      }
+      
+      // Verify payment status (paid or no_payment_required for 100% discounts)
+      if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
+        return NextResponse.json({ 
+          error: 'Checkout session payment not completed. Please complete checkout first.' 
+        }, { status: 403 })
+      }
+
+      // Verify email matches
+      const sessionEmail = session.customer_email || session.metadata?.user_email
+      if (sessionEmail && sessionEmail.toLowerCase() !== email.toLowerCase()) {
+        return NextResponse.json({ 
+          error: 'Email does not match checkout session. Please use the email from checkout.' 
+        }, { status: 403 })
+      }
+
+      console.log('✅ Checkout session validated:', checkout_intent)
+    } catch (error: any) {
+      console.error('❌ Error validating checkout session:', error)
+      return NextResponse.json({ 
+        error: 'Invalid checkout session. Please complete checkout first.' 
+      }, { status: 403 })
     }
 
     // Try to create user first

@@ -384,26 +384,94 @@ export function CriticalMomentsTimeline({
                         <div className="text-base sm:text-lg font-semibold text-green-400 mb-2">What Worked</div>
                         <p className="text-base sm:text-lg text-gray-200 leading-relaxed">
                           {(() => {
-                            // Generate more specific feedback based on moment type and outcome
+                            // Use analysis if available
                             if (moment.analysis?.whatWorked) {
                               return moment.analysis.whatWorked
                             }
                             
-                            // Type-specific default feedback
-                            if (moment.type === 'objection' && moment.outcome === 'success') {
-                              return `You effectively addressed the ${agentName || 'homeowner'}'s concern by acknowledging their position and providing a thoughtful response. Your approach showed empathy and maintained the conversation flow.`
-                            }
-                            if (moment.type === 'close_attempt' && moment.outcome === 'success') {
-                              return `Your closing attempt was well-timed and natural. You created a clear path forward without being pushy, which helped move the conversation toward a decision.`
-                            }
-                            if (moment.type === 'rapport' && moment.outcome === 'success') {
-                              return `You built strong rapport by finding common ground and showing genuine interest. This connection helped establish trust and made the ${agentName || 'homeowner'} more receptive to your message.`
-                            }
-                            if (moment.type === 'discovery' && moment.outcome === 'success') {
-                              return `Your discovery questions uncovered important information about the ${agentName || 'homeowner'}'s needs and situation. This insight allowed you to tailor your approach effectively.`
+                            // Generate specific feedback based on transcript content and moment type
+                            const transcriptLower = (moment.transcript || '').toLowerCase()
+                            const isSuccess = moment.outcome === 'success'
+                            const isFailure = moment.outcome === 'failure'
+                            
+                            // Objection handling feedback
+                            if (moment.type === 'objection') {
+                              if (isSuccess) {
+                                if (transcriptLower.includes('understand') || transcriptLower.includes('hear')) {
+                                  return `You acknowledged their concern first (${transcriptLower.includes('understand') ? 'showing understanding' : 'listening actively'}), which made them more receptive to your response. This validation approach builds trust before addressing objections.`
+                                }
+                                return `You handled this objection effectively by addressing their specific concern. Your response maintained the conversation flow and kept them engaged.`
+                              }
+                              if (isFailure) {
+                                return `This objection wasn't fully resolved. Consider acknowledging their concern more directly before pivoting to your response.`
+                              }
+                              return `You addressed an objection here. To improve, try acknowledging their concern first, then provide a solution that addresses their specific worry.`
                             }
                             
-                            return 'This moment showed effective communication and engagement. You maintained a professional yet personable tone that kept the conversation moving forward.'
+                            // Close attempt feedback
+                            if (moment.type === 'close_attempt') {
+                              if (isSuccess) {
+                                if (transcriptLower.includes('when') && !transcriptLower.includes('if')) {
+                                  return `Your use of assumptive language ("when" instead of "if") created forward momentum. This confident approach helped move the conversation toward commitment.`
+                                }
+                                if (transcriptLower.includes('ready') || transcriptLower.includes('get started')) {
+                                  return `Your direct closing approach worked well. You created a clear path forward and made it easy for them to say yes.`
+                                }
+                                return `Your closing attempt was effective. You created a natural transition to commitment without being pushy.`
+                              }
+                              if (isFailure) {
+                                if (transcriptLower.includes('if') && !transcriptLower.includes('when')) {
+                                  return `You used permission-seeking language ("if") which gave them an easy way out. Next time, try assumptive language like "when we get started" to create forward momentum.`
+                                }
+                                return `The close attempt didn't land. Consider using more assumptive language and creating urgency around the offer or timing.`
+                              }
+                              return `You attempted a close here. To improve effectiveness, use assumptive language ("when" instead of "if") and create a clear next step.`
+                            }
+                            
+                            // Rapport building feedback
+                            if (moment.type === 'rapport') {
+                              if (isSuccess) {
+                                if (transcriptLower.includes('neighbor') || transcriptLower.includes('neighborhood')) {
+                                  return `You connected by referencing the neighborhood, which created a sense of local connection and trust. This local approach makes you feel more like a neighbor than a salesperson.`
+                                }
+                                if (transcriptLower.includes('?') && (transcriptLower.includes('how') || transcriptLower.includes('what'))) {
+                                  return `You asked genuine questions about them, showing real interest. This personal connection helped build rapport and made them more comfortable.`
+                                }
+                                return `You built rapport by finding common ground and showing genuine interest. This connection established trust and made them more receptive.`
+                              }
+                              return `This was a rapport-building moment. To strengthen it, ask more personal questions and find shared experiences or local connections.`
+                            }
+                            
+                            // Discovery feedback
+                            if (moment.type === 'discovery') {
+                              if (isSuccess) {
+                                if (transcriptLower.includes('?') && transcriptLower.length < 100) {
+                                  return `Your open-ended question uncovered valuable information. Short, focused questions like this are effective for discovery.`
+                                }
+                                return `Your discovery question revealed important information about their needs. This insight allowed you to tailor your approach effectively.`
+                              }
+                              return `This discovery moment could be improved. Try asking more open-ended questions that start with "what," "how," or "why" to uncover deeper needs.`
+                            }
+                            
+                            // Opening feedback
+                            if (moment.type === 'opening') {
+                              if (isSuccess) {
+                                if (transcriptLower.length < 50) {
+                                  return `Your concise opening worked well. You got straight to the point without overwhelming them, which respects their time.`
+                                }
+                                return `Your opening established a positive tone. You introduced yourself clearly and set up the conversation effectively.`
+                              }
+                              return `The opening could be more effective. Try being more concise, mentioning the neighborhood connection, and getting to value quickly.`
+                            }
+                            
+                            // Generic fallback - but more specific than before
+                            if (isSuccess) {
+                              return `This moment worked well. You maintained good communication and kept the conversation moving forward effectively.`
+                            }
+                            if (isFailure) {
+                              return `This moment didn't achieve the desired outcome. Review the transcript to identify what could be improved for next time.`
+                            }
+                            return `This was an important moment in the conversation. Consider how you could strengthen your approach in similar situations.`
                           })()}
                         </p>
                       </div>
@@ -413,7 +481,63 @@ export function CriticalMomentsTimeline({
                       <div className="flex-1">
                         <div className="text-base sm:text-lg font-semibold text-blue-400 mb-2">What to Try Next Time</div>
                         <p className="text-base sm:text-lg text-gray-200 leading-relaxed">
-                          {moment.analysis?.whatToImprove || 'Consider alternative approaches to enhance this moment further.'}
+                          {(() => {
+                            // Use analysis if available
+                            if (moment.analysis?.whatToImprove) {
+                              return moment.analysis.whatToImprove
+                            }
+                            
+                            // Generate specific improvement feedback based on moment type and outcome
+                            const transcriptLower = (moment.transcript || '').toLowerCase()
+                            const isSuccess = moment.outcome === 'success'
+                            const isFailure = moment.outcome === 'failure'
+                            
+                            // Objection handling improvements
+                            if (moment.type === 'objection') {
+                              if (isFailure) {
+                                return `Try acknowledging their concern first with phrases like "I hear you" or "That makes sense" before addressing it. Then ask a discovery question to understand their specific worry before responding.`
+                              }
+                              return `Even though this worked, you could strengthen it by asking a follow-up question to understand their concern deeper, then addressing the root cause rather than just the surface objection.`
+                            }
+                            
+                            // Close attempt improvements
+                            if (moment.type === 'close_attempt') {
+                              if (isFailure) {
+                                if (transcriptLower.includes('if')) {
+                                  return `Replace "if" language with assumptive "when" language. Instead of "if you're interested," try "when we get started" or "once we set this up." This creates forward momentum.`
+                                }
+                                return `Try using assumptive language ("when" instead of "if"), create urgency around timing or the offer, and make the next step crystal clear.`
+                              }
+                              return `To make this even stronger, consider creating more urgency around timing or the offer, and use multiple close attempts if they hesitate.`
+                            }
+                            
+                            // Rapport improvements
+                            if (moment.type === 'rapport') {
+                              return `To deepen rapport, ask more personal questions about their home, family, or neighborhood. Reference specific things they mention and find shared experiences.`
+                            }
+                            
+                            // Discovery improvements
+                            if (moment.type === 'discovery') {
+                              if (!transcriptLower.includes('?')) {
+                                return `Try asking more open-ended questions that start with "what," "how," or "why" instead of yes/no questions. This uncovers deeper needs and motivations.`
+                              }
+                              return `Follow up with deeper questions. After they answer, ask "What else?" or "Tell me more about that" to uncover additional needs.`
+                            }
+                            
+                            // Opening improvements
+                            if (moment.type === 'opening') {
+                              if (transcriptLower.length > 100) {
+                                return `Your opening was too long. Keep it under 30 seconds - mention the neighborhood connection, get to value quickly, and ask a question to engage them.`
+                              }
+                              return `Strengthen your opening by mentioning the neighborhood connection earlier, getting to value faster, and asking an engaging question to start the conversation.`
+                            }
+                            
+                            // Generic improvements
+                            if (isFailure) {
+                              return `Review this moment and identify what didn't work. Consider asking for feedback or practicing this scenario to improve your approach.`
+                            }
+                            return `Even successful moments can be improved. Consider how you could make this moment even more effective next time by refining your language or timing.`
+                          })()}
                         </p>
                       </div>
                     </div>
