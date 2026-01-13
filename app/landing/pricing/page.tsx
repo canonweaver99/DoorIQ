@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PricingSection } from '@/components/ui/pricing'
 import { motion, useSpring } from 'framer-motion'
-import { TrendingUp, DollarSign, Calculator } from 'lucide-react'
+import { TrendingUp, DollarSign, Calculator, Info } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Navigation } from '../page'
@@ -18,11 +18,12 @@ export default function PricingPage() {
   const [repCount, setRepCount] = useState(5)
   
   // Automatically detect tier based on rep count
+  // Individual: 1 seat, Team: 2-100 reps, Enterprise: 101+ reps
   const selectedTier: 'starter' | 'team' | 'enterprise' | null = repCount >= 101 
     ? 'enterprise' 
-    : repCount >= 21 
+    : repCount >= 2 
     ? 'team' 
-    : repCount >= 1 
+    : repCount === 1 
     ? 'starter' 
     : null
 
@@ -58,6 +59,9 @@ export default function PricingPage() {
       }
     }
 
+    // Individual plan: $49 flat for 1 seat
+    // Team plan: $39 per rep for 2-100 reps
+    // Enterprise plan: $29 per rep for 101+ reps
     const pricePerRep = tier === 'starter' ? 49 : tier === 'team' ? 39 : 29
     const monthlyCost = reps * pricePerRep
     // Annual pricing: 2 months free = 10 months payment
@@ -88,22 +92,24 @@ export default function PricingPage() {
   const roiData = selectedTier ? calculateROI(selectedTier, repCount, roiDealValue) : null
 
   // Pricing plans configuration
-  // Note: Prices shown are per rep per month
+  // Individual: 1 seat at $49/month (flat rate)
+  // Team: 2-100 reps at $39/rep/month
+  // Enterprise: 101+ reps at $29/rep/month
   // Annual billing: 20% discount applied
   const plans = [
     {
-      name: 'Starter',
-      price: '49', // Per rep per month
-      yearlyPrice: '39', // Per rep per month with 20% discount
+      name: 'Individual',
+      price: '49', // Flat rate for 1 seat
+      yearlyPrice: '39', // Flat rate with 20% discount
       period: 'month',
-      description: 'Perfect for small teams (1-20 reps)',
+      description: 'Perfect for individual sales professionals (1 seat)',
       features: [
         'All 12 AI training agents',
         'Unlimited practice sessions',
         'Basic analytics & reporting',
-        'Team leaderboard',
-        'Manager dashboard',
+        'Performance tracking',
         'Email support',
+        '7-day free trial',
       ],
       buttonText: 'Start your free trial',
       href: '/team/signup?plan=starter',
@@ -115,16 +121,18 @@ export default function PricingPage() {
       },
       hasFreeTrial: true,
       minReps: 1,
-      maxReps: 20,
+      maxReps: 1,
     },
     {
       name: 'Team',
       price: '39', // Per rep per month
       yearlyPrice: '31', // Per rep per month with 20% discount
       period: 'month',
-      description: 'Most popular for growing teams (21-100 reps)',
+      description: 'Most popular for growing teams (2-100 reps)',
       features: [
-        'Everything in Starter',
+        'Everything in Individual',
+        'Team leaderboard',
+        'Manager dashboard',
         'Advanced analytics & reporting',
         'Team performance insights',
         'Custom practice scenarios',
@@ -140,7 +148,7 @@ export default function PricingPage() {
         router.push('/checkout?plan=team&billing=annual')
       },
       isPopular: true,
-      minReps: 21,
+      minReps: 2,
       maxReps: 100,
     },
     {
@@ -156,6 +164,7 @@ export default function PricingPage() {
         'Custom integrations',
         'SSO',
         'API access',
+        'Volume discounts',
       ],
       buttonText: 'Contact Sales',
       href: '/contact-sales',
@@ -182,6 +191,30 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <Navigation />
+      {/* Free Trial Banner */}
+      <div className="relative pt-24 pb-4 px-4 sm:px-6 md:px-8 lg:px-12">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-500/30 rounded-lg p-4 sm:p-5 flex items-start gap-3 sm:gap-4"
+          >
+            <div className="flex-shrink-0 mt-0.5">
+              <Info className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-space font-semibold text-white text-base sm:text-lg mb-1">
+                7-Day Free Trial Available
+              </h3>
+              <p className="font-sans text-white/80 text-sm sm:text-base leading-relaxed">
+                Individual plans (1 user) include a <span className="font-semibold text-white">7-day free trial</span> with no credit card required. 
+                Plans with 2+ users require immediate payment. Start risk-free and experience all premium features!
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
       {/* Merged Hero and Pricing Section */}
       <div className="relative">
         <PricingSection
@@ -242,21 +275,21 @@ export default function PricingPage() {
                     <div className="mt-2">
                       <p className="text-sm text-white/80 font-sans mb-1">
                         Selected Plan: <span className="font-semibold text-white">
-                          {selectedTier === 'starter' ? 'Starter' : selectedTier === 'team' ? 'Team' : 'Enterprise'}
+                          {selectedTier === 'starter' ? 'Individual' : selectedTier === 'team' ? 'Team' : 'Enterprise'}
                         </span>
                       </p>
                       <p className="text-xs text-white/60 font-sans">
                         {selectedTier === 'starter' 
-                          ? '5-20 reps • $49/rep/month ($245/month minimum)' 
+                          ? '1 seat • $49/month (flat rate)' 
                           : selectedTier === 'team' 
-                          ? '21-50 reps • $39/rep/month' 
-                          : '51+ reps • $29/rep/month (volume discounts at 100+)'}
+                          ? '2-100 reps • $39/rep/month' 
+                          : '101+ reps • $29/rep/month'}
                       </p>
                     </div>
                   )}
-                  {repCount > 0 && repCount < 5 && (
+                  {repCount === 0 && (
                     <p className="text-xs text-yellow-400 mt-1 font-sans">
-                      Minimum 5 reps required for Starter plan
+                      Enter number of reps to see pricing
                     </p>
                   )}
                 </div>

@@ -4,23 +4,30 @@
  * Price IDs and Payment Links for DoorIQ Plans
  */
 
+/**
+ * Stripe Configuration - PRODUCTION
+ * 
+ * Price IDs and Payment Links for DoorIQ Plans
+ * Updated for production use
+ */
+
 export const STRIPE_CONFIG = {
   starter: {
-    priceId: 'price_1SnNyq1WkNBozaYxhlXfEjg2', // Tiered monthly pricing
+    priceId: 'prod_TmlX1S82Ed4Gpe', // Production: DoorIQ Software - Tiered monthly pricing
     paymentLink: 'https://buy.stripe.com/8x228j5cC2UWaqVe0L2go01',
-    // Tiered pricing: 1-20 reps at $49/rep/month
-    perSeatPriceId: 'price_1SnNyq1WkNBozaYxhlXfEjg2',
+    // Individual plan: 1 seat at $49/month (flat rate)
+    perSeatPriceId: 'prod_TmlX1S82Ed4Gpe',
   },
   team: {
-    priceId: 'price_1SnNyq1WkNBozaYxhlXfEjg2', // Tiered monthly pricing
+    priceId: 'prod_TmlX1S82Ed4Gpe', // Production: DoorIQ Software - Tiered monthly pricing
     paymentLink: 'https://buy.stripe.com/00w6oz9sSgLM42x2i32go02',
-    // Tiered pricing: 21-100 reps at $39/rep/month
-    perSeatPriceId: 'price_1SnNyq1WkNBozaYxhlXfEjg2',
+    // Team plan: 2-100 reps at $39/rep/month
+    perSeatPriceId: 'prod_TmlX1S82Ed4Gpe',
   },
   enterprise: {
-    priceId: 'price_1SnNyq1WkNBozaYxhlXfEjg2', // Tiered monthly pricing
-    // Tiered pricing: 101+ reps at $29/rep/month
-    perSeatPriceId: 'price_1SnNyq1WkNBozaYxhlXfEjg2',
+    priceId: 'prod_TmlX1S82Ed4Gpe', // Production: DoorIQ Software - Tiered monthly pricing
+    // Enterprise plan: 101+ reps at $29/rep/month
+    perSeatPriceId: 'prod_TmlX1S82Ed4Gpe',
   },
 } as const
 

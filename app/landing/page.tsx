@@ -1399,14 +1399,14 @@ function CTASection() {
             className="mt-8 sm:mt-10 md:mt-12 mb-8"
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
-              {/* Starter Plan */}
+              {/* Individual Plan */}
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 sm:p-6">
-                <h3 className="font-space text-lg sm:text-xl text-white font-bold mb-2">Starter</h3>
+                <h3 className="font-space text-lg sm:text-xl text-white font-bold mb-2">Individual</h3>
                 <div className="mb-3">
                   <span className="text-2xl sm:text-3xl font-bold text-white">$49</span>
-                  <span className="text-sm text-white/60 ml-1">/rep/month</span>
+                  <span className="text-sm text-white/60 ml-1">/month</span>
                 </div>
-                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">1-20 reps</p>
+                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">1 seat • 7-day free trial</p>
                 <ul className="text-xs text-white/60 font-sans space-y-1">
                   <li>• Unlimited practice sessions</li>
                   <li>• All 12 AI training agents</li>
@@ -1426,9 +1426,9 @@ function CTASection() {
                   <span className="text-2xl sm:text-3xl font-bold text-white">$39</span>
                   <span className="text-sm text-white/60 ml-1">/rep/month</span>
                 </div>
-                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">21-100 reps</p>
+                <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">2-100 reps</p>
                 <ul className="text-xs text-white/60 font-sans space-y-1">
-                  <li>• Everything in Starter</li>
+                  <li>• Everything in Individual</li>
                   <li>• Advanced analytics</li>
                   <li>• Custom playbooks</li>
                 </ul>

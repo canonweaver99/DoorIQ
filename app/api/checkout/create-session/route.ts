@@ -72,9 +72,9 @@ export async function POST(request: NextRequest) {
 
     // Validate plan and rep count match
     const planLimits = {
-      starter: { min: 1, max: 20 },
-      team: { min: 21, max: 100 },
-      enterprise: { min: 101, max: 500 },
+      starter: { min: 1, max: 1 }, // Individual plan: 1 seat only
+      team: { min: 2, max: 100 }, // Team plan: 2-100 reps
+      enterprise: { min: 101, max: 500 }, // Enterprise plan: 101+ reps
     }
 
     const planLimit = planLimits[plan as keyof typeof planLimits]
@@ -93,14 +93,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate pricing
+    // Individual plan (starter): $49 flat for 1 seat
+    // Team plan: $39 per rep/month for 2-100 reps
+    // Enterprise plan: $29 per rep/month for 101+ reps
     const basePrices = {
-      starter: 49,
-      team: 39,
-      enterprise: 29,
+      starter: 49, // Flat rate for 1 seat
+      team: 39, // Per rep
+      enterprise: 29, // Per rep
     }
 
     const pricePerRep = basePrices[plan as keyof typeof basePrices]
-    // No volume discount needed - Enterprise pricing already reflects 101+ reps at $29/rep
 
     // Get origin for success/cancel URLs
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -257,6 +259,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create checkout session
+    // Only apply 7-day free trial for individual plans (1 rep)
+    // Plans with 2+ reps require immediate payment
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: 'subscription',
@@ -267,7 +271,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       subscription_data: {
-        trial_period_days: 7,
+        ...(repCount === 1 ? { trial_period_days: 7 } : {}),
         metadata: {
           plan_type: plan,
           billing_period: billingPeriod,

@@ -25,7 +25,7 @@ function TeamSignupContent() {
   const [checkingAuth, setCheckingAuth] = useState(true)
   
   const [organizationName, setOrganizationName] = useState('')
-  const [seatCount, setSeatCount] = useState(planType === 'starter' ? 5 : 25)
+  const [seatCount, setSeatCount] = useState(planType === 'starter' ? 1 : 2) // Individual: 1 seat, Team: 2+ seats
   const [userEmail, setUserEmail] = useState('')
   const [userName, setUserName] = useState('')
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(billingParam === 'annual' ? 'annual' : 'monthly')
@@ -34,23 +34,26 @@ function TeamSignupContent() {
   const [roiDealValue, setRoiDealValue] = useState(500)
 
   // Plan configuration
+  // Individual: 1 seat at $49/month (flat rate)
+  // Team: 2-100 seats at $39/seat/month
   const planConfig = planType === 'starter' 
     ? { 
-        name: 'Starter Plan',
-        pricePerSeat: 99,
+        name: 'Individual Plan',
+        pricePerSeat: 49,
         minSeats: 1,
-        maxSeats: 20,
+        maxSeats: 1,
         planId: 'starter'
       }
     : { 
         name: 'Team Plan',
-        pricePerSeat: 69,
-        minSeats: 21,
+        pricePerSeat: 39,
+        minSeats: 2,
         maxSeats: 100,
         planId: 'team'
       }
 
-  const monthlyCost = seatCount * planConfig.pricePerSeat
+  // Individual plan: flat $49, Team plan: per seat pricing
+  const monthlyCost = planConfig.planId === 'starter' ? planConfig.pricePerSeat : seatCount * planConfig.pricePerSeat
   // Annual pricing: 2 months free = 10 months payment
   const annualCost = Math.round(monthlyCost * 10)
   const annualSavings = monthlyCost * 12 - annualCost
@@ -147,14 +150,14 @@ function TeamSignupContent() {
   // Update seat count when plan type changes
   useEffect(() => {
     if (planType === 'starter') {
-      if (seatCount > 20) {
-        setSeatCount(20)
-      } else if (seatCount < 1) {
-        setSeatCount(5) // Default to 5 for starter
+      // Individual plan: exactly 1 seat
+      if (seatCount !== 1) {
+        setSeatCount(1)
       }
     } else {
-      if (seatCount < 21) {
-        setSeatCount(25) // Default to 25 for team
+      // Team plan: 2-100 seats
+      if (seatCount < 2) {
+        setSeatCount(2) // Default to 2 for team
       } else if (seatCount > 100) {
         setSeatCount(100)
       }
@@ -632,18 +635,21 @@ function TeamSignupContent() {
                   )}
                 </div>
                 
-                <div className="bg-purple-900/30 border border-purple-700 rounded-lg p-4 mt-4">
-                  <div className="flex items-center gap-2 text-purple-300">
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span className="font-space font-semibold">{trialDays}-day free trial</span>
+                {/* Only show free trial message for individual plans (1 seat) */}
+                {seatCount === 1 && (
+                  <div className="bg-purple-900/30 border border-purple-700 rounded-lg p-4 mt-4">
+                    <div className="flex items-center gap-2 text-purple-300">
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span className="font-space font-semibold">{trialDays}-day free trial</span>
+                    </div>
+                    <p className="text-sm text-purple-200 mt-1 font-sans">
+                      No charge for {trialDays} days, then {billingPeriod === 'monthly' 
+                        ? `$${monthlyCost.toLocaleString()}/month`
+                        : `$${annualCost.toLocaleString()}/year`
+                      }
+                    </p>
                   </div>
-                  <p className="text-sm text-purple-200 mt-1 font-sans">
-                    No charge for {trialDays} days, then {billingPeriod === 'monthly' 
-                      ? `$${monthlyCost.toLocaleString()}/month`
-                      : `$${annualCost.toLocaleString()}/year`
-                    }
-                  </p>
-                </div>
+                )}
               </div>
 
               <div className="flex gap-4">
@@ -669,7 +675,7 @@ function TeamSignupContent() {
                     </>
                   ) : (
                     <>
-                      Start Free Trial <ArrowRight className="ml-2 w-4 h-4" />
+                      {seatCount === 1 ? 'Start Free Trial' : 'Subscribe Now'} <ArrowRight className="ml-2 w-4 h-4" />
                     </>
                   )}
                 </Button>

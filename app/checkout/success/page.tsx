@@ -125,10 +125,12 @@ function CheckoutSuccessContent() {
                 <span className="text-purple-400 mt-1">•</span>
                 <span>Click the link in the email to set your password and access your account</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-purple-400 mt-1">•</span>
-                <span>Your 7-day free trial starts now - no charges until the trial ends</span>
-              </li>
+              {orderDetails?.reps === 1 && (
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-1">•</span>
+                  <span>Your 7-day free trial starts now - no charges until the trial ends</span>
+                </li>
+              )}
             </ul>
           </div>
 

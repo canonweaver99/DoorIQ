@@ -16,16 +16,16 @@ function CheckoutForm() {
   const billing = searchParams.get('billing') || 'monthly'
 
   const planDetails = {
-    starter: { name: 'Starter', price: 49, minReps: 1, maxReps: 20 },
-    team: { name: 'Team', price: 39, minReps: 21, maxReps: 100 },
-    enterprise: { name: 'Enterprise', price: 29, minReps: 101, maxReps: 500 },
+    starter: { name: 'Individual', price: 49, minReps: 1, maxReps: 1 }, // Individual: 1 seat only
+    team: { name: 'Team', price: 39, minReps: 2, maxReps: 100 }, // Team: 2-100 reps
+    enterprise: { name: 'Enterprise', price: 29, minReps: 101, maxReps: 500 }, // Enterprise: 101+ reps
   }
 
   // Auto-detect plan based on initial rep count
   const getInitialReps = () => {
-    if (initialPlan === 'starter') return '1'
-    if (initialPlan === 'team') return '21'
-    if (initialPlan === 'enterprise') return '101'
+    if (initialPlan === 'starter') return '1' // Individual plan: 1 seat
+    if (initialPlan === 'team') return '2' // Team plan: starts at 2 reps
+    if (initialPlan === 'enterprise') return '101' // Enterprise plan: starts at 101 reps
     return '1'
   }
 
@@ -53,16 +53,19 @@ function CheckoutForm() {
   const [validatingDiscount, setValidatingDiscount] = useState(false)
 
   // Auto-detect plan tier based on rep count
+  // Individual: 1 seat, Team: 2-100 reps, Enterprise: 101+ reps
   const repCount = parseInt(formData.numberOfReps) || 0
-  const detectedPlan = repCount >= 101 ? 'enterprise' : repCount >= 21 ? 'team' : repCount >= 1 ? 'starter' : initialPlan
+  const detectedPlan = repCount >= 101 ? 'enterprise' : repCount >= 2 ? 'team' : repCount === 1 ? 'starter' : initialPlan
   const selectedPlan = planDetails[detectedPlan as keyof typeof planDetails] || planDetails.starter
   
   const monthlyPrice = selectedPlan.price
   const annualPrice = Math.round(monthlyPrice * 0.8) // 20% discount
   const pricePerRep = billingPeriod === 'annual' ? annualPrice : monthlyPrice
 
-  // Calculate total (no volume discount needed - Enterprise pricing already reflects 101+)
-  const totalMonthly = repCount * pricePerRep
+  // Calculate total
+  // Individual plan: $49 flat (not per rep)
+  // Team/Enterprise: price per rep
+  const totalMonthly = selectedPlan.name === 'Individual' ? pricePerRep : repCount * pricePerRep
   const totalAnnual = totalMonthly * 12
 
   const handleInputChange = (field: string, value: string) => {
@@ -77,7 +80,7 @@ function CheckoutForm() {
       const newRepCount = parseInt(value) || 0
       if (newRepCount > 0) {
         // Plan will auto-detect, but ensure rep count is valid
-        const newDetectedPlan = newRepCount >= 51 ? 'enterprise' : newRepCount >= 21 ? 'team' : newRepCount >= 5 ? 'starter' : null
+        const newDetectedPlan = newRepCount >= 101 ? 'enterprise' : newRepCount >= 2 ? 'team' : newRepCount === 1 ? 'starter' : null
         if (newDetectedPlan) {
           const newPlan = planDetails[newDetectedPlan as keyof typeof planDetails]
           if (newRepCount < newPlan.minReps || newRepCount > newPlan.maxReps) {
@@ -301,7 +304,9 @@ function CheckoutForm() {
                         </span>
                       </p>
                       <p className="text-xs text-white/60">
-                        {selectedPlan.name} plan: {selectedPlan.minReps}-{selectedPlan.maxReps} reps
+                        {selectedPlan.name === 'Individual' 
+                          ? 'Individual plan: 1 seat'
+                          : `${selectedPlan.name} plan: ${selectedPlan.minReps}-${selectedPlan.maxReps} reps`}
                       </p>
                     </div>
                   )}

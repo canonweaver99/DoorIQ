@@ -42,17 +42,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate seat count based on plan type
+    // Individual plan: exactly 1 seat
+    // Team plan: 2-100 seats
     if (planType === 'starter') {
-      if (!seatCount || typeof seatCount !== 'number' || seatCount < 1 || seatCount > 20) {
+      if (!seatCount || typeof seatCount !== 'number' || seatCount !== 1) {
         return NextResponse.json(
-          { error: 'Seat count must be between 1 and 20 for Starter plan' },
+          { error: 'Individual plan requires exactly 1 seat' },
           { status: 400 }
         )
       }
     } else {
-      if (!seatCount || typeof seatCount !== 'number' || seatCount < 21 || seatCount > 100) {
+      if (!seatCount || typeof seatCount !== 'number' || seatCount < 2 || seatCount > 100) {
         return NextResponse.json(
-          { error: 'Seat count must be between 21 and 100 for Team plan' },
+          { error: 'Team plan requires 2-100 seats' },
           { status: 400 }
         )
       }
@@ -145,6 +147,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create checkout session with quantity-based pricing
+    // Only apply 7-day free trial for individual plans (1 seat)
+    // Plans with 2+ seats require immediate payment
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: 'subscription',
@@ -155,7 +159,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       subscription_data: {
-        trial_period_days: 7,
+        ...(seatCount === 1 ? { trial_period_days: 7 } : {}),
         metadata: {
           plan_type: planType,
           billing_period: billingPeriod,
