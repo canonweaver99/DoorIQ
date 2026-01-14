@@ -19,9 +19,9 @@ interface FormData {
 }
 
 const salesRepRanges = [
-  '1-20 reps',
-  '21-100 reps',
-  '101+ reps'
+  '101-150 reps',
+  '150-300 reps',
+  '300+ reps'
 ]
 
 const industries = [
@@ -132,7 +132,7 @@ export function ContactSalesFlow() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto pt-16 sm:pt-20 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

@@ -453,9 +453,17 @@ function CheckoutForm() {
                             <span className="text-white font-bold text-xl">${Math.round(totalAnnual).toLocaleString()}</span>
                           )}
                         </div>
+                        {hasFreeTrial && billingPeriod === 'annual' && (
+                          <div className="flex justify-between items-center mb-2 pt-1 border-t border-white/10">
+                            <span className="text-white/70 font-sans text-sm">After trial ends</span>
+                            <span className="text-white font-semibold">${Math.round(totalAnnual).toLocaleString()}/year</span>
+                          </div>
+                        )}
                         <p className="text-xs text-white/60 mt-1">
                           {hasFreeTrial 
-                            ? 'Start your 7-day free trial • No charge until trial ends'
+                            ? billingPeriod === 'annual'
+                              ? `Start your 7-day free trial • Then ${Math.round(totalAnnual).toLocaleString()}/year billed annually`
+                              : 'Start your 7-day free trial • No charge until trial ends'
                             : `Billed annually • ${Math.round(totalAnnual / 12).toLocaleString()}/month equivalent`
                           }
                         </p>
@@ -486,9 +494,17 @@ function CheckoutForm() {
                             <span className="text-white font-bold text-lg">${Math.round(totalMonthly).toLocaleString()}</span>
                           )}
                         </div>
+                        {hasFreeTrial && billingPeriod === 'monthly' && (
+                          <div className="flex justify-between items-center mb-2 pt-1 border-t border-white/10">
+                            <span className="text-white/70 font-sans text-sm">After trial ends</span>
+                            <span className="text-white font-semibold">${Math.round(totalMonthly).toLocaleString()}/month</span>
+                          </div>
+                        )}
                         <p className="text-xs text-white/60 mt-1">
                           {hasFreeTrial 
-                            ? 'Start your 7-day free trial • No charge until trial ends'
+                            ? billingPeriod === 'monthly'
+                              ? `Start your 7-day free trial • Then ${Math.round(totalMonthly).toLocaleString()}/month`
+                              : 'Start your 7-day free trial • No charge until trial ends'
                             : 'Billed monthly • Renews every month'
                           }
                         </p>
@@ -635,6 +651,23 @@ function CheckoutForm() {
                     </span>
                   </div>
                 </>
+              )}
+              {hasFreeTrial && (
+                <div className="flex justify-between">
+                  <span className="text-white/70 font-sans">Trial:</span>
+                  <span className="text-green-400 font-semibold">7 day free trial</span>
+                </div>
+              )}
+              {hasFreeTrial && (
+                <div className="flex justify-between">
+                  <span className="text-white/70 font-sans">After trial:</span>
+                  <span className="text-white font-semibold">
+                    {billingPeriod === 'annual' 
+                      ? `$${Math.round(totalAnnual).toLocaleString()}/year`
+                      : `$${Math.round(totalMonthly).toLocaleString()}/month`
+                    }
+                  </span>
+                </div>
               )}
               <div className="flex justify-between pt-2 border-t border-white/10">
                 <span className="text-white font-semibold">Total:</span>
