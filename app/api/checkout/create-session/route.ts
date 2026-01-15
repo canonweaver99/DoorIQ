@@ -130,6 +130,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Verify the price is active in Stripe
+    try {
+      const price = await stripe.prices.retrieve(priceId)
+      if (!price.active) {
+        return NextResponse.json(
+          { error: 'The price specified is inactive. This field only accepts active prices.' },
+          { status: 400 }
+        )
+      }
+    } catch (error: any) {
+      console.error('Error verifying price:', error)
+      // If price doesn't exist or other error, return helpful message
+      if (error.code === 'resource_missing') {
+        return NextResponse.json(
+          { error: `Price ID ${priceId} not found in Stripe. Please verify STRIPE_CONFIG.` },
+          { status: 400 }
+        )
+      }
+      return NextResponse.json(
+        { error: 'Failed to verify price configuration. Please contact support.' },
+        { status: 500 }
+      )
+    }
+
     // Create or retrieve Stripe customer
     let customerId: string
     try {
@@ -195,6 +219,7 @@ export async function POST(request: NextRequest) {
 
     // Validate and apply discount code if provided
     let discountCouponId: string | undefined
+    let isFullDiscount = false // Track if this is a 100% discount
     if (discountCode) {
       try {
         const supabase = await createServerSupabaseClient()
@@ -212,6 +237,11 @@ export async function POST(request: NextRequest) {
           if (!discountData.expires_at || new Date(discountData.expires_at) > new Date()) {
             // Check if code has reached max uses
             if (!discountData.max_uses || discountData.uses_count < discountData.max_uses) {
+              // Check if this is a 100% discount
+              if (discountData.discount_type === 'percentage' && Number(discountData.discount_value) >= 100) {
+                isFullDiscount = true
+              }
+
               // Create Stripe coupon from discount code
               const couponName = `Discount: ${discountData.code}`
               const couponConfig: Stripe.CouponCreateParams = {
@@ -261,6 +291,8 @@ export async function POST(request: NextRequest) {
     // Create checkout session
     // Only apply 7-day free trial for individual plans (1 rep)
     // Plans with 2+ reps require immediate payment
+    // IMPORTANT: Don't set trial_period_days if a 100% discount is applied
+    // Stripe doesn't allow trial periods with 100% discounts
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: 'subscription',
@@ -271,7 +303,10 @@ export async function POST(request: NextRequest) {
         },
       ],
       subscription_data: {
-        ...(repCount === 1 ? { trial_period_days: 7 } : {}),
+        // Only set trial period if:
+        // 1. It's a 1-rep plan (individual)
+        // 2. AND there's no 100% discount applied
+        ...(repCount === 1 && !isFullDiscount ? { trial_period_days: 7 } : {}),
         metadata: {
           plan_type: plan,
           billing_period: billingPeriod,

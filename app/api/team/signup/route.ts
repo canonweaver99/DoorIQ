@@ -76,16 +76,17 @@ export async function POST(request: NextRequest) {
     const name = userName || userProfile.full_name || ''
 
     // Get or create Stripe customer
+    const stripe = getStripeClient()
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured' },
+        { status: 500 }
+      )
+    }
+
     let customerId = userProfile.stripe_customer_id
 
     if (!customerId) {
-      const stripe = getStripeClient()
-      if (!stripe) {
-        return NextResponse.json(
-          { error: 'Stripe is not configured' },
-          { status: 500 }
-        )
-      }
       const customer = await stripe.customers.create({
         email: email,
         name: name,
@@ -110,6 +111,45 @@ export async function POST(request: NextRequest) {
       ? STRIPE_CONFIG.starter.perSeatPriceId 
       : STRIPE_CONFIG.team.perSeatPriceId
 
+    if (!priceId) {
+      return NextResponse.json(
+        { error: `Price ID not found for ${planType} plan. Please configure in STRIPE_CONFIG.` },
+        { status: 400 }
+      )
+    }
+
+    // Verify the price is active in Stripe
+    const stripe = getStripeClient()
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured' },
+        { status: 500 }
+      )
+    }
+
+    try {
+      const price = await stripe.prices.retrieve(priceId)
+      if (!price.active) {
+        return NextResponse.json(
+          { error: 'The price specified is inactive. This field only accepts active prices.' },
+          { status: 400 }
+        )
+      }
+    } catch (error: any) {
+      console.error('Error verifying price:', error)
+      // If price doesn't exist or other error, return helpful message
+      if (error.code === 'resource_missing') {
+        return NextResponse.json(
+          { error: `Price ID ${priceId} not found in Stripe. Please verify STRIPE_CONFIG.` },
+          { status: 400 }
+        )
+      }
+      return NextResponse.json(
+        { error: 'Failed to verify price configuration. Please contact support.' },
+        { status: 500 }
+      )
+    }
+
     // Calculate annual discount (2 months free = 16.67% discount)
     // For annual billing, we'll apply a discount coupon
     const isAnnual = billingPeriod === 'annual'
@@ -120,7 +160,7 @@ export async function POST(request: NextRequest) {
     if (isAnnual && discountPercent > 0) {
       try {
         // Try to find existing annual discount coupon
-        const coupons = await stripe!.coupons.list({ limit: 100 })
+        const coupons = await stripe.coupons.list({ limit: 100 })
         const existingCoupon = coupons.data.find(
           c => c.percent_off === discountPercent && c.name === 'Annual Billing - 2 Months Free'
         )
@@ -129,7 +169,7 @@ export async function POST(request: NextRequest) {
           discountId = existingCoupon.id
         } else {
           // Create new coupon for annual billing
-          const coupon = await stripe!.coupons.create({
+          const coupon = await stripe.coupons.create({
             name: 'Annual Billing - 2 Months Free',
             percent_off: discountPercent,
             duration: 'forever', // Can be reused
@@ -186,7 +226,7 @@ export async function POST(request: NextRequest) {
       sessionConfig.discounts = [{ coupon: discountId }]
     }
 
-    const session = await stripe!.checkout.sessions.create(sessionConfig)
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     return NextResponse.json({ 
       url: session.url,
