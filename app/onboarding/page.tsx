@@ -37,8 +37,34 @@ function OnboardingContent() {
   const searchParams = useSearchParams()
   
   // URL params from Stripe redirect
-  const sessionId = searchParams.get('session_id')
-  const emailParam = searchParams.get('email')
+  // Also check sessionStorage as fallback (in case OAuth didn't preserve query params)
+  const [sessionId, setSessionId] = useState(searchParams.get('session_id'))
+  const [emailParam, setEmailParam] = useState(searchParams.get('email'))
+  
+  // Fallback to sessionStorage if query params are missing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (!sessionId && sessionStorage.getItem('onboarding_session_id')) {
+        const storedSessionId = sessionStorage.getItem('onboarding_session_id')
+        setSessionId(storedSessionId)
+        // Update URL to include session_id
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.set('session_id', storedSessionId!)
+        window.history.replaceState({}, '', newUrl.toString())
+      }
+      if (!emailParam && sessionStorage.getItem('onboarding_email')) {
+        const storedEmail = sessionStorage.getItem('onboarding_email')
+        setEmailParam(storedEmail)
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.set('email', storedEmail!)
+        window.history.replaceState({}, '', newUrl.toString())
+      }
+      // Clear sessionStorage after reading
+      sessionStorage.removeItem('onboarding_session_id')
+      sessionStorage.removeItem('onboarding_email')
+      sessionStorage.removeItem('onboarding_redirect')
+    }
+  }, [sessionId, emailParam])
 
   // State
   const [currentStep, setCurrentStep] = useState(0)

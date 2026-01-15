@@ -89,8 +89,19 @@ export function AccountSetup({ email, sessionId, onComplete }: AccountSetupProps
 
       const origin = window.location.origin
 
+      // Store session info in sessionStorage as fallback (in case query params get lost)
+      if (sessionId) {
+        sessionStorage.setItem('onboarding_session_id', sessionId)
+      }
+      if (email) {
+        sessionStorage.setItem('onboarding_email', email)
+      }
+      sessionStorage.setItem('onboarding_redirect', '/onboarding')
+
       // Build callback URL with onboarding context
       const callbackUrl = `${origin}/auth/callback?next=/onboarding&email=${encodeURIComponent(email)}&session_id=${sessionId || ''}`
+
+      console.log('🔐 Initiating Google OAuth with callback:', callbackUrl)
 
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',

@@ -5,10 +5,16 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   
-  console.log('🔗 Callback hit')
-  console.log('📍 Code:', code ? 'yes' : 'no')
-  console.log('📍 Origin:', requestUrl.origin)
-  console.log('📍 Full URL:', requestUrl.href)
+    console.log('🔗 Callback hit')
+    console.log('📍 Code:', code ? 'yes' : 'no')
+    console.log('📍 Origin:', requestUrl.origin)
+    console.log('📍 Full URL:', requestUrl.href)
+    console.log('📍 Query params:', {
+      next: requestUrl.searchParams.get('next'),
+      session_id: requestUrl.searchParams.get('session_id'),
+      email: requestUrl.searchParams.get('email'),
+      checkout: requestUrl.searchParams.get('checkout'),
+    })
   
   // If no code, redirect to login
   if (!code) {
@@ -46,8 +52,12 @@ export async function GET(request: Request) {
     const hasCompletedOnboarding = existingUser?.onboarding_completed === true
     const hasCompletedAccountSetup = !!existingUser?.account_setup_completed_at
     const checkoutIntent = requestUrl.searchParams.get('checkout')
-    const sessionId = requestUrl.searchParams.get('session_id')
-    const nextPath = requestUrl.searchParams.get('next')
+    let sessionId = requestUrl.searchParams.get('session_id')
+    let nextPath = requestUrl.searchParams.get('next')
+    let email = requestUrl.searchParams.get('email')
+    
+    // If query params are missing, this might be a case where Supabase didn't preserve them
+    // We'll handle this in the redirect logic below by checking onboarding status
     
     // If this is a new user signup (not login), require checkout validation
     // Check for either 'checkout' param (old flow) or 'session_id' param (onboarding flow)
@@ -86,7 +96,6 @@ export async function GET(request: Request) {
     
     // If next is /onboarding, always redirect there (onboarding page will handle step logic)
     if (nextPath === '/onboarding') {
-      const email = requestUrl.searchParams.get('email')
       const onboardingUrl = new URL('/onboarding', requestUrl.origin)
       if (sessionId) {
         onboardingUrl.searchParams.set('session_id', sessionId)
@@ -99,9 +108,8 @@ export async function GET(request: Request) {
     } else if (!nextPath) {
       // If no explicit next path, check if user needs to complete onboarding
       // If user hasn't completed account setup or onboarding, redirect to onboarding
-      if (!hasCompletedAccountSetup || !hasCompletedOnboarding) {
-        // Preserve session_id and email if they exist in the callback URL
-        const email = requestUrl.searchParams.get('email')
+      // Also check if they have a checkout session (might be from recent signup)
+      if (!hasCompletedAccountSetup || !hasCompletedOnboarding || sessionId) {
         const onboardingUrl = new URL('/onboarding', requestUrl.origin)
         if (sessionId) {
           onboardingUrl.searchParams.set('session_id', sessionId)
@@ -110,7 +118,7 @@ export async function GET(request: Request) {
           onboardingUrl.searchParams.set('email', email)
         }
         redirectPath = onboardingUrl.pathname + onboardingUrl.search
-        console.log('🔄 User needs to complete onboarding, redirecting to:', redirectPath)
+        console.log('🔄 User needs to complete onboarding or has checkout session, redirecting to:', redirectPath)
       }
     }
     
