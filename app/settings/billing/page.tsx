@@ -48,6 +48,7 @@ function BillingSettingsPage() {
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [isManager, setIsManager] = useState(false)
+  const [isIndividualPlan, setIsIndividualPlan] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [invoices, setInvoices] = useState<any[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
@@ -133,6 +134,7 @@ function BillingSettingsPage() {
       setSubscription(data.subscription)
       setUsage(data.usage)
       setIsManager(data.isManager)
+      setIsIndividualPlan(data.isIndividualPlan || false)
     } catch (err: any) {
       console.error('Error fetching billing data:', err)
       setError(err.message || 'Failed to load billing information')
@@ -351,8 +353,9 @@ function BillingSettingsPage() {
     )
   }
 
-  // Restrict access to managers and admins only
-  const hasAccess = isManager || userRole === 'admin'
+  // Restrict access to managers, admins, and individual plan users
+  // Individual plan users (seat_limit = 1) should have access since they're the only user
+  const hasAccess = isManager || userRole === 'admin' || isIndividualPlan
   if (!hasAccess) {
     return (
       <div className="text-center py-12">

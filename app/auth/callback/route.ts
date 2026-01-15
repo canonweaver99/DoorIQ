@@ -33,16 +33,18 @@ export async function GET(request: Request) {
     
     console.log('✅ Session created successfully:', data.user.email)
     
-    // Check if this is a new user (first time OAuth signup)
+    // Check if this is a new user (first time OAuth signup) and onboarding status
     const { createServiceSupabaseClient } = await import('@/lib/supabase/server')
     const serviceSupabase = await createServiceSupabaseClient()
     const { data: existingUser } = await serviceSupabase
       .from('users')
-      .select('id')
+      .select('id, onboarding_completed, account_setup_completed_at')
       .eq('id', data.user.id)
       .single()
     
     const isNewUser = !existingUser
+    const hasCompletedOnboarding = existingUser?.onboarding_completed === true
+    const hasCompletedAccountSetup = !!existingUser?.account_setup_completed_at
     const checkoutIntent = requestUrl.searchParams.get('checkout')
     const sessionId = requestUrl.searchParams.get('session_id')
     const nextPath = requestUrl.searchParams.get('next')
@@ -78,7 +80,7 @@ export async function GET(request: Request) {
       }
     }
     
-    // Get redirect path from query params or default to /home
+    // Get redirect path from query params or default based on onboarding status
     // If coming from onboarding with session_id, preserve it in the redirect
     let redirectPath = nextPath || '/home'
     
@@ -91,6 +93,22 @@ export async function GET(request: Request) {
         onboardingUrl.searchParams.set('email', email)
       }
       redirectPath = onboardingUrl.pathname + onboardingUrl.search
+    } else if (!nextPath) {
+      // If no explicit next path, check if user needs to complete onboarding
+      // If user hasn't completed account setup or onboarding, redirect to onboarding
+      if (!hasCompletedAccountSetup || !hasCompletedOnboarding) {
+        // Preserve session_id and email if they exist in the callback URL
+        const email = requestUrl.searchParams.get('email')
+        const onboardingUrl = new URL('/onboarding', requestUrl.origin)
+        if (sessionId) {
+          onboardingUrl.searchParams.set('session_id', sessionId)
+        }
+        if (email) {
+          onboardingUrl.searchParams.set('email', email)
+        }
+        redirectPath = onboardingUrl.pathname + onboardingUrl.search
+        console.log('🔄 User needs to complete onboarding, redirecting to:', redirectPath)
+      }
     }
     
     const redirectUrl = new URL(redirectPath, requestUrl.origin)

@@ -98,6 +98,9 @@ export async function GET(request: NextRequest) {
     const activeRepsCount = activeRepsResult.count || 0
     const sessionsCount = sessionsResult.count || 0
 
+    // Individual plan users (seat_limit = 1) should have access to billing
+    const isIndividualPlan = org.seat_limit === 1
+    
     return NextResponse.json({
       plan: {
         tier: org.plan_tier,
@@ -112,6 +115,7 @@ export async function GET(request: NextRequest) {
         sessionsThisMonth: sessionsCount || 0,
       },
       isManager: userData.role === 'manager' || userData.role === 'admin',
+      isIndividualPlan: isIndividualPlan,
     }, {
       headers: {
         'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=120',
