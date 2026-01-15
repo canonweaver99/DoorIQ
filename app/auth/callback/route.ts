@@ -81,18 +81,21 @@ export async function GET(request: Request) {
     }
     
     // Get redirect path from query params or default based on onboarding status
-    // If coming from onboarding with session_id, preserve it in the redirect
+    // If coming from onboarding, always redirect there and preserve params
     let redirectPath = nextPath || '/home'
     
-    // If we have session_id and next is /onboarding, preserve session_id and email
-    if (sessionId && nextPath === '/onboarding') {
+    // If next is /onboarding, always redirect there (onboarding page will handle step logic)
+    if (nextPath === '/onboarding') {
       const email = requestUrl.searchParams.get('email')
       const onboardingUrl = new URL('/onboarding', requestUrl.origin)
-      onboardingUrl.searchParams.set('session_id', sessionId)
+      if (sessionId) {
+        onboardingUrl.searchParams.set('session_id', sessionId)
+      }
       if (email) {
         onboardingUrl.searchParams.set('email', email)
       }
       redirectPath = onboardingUrl.pathname + onboardingUrl.search
+      console.log('🔄 Redirecting to onboarding with params:', redirectPath)
     } else if (!nextPath) {
       // If no explicit next path, check if user needs to complete onboarding
       // If user hasn't completed account setup or onboarding, redirect to onboarding
