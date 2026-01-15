@@ -44,27 +44,33 @@ export async function GET(request: Request) {
     
     const isNewUser = !existingUser
     const checkoutIntent = requestUrl.searchParams.get('checkout')
+    const sessionId = requestUrl.searchParams.get('session_id')
+    const nextPath = requestUrl.searchParams.get('next')
     
-    // If this is a new user signup (not login), require checkout
-    if (isNewUser && !checkoutIntent) {
+    // If this is a new user signup (not login), require checkout validation
+    // Check for either 'checkout' param (old flow) or 'session_id' param (onboarding flow)
+    if (isNewUser && !checkoutIntent && !sessionId) {
       console.log('⚠️ New OAuth user without checkout - redirecting to checkout')
       return NextResponse.redirect(new URL('/checkout?error=Please complete checkout before creating an account', requestUrl.origin))
     }
     
-    // If checkout intent provided, validate it
-    if (checkoutIntent && isNewUser) {
+    // Validate checkout session if provided (either via checkout param or session_id param)
+    const sessionToValidate = checkoutIntent || sessionId
+    if (sessionToValidate && isNewUser) {
       try {
         const stripeKey = process.env.STRIPE_SECRET_KEY
         if (stripeKey) {
           const Stripe = (await import('stripe')).default
           const stripe = new Stripe(stripeKey, { apiVersion: '2025-09-30.clover' })
-          const session = await stripe.checkout.sessions.retrieve(checkoutIntent)
+          const session = await stripe.checkout.sessions.retrieve(sessionToValidate)
           
           if (session.status !== 'complete' || 
               (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required')) {
             console.log('⚠️ Invalid checkout session - redirecting to checkout')
             return NextResponse.redirect(new URL('/checkout?error=Invalid checkout session', requestUrl.origin))
           }
+          
+          console.log('✅ Checkout session validated:', sessionToValidate)
         }
       } catch (error) {
         console.error('Error validating checkout session:', error)
@@ -73,7 +79,20 @@ export async function GET(request: Request) {
     }
     
     // Get redirect path from query params or default to /home
-    const redirectPath = requestUrl.searchParams.get('next') || '/home'
+    // If coming from onboarding with session_id, preserve it in the redirect
+    let redirectPath = nextPath || '/home'
+    
+    // If we have session_id and next is /onboarding, preserve session_id and email
+    if (sessionId && nextPath === '/onboarding') {
+      const email = requestUrl.searchParams.get('email')
+      const onboardingUrl = new URL('/onboarding', requestUrl.origin)
+      onboardingUrl.searchParams.set('session_id', sessionId)
+      if (email) {
+        onboardingUrl.searchParams.set('email', email)
+      }
+      redirectPath = onboardingUrl.pathname + onboardingUrl.search
+    }
+    
     const redirectUrl = new URL(redirectPath, requestUrl.origin)
     
     console.log('🔄 Redirecting to:', redirectUrl.href)
