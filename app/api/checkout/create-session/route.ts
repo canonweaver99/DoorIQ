@@ -130,12 +130,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify the price is active in Stripe
+    // Verify the price is active and supports subscriptions in Stripe
+    let priceDetails: Stripe.Price
     try {
-      const price = await stripe.prices.retrieve(priceId)
-      if (!price.active) {
+      priceDetails = await stripe.prices.retrieve(priceId)
+      if (!priceDetails.active) {
         return NextResponse.json(
-          { error: 'The price specified is inactive. This field only accepts active prices.' },
+          { error: `The price specified (${priceId}) is inactive in Stripe. Please activate it in your Stripe dashboard or update STRIPE_CONFIG with an active price ID.` },
+          { status: 400 }
+        )
+      }
+      // Verify it's a recurring subscription price (required for trials)
+      if (priceDetails.type !== 'recurring') {
+        return NextResponse.json(
+          { error: `The price specified (${priceId}) is not a recurring subscription price. Free trials require a recurring subscription price.` },
           { status: 400 }
         )
       }
@@ -339,16 +347,39 @@ export async function POST(request: NextRequest) {
       sessionConfig.allow_promotion_codes = true
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig)
+    let session: Stripe.Checkout.Session
+    try {
+      session = await stripe.checkout.sessions.create(sessionConfig)
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error)
+      // Provide more specific error messages for common Stripe errors
+      if (error.code === 'resource_missing' || error.message?.includes('inactive')) {
+        return NextResponse.json(
+          { error: `The price specified (${priceId}) is inactive or invalid. Please verify the price is active in your Stripe dashboard. Error: ${error.message}` },
+          { status: 400 }
+        )
+      }
+      if (error.message?.includes('trial')) {
+        return NextResponse.json(
+          { error: `This price does not support free trials. Please configure the price in Stripe to allow trials, or contact support. Error: ${error.message}` },
+          { status: 400 }
+        )
+      }
+      return NextResponse.json(
+        { error: error.message || 'Failed to create checkout session. Please try again or contact support.' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       url: session.url,
       sessionId: session.id,
     })
   } catch (error: any) {
-    console.error('Error creating checkout session:', error)
+    // Catch any other unexpected errors
+    console.error('Unexpected error in checkout session creation:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
+      { error: error.message || 'Failed to create checkout session. Please try again or contact support.' },
       { status: 500 }
     )
   }
