@@ -13,10 +13,10 @@
 
 export const STRIPE_CONFIG = {
   starter: {
-    priceId: 'price_1SW61m1fQ6MPQdN0K9cEgwzk', // Production: DoorIQ Software - Individual plan
+    priceId: 'price_1SpC081fQ6MPQdN0Oi42IDV0', // Production: DoorIQ Software - Individual plan
     paymentLink: 'https://buy.stripe.com/8x228j5cC2UWaqVe0L2go01',
     // Individual plan: 1 seat at $49/month (flat rate)
-    perSeatPriceId: 'price_1SW61m1fQ6MPQdN0K9cEgwzk',
+    perSeatPriceId: 'price_1SpC081fQ6MPQdN0Oi42IDV0',
   },
   team: {
     priceId: 'price_1SW66b1fQ6MPQdN0SJ1r5Kbj', // Production: DoorIQ Software - Team plan
