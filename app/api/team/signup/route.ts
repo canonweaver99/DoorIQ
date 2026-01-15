@@ -119,14 +119,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the price is active in Stripe
-    const stripe = getStripeClient()
-    if (!stripe) {
-      return NextResponse.json(
-        { error: 'Stripe is not configured' },
-        { status: 500 }
-      )
-    }
-
     try {
       const price = await stripe.prices.retrieve(priceId)
       if (!price.active) {
