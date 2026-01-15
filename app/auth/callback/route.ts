@@ -53,8 +53,10 @@ export async function GET(request: Request) {
     const hasCompletedAccountSetup = !!existingUser?.account_setup_completed_at
     const hasCheckoutSession = !!existingUser?.checkout_session_id || !!sessionId
     
+    // CRITICAL: For new users, if they have sessionId in query params, they MUST complete onboarding
+    // For existing users, check checkout_session_id in their record
     // If user has a checkout session (from recent checkout), they MUST complete onboarding
-    const requiresOnboarding = hasCheckoutSession && !hasCompletedOnboarding
+    const requiresOnboarding = (hasCheckoutSession && !hasCompletedOnboarding) || (isNewUser && !!sessionId)
     const checkoutIntent = requestUrl.searchParams.get('checkout')
     let sessionId = requestUrl.searchParams.get('session_id')
     let nextPath = requestUrl.searchParams.get('next')

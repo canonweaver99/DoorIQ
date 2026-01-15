@@ -120,13 +120,43 @@ export default function HomePage() {
           return
         }
         
-        // Fetch user name
+        // CRITICAL: Check if user needs to complete onboarding
+        // Fetch user profile including onboarding status and checkout_session_id
         const { data: userData } = await supabase
           .from('users')
-          .select('full_name, email')
+          .select('full_name, email, onboarding_completed, checkout_session_id, account_setup_completed_at')
           .eq('id', user.id)
           .single()
         
+        // If user doesn't exist yet (new user), they need onboarding
+        if (!userData) {
+          console.log('🔄 New user - redirecting to onboarding')
+          const onboardingUrl = new URL('/onboarding', window.location.origin)
+          if (user.email) {
+            onboardingUrl.searchParams.set('email', user.email)
+          }
+          router.replace(onboardingUrl.pathname + onboardingUrl.search)
+          return
+        }
+        
+        // If user has checkout_session_id or hasn't completed onboarding, redirect to onboarding
+        const hasCheckoutSession = !!userData.checkout_session_id
+        const mustCompleteOnboarding = hasCheckoutSession || !userData.onboarding_completed || !userData.account_setup_completed_at
+        
+        if (mustCompleteOnboarding) {
+          console.log('🔄 User needs onboarding - redirecting from home page')
+          const onboardingUrl = new URL('/onboarding', window.location.origin)
+          if (userData.checkout_session_id) {
+            onboardingUrl.searchParams.set('session_id', userData.checkout_session_id)
+          }
+          if (user.email) {
+            onboardingUrl.searchParams.set('email', user.email)
+          }
+          router.replace(onboardingUrl.pathname + onboardingUrl.search)
+          return
+        }
+        
+        // Fetch user name (original query)
         if (userData?.full_name) {
           const firstName = userData.full_name.split(' ')[0] || userData.email?.split('@')[0] || ''
           if (firstName) {
