@@ -18,7 +18,7 @@ const InstantInsightsGrid = dynamic(() => import('@/components/analytics/Instant
   loading: () => <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />,
   ssr: false
 })
-const CriticalMomentsTimeline = dynamic(() => import('@/components/analytics/CriticalMomentsTimeline').then(mod => ({ default: mod.CriticalMomentsTimeline })), {
+const ActionableSteps = dynamic(() => import('@/components/analytics/ActionableSteps').then(mod => ({ default: mod.ActionableSteps })), {
   loading: () => <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />,
   ssr: false
 })
@@ -415,12 +415,10 @@ export default function AnalyticsPage() {
           setLoadingStates(prev => ({ ...prev, insights: true }))
         }, 500)
         
-        // Load moments after insights
-        if (data.key_moments && Array.isArray(data.key_moments) && data.key_moments.length > 0) {
-          setTimeout(() => {
-            setLoadingStates(prev => ({ ...prev, moments: true }))
-          }, 1000)
-        }
+        // Load actionable steps after insights (always show, doesn't depend on key_moments)
+        setTimeout(() => {
+          setLoadingStates(prev => ({ ...prev, moments: true }))
+        }, 1000)
         
         // Load objection analysis if available
         if (data.analytics?.objection_analysis) {
@@ -470,11 +468,9 @@ export default function AnalyticsPage() {
                   setTimeout(() => {
                     setLoadingStates(prev => ({ ...prev, insights: true }))
                   }, 500)
-                  if (pollData.key_moments && Array.isArray(pollData.key_moments) && pollData.key_moments.length > 0) {
-                    setTimeout(() => {
-                      setLoadingStates(prev => ({ ...prev, moments: true }))
-                    }, 1000)
-                  }
+                  setTimeout(() => {
+                    setLoadingStates(prev => ({ ...prev, moments: true }))
+                  }, 1000)
                   setTimeout(() => {
                     setLoadingStates(prev => ({ ...prev, speech: true }))
                   }, 2500)
@@ -690,106 +686,24 @@ export default function AnalyticsPage() {
           <div className="h-32 bg-slate-900/50 rounded-xl mb-8 animate-pulse" />
         )}
         
-        {/* Critical Moments Timeline - Loads after insights */}
-        {session.key_moments && Array.isArray(session.key_moments) && session.key_moments.length > 0 ? (
-          loadingStates.moments ? (
-            <CriticalMomentsTimeline 
-              fullTranscript={(session as any).full_transcript || (session as any).transcript}
-              moments={session.key_moments.map((moment: any) => {
-                // If moment doesn't have transcript, try to find it from full_transcript
-                if (!moment.transcript && (session as any).full_transcript && Array.isArray((session as any).full_transcript)) {
-                  const transcript = (session as any).full_transcript
-                  
-                  // Try to find transcript by startIndex or line number first
-                  if (moment.startIndex !== undefined && transcript[moment.startIndex]) {
-                    const entry = transcript[moment.startIndex]
-                    moment.transcript = entry.text || entry.message || ''
-                  } else if (moment.line !== undefined && transcript[moment.line]) {
-                    const entry = transcript[moment.line]
-                    moment.transcript = entry.text || entry.message || ''
-                  } else if (moment.timestamp) {
-                    // Parse timestamp (format: "MM:SS" or "HH:MM:SS")
-                    const parseTimestamp = (ts: string): number => {
-                      const parts = ts.split(':').map(Number)
-                      if (parts.length === 2) return parts[0] * 60 + parts[1] // MM:SS
-                      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2] // HH:MM:SS
-                      return 0
-                    }
-                    
-                    const momentSeconds = parseTimestamp(moment.timestamp)
-                    const durationSeconds = (session as any).duration_seconds || 0
-                    
-                    if (momentSeconds > 0 && durationSeconds > 0) {
-                      // Find entry closest to the timestamp
-                      let closestEntry = null
-                      let minDiff = Infinity
-                      
-                      transcript.forEach((entry: any, idx: number) => {
-                        if (entry.timestamp) {
-                          const entryTime = typeof entry.timestamp === 'string' 
-                            ? new Date(entry.timestamp).getTime() / 1000
-                            : entry.timestamp
-                          const sessionStart = (session as any).created_at 
-                            ? new Date((session as any).created_at).getTime() / 1000
-                            : Date.now() / 1000
-                          const entrySeconds = entryTime - sessionStart
-                          const diff = Math.abs(entrySeconds - momentSeconds)
-                          
-                          if (diff < minDiff) {
-                            minDiff = diff
-                            closestEntry = entry
-                          }
-                        } else {
-                          // Estimate based on position in transcript
-                          const estimatedSeconds = (idx / transcript.length) * durationSeconds
-                          const diff = Math.abs(estimatedSeconds - momentSeconds)
-                          if (diff < minDiff && diff < 30) { // Within 30 seconds
-                            minDiff = diff
-                            closestEntry = entry
-                          }
-                        }
-                      })
-                      
-                      if (closestEntry) {
-                        moment.transcript = closestEntry.text || closestEntry.message || ''
-                      }
-                    }
-                  }
-                  
-                  // If still no transcript, try to get a relevant snippet
-                  if (!moment.transcript && transcript.length > 0) {
-                    // Try to find entries related to the moment type
-                    const relevantEntries = transcript.filter((entry: any) => {
-                      const text = (entry.text || entry.message || '').toLowerCase()
-                      if (moment.type === 'objection' && (text.includes('not interested') || text.includes('too expensive') || text.includes('think about'))) {
-                        return true
-                      }
-                      if (moment.type === 'close_attempt' && (text.includes('ready to') || text.includes('get started') || text.includes('sign up'))) {
-                        return true
-                      }
-                      return false
-                    })
-                    
-                    if (relevantEntries.length > 0) {
-                      moment.transcript = relevantEntries[0].text || relevantEntries[0].message || ''
-                    } else {
-                      // Fallback: get a middle entry
-                      const midPoint = Math.floor(transcript.length / 2)
-                      const entry = transcript[midPoint] || transcript[0]
-                      moment.transcript = entry.text || entry.message || ''
-                    }
-                  }
-                }
-                return moment
-              })}
-              sessionStartTime={(session as any).created_at || (session as any).started_at}
-              durationSeconds={(session as any).duration_seconds}
-              agentName={(session as any).agent_name}
-            />
-          ) : (
-            <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
-          )
-        ) : null}
+        {/* Actionable Steps - Loads after insights */}
+        {loadingStates.moments ? (
+          <ActionableSteps
+            overallScore={session.overall_score || 0}
+            saleClosed={session.sale_closed}
+            sessionHighlight={session.analytics?.feedback?.session_highlight}
+            strengths={session.analytics?.feedback?.strengths}
+            improvements={session.analytics?.feedback?.improvements}
+            scores={{
+              rapport: session.rapport_score || 0,
+              discovery: session.discovery_score || 0,
+              objection_handling: session.objection_handling_score || 0,
+              closing: session.close_score || 0
+            }}
+          />
+        ) : (
+          <div className="h-64 bg-slate-900/50 rounded-3xl mb-8 animate-pulse" />
+        )}
         
         {/* Conversation Flow - Loads after moments */}
         {conversationFlowData ? (
