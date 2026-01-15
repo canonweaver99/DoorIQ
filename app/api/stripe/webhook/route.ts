@@ -359,6 +359,36 @@ async function handleTeamPlanCheckout(
   }
 
   console.log(`✅ Team plan checkout completed: Organization ${organization.id} created with ${actualQuantity} seats, subscription_status: ${subscription.status}`)
+  
+  // Send welcome email and trial notification if trial started
+  if (subscription.status === 'trialing') {
+    try {
+      const { sendWelcomeEmail, sendTrialStartNotification } = await import('@/lib/email/send')
+      
+      // Get user details for emails
+      const { data: userData } = await serviceSupabase
+        .from('users')
+        .select('email, full_name')
+        .eq('id', userId)
+        .single()
+      
+      if (userData?.email) {
+        // Send welcome email to user
+        await sendWelcomeEmail(userData.email, userData.full_name || undefined)
+        
+        // Send trial start notification to admin
+        await sendTrialStartNotification(
+          userData.email,
+          userData.full_name || userEmail || 'User',
+          planType,
+          trialEndsAt
+        )
+      }
+    } catch (error) {
+      console.error('Error sending trial start emails:', error)
+      // Don't throw - email sending shouldn't fail the webhook
+    }
+  }
 }
 
 /**
@@ -393,17 +423,58 @@ async function handleIndividualPlanCheckout(
     return
   }
 
+  // Get subscription to check status and trial end date
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+  const trialEndsAt = subscription.trial_end 
+    ? new Date(subscription.trial_end * 1000).toISOString()
+    : null
+  
   // Update user subscription info
   const { error } = await supabase
     .from('users')
     .update({
       stripe_customer_id: customerId,
-      subscription_status: 'trialing',
+      subscription_status: subscription.status === 'trialing' ? 'trialing' : 'active',
+      trial_ends_at: trialEndsAt,
     })
     .eq('id', userId)
 
   if (error) {
     console.error('Error updating user subscription:', error)
+  }
+  
+  // Send welcome email and trial notification if trial started
+  if (subscription.status === 'trialing') {
+    try {
+      const { sendWelcomeEmail, sendTrialStartNotification } = await import('@/lib/email/send')
+      
+      // Get user email from customer or user record
+      const userEmail = (customer as Stripe.Customer).email
+      
+      // Get user details for emails
+      const { data: userData } = await supabase
+        .from('users')
+        .select('email, full_name')
+        .eq('id', userId)
+        .single()
+      
+      const emailToUse = userData?.email || userEmail
+      if (emailToUse) {
+        // Send welcome email to user
+        await sendWelcomeEmail(emailToUse, userData?.full_name || undefined)
+        
+        // Send trial start notification to admin
+        await sendTrialStartNotification(
+          emailToUse,
+          userData?.full_name || userEmail || 'User',
+          'individual',
+          trialEndsAt
+        )
+      }
+    } catch (error) {
+      console.error('Error sending trial start emails:', error)
+      // Don't throw - email sending shouldn't fail the webhook
+    }
   }
 }
 
@@ -561,6 +632,38 @@ async function handleSubscriptionCreated(
           trial_ends_at: trialEndsAt,
         })
         .eq('organization_id', org.id)
+      
+      // Send welcome email and trial notification if trial started (backup in case checkout handler didn't send)
+      if (subscription.status === 'trialing') {
+        try {
+          const { sendWelcomeEmail, sendTrialStartNotification } = await import('@/lib/email/send')
+          
+          // Get the manager user (first user in org)
+          const { data: managerUser } = await supabase
+            .from('users')
+            .select('email, full_name')
+            .eq('organization_id', org.id)
+            .eq('role', 'manager')
+            .limit(1)
+            .single()
+          
+          if (managerUser?.email) {
+            // Send welcome email to manager
+            await sendWelcomeEmail(managerUser.email, managerUser.full_name || undefined)
+            
+            // Send trial start notification to admin
+            await sendTrialStartNotification(
+              managerUser.email,
+              managerUser.full_name || 'User',
+              planType || 'team',
+              trialEndsAt
+            )
+          }
+        } catch (error) {
+          console.error('Error sending trial start emails in subscription.created:', error)
+          // Don't throw - email sending shouldn't fail the webhook
+        }
+      }
     }
     return
   }
@@ -582,6 +685,41 @@ async function handleSubscriptionCreated(
 
     if (error) {
       console.error('Error granting subscription credits:', error)
+    }
+    
+    // Send welcome email and trial notification if trial started (backup in case checkout handler didn't send)
+    if (subscription.status === 'trialing') {
+      try {
+        const { sendWelcomeEmail, sendTrialStartNotification } = await import('@/lib/email/send')
+        
+        const trialEndsAt = subscription.trial_end 
+          ? new Date(subscription.trial_end * 1000).toISOString()
+          : null
+        
+        // Get user details for emails
+        const { data: userData } = await supabase
+          .from('users')
+          .select('email, full_name')
+          .eq('id', userId)
+          .single()
+        
+        const userEmail = userData?.email || (customer as Stripe.Customer).email
+        if (userEmail) {
+          // Send welcome email to user
+          await sendWelcomeEmail(userEmail, userData?.full_name || undefined)
+          
+          // Send trial start notification to admin
+          await sendTrialStartNotification(
+            userEmail,
+            userData?.full_name || 'User',
+            'individual',
+            trialEndsAt
+          )
+        }
+      } catch (error) {
+        console.error('Error sending trial start emails in subscription.created:', error)
+        // Don't throw - email sending shouldn't fail the webhook
+      }
     }
   }
 }

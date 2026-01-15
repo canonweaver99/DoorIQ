@@ -244,6 +244,102 @@ export async function sendWelcomeEmail(userEmail: string, fullName?: string) {
 }
 
 /**
+ * Send trial start notification to admin
+ */
+export async function sendTrialStartNotification(
+  userEmail: string,
+  fullName: string,
+  planType: string,
+  trialEndsAt: string | null
+) {
+  try {
+    // Don't send if Resend is not configured
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⏭️  Skipping trial start notification - Resend not configured')
+      return
+    }
+
+    const adminEmail = 'canonweaver@loopline.design'
+    const trialEndDate = trialEndsAt 
+      ? new Date(trialEndsAt).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })
+      : 'N/A'
+    
+    const subject = `Free Trial Started: ${fullName || userEmail} (${planType})`
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+            .info-row { margin: 15px 0; padding: 10px; background: #f9fafb; border-radius: 6px; }
+            .info-label { font-weight: 600; color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .info-value { font-size: 16px; color: #111827; margin-top: 5px; }
+            .trial-badge { display: inline-block; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1 style="margin: 0; font-size: 24px;">🎉 Free Trial Started</h1>
+            </div>
+            <div class="content">
+              <p>A new user has started their free trial:</p>
+              
+              <div class="info-row">
+                <div class="info-label">Name</div>
+                <div class="info-value">${fullName || 'Not provided'}</div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-label">Email</div>
+                <div class="info-value">${userEmail}</div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-label">Plan Type</div>
+                <div class="info-value">${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan<span class="trial-badge">Trial</span></div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-label">Trial Ends</div>
+                <div class="info-value">${trialEndDate}</div>
+              </div>
+              
+              <div class="info-row">
+                <div class="info-label">Trial Started</div>
+                <div class="info-value">${new Date().toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'long' })}</div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    await sendEmail({
+      to: adminEmail,
+      subject,
+      html,
+      from: 'DoorIQ <notifications@dooriq.ai>'
+    })
+
+    console.log(`✅ Trial start notification sent to ${adminEmail} for user: ${userEmail}`)
+  } catch (error) {
+    // Don't throw - this is a notification, shouldn't fail the process
+    console.error('❌ Failed to send trial start notification:', error)
+  }
+}
+
+/**
  * Send manager promotion email when a user is promoted from rep to manager
  */
 export async function sendManagerPromotionEmail(
