@@ -44,13 +44,17 @@ export async function GET(request: Request) {
     const serviceSupabase = await createServiceSupabaseClient()
     const { data: existingUser } = await serviceSupabase
       .from('users')
-      .select('id, onboarding_completed, account_setup_completed_at')
+      .select('id, onboarding_completed, account_setup_completed_at, checkout_session_id')
       .eq('id', data.user.id)
       .single()
     
     const isNewUser = !existingUser
     const hasCompletedOnboarding = existingUser?.onboarding_completed === true
     const hasCompletedAccountSetup = !!existingUser?.account_setup_completed_at
+    const hasCheckoutSession = !!existingUser?.checkout_session_id || !!sessionId
+    
+    // If user has a checkout session (from recent checkout), they MUST complete onboarding
+    const requiresOnboarding = hasCheckoutSession && !hasCompletedOnboarding
     const checkoutIntent = requestUrl.searchParams.get('checkout')
     let sessionId = requestUrl.searchParams.get('session_id')
     let nextPath = requestUrl.searchParams.get('next')
@@ -91,11 +95,26 @@ export async function GET(request: Request) {
     }
     
     // Get redirect path from query params or default based on onboarding status
-    // If coming from onboarding, always redirect there and preserve params
+    // CRITICAL: If user has a checkout session, they MUST complete onboarding
     let redirectPath = nextPath || '/home'
     
-    // If next is /onboarding, always redirect there (onboarding page will handle step logic)
-    if (nextPath === '/onboarding') {
+    // If user has a checkout session (recent checkout), force onboarding
+    if (requiresOnboarding) {
+      const onboardingUrl = new URL('/onboarding', requestUrl.origin)
+      // Use session_id from query param or from user record
+      const finalSessionId = sessionId || existingUser?.checkout_session_id
+      if (finalSessionId) {
+        onboardingUrl.searchParams.set('session_id', finalSessionId)
+      }
+      if (email) {
+        onboardingUrl.searchParams.set('email', email)
+      } else if (data.user.email) {
+        onboardingUrl.searchParams.set('email', data.user.email)
+      }
+      redirectPath = onboardingUrl.pathname + onboardingUrl.search
+      console.log('🔄 User has checkout session - FORCING onboarding:', redirectPath)
+    } else if (nextPath === '/onboarding') {
+      // If next is /onboarding, always redirect there (onboarding page will handle step logic)
       const onboardingUrl = new URL('/onboarding', requestUrl.origin)
       if (sessionId) {
         onboardingUrl.searchParams.set('session_id', sessionId)
@@ -107,9 +126,7 @@ export async function GET(request: Request) {
       console.log('🔄 Redirecting to onboarding with params:', redirectPath)
     } else if (!nextPath) {
       // If no explicit next path, check if user needs to complete onboarding
-      // If user hasn't completed account setup or onboarding, redirect to onboarding
-      // Also check if they have a checkout session (might be from recent signup)
-      if (!hasCompletedAccountSetup || !hasCompletedOnboarding || sessionId) {
+      if (!hasCompletedAccountSetup || !hasCompletedOnboarding) {
         const onboardingUrl = new URL('/onboarding', requestUrl.origin)
         if (sessionId) {
           onboardingUrl.searchParams.set('session_id', sessionId)
@@ -118,7 +135,7 @@ export async function GET(request: Request) {
           onboardingUrl.searchParams.set('email', email)
         }
         redirectPath = onboardingUrl.pathname + onboardingUrl.search
-        console.log('🔄 User needs to complete onboarding or has checkout session, redirecting to:', redirectPath)
+        console.log('🔄 User needs to complete onboarding, redirecting to:', redirectPath)
       }
     }
     

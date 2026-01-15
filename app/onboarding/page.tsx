@@ -89,15 +89,20 @@ function OnboardingContent() {
         setIsAuthenticated(true)
         setEmail(user.email || emailParam || '')
 
-        // Load user profile
+        // Load user profile including checkout_session_id
         const { data: profile } = await supabase
           .from('users')
-          .select('full_name, onboarding_current_step, onboarding_role, onboarding_completed')
+          .select('full_name, onboarding_current_step, onboarding_role, onboarding_completed, checkout_session_id')
           .eq('id', user.id)
           .single()
 
         if (profile) {
           setUserName(profile.full_name || '')
+          
+          // CRITICAL: If user has a checkout_session_id, they MUST complete onboarding
+          // This ensures users who just completed checkout go through full onboarding
+          const hasCheckoutSession = !!sessionId || !!profile.checkout_session_id
+          const mustCompleteOnboarding = hasCheckoutSession && !profile.onboarding_completed
 
           // Fetch organization seat limit to determine plan name
           const { data: userData } = await supabase
@@ -116,10 +121,11 @@ function OnboardingContent() {
             if (org?.seat_limit) {
               setPlanName(org.seat_limit === 1 ? 'Individual Plan' : 'Team Plan')
             }
-          } else if (sessionId) {
+          } else if (sessionId || profile.checkout_session_id) {
             // If organization doesn't exist yet, check checkout session metadata
+            const sessionToCheck = sessionId || profile.checkout_session_id
             try {
-              const response = await fetch(`/api/checkout/session?session_id=${sessionId}`)
+              const response = await fetch(`/api/checkout/session?session_id=${sessionToCheck}`)
               if (response.ok) {
                 const sessionData = await response.json()
                 const seatCount = parseInt(
@@ -135,10 +141,24 @@ function OnboardingContent() {
             }
           }
 
-          // If onboarding is completed, redirect to home
-          if (profile.onboarding_completed) {
+          // If onboarding is completed AND they don't have a checkout session, redirect to home
+          // If they have a checkout session, they MUST complete onboarding even if they did it before
+          if (profile.onboarding_completed && !mustCompleteOnboarding) {
             router.push('/home')
             return
+          }
+          
+          // If they have a checkout session but onboarding is marked complete, reset it
+          // This handles the case where they completed onboarding before but just did a new checkout
+          if (mustCompleteOnboarding && profile.onboarding_completed) {
+            console.log('🔄 User has checkout session - resetting onboarding completion status')
+            await supabase
+              .from('users')
+              .update({
+                onboarding_completed: false,
+                onboarding_completed_at: null,
+              })
+              .eq('id', user.id)
           }
 
           // Resume from saved step
@@ -294,12 +314,14 @@ function OnboardingContent() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
-      // Mark onboarding as completed
+      // Mark onboarding as completed and clear checkout_session_id
+      // This allows them to access the app normally after completing onboarding
       await supabase
         .from('users')
         .update({
           onboarding_completed: true,
           onboarding_completed_at: new Date().toISOString(),
+          checkout_session_id: null, // Clear checkout session so they're not forced into onboarding again
         })
         .eq('id', user.id)
 

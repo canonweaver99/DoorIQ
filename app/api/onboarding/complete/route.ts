@@ -12,11 +12,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Update onboarding_completed and onboarding_completed_at
+    // Clear checkout_session_id so user isn't forced into onboarding again
     const { error: updateError } = await supabase
       .from('users')
       .update({
         onboarding_completed: true,
         onboarding_completed_at: new Date().toISOString(),
+        checkout_session_id: null, // Clear checkout session after onboarding completion
       })
       .eq('id', user.id)
 
