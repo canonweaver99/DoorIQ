@@ -32,6 +32,42 @@ export async function POST(req: Request) {
     
     // Create session with service role
     const serviceSupabase = await createServiceSupabaseClient()
+    
+    // CRITICAL: Ensure user exists in users table before creating session
+    // This prevents foreign key constraint violations
+    if (user && !isAnonymous) {
+      let { data: userRecord } = await serviceSupabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
+      
+      // Create user record if missing (shouldn't happen, but safety check)
+      if (!userRecord) {
+        console.log('⚠️ User missing from users table, creating record...')
+        const { data: newUser, error: createError } = await serviceSupabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email || '',
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            rep_id: `REP-${Date.now().toString().slice(-6)}`,
+            role: 'rep',
+            virtual_earnings: 0,
+          })
+          .select('id')
+          .single()
+        
+        if (createError && createError.code !== '23505') { // Ignore duplicate key errors
+          console.error('❌ Failed to create user record:', createError)
+          return NextResponse.json({ 
+            error: 'Failed to create user profile',
+            details: createError.message
+          }, { status: 500 })
+        }
+        userRecord = newUser || userRecord
+      }
+    }
     const sessionData: any = {
       user_id: user?.id || null, // null for anonymous free demo sessions
       agent_name: agent_name,

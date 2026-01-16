@@ -18,17 +18,17 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/auth/login?error=Authentication failed', requestUrl.origin))
     }
 
-    // Get user profile
+    // Get user profile - ensure user exists in users table
     const serviceSupabase = await createServiceSupabaseClient()
-    let { data: user } = await serviceSupabase
+    let { data: user, error: fetchError } = await serviceSupabase
       .from('users')
       .select('id, role')
       .eq('id', data.user.id)
       .maybeSingle()
 
-    // Create user record if doesn't exist
+    // Create user record if doesn't exist - CRITICAL: must succeed or session creation will fail
     if (!user) {
-      const { data: newUser } = await serviceSupabase
+      const { data: newUser, error: createError } = await serviceSupabase
         .from('users')
         .insert({
           id: data.user.id,
@@ -40,7 +40,28 @@ export async function GET(request: Request) {
         })
         .select('id, role')
         .single()
-      user = newUser
+      
+      if (createError) {
+        console.error('❌ Failed to create user profile:', createError)
+        // If user already exists (race condition), fetch it
+        if (createError.code === '23505') {
+          const { data: existingUser } = await serviceSupabase
+            .from('users')
+            .select('id, role')
+            .eq('id', data.user.id)
+            .single()
+          user = existingUser
+        } else {
+          throw new Error(`Failed to create user profile: ${createError.message}`)
+        }
+      } else {
+        user = newUser
+      }
+    }
+
+    // Ensure user exists - fail if not
+    if (!user) {
+      throw new Error('User profile not found and could not be created')
     }
 
     // SIMPLE RULE: If user has a role, go to home. Otherwise, onboarding.
