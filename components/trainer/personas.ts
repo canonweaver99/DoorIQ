@@ -12,7 +12,6 @@ export const ALLOWED_AGENT_ORDER = [
   'Just Treated Jerry',
   'Think About It Tina',
   'Veteran Victor',
-  'Tag Team Tanya & Tom',
 ] as const
 
 export type AllowedAgentName = typeof ALLOWED_AGENT_ORDER[number]
@@ -527,38 +526,39 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
   //     elevenAgentId: 'agent_5901k8s3rnrkfp9vky7q1j4t3xhj',
   //   },
   // },
-  'Tag Team Tanya & Tom': {
-    bubble: {
-      subtitle: 'Couple Decision',
-      description: 'Multiple decision-makers. Practice consensus.',
-      difficulty: 'Hard',
-      color: 'tertiary',
-      image: '/Tanya and Tom no backround.png', // Bubble image (no background)
-      liveSessionImage: '/tanya and tom.png', // Live session image
-    },
-    card: {
-      age: 42,
-      occupation: 'Both work full-time',
-      location: 'Family home',
-      personality: 'Collaborative decision-makers, need both to agree',
-      challengeLevel: 3,
-      challengeLabel: 'Hard',
-      difficultyKey: 'hard',
-      traits: [
-        'Both partners ask different questions',
-        'Need to address concerns of both individuals',
-        'May disagree with each other during conversation',
-        'Requires building consensus and addressing dual objections',
-      ],
-      bestFor: 'Handling multiple decision-makers and building consensus',
-      estimatedTime: '9-13 min',
-      startingScore: 44,
-      targetScore: 72,
-      avatar: '👥',
-      color: 'purple',
-      elevenAgentId: 'agent_4301k8s3mmvvekqb6fdpyszs9md4',
-    },
-  },
+  // REMOVED: 'Tag Team Tanya & Tom' - audio unavailable, removed from landing page voice test
+  // 'Tag Team Tanya & Tom': {
+  //   bubble: {
+  //     subtitle: 'Couple Decision',
+  //     description: 'Multiple decision-makers. Practice consensus.',
+  //     difficulty: 'Hard',
+  //     color: 'tertiary',
+  //     image: '/Tanya and Tom no backround.png', // Bubble image (no background)
+  //     liveSessionImage: '/tanya and tom.png', // Live session image
+  //   },
+  //   card: {
+  //     age: 42,
+  //     occupation: 'Both work full-time',
+  //     location: 'Family home',
+  //     personality: 'Collaborative decision-makers, need both to agree',
+  //     challengeLevel: 3,
+  //     challengeLabel: 'Hard',
+  //     difficultyKey: 'hard',
+  //     traits: [
+  //       'Both partners ask different questions',
+  //       'Need to address concerns of both individuals',
+  //       'May disagree with each other during conversation',
+  //       'Requires building consensus and addressing dual objections',
+  //     ],
+  //     bestFor: 'Handling multiple decision-makers and building consensus',
+  //     estimatedTime: '9-13 min',
+  //     startingScore: 44,
+  //     targetScore: 72,
+  //     avatar: '👥',
+  //     color: 'purple',
+  //     elevenAgentId: 'agent_4301k8s3mmvvekqb6fdpyszs9md4',
+  //   },
+  // },
   // TEMPORARILY REMOVED: 'Comparing Carl' - can be restored by adding back to ALLOWED_AGENT_ORDER and uncommenting below
   // 'Comparing Carl': {
   //   bubble: {
