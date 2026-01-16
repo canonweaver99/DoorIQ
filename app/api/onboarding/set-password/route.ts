@@ -2,8 +2,22 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
-import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+
+// Helper function to call Supabase Admin API directly
+async function supabaseAdminFetch(supabaseUrl: string, serviceRoleKey: string, endpoint: string, options: RequestInit = {}) {
+  const url = `${supabaseUrl}/auth/v1/admin${endpoint}`
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${serviceRoleKey}`,
+      'apikey': serviceRoleKey,
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+  return response
+}
 
 export async function POST(request: NextRequest) {
   console.log('🔐 SET-PASSWORD: Starting...')
@@ -36,38 +50,26 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServiceSupabaseClient()
     
-    // Create admin client with service role key for auth.admin methods
-    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
-
-    // Debug: Check if admin methods exist
-    console.log('🔍 Admin client check:', {
-      hasAuth: !!adminClient.auth,
-      hasAdmin: !!adminClient.auth?.admin,
-      hasGetUserByEmail: typeof adminClient.auth?.admin?.getUserByEmail,
-    })
-
-    // STEP 1: Try to find existing user
+    // STEP 1: Try to find existing user via direct API call
     console.log('👤 Step 1: Looking for existing user...')
     let userId: string | null = null
     
-    // Check if auth.admin exists before calling
-    if (!adminClient.auth?.admin?.getUserByEmail) {
-      console.error('❌ auth.admin.getUserByEmail not available!')
-      console.log('Service Role Key prefix:', serviceRoleKey.substring(0, 20))
-      return NextResponse.json({ error: 'Server configuration error: Admin methods not available. Check SUPABASE_SERVICE_ROLE_KEY.' }, { status: 500 })
-    }
-    
-    const { data: existingUser, error: findError } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
-    if (existingUser?.user) {
-      userId = existingUser.user.id
-      console.log('✅ Found existing user:', userId)
-    } else {
-      console.log('❌ User not found:', findError?.message || 'No user with this email')
+    try {
+      const listResponse = await supabaseAdminFetch(supabaseUrl, serviceRoleKey, `/users?email=${encodeURIComponent(email.toLowerCase())}`)
+      
+      if (listResponse.ok) {
+        const usersData = await listResponse.json()
+        console.log('📋 Users lookup result:', usersData?.users?.length || 0, 'users found')
+        if (usersData?.users?.length > 0) {
+          userId = usersData.users[0].id
+          console.log('✅ Found existing user:', userId)
+        }
+      } else {
+        const errorText = await listResponse.text()
+        console.log('❌ Users lookup failed:', listResponse.status, errorText)
+      }
+    } catch (lookupError: any) {
+      console.log('❌ User lookup error:', lookupError.message)
     }
 
     // STEP 2: If no user and we have sessionId, verify Stripe and create user
@@ -86,45 +88,34 @@ export async function POST(request: NextRequest) {
           customer_id: typeof session.customer === 'string' ? session.customer : session.customer?.id
         })
 
-        // Get the email and name from session
-        const sessionEmail = session.customer_email || session.metadata?.user_email || ''
         const userName = session.metadata?.user_name || email.split('@')[0]
         
-        // Check if session is valid (complete or has a customer)
         const isValid = session.status === 'complete' || 
                        session.payment_status === 'paid' || 
                        session.payment_status === 'no_payment_required' ||
                        session.customer
 
         console.log('🔍 Session valid?', isValid)
-        console.log('🔍 Session email:', sessionEmail)
-        console.log('🔍 Provided email:', email.toLowerCase())
 
         if (isValid) {
-          console.log('✅ Valid session, creating user...')
+          console.log('✅ Valid session, creating user via API...')
           
-          // Create auth user
-          const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-            email: email.toLowerCase(),
-            email_confirm: false,
-            user_metadata: { full_name: userName, source: 'checkout' }
+          // Create user via direct API call
+          const createResponse = await supabaseAdminFetch(supabaseUrl, serviceRoleKey, '/users', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: email.toLowerCase(),
+              email_confirm: false,
+              user_metadata: { full_name: userName, source: 'checkout' }
+            })
           })
 
-          if (createError) {
-            console.log('⚠️ Create user error:', createError.message)
-            // If already exists, try to find them
-            if (createError.message?.includes('already') || createError.message?.includes('exists')) {
-              const { data: retry } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
-              if (retry?.user) {
-                userId = retry.user.id
-                console.log('✅ Found user on retry:', userId)
-              }
-            }
-          } else if (newUser?.user) {
-            userId = newUser.user.id
+          if (createResponse.ok) {
+            const newUserData = await createResponse.json()
+            userId = newUserData.id
             console.log('✅ Created new user:', userId)
 
-            // Create profile
+            // Create profile in database
             const { error: profileError } = await supabase.from('users').insert({
               id: userId,
               email: email.toLowerCase(),
@@ -139,6 +130,21 @@ export async function POST(request: NextRequest) {
               console.log('⚠️ Profile creation error:', profileError.message)
             } else {
               console.log('✅ Profile created')
+            }
+          } else {
+            const errorText = await createResponse.text()
+            console.log('⚠️ Create user response:', createResponse.status, errorText)
+            
+            // If already exists, try to find them again
+            if (errorText.includes('already') || errorText.includes('exists') || createResponse.status === 422) {
+              const retryResponse = await supabaseAdminFetch(supabaseUrl, serviceRoleKey, `/users?email=${encodeURIComponent(email.toLowerCase())}`)
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json()
+                if (retryData?.users?.length > 0) {
+                  userId = retryData.users[0].id
+                  console.log('✅ Found user on retry:', userId)
+                }
+              }
             }
           }
         }
@@ -160,23 +166,19 @@ export async function POST(request: NextRequest) {
           const customer = customers.data[0]
           console.log('✅ Found Stripe customer:', customer.id)
           
-          // Create user from customer
-          const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-            email: email.toLowerCase(),
-            email_confirm: false,
-            user_metadata: { full_name: customer.name || email.split('@')[0], source: 'stripe_customer' }
+          // Create user via direct API call
+          const createResponse = await supabaseAdminFetch(supabaseUrl, serviceRoleKey, '/users', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: email.toLowerCase(),
+              email_confirm: false,
+              user_metadata: { full_name: customer.name || email.split('@')[0], source: 'stripe_customer' }
+            })
           })
 
-          if (createError) {
-            if (createError.message?.includes('already') || createError.message?.includes('exists')) {
-              const { data: retry } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
-              if (retry?.user) {
-                userId = retry.user.id
-                console.log('✅ Found user on retry:', userId)
-              }
-            }
-          } else if (newUser?.user) {
-            userId = newUser.user.id
+          if (createResponse.ok) {
+            const newUserData = await createResponse.json()
+            userId = newUserData.id
             console.log('✅ Created user from Stripe customer:', userId)
 
             await supabase.from('users').insert({
@@ -188,6 +190,18 @@ export async function POST(request: NextRequest) {
               virtual_earnings: 0,
               stripe_customer_id: customer.id,
             })
+          } else {
+            const errorText = await createResponse.text()
+            if (errorText.includes('already') || errorText.includes('exists') || createResponse.status === 422) {
+              const retryResponse = await supabaseAdminFetch(supabaseUrl, serviceRoleKey, `/users?email=${encodeURIComponent(email.toLowerCase())}`)
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json()
+                if (retryData?.users?.length > 0) {
+                  userId = retryData.users[0].id
+                  console.log('✅ Found user on retry:', userId)
+                }
+              }
+            }
           }
         } else {
           console.log('❌ No Stripe customer found with email:', email.toLowerCase())
@@ -206,18 +220,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // STEP 4: Set password
+    // STEP 4: Set password via direct API call
     console.log('🔐 Step 4: Setting password for user:', userId)
     
-    const { error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
-      password,
-      email_confirm: true,
+    const updateResponse = await supabaseAdminFetch(supabaseUrl, serviceRoleKey, `/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        password: password,
+        email_confirm: true,
+      })
     })
 
-    if (updateError) {
-      console.log('❌ Password update error:', updateError.message)
-      return NextResponse.json({ error: 'Failed to set password: ' + updateError.message }, { status: 500 })
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text()
+      console.log('❌ Password update error:', updateResponse.status, errorText)
+      return NextResponse.json({ error: 'Failed to set password: ' + errorText }, { status: 500 })
     }
+
+    console.log('✅ Password updated successfully')
 
     // Update profile
     await supabase.from('users').update({
