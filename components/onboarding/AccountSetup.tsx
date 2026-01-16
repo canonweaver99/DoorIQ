@@ -56,16 +56,34 @@ export function AccountSetup({ email, sessionId, onComplete }: AccountSetupProps
         throw new Error(data.error || 'Failed to set password')
       }
 
+      console.log('✅ Password set successfully, waiting before sign in...')
+      
+      // Small delay to ensure password is propagated
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       // Sign in the user with the new password
       const supabase = createClient()
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      console.log('🔐 Attempting sign in for:', email.toLowerCase())
+      
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
         password,
       })
 
       if (signInError) {
-        throw new Error(signInError.message)
+        console.error('❌ Sign in error:', signInError)
+        // If sign in fails, try once more after another delay
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        const { error: retryError } = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase(),
+          password,
+        })
+        if (retryError) {
+          throw new Error(retryError.message)
+        }
       }
+      
+      console.log('✅ Sign in successful:', signInData?.user?.id)
 
       onComplete()
     } catch (err: any) {
