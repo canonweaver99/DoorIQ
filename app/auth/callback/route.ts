@@ -39,28 +39,40 @@ export async function GET(request: Request) {
     
     console.log('✅ Session created successfully:', data.user.email)
     
+    // Get query params first
+    const checkoutIntent = requestUrl.searchParams.get('checkout')
+    const sessionId = requestUrl.searchParams.get('session_id')
+    const nextPath = requestUrl.searchParams.get('next')
+    const email = requestUrl.searchParams.get('email')
+    
     // Check if this is a new user (first time OAuth signup) and onboarding status
     const { createServiceSupabaseClient } = await import('@/lib/supabase/server')
     const serviceSupabase = await createServiceSupabaseClient()
     const { data: existingUser } = await serviceSupabase
       .from('users')
-      .select('id, onboarding_completed, account_setup_completed_at, checkout_session_id')
+      .select('id, role, onboarding_completed, account_setup_completed_at, checkout_session_id')
       .eq('id', data.user.id)
-      .single()
+      .maybeSingle()
     
-    const isNewUser = !existingUser
-    const hasCompletedOnboarding = existingUser?.onboarding_completed === true
-    const hasCompletedAccountSetup = !!existingUser?.account_setup_completed_at
-    const hasCheckoutSession = !!existingUser?.checkout_session_id || !!sessionId
+    type UserProfile = {
+      id: string
+      role: string | null
+      onboarding_completed: boolean | null
+      account_setup_completed_at: string | null
+      checkout_session_id: string | null
+    }
+    
+    const userProfile = existingUser as UserProfile | null
+    const isNewUser = !userProfile
+    const hasExistingRole = userProfile ? (!!userProfile.role && (userProfile.role === 'manager' || userProfile.role === 'rep' || userProfile.role === 'admin')) : false
+    const hasCompletedOnboarding = userProfile?.onboarding_completed === true
+    const hasCompletedAccountSetup = !!userProfile?.account_setup_completed_at
+    const hasCheckoutSession = !!userProfile?.checkout_session_id || !!sessionId
     
     // CRITICAL: For new users, if they have sessionId in query params, they MUST complete onboarding
     // For existing users, check checkout_session_id in their record
     // If user has a checkout session (from recent checkout), they MUST complete onboarding
     const requiresOnboarding = (hasCheckoutSession && !hasCompletedOnboarding) || (isNewUser && !!sessionId)
-    const checkoutIntent = requestUrl.searchParams.get('checkout')
-    let sessionId = requestUrl.searchParams.get('session_id')
-    let nextPath = requestUrl.searchParams.get('next')
-    let email = requestUrl.searchParams.get('email')
     
     // If query params are missing, this might be a case where Supabase didn't preserve them
     // We'll handle this in the redirect logic below by checking onboarding status
@@ -104,7 +116,7 @@ export async function GET(request: Request) {
     if (nextPath === '/onboarding') {
       const onboardingUrl = new URL('/onboarding', requestUrl.origin)
       // Preserve session_id from query param or from user record
-      const finalSessionId = sessionId || existingUser?.checkout_session_id
+      const finalSessionId = sessionId || (userProfile?.checkout_session_id || null)
       if (finalSessionId) {
         onboardingUrl.searchParams.set('session_id', finalSessionId)
       }
@@ -119,7 +131,7 @@ export async function GET(request: Request) {
       // PRIORITY 2: If user has a checkout session (recent checkout), force onboarding
       const onboardingUrl = new URL('/onboarding', requestUrl.origin)
       // Use session_id from query param or from user record
-      const finalSessionId = sessionId || existingUser?.checkout_session_id
+      const finalSessionId = sessionId || (userProfile?.checkout_session_id || null)
       if (finalSessionId) {
         onboardingUrl.searchParams.set('session_id', finalSessionId)
       }
@@ -133,7 +145,12 @@ export async function GET(request: Request) {
     } else if (!nextPath) {
       // If no explicit next path, ONLY redirect to onboarding if user has a checkout session
       // Regular logins (without checkout) should go to /home, not onboarding
-      if (hasCheckoutSession && (!hasCompletedAccountSetup || !hasCompletedOnboarding)) {
+      // CRITICAL: If user already has a role set, they should NEVER go to onboarding
+      if (hasExistingRole && !hasCheckoutSession) {
+        // User already has a role and no checkout session - go straight to home
+        redirectPath = '/home'
+        console.log('✅ User already has role set - redirecting to home (no onboarding required)')
+      } else if (hasCheckoutSession && (!hasCompletedAccountSetup || !hasCompletedOnboarding)) {
         const onboardingUrl = new URL('/onboarding', requestUrl.origin)
         if (sessionId) {
           onboardingUrl.searchParams.set('session_id', sessionId)

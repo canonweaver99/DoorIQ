@@ -121,10 +121,10 @@ export default function HomePage() {
         }
         
         // CRITICAL: Check if user needs to complete onboarding
-        // Fetch user profile including onboarding status and checkout_session_id
+        // Fetch user profile including role, onboarding status and checkout_session_id
         const { data: userData } = await supabase
           .from('users')
-          .select('full_name, email, onboarding_completed, checkout_session_id, account_setup_completed_at')
+          .select('full_name, email, role, onboarding_completed, checkout_session_id, account_setup_completed_at')
           .eq('id', user.id)
           .single()
         
@@ -139,12 +139,16 @@ export default function HomePage() {
           return
         }
         
-        // ONLY redirect to onboarding if user has a checkout_session_id (post-checkout flow)
-        // Regular logins (without checkout) should NOT be forced into onboarding
+        // CRITICAL: If user already has a role set (manager/rep/admin) AND no checkout session,
+        // they should NOT be redirected to onboarding - they're already set up
+        const hasExistingRole = !!userData.role && (userData.role === 'manager' || userData.role === 'rep' || userData.role === 'admin')
         const hasCheckoutSession = !!userData.checkout_session_id
-        const mustCompleteOnboarding = hasCheckoutSession && (!userData.onboarding_completed || !userData.account_setup_completed_at)
         
-        if (mustCompleteOnboarding) {
+        if (hasExistingRole && !hasCheckoutSession) {
+          // User already has a role and no checkout session - stay on home page
+          console.log('✅ User already has role set - staying on home page')
+        } else if (hasCheckoutSession && (!userData.onboarding_completed || !userData.account_setup_completed_at)) {
+          // ONLY redirect to onboarding if user has a checkout_session_id (post-checkout flow)
           console.log('🔄 User has checkout session and needs onboarding - redirecting from home page')
           const onboardingUrl = new URL('/onboarding', window.location.origin)
           if (userData.checkout_session_id) {

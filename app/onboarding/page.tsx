@@ -89,19 +89,29 @@ function OnboardingContent() {
         setIsAuthenticated(true)
         setEmail(user.email || emailParam || '')
 
-        // Load user profile including checkout_session_id
+        // Load user profile including checkout_session_id and role
         const { data: profile } = await supabase
           .from('users')
-          .select('full_name, onboarding_current_step, onboarding_role, onboarding_completed, checkout_session_id')
+          .select('full_name, role, onboarding_current_step, onboarding_role, onboarding_completed, checkout_session_id')
           .eq('id', user.id)
           .single()
 
         if (profile) {
           setUserName(profile.full_name || '')
           
+          // CRITICAL: If user already has a role set (manager/rep/admin) AND no checkout session,
+          // they should NOT be in onboarding - redirect to home immediately
+          const hasCheckoutSession = !!sessionId || !!profile.checkout_session_id
+          const hasExistingRole = !!profile.role && (profile.role === 'manager' || profile.role === 'rep' || profile.role === 'admin')
+          
+          if (hasExistingRole && !hasCheckoutSession) {
+            console.log('✅ User already has role set and no checkout session - redirecting to home')
+            router.push('/home')
+            return
+          }
+          
           // CRITICAL: If user has a checkout_session_id, they MUST complete onboarding
           // This ensures users who just completed checkout go through full onboarding
-          const hasCheckoutSession = !!sessionId || !!profile.checkout_session_id
           const mustCompleteOnboarding = hasCheckoutSession && !profile.onboarding_completed
 
           // Fetch organization seat limit to determine plan name
