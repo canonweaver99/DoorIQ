@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, Suspense, lazy } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Play, Flame, Target, TrendingUp, ArrowRight } from 'lucide-react'
 
@@ -101,105 +101,33 @@ export default function HomePage() {
     try {
       const supabase = createClient()
       
-      // Parallel fetch user and stats to reduce loading time
       const [userResult, statsResponse] = await Promise.allSettled([
         supabase.auth.getUser(),
-        fetch('/api/homepage/rotating-stats', { 
-          cache: 'force-cache',
-          next: { revalidate: 300 } // Revalidate every 5 minutes instead of 60 seconds
-        })
+        fetch('/api/homepage/rotating-stats', { cache: 'force-cache', next: { revalidate: 300 } })
       ])
       
-      // Handle user data
       if (userResult.status === 'fulfilled') {
         const { data: { user } } = userResult.value
+        if (!user) { setLoading(false); return }
         
-        if (!user) {
-          setUserName('')
-          setLoading(false)
-          return
-        }
-        
-        // CRITICAL: Check if user needs to complete onboarding
-        // Fetch user profile including role, onboarding status and checkout_session_id
         const { data: userData } = await supabase
           .from('users')
-          .select('full_name, email, role, onboarding_completed, checkout_session_id, account_setup_completed_at')
+          .select('full_name, email')
           .eq('id', user.id)
           .single()
         
-        // If user doesn't exist yet (new user), they need onboarding
-        if (!userData) {
-          console.log('🔄 New user - redirecting to onboarding')
-          const onboardingUrl = new URL('/onboarding', window.location.origin)
-          if (user.email) {
-            onboardingUrl.searchParams.set('email', user.email)
-          }
-          router.replace(onboardingUrl.pathname + onboardingUrl.search)
-          return
-        }
-        
-        // CRITICAL: If user already has a role set (manager/rep/admin) AND no checkout session,
-        // they should NOT be redirected to onboarding - they're already set up
-        const hasExistingRole = !!userData.role && (userData.role === 'manager' || userData.role === 'rep' || userData.role === 'admin')
-        const hasCheckoutSession = !!userData.checkout_session_id
-        
-        if (hasExistingRole && !hasCheckoutSession) {
-          // User already has a role and no checkout session - stay on home page
-          console.log('✅ User already has role set - staying on home page')
-        } else if (hasCheckoutSession && (!userData.onboarding_completed || !userData.account_setup_completed_at)) {
-          // ONLY redirect to onboarding if user has a checkout_session_id (post-checkout flow)
-          console.log('🔄 User has checkout session and needs onboarding - redirecting from home page')
-          const onboardingUrl = new URL('/onboarding', window.location.origin)
-          if (userData.checkout_session_id) {
-            onboardingUrl.searchParams.set('session_id', userData.checkout_session_id)
-          }
-          if (user.email) {
-            onboardingUrl.searchParams.set('email', user.email)
-          }
-          router.replace(onboardingUrl.pathname + onboardingUrl.search)
-          return
-        }
-        
-        // Fetch user name (original query)
-        if (userData?.full_name) {
-          const firstName = userData.full_name.split(' ')[0] || userData.email?.split('@')[0] || ''
-          if (firstName) {
-            setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
-          }
-        } else if (userData?.email) {
-          const emailName = userData.email.split('@')[0] || ''
-          if (emailName) {
-            setUserName(emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase())
-          }
-        } else {
-          const authName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || ''
-          if (authName) {
-            const firstName = authName.split(' ')[0]
-            setUserName(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase())
-          }
-        }
+        const name = userData?.full_name?.split(' ')[0] || userData?.email?.split('@')[0] || 
+                     user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || ''
+        if (name) setUserName(name.charAt(0).toUpperCase() + name.slice(1).toLowerCase())
       }
 
-      // Handle stats
       if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
-        try {
-          const statsData = await statsResponse.value.json()
-          setStats({
-            streak: statsData.streak || 0,
-            sessionsToday: statsData.repsToday || 0,
-            avgScore: statsData.averageScore || 0,
-          })
-        } catch (e) {
-          console.error('Error parsing stats:', e)
-        }
+        const statsData = await statsResponse.value.json()
+        setStats({ streak: statsData.streak || 0, sessionsToday: statsData.repsToday || 0, avgScore: statsData.averageScore || 0 })
       }
       
       setLoading(false)
-    } catch (error) {
-      console.error('Error fetching user data:', error)
-      setLoading(false)
-    }
+    } catch { setLoading(false) }
   }
 
   const getTimeOfDayGreeting = () => {
