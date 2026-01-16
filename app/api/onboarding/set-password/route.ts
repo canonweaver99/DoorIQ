@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 
 export async function POST(request: NextRequest) {
@@ -35,8 +35,13 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createServiceSupabaseClient()
-    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
+    
+    // Create admin client with service role key for auth.admin methods
+    const adminClient = createSupabaseClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
     })
 
     // STEP 1: Try to find existing user
