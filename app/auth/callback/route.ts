@@ -48,11 +48,41 @@ export async function GET(request: Request) {
     // Check if this is a new user (first time OAuth signup) and onboarding status
     const { createServiceSupabaseClient } = await import('@/lib/supabase/server')
     const serviceSupabase = await createServiceSupabaseClient()
-    const { data: existingUser } = await serviceSupabase
+    let { data: existingUser } = await serviceSupabase
       .from('users')
       .select('id, role, onboarding_completed, account_setup_completed_at, checkout_session_id')
       .eq('id', data.user.id)
       .maybeSingle()
+    
+    // CRITICAL: If user doesn't exist in users table, create the record
+    // This prevents foreign key constraint errors when creating sessions
+    if (!existingUser) {
+      console.log('📝 User record not found in users table - creating profile...')
+      const userMetadata = data.user.user_metadata || {}
+      const repId = `REP-${Date.now().toString().slice(-6)}`
+      
+      const { data: newUser, error: createError } = await serviceSupabase
+        .from('users')
+        .insert({
+          id: data.user.id,
+          email: data.user.email || '',
+          full_name: userMetadata.full_name || userMetadata.name || data.user.email?.split('@')[0] || 'User',
+          rep_id: repId,
+          role: 'rep',
+          virtual_earnings: 0,
+        })
+        .select('id, role, onboarding_completed, account_setup_completed_at, checkout_session_id')
+        .single()
+      
+      if (createError) {
+        console.error('❌ Failed to create user profile:', createError)
+        // Continue anyway - user is authenticated even if profile creation fails
+        // They'll get an error when trying to create a session, but at least they're logged in
+      } else {
+        console.log('✅ User profile created successfully')
+        existingUser = newUser
+      }
+    }
     
     type UserProfile = {
       id: string
