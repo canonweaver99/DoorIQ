@@ -141,24 +141,26 @@ function OnboardingContent() {
             }
           }
 
-          // If onboarding is completed AND they don't have a checkout session, redirect to home
-          // If they have a checkout session, they MUST complete onboarding even if they did it before
-          if (profile.onboarding_completed && !mustCompleteOnboarding) {
+          // CRITICAL: If user has sessionId in query params (from AccountSetup Google OAuth),
+          // they MUST continue onboarding flow, even if they've completed it before
+          // This ensures clicking "Continue with Google" from onboarding always continues onboarding
+          if (sessionId || profile.checkout_session_id) {
+            // If they have a checkout session but onboarding is marked complete, reset it
+            // This handles the case where they completed onboarding before but just did a new checkout
+            if (profile.onboarding_completed) {
+              console.log('🔄 User has checkout session - resetting onboarding completion status')
+              await supabase
+                .from('users')
+                .update({
+                  onboarding_completed: false,
+                  onboarding_completed_at: null,
+                })
+                .eq('id', user.id)
+            }
+          } else if (profile.onboarding_completed) {
+            // No checkout session and onboarding is completed - redirect to home
             router.push('/home')
             return
-          }
-          
-          // If they have a checkout session but onboarding is marked complete, reset it
-          // This handles the case where they completed onboarding before but just did a new checkout
-          if (mustCompleteOnboarding && profile.onboarding_completed) {
-            console.log('🔄 User has checkout session - resetting onboarding completion status')
-            await supabase
-              .from('users')
-              .update({
-                onboarding_completed: false,
-                onboarding_completed_at: null,
-              })
-              .eq('id', user.id)
           }
 
           // Resume from saved step

@@ -139,12 +139,13 @@ export default function HomePage() {
           return
         }
         
-        // If user has checkout_session_id or hasn't completed onboarding, redirect to onboarding
+        // ONLY redirect to onboarding if user has a checkout_session_id (post-checkout flow)
+        // Regular logins (without checkout) should NOT be forced into onboarding
         const hasCheckoutSession = !!userData.checkout_session_id
-        const mustCompleteOnboarding = hasCheckoutSession || !userData.onboarding_completed || !userData.account_setup_completed_at
+        const mustCompleteOnboarding = hasCheckoutSession && (!userData.onboarding_completed || !userData.account_setup_completed_at)
         
         if (mustCompleteOnboarding) {
-          console.log('🔄 User needs onboarding - redirecting from home page')
+          console.log('🔄 User has checkout session and needs onboarding - redirecting from home page')
           const onboardingUrl = new URL('/onboarding', window.location.origin)
           if (userData.checkout_session_id) {
             onboardingUrl.searchParams.set('session_id', userData.checkout_session_id)
