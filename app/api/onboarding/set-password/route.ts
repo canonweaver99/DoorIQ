@@ -44,9 +44,23 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Debug: Check if admin methods exist
+    console.log('🔍 Admin client check:', {
+      hasAuth: !!adminClient.auth,
+      hasAdmin: !!adminClient.auth?.admin,
+      hasGetUserByEmail: typeof adminClient.auth?.admin?.getUserByEmail,
+    })
+
     // STEP 1: Try to find existing user
     console.log('👤 Step 1: Looking for existing user...')
     let userId: string | null = null
+    
+    // Check if auth.admin exists before calling
+    if (!adminClient.auth?.admin?.getUserByEmail) {
+      console.error('❌ auth.admin.getUserByEmail not available!')
+      console.log('Service Role Key prefix:', serviceRoleKey.substring(0, 20))
+      return NextResponse.json({ error: 'Server configuration error: Admin methods not available. Check SUPABASE_SERVICE_ROLE_KEY.' }, { status: 500 })
+    }
     
     const { data: existingUser, error: findError } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
     if (existingUser?.user) {
