@@ -99,20 +99,21 @@ function OnboardingContent() {
         if (profile) {
           setUserName(profile.full_name || '')
           
-          // CRITICAL: If user already has a role set (manager/rep/admin) AND no checkout session,
+          // CRITICAL: If user already has a role set (manager/rep/admin) AND no checkout_session_id in database,
           // they should NOT be in onboarding - redirect to home immediately
-          const hasCheckoutSession = !!sessionId || !!profile.checkout_session_id
+          // ONLY check database value, NOT URL params (to prevent stale sessionIds from forcing onboarding)
           const hasExistingRole = !!profile.role && (profile.role === 'manager' || profile.role === 'rep' || profile.role === 'admin')
+          const hasCheckoutSessionInDB = !!profile.checkout_session_id
           
-          if (hasExistingRole && !hasCheckoutSession) {
-            console.log('✅ User already has role set and no checkout session - redirecting to home')
+          if (hasExistingRole && !hasCheckoutSessionInDB) {
+            console.log('✅ User already has role set and no checkout session in DB - redirecting to home')
             router.push('/home')
             return
           }
           
-          // CRITICAL: If user has a checkout_session_id, they MUST complete onboarding
+          // CRITICAL: If user has a checkout_session_id in database, they MUST complete onboarding
           // This ensures users who just completed checkout go through full onboarding
-          const mustCompleteOnboarding = hasCheckoutSession && !profile.onboarding_completed
+          const mustCompleteOnboarding = hasCheckoutSessionInDB && !profile.onboarding_completed
 
           // Fetch organization seat limit to determine plan name
           const { data: userData } = await supabase
@@ -131,9 +132,9 @@ function OnboardingContent() {
             if (org?.seat_limit) {
               setPlanName(org.seat_limit === 1 ? 'Individual Plan' : 'Team Plan')
             }
-          } else if (sessionId || profile.checkout_session_id) {
+          } else if (profile.checkout_session_id) {
             // If organization doesn't exist yet, check checkout session metadata
-            const sessionToCheck = sessionId || profile.checkout_session_id
+            const sessionToCheck = profile.checkout_session_id
             try {
               const response = await fetch(`/api/checkout/session?session_id=${sessionToCheck}`)
               if (response.ok) {
@@ -151,15 +152,6 @@ function OnboardingContent() {
             }
           }
 
-          // CRITICAL: If user already has a role set (manager/rep/admin) AND no checkout_session_id in database,
-          // they should NOT be in onboarding - redirect to home immediately
-          // This prevents users who already completed onboarding from being forced through it again
-          if (hasExistingRole && !profile.checkout_session_id) {
-            console.log('✅ User already has role set and no checkout session in DB - redirecting to home')
-            router.push('/home')
-            return
-          }
-          
           // CRITICAL: If user has checkout_session_id in database (from recent checkout),
           // they MUST complete onboarding flow, even if they've completed it before
           // This handles the case where they completed onboarding before but just did a new checkout
