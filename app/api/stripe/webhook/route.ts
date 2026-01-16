@@ -393,6 +393,7 @@ async function handleTeamPlanCheckout(
 
 /**
  * Handle individual/starter plan checkout completion
+ * Supports both existing users (with supabase_user_id) and guest checkouts (creates new user)
  */
 async function handleIndividualPlanCheckout(
   session: Stripe.Checkout.Session,
@@ -409,17 +410,129 @@ async function handleIndividualPlanCheckout(
     return
   }
 
-  // Get user ID from customer metadata or subscription metadata
   const stripe = getStripeClient()
   if (!stripe) {
     console.error('Stripe is not configured')
     return
   }
-  const customer = await stripe.customers.retrieve(customerId)
-  const userId = (customer as Stripe.Customer).metadata?.supabase_user_id
+
+  const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer
+  
+  // Get user ID from customer metadata or session metadata
+  let userId = customer.metadata?.supabase_user_id || session.metadata?.supabase_user_id
+  
+  // Get user info from session metadata (for guest checkouts)
+  const metadata = session.metadata || {}
+  const userEmail = metadata.user_email || customer.email || session.customer_email
+  const userName = metadata.user_name || customer.name
+  
+  // For guest checkouts, we need to create the user account
+  if (!userId && userEmail) {
+    console.log('🔐 Guest individual checkout detected - creating user account for:', userEmail)
+    const serviceSupabase = await createServiceSupabaseClient()
+    
+    // Create admin client for auth operations
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('❌ Missing Supabase configuration for admin client')
+      throw new Error('Missing Supabase configuration')
+    }
+    
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+    
+    try {
+      // Check if user already exists by email using admin client
+      const { data: existingUserData, error: getUserError } = await adminClient.auth.admin.getUserByEmail(userEmail.toLowerCase())
+      
+      if (!getUserError && existingUserData?.user) {
+        userId = existingUserData.user.id
+        console.log('✅ Found existing user:', userId)
+      } else {
+        // Create new auth user (unconfirmed - they'll set password via email)
+        const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+          email: userEmail.toLowerCase(),
+          email_confirm: false, // They'll confirm via password setup email
+          user_metadata: {
+            full_name: userName || userEmail.split('@')[0],
+            source: 'stripe_checkout',
+          },
+        })
+
+        if (authError) {
+          console.error('❌ Error creating auth user:', authError)
+          throw authError
+        }
+
+        if (!authData?.user) {
+          throw new Error('Failed to create auth user')
+        }
+
+        userId = authData.user.id
+        console.log('✅ Created new auth user:', userId)
+
+        // Generate rep ID
+        const repId = `REP-${Date.now().toString().slice(-6)}`
+
+        // Create user profile using service client (bypasses RLS)
+        const { error: profileError } = await serviceSupabase
+          .from('users')
+          .insert({
+            id: userId,
+            email: userEmail.toLowerCase(),
+            full_name: userName || userEmail.split('@')[0],
+            rep_id: repId,
+            role: 'rep',
+            virtual_earnings: 0,
+            checkout_session_id: session.id || null,
+          })
+
+        if (profileError) {
+          console.error('❌ Error creating user profile:', profileError)
+          // Try to clean up auth user
+          await adminClient.auth.admin.deleteUser(userId)
+          throw profileError
+        }
+
+        // Create session limits record
+        const today = new Date().toISOString().split('T')[0]
+        const { error: limitsError } = await serviceSupabase
+          .from('user_session_limits')
+          .insert({
+            user_id: userId,
+            sessions_this_month: 0,
+            sessions_limit: 75,
+            last_reset_date: today,
+          })
+
+        if (limitsError) {
+          console.error('⚠️ Error creating session limits:', limitsError)
+          // Don't fail - this is not critical
+        }
+
+        // Update Stripe customer with user ID for future reference
+        await stripe.customers.update(customerId, {
+          metadata: {
+            ...customer.metadata,
+            supabase_user_id: userId,
+          },
+        })
+        
+        console.log('✅ User account created successfully for individual plan:', userId)
+      }
+    } catch (error) {
+      console.error('❌ Error creating user for individual checkout:', error)
+      throw error
+    }
+  }
 
   if (!userId) {
-    console.error('No user ID in customer metadata')
+    console.error('No user ID found and could not create user (missing email)')
     return
   }
 
@@ -448,9 +561,6 @@ async function handleIndividualPlanCheckout(
     try {
       const { sendWelcomeEmail, sendTrialStartNotification } = await import('@/lib/email/send')
       
-      // Get user email from customer or user record
-      const userEmail = (customer as Stripe.Customer).email
-      
       // Get user details for emails
       const { data: userData } = await supabase
         .from('users')
@@ -466,7 +576,7 @@ async function handleIndividualPlanCheckout(
         // Send trial start notification to admin
         await sendTrialStartNotification(
           emailToUse,
-          userData?.full_name || userEmail || 'User',
+          userData?.full_name || userName || 'User',
           'individual',
           trialEndsAt
         )

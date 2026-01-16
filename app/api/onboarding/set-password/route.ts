@@ -136,61 +136,82 @@ export async function POST(request: NextRequest) {
             const metadata = session.metadata || {}
             const userName = metadata.user_name || email.split('@')[0]
             
-            // Create auth user using admin client
-            const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-              email: email.toLowerCase(),
-              email_confirm: false,
-              user_metadata: {
-                full_name: userName,
-                source: 'stripe_checkout',
-              },
-            })
-
-            if (authError) {
-              console.error('❌ Error creating auth user:', authError)
-              throw new Error(`Failed to create user: ${authError.message}`)
-            } else if (authData?.user) {
-              existingUser = authData.user
-              console.log('✅ Created new auth user:', existingUser.id)
-
-              // Generate rep ID
-              const repId = `REP-${Date.now().toString().slice(-6)}`
-
-              // Create user profile using service client (bypasses RLS)
-              const { error: profileError } = await supabase
-                .from('users')
-                .insert({
-                  id: existingUser.id,
-                  email: email.toLowerCase(),
+            try {
+              // Create auth user using admin client
+              const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+                email: email.toLowerCase(),
+                email_confirm: false,
+                user_metadata: {
                   full_name: userName,
-                  rep_id: repId,
-                  role: 'rep',
-                  virtual_earnings: 0,
-                  checkout_session_id: sessionId,
-                })
+                  source: 'stripe_checkout',
+                },
+              })
 
-              if (profileError) {
-                console.error('❌ Error creating user profile:', profileError)
-                // Try to clean up auth user
-                await adminClient.auth.admin.deleteUser(existingUser.id)
-                throw new Error(`Failed to create user profile: ${profileError.message}`)
+              if (authError) {
+                // If user already exists, try to get them instead
+                if (authError.message?.includes('already') || authError.message?.includes('exists')) {
+                  console.log('User already exists in auth, fetching...')
+                  const { data: existingAuthData } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
+                  if (existingAuthData?.user) {
+                    existingUser = existingAuthData.user
+                    console.log('✅ Found existing auth user:', existingUser.id)
+                  }
+                } else {
+                  console.error('❌ Error creating auth user:', authError)
+                  throw new Error(`Failed to create user: ${authError.message}`)
+                }
+              } else if (authData?.user) {
+                existingUser = authData.user
+                console.log('✅ Created new auth user:', existingUser.id)
+
+                // Generate rep ID
+                const repId = `REP-${Date.now().toString().slice(-6)}`
+
+                // Create user profile using service client (bypasses RLS)
+                const { error: profileError } = await supabase
+                  .from('users')
+                  .insert({
+                    id: existingUser.id,
+                    email: email.toLowerCase(),
+                    full_name: userName,
+                    rep_id: repId,
+                    role: 'rep',
+                    virtual_earnings: 0,
+                    checkout_session_id: sessionId,
+                  })
+
+                if (profileError) {
+                  // If profile already exists (race condition), that's fine
+                  if (profileError.code === '23505') {
+                    console.log('User profile already exists, continuing...')
+                  } else {
+                    console.error('❌ Error creating user profile:', profileError)
+                    // Try to clean up auth user
+                    await adminClient.auth.admin.deleteUser(existingUser.id)
+                    throw new Error(`Failed to create user profile: ${profileError.message}`)
+                  }
+                }
+
+                // Create session limits record
+                const today = new Date().toISOString().split('T')[0]
+                const { error: limitsError } = await supabase
+                  .from('user_session_limits')
+                  .insert({
+                    user_id: existingUser.id,
+                    sessions_this_month: 0,
+                    sessions_limit: 75,
+                    last_reset_date: today,
+                  })
+
+                if (limitsError && limitsError.code !== '23505') {
+                  console.error('⚠️ Error creating session limits:', limitsError)
+                  // Don't fail - this is not critical
+                }
               }
-
-              // Create session limits record
-              const today = new Date().toISOString().split('T')[0]
-              const { error: limitsError } = await supabase
-                .from('user_session_limits')
-                .insert({
-                  user_id: existingUser.id,
-                  sessions_this_month: 0,
-                  sessions_limit: 75,
-                  last_reset_date: today,
-                })
-
-              if (limitsError) {
-                console.error('⚠️ Error creating session limits:', limitsError)
-                // Don't fail - this is not critical
-              }
+            } catch (userCreationError: any) {
+              console.error('❌ Error in user creation flow:', userCreationError)
+              // Re-throw to be handled by outer catch - this is a critical error
+              throw userCreationError
             }
           } else {
             console.log('⚠️ Checkout session not completed or email mismatch', {
@@ -201,6 +222,11 @@ export async function POST(request: NextRequest) {
             })
           }
         } catch (stripeError: any) {
+          // Only log Stripe retrieval errors, not user creation errors
+          if (stripeError.message?.includes('Failed to create')) {
+            // This is a user creation error, not a Stripe error - re-throw it
+            throw stripeError
+          }
           console.error('❌ Error checking Stripe session:', stripeError)
           console.error('Stripe error details:', JSON.stringify(stripeError, null, 2))
           // Continue - webhook might still be processing
