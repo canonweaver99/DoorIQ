@@ -39,7 +39,7 @@ export function AccountSetup({ email, sessionId, onComplete }: AccountSetupProps
     setError(null)
 
     try {
-      // Call our API to set the password for the user created by webhook
+      // Step 1: Create account with password via our API
       const response = await fetch('/api/onboarding/set-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,41 +53,27 @@ export function AccountSetup({ email, sessionId, onComplete }: AccountSetupProps
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to set password')
+        throw new Error(data.error || 'Failed to create account')
       }
 
-      console.log('✅ Password set successfully, waiting before sign in...')
-      
-      // Small delay to ensure password is propagated
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      console.log('✅ Account created successfully')
 
-      // Sign in the user with the new password
+      // Step 2: Sign in the user
       const supabase = createClient()
-      console.log('🔐 Attempting sign in for:', email.toLowerCase())
-      
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
         password,
       })
 
       if (signInError) {
         console.error('❌ Sign in error:', signInError)
-        // If sign in fails, try once more after another delay
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        const { error: retryError } = await supabase.auth.signInWithPassword({
-          email: email.toLowerCase(),
-          password,
-        })
-        if (retryError) {
-          throw new Error(retryError.message)
-        }
+        throw new Error(signInError.message)
       }
       
-      console.log('✅ Sign in successful:', signInData?.user?.id)
-
+      console.log('✅ Sign in successful')
       onComplete()
     } catch (err: any) {
-      console.error('Password setup error:', err)
+      console.error('Account setup error:', err)
       setError(err.message || 'Failed to set up your account')
     } finally {
       setLoading(false)
