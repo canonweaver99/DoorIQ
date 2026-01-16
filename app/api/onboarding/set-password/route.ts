@@ -83,7 +83,10 @@ export async function POST(request: NextRequest) {
           // Verify session is completed and email matches (check both customer_email and metadata)
           const sessionEmail = session.customer_email || session.metadata?.user_email || ''
           const emailMatches = sessionEmail.toLowerCase() === email.toLowerCase()
-          const isComplete = session.status === 'complete' || session.payment_status === 'paid'
+          // Accept 'paid' for regular checkouts or 'no_payment_required' for free trials
+          const isComplete = session.status === 'complete' || 
+                           session.payment_status === 'paid' || 
+                           session.payment_status === 'no_payment_required'
           
           // Also check if customer exists in Stripe with this email
           let customerExists = false
@@ -124,7 +127,9 @@ export async function POST(request: NextRequest) {
           })
           
           // Create user if session is complete OR if customer exists in Stripe (more lenient)
-          if ((isComplete && emailMatches) || (customerExists && emailMatches)) {
+          // For free trials, payment_status will be 'no_payment_required', which is valid
+          const isValidSession = isComplete || customerExists
+          if (isValidSession && emailMatches) {
             console.log('✅ Checkout session verified, creating user account')
             
             // Get metadata from session
@@ -203,18 +208,23 @@ export async function POST(request: NextRequest) {
       }
 
       // Retry finding user (webhook might have created it)
+      // For free trials, webhook might take longer to process
       if (!existingUser) {
-        console.log('Waiting for webhook to complete...')
-        await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds
-        
-        try {
-          const { data: retryUserData, error: retryError } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
-          if (!retryError && retryUserData?.user) {
-            existingUser = retryUserData.user
-            console.log('✅ Found user after retry:', existingUser.id)
+        console.log('Waiting for webhook to complete (may take longer for free trials)...')
+        // Wait longer for free trial webhooks (up to 5 seconds total)
+        for (let i = 0; i < 3; i++) {
+          await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds each time
+          
+          try {
+            const { data: retryUserData, error: retryError } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
+            if (!retryError && retryUserData?.user) {
+              existingUser = retryUserData.user
+              console.log(`✅ Found user after retry attempt ${i + 1}:`, existingUser.id)
+              break
+            }
+          } catch (retryError) {
+            console.log(`Retry attempt ${i + 1} failed, will retry...`)
           }
-        } catch (retryError) {
-          console.log('User still not found after retry')
         }
       }
     }
