@@ -258,6 +258,72 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // If still no user, try one more aggressive approach:
+      // Just check if a Stripe customer exists with this email and create the user
+      if (!existingUser) {
+        console.log('🔄 Last resort: checking if Stripe customer exists with this email...')
+        const stripe = getStripeClient()
+        if (stripe) {
+          try {
+            const customers = await stripe.customers.list({ email: email.toLowerCase(), limit: 1 })
+            if (customers.data.length > 0) {
+              const customer = customers.data[0]
+              console.log('✅ Found Stripe customer, creating user:', customer.id)
+              
+              // Get name from customer or email
+              const userName = customer.name || email.split('@')[0]
+              
+              // Create auth user
+              const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+                email: email.toLowerCase(),
+                email_confirm: false,
+                user_metadata: {
+                  full_name: userName,
+                  source: 'stripe_customer_fallback',
+                },
+              })
+              
+              if (authError) {
+                if (authError.message?.includes('already') || authError.message?.includes('exists')) {
+                  const { data: existingAuthData } = await adminClient.auth.admin.getUserByEmail(email.toLowerCase())
+                  if (existingAuthData?.user) {
+                    existingUser = existingAuthData.user
+                    console.log('✅ Found existing auth user:', existingUser.id)
+                  }
+                } else {
+                  console.error('❌ Error creating auth user in fallback:', authError)
+                }
+              } else if (authData?.user) {
+                existingUser = authData.user
+                console.log('✅ Created auth user in fallback:', existingUser.id)
+                
+                // Create user profile
+                const repId = `REP-${Date.now().toString().slice(-6)}`
+                const { error: profileError } = await supabase
+                  .from('users')
+                  .insert({
+                    id: existingUser.id,
+                    email: email.toLowerCase(),
+                    full_name: userName,
+                    rep_id: repId,
+                    role: 'rep',
+                    virtual_earnings: 0,
+                    stripe_customer_id: customer.id,
+                  })
+                
+                if (profileError && profileError.code !== '23505') {
+                  console.error('❌ Error creating profile in fallback:', profileError)
+                }
+              }
+            } else {
+              console.log('No Stripe customer found with email:', email.toLowerCase())
+            }
+          } catch (stripeError) {
+            console.error('Error in Stripe customer lookup fallback:', stripeError)
+          }
+        }
+      }
+      
       // Retry finding user (webhook might have created it)
       // For free trials, webhook might take longer to process
       if (!existingUser) {
