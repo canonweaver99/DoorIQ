@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
             method: 'POST',
             body: JSON.stringify({
               email: email.toLowerCase(),
-              email_confirm: false,
+              email_confirm: true,  // Pre-confirm since they completed Stripe checkout
               user_metadata: { full_name: userName, source: 'checkout' }
             })
           })
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
             method: 'POST',
             body: JSON.stringify({
               email: email.toLowerCase(),
-              email_confirm: false,
+              email_confirm: true,  // Pre-confirm since they have a Stripe customer
               user_metadata: { full_name: customer.name || email.split('@')[0], source: 'stripe_customer' }
             })
           })
@@ -227,14 +227,17 @@ export async function POST(request: NextRequest) {
       method: 'PUT',
       body: JSON.stringify({
         password: password,
-        email_confirm: true,
+        email_confirm: true,  // Confirms email for future signups
       })
     })
+    
+    // Get response body for logging
+    const updateText = await updateResponse.text()
+    console.log('📋 Password update response:', updateResponse.status, updateText)
 
     if (!updateResponse.ok) {
-      const errorText = await updateResponse.text()
-      console.log('❌ Password update error:', updateResponse.status, errorText)
-      return NextResponse.json({ error: 'Failed to set password: ' + errorText }, { status: 500 })
+      console.log('❌ Password update failed')
+      return NextResponse.json({ error: 'Failed to set password: ' + updateText }, { status: 500 })
     }
 
     console.log('✅ Password updated successfully')
