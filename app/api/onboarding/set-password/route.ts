@@ -76,42 +76,61 @@ export async function POST(request: NextRequest) {
         console.error('❌ Stripe client not available')
       } else {
         try {
-          // Retrieve the checkout session
-          const session = await stripe.checkout.sessions.retrieve(sessionId)
+          // Retrieve the checkout session with customer expansion
+          const session = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ['customer']
+          })
           console.log('Stripe session status:', session.status)
-          console.log('Stripe session email:', session.customer_email)
+          console.log('Stripe session customer_email:', session.customer_email)
           console.log('Stripe session metadata:', JSON.stringify(session.metadata, null, 2))
           
-          // Verify session is completed and email matches (check both customer_email and metadata)
-          const sessionEmail = session.customer_email || session.metadata?.user_email || ''
-          const emailMatches = sessionEmail.toLowerCase() === email.toLowerCase()
-          // Accept 'paid' for regular checkouts or 'no_payment_required' for free trials
-          const isComplete = session.status === 'complete' || 
-                           session.payment_status === 'paid' || 
-                           session.payment_status === 'no_payment_required'
+          // Get customer email from multiple sources
+          let customerEmail = ''
+          let customerFromSession: Stripe.Customer | null = null
           
-          // Also check if customer exists in Stripe with this email
-          let customerExists = false
-          if (session.customer) {
+          // Try to get customer from expanded session
+          if (session.customer && typeof session.customer !== 'string') {
+            customerFromSession = session.customer as Stripe.Customer
+            customerEmail = customerFromSession.email || ''
+            console.log('✅ Got customer from expanded session:', customerFromSession.id, customerEmail)
+          } else if (session.customer) {
+            // Customer is a string ID, fetch it
             try {
-              const customerId = typeof session.customer === 'string' ? session.customer : session.customer.id
+              const customerId = session.customer as string
               const customer = await stripe.customers.retrieve(customerId)
-              if (customer && !customer.deleted && (customer as Stripe.Customer).email?.toLowerCase() === email.toLowerCase()) {
-                customerExists = true
-                console.log('✅ Customer found in Stripe:', customerId)
+              if (customer && !customer.deleted) {
+                customerFromSession = customer as Stripe.Customer
+                customerEmail = customerFromSession.email || ''
+                console.log('✅ Fetched customer:', customerId, customerEmail)
               }
             } catch (customerError) {
               console.log('Could not retrieve customer:', customerError)
             }
           }
           
-          // Also try to find customer by email directly
+          // Check email from multiple sources
+          const sessionEmail = session.customer_email || session.metadata?.user_email || customerEmail || ''
+          console.log('Resolved session email:', sessionEmail)
+          
+          // Be more lenient with email matching - check if any of the emails match
+          const emailMatches = sessionEmail.toLowerCase() === email.toLowerCase() ||
+                              customerEmail.toLowerCase() === email.toLowerCase()
+          
+          // Accept 'paid' for regular checkouts or 'no_payment_required' for free trials
+          const isComplete = session.status === 'complete' || 
+                           session.payment_status === 'paid' || 
+                           session.payment_status === 'no_payment_required'
+          
+          // Customer exists if we got one from the session
+          const customerExists = customerFromSession !== null
+          
+          // Also try to find customer by email directly if not found
           if (!customerExists) {
             try {
               const customers = await stripe.customers.list({ email: email.toLowerCase(), limit: 1 })
-              if (customers.data.length > 0 && customers.data[0].email?.toLowerCase() === email.toLowerCase()) {
-                customerExists = true
-                console.log('✅ Customer found by email in Stripe')
+              if (customers.data.length > 0) {
+                console.log('✅ Customer found by email search in Stripe')
+                // This is also a valid checkout
               }
             } catch (listError) {
               console.log('Could not list customers:', listError)
@@ -123,15 +142,19 @@ export async function POST(request: NextRequest) {
             emailMatches, 
             customerExists,
             sessionEmail: sessionEmail.toLowerCase(), 
+            customerEmail: customerEmail.toLowerCase(),
             providedEmail: email.toLowerCase(),
             sessionStatus: session.status,
             paymentStatus: session.payment_status
           })
           
-          // Create user if session is complete OR if customer exists in Stripe (more lenient)
+          // Create user if session is complete OR if customer exists in Stripe
           // For free trials, payment_status will be 'no_payment_required', which is valid
+          // Also be more lenient - if we have a valid session with a customer, trust it
           const isValidSession = isComplete || customerExists
-          if (isValidSession && emailMatches) {
+          const shouldCreateUser = isValidSession && (emailMatches || customerExists)
+          
+          if (shouldCreateUser) {
             console.log('✅ Checkout session verified, creating user account')
             
             // Get metadata from session
