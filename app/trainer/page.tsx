@@ -1517,13 +1517,18 @@ function TrainerPageContent() {
         }),
       })
       
-      if (!resp.ok) throw new Error('Failed to create session')
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}))
+        const errorMessage = errorData.error || errorData.message || `Failed to create session (${resp.status})`
+        const errorDetails = errorData.details ? ` - ${errorData.details}` : ''
+        throw new Error(`${errorMessage}${errorDetails}`)
+      }
       
       const json = await resp.json()
       return json.id
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error creating session', error)
-      return null
+      throw error // Re-throw to propagate the error with details
     }
   }
 

@@ -151,14 +151,21 @@ function OnboardingContent() {
             }
           }
 
-          // CRITICAL: If user has sessionId in query params (from AccountSetup Google OAuth),
-          // they MUST continue onboarding flow, even if they've completed it before
-          // This ensures clicking "Continue with Google" from onboarding always continues onboarding
-          if (sessionId || profile.checkout_session_id) {
-            // If they have a checkout session but onboarding is marked complete, reset it
-            // This handles the case where they completed onboarding before but just did a new checkout
+          // CRITICAL: If user already has a role set (manager/rep/admin) AND no checkout_session_id in database,
+          // they should NOT be in onboarding - redirect to home immediately
+          // This prevents users who already completed onboarding from being forced through it again
+          if (hasExistingRole && !profile.checkout_session_id) {
+            console.log('✅ User already has role set and no checkout session in DB - redirecting to home')
+            router.push('/home')
+            return
+          }
+          
+          // CRITICAL: If user has checkout_session_id in database (from recent checkout),
+          // they MUST complete onboarding flow, even if they've completed it before
+          // This handles the case where they completed onboarding before but just did a new checkout
+          if (profile.checkout_session_id) {
             if (profile.onboarding_completed) {
-              console.log('🔄 User has checkout session - resetting onboarding completion status')
+              console.log('🔄 User has checkout session in DB - resetting onboarding completion status')
               await supabase
                 .from('users')
                 .update({

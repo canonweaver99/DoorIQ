@@ -12,13 +12,22 @@ export async function POST(req: Request) {
     
     // Get authenticated user (optional for free demo)
     const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    // Log authentication status for debugging
+    if (authError) {
+      console.error('Auth error when creating session:', authError)
+    }
     
     // Allow anonymous sessions for free demo
     const isAnonymous = !user && is_free_demo === true
     
     if (!user && !isAnonymous) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      console.error('Session creation failed: User not authenticated and not free demo')
+      return NextResponse.json({ 
+        error: 'Not authenticated', 
+        details: authError?.message || 'Please log in to start a session'
+      }, { status: 401 })
     }
     
     // Create session with service role
