@@ -65,24 +65,54 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Create session in database
-    const supabase = await createServiceSupabaseClient()
-    
     // Get the authenticated user from server-side
     const { createServerSupabaseClient } = await import('@/lib/supabase/server')
     const serverSupabase = await createServerSupabaseClient()
-    const { data: { user }, error: authError } = await serverSupabase.auth.getUser()
+    const { data: { user: authUser }, error: authError } = await serverSupabase.auth.getUser()
     
-    if (authError || !user) {
+    if (authError || !authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // CRITICAL: Get user ID from users table (not auth) to ensure foreign key constraint
+    const supabase = await createServiceSupabaseClient()
+    
+    let { data: userRecord } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', authUser.id)
+      .maybeSingle()
+    
+    // Create user record if missing
+    if (!userRecord) {
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          id: authUser.id,
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+          rep_id: `REP-${Date.now().toString().slice(-6)}`,
+          role: 'rep',
+          virtual_earnings: 0,
+        })
+        .select('id')
+        .single()
+      
+      if (createError && createError.code !== '23505') {
+        return NextResponse.json({ 
+          error: 'Failed to create user profile',
+          details: createError.message
+        }, { status: 500 })
+      }
+      userRecord = newUser
     }
 
     // Ensure duration is at least 1 second (some files might have 0 duration)
     const durationSeconds = Math.max(1, Math.floor(transcription.duration || 0))
 
-    // Create a new session
+    // Create a new session - use ID from users table
     const sessionData: any = {
-      user_id: user.id,
+      user_id: userRecord?.id || authUser.id, // Use ID from users table
       agent_name: 'Uploaded Recording',
       full_transcript: formattedTranscript,
       audio_url: fileUrl,

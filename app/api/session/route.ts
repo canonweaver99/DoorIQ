@@ -12,45 +12,39 @@ export async function POST(req: Request) {
     
     // Get authenticated user (optional for free demo)
     const supabase = await createServerSupabaseClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    // Log authentication status for debugging
-    if (authError) {
-      console.error('Auth error when creating session:', authError)
-    }
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
     
     // Allow anonymous sessions for free demo
-    const isAnonymous = !user && is_free_demo === true
+    const isAnonymous = !authUser && is_free_demo === true
     
-    if (!user && !isAnonymous) {
-      console.error('Session creation failed: User not authenticated and not free demo')
+    if (!authUser && !isAnonymous) {
       return NextResponse.json({ 
         error: 'Not authenticated', 
         details: authError?.message || 'Please log in to start a session'
       }, { status: 401 })
     }
     
-    // Create session with service role
+    // CRITICAL: Get user ID from users table (not auth) to ensure foreign key constraint
     const serviceSupabase = await createServiceSupabaseClient()
+    let userId: string | null = null
     
-    // CRITICAL: Ensure user exists in users table before creating session
-    // This prevents foreign key constraint violations
-    if (user && !isAnonymous) {
+    if (authUser && !isAnonymous) {
+      // Query users table first - this ensures the user exists
       let { data: userRecord } = await serviceSupabase
         .from('users')
         .select('id')
-        .eq('id', user.id)
+        .eq('id', authUser.id)
         .maybeSingle()
       
-      // Create user record if missing (shouldn't happen, but safety check)
+      // Create user record if missing
       if (!userRecord) {
         console.log('⚠️ User missing from users table, creating record...')
         const { data: newUser, error: createError } = await serviceSupabase
           .from('users')
           .insert({
-            id: user.id,
-            email: user.email || '',
-            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            id: authUser.id,
+            email: authUser.email || '',
+            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
             rep_id: `REP-${Date.now().toString().slice(-6)}`,
             role: 'rep',
             virtual_earnings: 0,
@@ -58,18 +52,22 @@ export async function POST(req: Request) {
           .select('id')
           .single()
         
-        if (createError && createError.code !== '23505') { // Ignore duplicate key errors
+        if (createError && createError.code !== '23505') {
           console.error('❌ Failed to create user record:', createError)
           return NextResponse.json({ 
             error: 'Failed to create user profile',
             details: createError.message
           }, { status: 500 })
         }
-        userRecord = newUser || userRecord
+        userRecord = newUser
       }
+      
+      // Use ID from users table (not auth)
+      userId = userRecord?.id || null
     }
+    
     const sessionData: any = {
-      user_id: user?.id || null, // null for anonymous free demo sessions
+      user_id: userId, // Use ID from users table, not auth
       agent_name: agent_name,
       started_at: new Date().toISOString(),
       is_free_demo: isAnonymous || false,
