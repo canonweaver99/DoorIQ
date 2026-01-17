@@ -1,13 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X, Mail, CheckCircle } from 'lucide-react'
-
-declare global {
-  interface Window {
-    grecaptcha: any
-  }
-}
 
 interface PasswordResetModalProps {
   isOpen: boolean
@@ -19,19 +13,6 @@ export default function PasswordResetModal({ isOpen, onClose }: PasswordResetMod
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false)
-
-  useEffect(() => {
-    // Load reCAPTCHA script
-    if (isOpen && !recaptchaLoaded) {
-      const script = document.createElement('script')
-      script.src = `https://www.google.com/recaptcha/api.js?render=${process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}`
-      script.async = true
-      script.defer = true
-      script.onload = () => setRecaptchaLoaded(true)
-      document.body.appendChild(script)
-    }
-  }, [isOpen, recaptchaLoaded])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,21 +20,10 @@ export default function PasswordResetModal({ isOpen, onClose }: PasswordResetMod
     setLoading(true)
 
     try {
-      // Wait for reCAPTCHA to be ready
-      if (!window.grecaptcha) {
-        throw new Error('reCAPTCHA not loaded. Please try again.')
-      }
-
-      // Get reCAPTCHA token
-      const token = await window.grecaptcha.execute(
-        process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
-        { action: 'password_reset' }
-      )
-
       const response = await fetch('/api/auth/request-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, recaptchaToken: token }),
+        body: JSON.stringify({ email }),
       })
 
       const data = await response.json()
@@ -141,10 +111,6 @@ export default function PasswordResetModal({ isOpen, onClose }: PasswordResetMod
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </button>
-
-                <p className="text-xs text-slate-500 text-center">
-                  This site is protected by reCAPTCHA
-                </p>
               </form>
             </>
           )}
