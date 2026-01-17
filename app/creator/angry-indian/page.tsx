@@ -20,6 +20,16 @@ export default function AngryIndianCreatorPage() {
   useEffect(() => {
     const initializeAgent = async () => {
       try {
+        // Check if user is authenticated first
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          // Not authenticated - redirect to login with next parameter to return here
+          const currentPath = '/creator/angry-indian'
+          router.push(`/auth/login?next=${encodeURIComponent(currentPath)}`)
+          return
+        }
+
         // Fetch the Angry Indian agent
         const { data: agents, error: agentError } = await supabase
           .from('agents')

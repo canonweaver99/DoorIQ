@@ -147,6 +147,16 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+      // IMPORTANT: Verify price belongs to the correct product (prod_TmlX1S82Ed4Gpe)
+      const { STRIPE_PRODUCT_ID } = await import('@/lib/stripe/config')
+      const productId = typeof priceDetails.product === 'string' ? priceDetails.product : priceDetails.product?.id
+      if (productId !== STRIPE_PRODUCT_ID) {
+        console.error(`❌ Price ${priceId} belongs to product ${productId}, but expected ${STRIPE_PRODUCT_ID}`)
+        return NextResponse.json(
+          { error: `Price ${priceId} does not belong to the correct product. All prices must belong to product ${STRIPE_PRODUCT_ID}. Please update STRIPE_CONFIG.` },
+          { status: 400 }
+        )
+      }
     } catch (error: any) {
       console.error('Error verifying price:', error)
       // If price doesn't exist or other error, return helpful message

@@ -1348,7 +1348,8 @@ function TrainerPageContent() {
           const usedFreeDemo = localStorage.getItem('used_free_demo') === 'true'
           if (usedFreeDemo) {
             // Anonymous users still need to sign in for unlimited access
-            router.push(`/auth/login?redirect=/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`)
+            const currentUrl = `/trainer?agent=${selectedAgent.eleven_agent_id}&name=${encodeURIComponent(selectedAgent.name)}`
+            router.push(`/auth/login?next=${encodeURIComponent(currentUrl)}`)
             setLoading(false)
             return
           } else {

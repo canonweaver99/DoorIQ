@@ -64,10 +64,17 @@ export async function GET(request: Request) {
       throw new Error('User profile not found and could not be created')
     }
 
-    // SIMPLE RULE: If user has a role, go to home. Otherwise, onboarding.
+    // Check if there's a next parameter to redirect to
+    const nextUrl = requestUrl.searchParams.get('next')
+    
+    // SIMPLE RULE: If user has a role, go to next URL or home. Otherwise, onboarding.
     const hasRole = user?.role && ['manager', 'rep', 'admin'].includes(user.role)
     
     if (hasRole) {
+      // If there's a next parameter, redirect there; otherwise go to home
+      if (nextUrl) {
+        return NextResponse.redirect(new URL(nextUrl, requestUrl.origin))
+      }
       return NextResponse.redirect(new URL('/home', requestUrl.origin))
     }
 
@@ -77,6 +84,8 @@ export async function GET(request: Request) {
     const onboardingUrl = new URL('/onboarding', requestUrl.origin)
     if (sessionId) onboardingUrl.searchParams.set('session_id', sessionId)
     if (email) onboardingUrl.searchParams.set('email', email)
+    // Preserve next parameter for after onboarding
+    if (nextUrl) onboardingUrl.searchParams.set('next', nextUrl)
     
     return NextResponse.redirect(onboardingUrl)
 
