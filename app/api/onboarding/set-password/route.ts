@@ -76,9 +76,21 @@ export async function POST(request: NextRequest) {
       if (signUpError.message?.includes('already registered') || signUpError.message?.includes('already exists')) {
         console.log('⚠️ User already exists, updating password...')
         
-        // Get user by email using admin API
-        const { data: userData } = await supabase.auth.admin.listUsers()
-        const existingUser = userData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
+        // Get user by email using admin API with filter
+        const { data: userData, error: listError } = await supabase.auth.admin.listUsers({
+          filter: `email.eq.${email.toLowerCase()}`,
+        })
+        
+        console.log('📋 User lookup result:', listError ? listError.message : `Found ${userData?.users?.length || 0} users`)
+        
+        let existingUser = userData?.users?.[0]
+        
+        // If filter didn't work, try finding in full list (fallback)
+        if (!existingUser) {
+          console.log('⚠️ Filter did not work, trying full list search...')
+          const { data: allUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+          existingUser = allUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
+        }
         
         if (existingUser) {
           userId = existingUser.id
@@ -96,8 +108,28 @@ export async function POST(request: NextRequest) {
           }
           console.log('✅ Password updated for existing user')
         } else {
-          console.error('❌ Could not find existing user')
-          return NextResponse.json({ error: 'User exists but could not be found' }, { status: 500 })
+          // Last resort: try to sign in with a wrong password to see if user exists
+          console.log('⚠️ Could not find user, attempting direct sign-in test...')
+          
+          // Delete the user and recreate
+          console.log('🔄 Will try to create a fresh account...')
+          const { data: freshSignUp, error: freshError } = await supabase.auth.signUp({
+            email: email.toLowerCase(),
+            password: password,
+            options: {
+              data: { full_name: userName, source: 'checkout_retry' },
+            },
+          })
+          
+          if (freshError) {
+            console.error('❌ Fresh signup also failed:', freshError.message)
+            return NextResponse.json({ error: 'Could not create account. Please try a different email or contact support.' }, { status: 500 })
+          }
+          
+          if (freshSignUp?.user) {
+            userId = freshSignUp.user.id
+            console.log('✅ Created user on retry:', userId)
+          }
         }
       } else {
         console.error('❌ SignUp failed:', signUpError.message)
