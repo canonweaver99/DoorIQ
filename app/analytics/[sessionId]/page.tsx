@@ -721,7 +721,8 @@ export default function AnalyticsPage() {
         ) : null}
         
         {/* Focus Area - Shows biggest opportunity */}
-        {comparison && session.overall_score && (
+        {/* Show FocusArea if we have comparison data AND scores exist (including 0 scores) */}
+        {comparison && session.overall_score !== null && session.overall_score !== undefined && (
           loadingStates.comparison ? (
             <FocusArea
               currentScores={{
