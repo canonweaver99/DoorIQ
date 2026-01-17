@@ -53,21 +53,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // SIMPLE APPROACH: Try to sign up the user with password
-    console.log('👤 Attempting signUp for:', email.toLowerCase())
+    // Use admin.createUser to create user with confirmed email
+    console.log('👤 Creating user with admin API for:', email.toLowerCase())
     
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
       email: email.toLowerCase(),
       password: password,
-      options: {
-        data: {
-          full_name: userName,
-          source: 'checkout',
-        },
+      email_confirm: true,  // This confirms the email immediately
+      user_metadata: {
+        full_name: userName,
+        source: 'checkout',
       },
     })
 
-    console.log('📋 SignUp result:', signUpError ? `Error: ${signUpError.message}` : `Success: ${signUpData?.user?.id}`)
+    console.log('📋 CreateUser result:', signUpError ? `Error: ${signUpError.message}` : `Success: ${signUpData?.user?.id}`)
 
     let userId: string | null = null
 
@@ -108,21 +107,17 @@ export async function POST(request: NextRequest) {
           }
           console.log('✅ Password updated for existing user')
         } else {
-          // Last resort: try to sign in with a wrong password to see if user exists
-          console.log('⚠️ Could not find user, attempting direct sign-in test...')
-          
-          // Delete the user and recreate
+          // Last resort: try to create fresh account
           console.log('🔄 Will try to create a fresh account...')
-          const { data: freshSignUp, error: freshError } = await supabase.auth.signUp({
+          const { data: freshSignUp, error: freshError } = await supabase.auth.admin.createUser({
             email: email.toLowerCase(),
             password: password,
-            options: {
-              data: { full_name: userName, source: 'checkout_retry' },
-            },
+            email_confirm: true,
+            user_metadata: { full_name: userName, source: 'checkout_retry' },
           })
           
           if (freshError) {
-            console.error('❌ Fresh signup also failed:', freshError.message)
+            console.error('❌ Fresh create also failed:', freshError.message)
             return NextResponse.json({ error: 'Could not create account. Please try a different email or contact support.' }, { status: 500 })
           }
           
