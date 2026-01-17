@@ -541,7 +541,7 @@ function TrainerPageContent() {
   
   // Helper function to check if agent has video animations
   const agentHasVideos = (agentName: string | null | undefined): boolean => {
-    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Switchover Steve' || agentName === 'Think About It Tina' || agentName === 'Too Expensive Tim' || agentName === 'Skeptical Sam' || agentName === 'Renter Randy' || agentName === 'DIY Dave' || agentName === 'Busy Beth' || agentName === 'Not Interested Nick' || agentName === 'Spouse Check Susan'
+    return agentName === 'Average Austin' || agentName === 'Tag Team Tanya & Tom' || agentName === 'Veteran Victor' || agentName === 'No Problem Nancy' || agentName === 'Just Treated Jerry' || agentName === 'Switchover Steve' || agentName === 'Think About It Tina' || agentName === 'Too Expensive Tim' || agentName === 'Skeptical Sam' || agentName === 'Renter Randy' || agentName === 'DIY Dave' || agentName === 'Busy Beth' || agentName === 'Not Interested Nick' || agentName === 'Spouse Check Susan' || agentName === 'Angry Indian'
   }
   
   // Helper function to get video paths for an agent
@@ -642,6 +642,13 @@ function TrainerPageContent() {
         loop: '/spouse-check-susan-loop.mp4',
         closing: '/spouse-check-susan-closing-door.mp4',
         opening: '/spouse-check-susan-opening-door.mp4'
+      }
+    }
+    if (agentName === 'Angry Indian') {
+      return {
+        loop: '/indian-loop.mp4',
+        closing: '/indian-closing-door.mp4',
+        opening: '/indian-door-open.mp4'
       }
     }
     return null

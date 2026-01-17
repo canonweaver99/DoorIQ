@@ -136,23 +136,18 @@ export default function LoadingPage() {
 
             const isFirstCompletedSession = (completedSessionsCount || 0) === 0
 
-            // If manager, first completed session, and hasn't invited team yet, redirect to invite page
-            // If first completed session, redirect to book demo
-            if (isFirstCompletedSession) {
-              console.log('👋 First completed session - redirecting to book demo')
-              if (!stepsCompleted.first_session) {
-                await fetch('/api/onboarding/complete-step', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ step: 'first_session' }),
-                })
-              }
-              router.push(`/book-demo`)
-              return
+            // Mark first session as complete if needed
+            if (isFirstCompletedSession && !stepsCompleted.first_session) {
+              console.log('👋 First completed session - marking step complete')
+              await fetch('/api/onboarding/complete-step', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ step: 'first_session' }),
+              })
             }
           }
 
-          // Not first session - redirect to analytics
+          // Always redirect to analytics after session
           console.log('✅ Grading complete, redirecting to analytics...')
           router.push(`/analytics/${sessionId}`)
           return
