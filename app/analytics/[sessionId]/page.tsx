@@ -56,6 +56,8 @@ interface SessionData {
   deal_details: any | null
   instant_metrics?: any
   key_moments?: any[]
+  grading_status?: string | null
+  graded_at?: string | null
   analytics?: {
     coaching_plan?: any
     feedback?: any
@@ -550,15 +552,51 @@ export default function AnalyticsPage() {
       )
     }
     
-    // Double-check that we have all required data before showing the page
-    if (!session.overall_score && session.overall_score !== 0) {
+    // Auto-refresh while grading is in progress
+    useEffect(() => {
+      if (session && session.grading_status !== 'complete') {
+        const interval = setInterval(() => {
+          // Reload the page to check for updated grading status
+          window.location.reload()
+        }, 3000) // Check every 3 seconds
+        
+        return () => clearInterval(interval)
+      }
+    }, [session])
+    
+    // CRITICAL: Only show analytics if grading is 100% complete
+    // Check grading_status first - must be 'complete'
+    if (session.grading_status !== 'complete') {
       return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 mb-2">Grading in progress...</p>
-          <p className="text-gray-600 text-sm">Please wait while we complete the analysis</p>
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-6">
+            <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-6" />
+            <h2 className="text-xl font-bold text-white mb-2">Grading in Progress</h2>
+            <p className="text-gray-400 mb-4">Please wait while we analyze your session...</p>
+            <p className="text-sm text-gray-500 mb-2">
+              Status: <span className="font-semibold">{session.grading_status || 'pending'}</span>
+            </p>
+            <p className="text-xs text-gray-600 mt-4">
+              This page will automatically refresh when grading is complete.
+            </p>
+          </div>
         </div>
+      )
+    }
+    
+    // Double-check that we have scores before showing the page
+    // Even if grading_status is complete, ensure scores exist
+    if (session.overall_score === null && session.overall_score !== 0) {
+      return (
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-6">
+            <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-6" />
+            <h2 className="text-xl font-bold text-white mb-2">Finalizing Scores</h2>
+            <p className="text-gray-400 mb-4">Calculating your performance metrics...</p>
+            <p className="text-xs text-gray-600 mt-4">
+              This page will automatically refresh when ready.
+            </p>
+          </div>
         </div>
       )
     }
