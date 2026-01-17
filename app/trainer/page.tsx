@@ -96,7 +96,8 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'Just Treated Jerry': '/Just Treated Jerry.png',
     'Think About It Tina': '/Think About It Tina.png',
     'Veteran Victor': '/Veteran Victor Landcape.png',
-    'Tag Team Tanya & Tom': '/tanya and tom.png'
+    'Tag Team Tanya & Tom': '/tanya and tom.png',
+    'Angry Indian': '/angry-indian.png'
   }
   
   if (agentImageMap[agent.name]) {
