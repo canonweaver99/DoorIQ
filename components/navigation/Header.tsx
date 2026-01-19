@@ -1293,10 +1293,10 @@ function HeaderContent() {
                   </div>
 
                   <div className="px-[19px]">
-                    <div className="rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-indigo-500/10 p-[14px]">
+                    <div className="rounded-xl border border-purple-800/40 bg-gradient-to-br from-purple-800/15 to-indigo-800/15 p-[14px]">
                       <div className="flex items-center gap-[12px]">
                         {profileAvatar && !avatarError ? (
-                          <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border-2 border-purple-500/40 ring-2 ring-purple-500/20">
+                          <div className="h-[37px] w-[37px] rounded-xl overflow-hidden border-2 border-purple-800/50 ring-2 ring-purple-800/30">
                             <img 
                               src={profileAvatar} 
                               alt={profileName}
@@ -1308,7 +1308,7 @@ function HeaderContent() {
                             />
                           </div>
                         ) : (
-                          <div className="h-[37px] w-[37px] rounded-xl bg-gradient-to-br from-purple-500/30 to-indigo-500/30 border-2 border-purple-500/40 flex items-center justify-center text-white text-[14px] font-semibold">
+                          <div className="h-[37px] w-[37px] rounded-xl bg-gradient-to-br from-purple-800/40 to-indigo-800/40 border-2 border-purple-800/50 flex items-center justify-center text-white text-[14px] font-semibold">
                             {profileInitial}
                           </div>
                         )}
@@ -1319,12 +1319,12 @@ function HeaderContent() {
                       </div>
                         <div className="mt-[12px] flex items-center justify-between text-sm sm:text-base text-white/70">
                           <div>
-                            <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-emerald-400/80 font-space">Earnings</p>
-                            <p className="mt-[2px] text-base sm:text-lg font-semibold text-emerald-300 font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
+                            <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/80 font-space">Earnings</p>
+                            <p className="mt-[2px] text-base sm:text-lg font-semibold text-white font-space">${profileEarnings?.toFixed(2) ?? '0.00'}</p>
                           </div>
                           <button
                             onClick={() => router.push('/settings')}
-                            className="inline-flex items-center gap-[5px] rounded-full border border-purple-500/30 bg-purple-500/20 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-purple-200 hover:bg-purple-500/30 hover:border-purple-500/40 transition font-space"
+                            className="inline-flex items-center gap-[5px] rounded-full border border-purple-800/40 bg-purple-800/20 px-[12px] py-[5px] text-xs uppercase tracking-[0.15em] text-purple-200 hover:bg-purple-800/30 hover:border-purple-800/50 transition font-space"
                           >
                           Manage Account
                           <ArrowRight className="h-[12px] w-[12px]" />
@@ -1338,7 +1338,7 @@ function HeaderContent() {
                       {quickActions.map((action, index) => {
                         const Icon = action.icon
                         // All buttons use consistent dark purple theme
-                        const colorScheme = { bg: 'bg-purple-600/20', border: 'border-purple-600/30', iconBg: 'bg-purple-600/30', iconBorder: 'border-purple-600/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-600/30 hover:border-purple-600/40' }
+                        const colorScheme = { bg: 'bg-purple-800/20', border: 'border-purple-800/40', iconBg: 'bg-purple-800/30', iconBorder: 'border-purple-800/50', iconColor: 'text-purple-200', hover: 'hover:bg-purple-800/30 hover:border-purple-800/50' }
                         return (
                           <button
                             key={action.label}
@@ -1346,9 +1346,9 @@ function HeaderContent() {
                               router.push(action.href)
                               setIsSidebarOpen(false)
                             }}
-                            className="group flex flex-col items-center justify-center gap-[7px] rounded-xl border border-purple-600/30 bg-purple-600/20 px-[9px] py-[12px] text-xs sm:text-sm text-white/80 transition hover:bg-purple-600/30 hover:border-purple-600/40 font-space"
+                            className="group flex flex-col items-center justify-center gap-[7px] rounded-xl border border-purple-800/40 bg-purple-800/20 px-[9px] py-[12px] text-xs sm:text-sm text-white/80 transition hover:bg-purple-800/30 hover:border-purple-800/50 font-space"
                           >
-                            <span className="flex h-[33px] w-[33px] items-center justify-center rounded-lg bg-purple-600/30 border border-purple-600/40 text-purple-300">
+                            <span className="flex h-[33px] w-[33px] items-center justify-center rounded-lg bg-purple-800/30 border border-purple-800/50 text-purple-200">
                               <Icon className="h-[16.5px] w-[16.5px]" />
                             </span>
                             <span className="text-center leading-tight font-medium">{action.label}</span>
@@ -1369,7 +1369,7 @@ function HeaderContent() {
                               const Icon = item.icon
                               const active = isActive(item.href)
                               // All buttons use consistent dark purple theme
-                              const colorScheme = { bg: 'bg-purple-600/20', border: 'border-purple-600/30', iconBg: 'bg-purple-600/30', iconBorder: 'border-purple-600/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-600/30 hover:border-purple-600/40', activeBg: 'bg-purple-600/30', activeBorder: 'border-purple-600/50' }
+                              const colorScheme = { bg: 'bg-purple-800/20', border: 'border-purple-800/40', iconBg: 'bg-purple-800/30', iconBorder: 'border-purple-800/50', iconColor: 'text-purple-200', hover: 'hover:bg-purple-800/30 hover:border-purple-800/50', activeBg: 'bg-purple-800/30', activeBorder: 'border-purple-800/60' }
                               return (
                                 <button
                                   key={item.name}
@@ -1377,10 +1377,10 @@ function HeaderContent() {
                                     router.push(item.href)
                                     setIsSidebarOpen(false)
                                   }}
-                                  className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${active ? 'border-purple-600/50' : 'border-purple-600/30'} ${active ? 'bg-purple-600/30' : 'bg-purple-600/20'} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:bg-purple-600/30 hover:border-purple-600/40 font-space`}
+                                  className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${active ? 'border-purple-800/60' : 'border-purple-800/40'} ${active ? 'bg-purple-800/30' : 'bg-purple-800/20'} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:bg-purple-800/30 hover:border-purple-800/50 font-space`}
                                 >
                                   <span className="flex items-center gap-[12px]">
-                                    <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-purple-600/30 border border-purple-600/40 text-purple-300 shrink-0">
+                                    <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-purple-800/30 border border-purple-800/50 text-purple-200 shrink-0">
                                       <Icon className="h-[16.5px] w-[16.5px]" />
                                     </span>
                                     <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
@@ -1414,9 +1414,9 @@ function HeaderContent() {
                         return (
                           <div key={section.title}>
                             <p className={`text-xs sm:text-sm uppercase tracking-[0.25em] mb-[7px] font-space ${
-                              section.title === 'Workspace' ? 'text-purple-400/80' :
-                              section.title === 'Training' ? 'text-emerald-400/80' :
-                              section.title === 'Navigation' ? 'text-blue-400/80' :
+                              section.title === 'Workspace' ? 'text-white/80' :
+                              section.title === 'Training' ? 'text-white/80' :
+                              section.title === 'Navigation' ? 'text-white/80' :
                               'text-white/50'
                             }`}>{section.title}</p>
                             <div className="space-y-[5px]">
@@ -1424,7 +1424,7 @@ function HeaderContent() {
                                 const Icon = item.icon
                                 const isActiveItem = isActive(item.href)
                                 // All buttons use consistent dark purple theme
-                                const colorScheme = { bg: 'bg-purple-600/20', border: 'border-purple-600/30', iconBg: 'bg-purple-600/30', iconBorder: 'border-purple-600/40', iconColor: 'text-purple-300', hover: 'hover:bg-purple-600/30 hover:border-purple-600/40', activeBg: 'bg-purple-600/30', activeBorder: 'border-purple-600/50' }
+                                const colorScheme = { bg: 'bg-purple-800/20', border: 'border-purple-800/40', iconBg: 'bg-purple-800/30', iconBorder: 'border-purple-800/50', iconColor: 'text-purple-200', hover: 'hover:bg-purple-800/30 hover:border-purple-800/50', activeBg: 'bg-purple-800/30', activeBorder: 'border-purple-800/60' }
                                 return (
                                   <button
                                     key={item.name}
@@ -1432,10 +1432,10 @@ function HeaderContent() {
                                       router.push(item.href)
                                       setIsSidebarOpen(false)
                                     }}
-                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${isActiveItem ? 'border-purple-600/50' : 'border-purple-600/30'} ${isActiveItem ? 'bg-purple-600/30' : 'bg-purple-600/20'} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:bg-purple-600/30 hover:border-purple-600/40 font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
+                                    className={`flex w-full items-center justify-between gap-[9px] rounded-xl border ${isActiveItem ? 'border-purple-800/60' : 'border-purple-800/40'} ${isActiveItem ? 'bg-purple-800/30' : 'bg-purple-800/20'} px-[14px] py-[9px] text-base sm:text-lg text-white/80 transition-all hover:bg-purple-800/30 hover:border-purple-800/50 font-space ${item.desktopOnly ? 'hidden md:flex' : ''}`}
                                   >
                                     <span className="flex items-center gap-[12px]">
-                                      <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-purple-600/30 border border-purple-600/40 text-purple-300 shrink-0">
+                                      <span className="flex h-[28.5px] w-[28.5px] items-center justify-center rounded-lg bg-purple-800/30 border border-purple-800/50 text-purple-200 shrink-0">
                                         <Icon className="h-[16.5px] w-[16.5px]" />
                                       </span>
                                       <span className="text-sm sm:text-base font-medium tracking-tight">{item.name}</span>
