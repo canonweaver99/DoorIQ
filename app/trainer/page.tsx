@@ -1186,14 +1186,35 @@ function TrainerPageContent() {
           router.push('/trainer/select-homeowner')
           return
         }
-        console.log('🔍 Selected agent by param:', match)
-        setSelectedAgent(match || availableAgents?.[0] || null)
+        if (match) {
+          console.log('🔍 Selected agent by param:', match)
+          setSelectedAgent(match)
+        } else {
+          console.warn('⚠️ Agent not found with ID:', agentParam, 'Available agents:', availableAgents.map((a: Agent) => ({ name: a.name, id: a.eleven_agent_id })))
+          // Try to find by name parameter as fallback
+          const nameParam = searchParams.get('name')
+          if (nameParam) {
+            const nameMatch = availableAgents.find((agent: Agent) => agent.name === decodeURIComponent(nameParam))
+            if (nameMatch) {
+              console.log('🔍 Found agent by name param:', nameMatch)
+              setSelectedAgent(nameMatch)
+            } else {
+              console.error('❌ Agent not found by name either:', nameParam)
+              setSelectedAgent(availableAgents?.[0] || null)
+            }
+          } else {
+            setSelectedAgent(availableAgents?.[0] || null)
+          }
+        }
       } else {
         console.log('🔍 Selected first agent:', availableAgents?.[0])
         setSelectedAgent(availableAgents?.[0] || null)
       }
     } catch (error) {
       logger.error('Error fetching agents', error)
+      console.error('❌ Failed to fetch agents:', error)
+      // Set to null to show error state
+      setSelectedAgent(null)
     }
   }
 
@@ -1312,8 +1333,20 @@ function TrainerPageContent() {
 
 
   const startSession = async (skipCreditCheck = false) => {
-    if (!selectedAgent?.eleven_agent_id) {
+    if (!selectedAgent) {
       alert('Please select an agent first')
+      return
+    }
+    
+    if (!selectedAgent.eleven_agent_id) {
+      console.error('❌ Selected agent missing eleven_agent_id:', selectedAgent)
+      alert(`Error: Agent "${selectedAgent.name}" is not properly configured. Please select a different agent.`)
+      return
+    }
+    
+    if (!selectedAgent.name) {
+      console.error('❌ Selected agent missing name:', selectedAgent)
+      alert('Error: Agent is not properly configured. Please refresh the page and try again.')
       return
     }
 
@@ -1516,11 +1549,15 @@ function TrainerPageContent() {
 
   const createSessionRecord = async (isFreeDemo: boolean = false) => {
     try {
+      if (!selectedAgent || !selectedAgent.name || !selectedAgent.eleven_agent_id) {
+        throw new Error('Agent is not properly selected. Please refresh the page and try again.')
+      }
+      
       const resp = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          agent_name: selectedAgent?.name,
+          agent_name: selectedAgent.name,
           agent_id: selectedAgent?.eleven_agent_id,
           is_free_demo: isFreeDemo
         }),
@@ -2780,6 +2817,11 @@ function TrainerPageContent() {
         unoptimized={src?.includes(' ') || src?.includes('&')}
         onError={(e) => {
           console.error('❌ Image failed to load:', src, 'Encoded:', imageSrc)
+          const target = e.target as HTMLImageElement
+          // Fallback to default agent image if available
+          if (target.src !== '/agents/default.png') {
+            target.src = '/agents/default.png'
+          }
           e.stopPropagation()
         }}
         placeholder="blur"
