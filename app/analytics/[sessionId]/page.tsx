@@ -486,14 +486,23 @@ export default function AnalyticsPage() {
               // Continue polling
               setTimeout(pollForCompletion, 1000)
             } else {
-              // Timeout - redirect back to sessions page
-              console.warn('Grading timeout - redirecting to sessions page')
-              router.push('/sessions?message=Grading is still in progress. Please check back in a few moments.')
+              // Timeout - show error state instead of redirecting
+              console.warn('Grading timeout after 3 minutes')
+              setLoading(false)
+              // Set session to show error state
+              setSession({
+                ...data,
+                grading_status: 'failed' as any
+              })
             }
           } catch (error) {
             console.error('Error polling for grading completion:', error)
-            // On error, redirect to sessions page
-            router.push('/sessions?message=Unable to load analytics. Please try again later.')
+            setLoading(false)
+            // Set session to show error state
+            setSession({
+              ...data,
+              grading_status: 'failed' as any
+            })
           }
         }
         
@@ -540,6 +549,19 @@ export default function AnalyticsPage() {
     fetchComparison()
   }, [session, sessionId])
   
+  // Auto-refresh while grading is in progress
+  // CRITICAL: This hook must be before any early returns to follow React rules
+  useEffect(() => {
+    if (session && session.grading_status !== 'complete') {
+      const interval = setInterval(() => {
+        // Reload the page to check for updated grading status
+        window.location.reload()
+      }, 3000) // Check every 3 seconds
+      
+      return () => clearInterval(interval)
+    }
+  }, [session])
+  
     if (loading || !session) {
       return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -552,21 +574,41 @@ export default function AnalyticsPage() {
       )
     }
     
-    // Auto-refresh while grading is in progress
-    useEffect(() => {
-      if (session && session.grading_status !== 'complete') {
-        const interval = setInterval(() => {
-          // Reload the page to check for updated grading status
-          window.location.reload()
-        }, 3000) // Check every 3 seconds
-        
-        return () => clearInterval(interval)
-      }
-    }, [session])
-    
     // CRITICAL: Only show analytics if grading is 100% complete
     // Check grading_status first - must be 'complete'
     if (session.grading_status !== 'complete') {
+      // Show error state if grading failed
+      if (session.grading_status === 'failed' || session.grading_status === 'error') {
+        return (
+          <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="text-center max-w-md mx-auto px-6">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">Grading Failed</h2>
+              <p className="text-gray-400 mb-4">We encountered an error while analyzing your session.</p>
+              <div className="flex gap-3 justify-center mt-6">
+                <button
+                  onClick={() => router.push('/sessions')}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors"
+                >
+                  Back to Sessions
+                </button>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+      
+      // Show loading state for in-progress grading
       return (
         <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-6">
@@ -586,7 +628,7 @@ export default function AnalyticsPage() {
     
     // Double-check that we have scores before showing the page
     // Even if grading_status is complete, ensure scores exist
-    if (session.overall_score === null && session.overall_score !== 0) {
+    if (session.overall_score === null || session.overall_score === undefined) {
       return (
         <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center max-w-md mx-auto px-6">
