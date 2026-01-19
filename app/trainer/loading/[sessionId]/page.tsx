@@ -30,7 +30,13 @@ export default function LoadingPage() {
   
   const handleSkip = () => {
     console.warn('⏭️ User skipped waiting - grading may not be complete')
-    router.push(`/analytics/${sessionId}`)
+    try {
+      router.push(`/analytics/${sessionId}`)
+    } catch (error) {
+      console.error('Error redirecting to analytics:', error)
+      // Fallback to home if redirect fails
+      router.push('/home')
+    }
   }
 
   const handleStreamingComplete = async () => {
@@ -44,7 +50,7 @@ export default function LoadingPage() {
       if (user) {
         const { data: userData } = await supabase
           .from('users')
-          .select('role, onboarding_steps_completed')
+          .select('role, onboarding_steps_completed, onboarding_completed')
           .eq('id', user.id)
           .single()
 
@@ -52,6 +58,7 @@ export default function LoadingPage() {
           const isManager = userData.role === 'manager' || userData.role === 'admin'
           const stepsCompleted = userData.onboarding_steps_completed || {}
           const hasInvitedTeam = stepsCompleted.invite_team === true
+          const onboardingCompleted = userData.onboarding_completed === true
 
           // Check if this is their first completed session (excluding current session)
           const { count: completedSessionsCount } = await supabase
@@ -64,29 +71,38 @@ export default function LoadingPage() {
 
           const isFirstCompletedSession = (completedSessionsCount || 0) === 0
 
-          // If first completed session, redirect to book demo
-          if (isFirstCompletedSession) {
-            console.log('👋 First completed session - redirecting to book demo')
-            // Mark first_session as complete before redirecting (if not already marked)
-            if (!stepsCompleted.first_session) {
+          // Mark first_session as complete if needed (for first session)
+          if (isFirstCompletedSession && !stepsCompleted.first_session) {
+            try {
+              console.log('👋 First completed session - marking step complete')
               await fetch('/api/onboarding/complete-step', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ step: 'first_session' }),
               })
+            } catch (stepError) {
+              console.error('Error marking first_session step:', stepError)
+              // Continue to analytics even if step marking fails
             }
-            router.push(`/book-demo`)
-            return
           }
         }
       }
     } catch (error) {
       console.error('Error checking first session in handleStreamingComplete:', error)
+      // If anything goes wrong, redirect to home page
+      router.push('/home')
+      return
     }
     
-    // Not first session - proceed to analytics
-    console.log('✅ Redirecting to analytics...')
-    router.push(`/analytics/${sessionId}`)
+    // Always redirect to analytics after grading completes
+    try {
+      console.log('✅ Redirecting to analytics...')
+      router.push(`/analytics/${sessionId}`)
+    } catch (error) {
+      console.error('Error redirecting to analytics:', error)
+      // Fallback to home if analytics redirect fails
+      router.push('/home')
+    }
   }
 
   // Check if grading is already complete and handle first session redirects
@@ -116,7 +132,7 @@ export default function LoadingPage() {
           // Get user role and check if they have completed any other sessions
           const { data: userData } = await supabase
             .from('users')
-            .select('role, onboarding_steps_completed')
+            .select('role, onboarding_steps_completed, onboarding_completed')
             .eq('id', user.id)
             .single()
 
@@ -148,16 +164,23 @@ export default function LoadingPage() {
           }
 
           // Always redirect to analytics after session
-          console.log('✅ Grading complete, redirecting to analytics...')
-          router.push(`/analytics/${sessionId}`)
-          return
+          try {
+            console.log('✅ Grading complete, redirecting to analytics...')
+            router.push(`/analytics/${sessionId}`)
+            return
+          } catch (redirectError) {
+            console.error('Error redirecting to analytics:', redirectError)
+            // Fallback to home if redirect fails
+            router.push('/home')
+            return
+          }
         }
 
         // Grading not complete yet - check first session for manager redirect logic
         // Get user role and check if they have completed any other sessions
         const { data: userData } = await supabase
           .from('users')
-          .select('role, onboarding_steps_completed')
+          .select('role, onboarding_steps_completed, onboarding_completed')
           .eq('id', user.id)
           .single()
 
@@ -187,7 +210,14 @@ export default function LoadingPage() {
         setCheckedFirstSession(true)
       } catch (error) {
         console.error('Error checking grading and first session:', error)
-        setCheckedFirstSession(true) // Continue with normal flow on error
+        // If anything goes wrong, redirect to home page
+        try {
+          router.push('/home')
+        } catch (redirectError) {
+          console.error('Error redirecting to home:', redirectError)
+          // Last resort - just set checked flag
+          setCheckedFirstSession(true)
+        }
       }
     }
 
@@ -276,7 +306,13 @@ export default function LoadingPage() {
             
             // Small delay for UI smoothness
             setTimeout(() => {
-              router.push(`/analytics/${sessionId}`)
+              try {
+                router.push(`/analytics/${sessionId}`)
+              } catch (error) {
+                console.error('Error redirecting to analytics:', error)
+                // Fallback to home if redirect fails
+                router.push('/home')
+              }
             }, 1000)
             
             return true
@@ -303,6 +339,7 @@ export default function LoadingPage() {
       } catch (error) {
         console.error('Error checking session:', error)
         setLastError('Failed to check session status')
+        // Error is logged, continue polling - the skip button will be available after 5 minutes
       }
       return false
     }

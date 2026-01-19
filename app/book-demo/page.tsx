@@ -246,7 +246,7 @@ export default function BookDemoPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6"
           >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-playfair font-light text-white mb-2 text-center tracking-tight">Ready to see <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span> in action?</h1>
+            <h1 className="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-bold leading-[1.2] sm:leading-[1.3] mb-2 w-full">Ready to see <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">DoorIQ</span> in action?</h1>
             <p className="text-white/80 text-center font-sans">Pick a time that works best for you</p>
           </motion.div>
 
@@ -297,8 +297,8 @@ export default function BookDemoPage() {
               animate={{ opacity: 1, y: 0 }}
               className="mb-12 text-center"
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-playfair font-light text-white mb-4 tracking-tight">
-                Ready to see <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">DoorIQ</span> in action?
+              <h1 className="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-bold leading-[1.2] sm:leading-[1.3] mb-4 w-full">
+                Ready to see <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">DoorIQ</span> in action?
               </h1>
               <p className="text-white/80 text-lg md:text-xl font-sans font-light">
                 Book a demo and see how we can transform your sales team
