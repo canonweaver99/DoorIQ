@@ -376,3 +376,114 @@ export async function sendManagerPromotionEmail(
   }
 }
 
+/**
+ * Send post-checkout email with login/onboarding link
+ * This is a safety net in case the redirect after Stripe checkout fails
+ */
+export async function sendPostCheckoutEmail(
+  userEmail: string,
+  userName: string,
+  sessionId: string,
+  supabaseAdmin: any
+) {
+  try {
+    // Don't send if Resend is not configured
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⏭️  Skipping post-checkout email - Resend not configured')
+      return
+    }
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                    process.env.NEXT_PUBLIC_APP_URL || 
+                    'https://dooriq.ai'
+    
+    // Generate magic link that redirects to onboarding
+    const onboardingUrl = `${siteUrl}/onboarding?session_id=${sessionId}&email=${encodeURIComponent(userEmail)}`
+    
+    // Generate a magic link using Supabase admin
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: userEmail.toLowerCase(),
+      options: {
+        redirectTo: onboardingUrl
+      }
+    })
+
+    let loginLink = onboardingUrl
+    if (!linkError && linkData?.properties?.action_link) {
+      loginLink = linkData.properties.action_link
+      console.log(`✅ Generated magic link for post-checkout email`)
+    } else {
+      console.warn('⚠️ Could not generate magic link, using direct onboarding URL')
+    }
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #333; margin: 0; padding: 0; background: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .email-content { background: #ffffff; padding: 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .header { text-align: center; margin-bottom: 30px; }
+            .header h1 { color: #8b5cf6; font-size: 28px; margin: 0 0 10px 0; }
+            .content { color: #4b5563; font-size: 16px; }
+            .content p { margin: 16px 0; }
+            .button-container { text-align: center; margin: 30px 0; }
+            .button { display: inline-block; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; }
+            .button:hover { opacity: 0.9; }
+            .backup-link { margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 6px; border-left: 3px solid #8b5cf6; }
+            .backup-link p { margin: 8px 0; font-size: 14px; color: #6b7280; }
+            .backup-link a { color: #8b5cf6; word-break: break-all; }
+            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="email-content">
+              <div class="header">
+                <h1>Welcome to DoorIQ! 🎉</h1>
+              </div>
+              <div class="content">
+                <p>Hi ${userName || 'there'},</p>
+                <p>Thank you for your purchase! Your payment has been processed successfully.</p>
+                <p>To complete your account setup and get started, please click the button below to finish onboarding:</p>
+                
+                <div class="button-container">
+                  <a href="${loginLink}" class="button">Complete Account Setup →</a>
+                </div>
+                
+                <div class="backup-link">
+                  <p><strong>If the button doesn't work, copy and paste this link into your browser:</strong></p>
+                  <p><a href="${loginLink}">${loginLink}</a></p>
+                </div>
+                
+                <p style="margin-top: 30px;">This link will take you directly to your onboarding where you can set up your password and start using DoorIQ.</p>
+                <p><strong>Note:</strong> If you were already redirected after checkout, you can safely ignore this email.</p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} DoorIQ. All rights reserved.</p>
+                <p>If you have any questions, please contact support.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    await sendEmail({
+      to: userEmail,
+      subject: 'Complete Your DoorIQ Account Setup',
+      html,
+      from: 'DoorIQ <welcome@dooriq.ai>'
+    })
+
+    console.log(`✅ Post-checkout email sent to ${userEmail}`)
+  } catch (error) {
+    // Don't throw - this is a safety net email, shouldn't fail the webhook
+    console.error('❌ Failed to send post-checkout email:', error)
+  }
+}
+

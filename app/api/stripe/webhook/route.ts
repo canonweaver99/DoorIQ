@@ -171,6 +171,20 @@ async function handleTeamPlanCheckout(
       if (!getUserError && existingUserData?.user) {
         userId = existingUserData.user.id
         console.log('✅ Found existing user:', userId)
+        
+        // Send post-checkout email even for existing users in case redirect failed
+        try {
+          const { sendPostCheckoutEmail } = await import('@/lib/email/send')
+          await sendPostCheckoutEmail(
+            userEmail.toLowerCase(),
+            userName || userEmail.split('@')[0],
+            session.id,
+            adminClient
+          )
+        } catch (emailError) {
+          console.error('⚠️ Failed to send post-checkout email (non-critical):', emailError)
+          // Don't throw - email is a safety net, shouldn't fail webhook
+        }
       } else {
         // Create new auth user (unconfirmed - they'll set password via email)
         const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
@@ -236,6 +250,20 @@ async function handleTeamPlanCheckout(
         // Note: Password setup is now handled in the onboarding flow
         // Users are redirected to /onboarding after checkout where they set their password
         console.log('✅ User account created for guest checkout. Password will be set in onboarding flow.')
+        
+        // Send post-checkout email with login link as a safety net in case redirect fails
+        try {
+          const { sendPostCheckoutEmail } = await import('@/lib/email/send')
+          await sendPostCheckoutEmail(
+            userEmail.toLowerCase(),
+            userName || userEmail.split('@')[0],
+            session.id,
+            adminClient
+          )
+        } catch (emailError) {
+          console.error('⚠️ Failed to send post-checkout email (non-critical):', emailError)
+          // Don't throw - email is a safety net, shouldn't fail webhook
+        }
       }
     } catch (error: any) {
       console.error('❌ Error creating user for guest checkout:', error)
@@ -453,6 +481,20 @@ async function handleIndividualPlanCheckout(
       if (!getUserError && existingUserData?.user) {
         userId = existingUserData.user.id
         console.log('✅ Found existing user:', userId)
+        
+        // Send post-checkout email even for existing users in case redirect failed
+        try {
+          const { sendPostCheckoutEmail } = await import('@/lib/email/send')
+          await sendPostCheckoutEmail(
+            userEmail.toLowerCase(),
+            userName || userEmail.split('@')[0],
+            session.id,
+            adminClient
+          )
+        } catch (emailError) {
+          console.error('⚠️ Failed to send post-checkout email (non-critical):', emailError)
+          // Don't throw - email is a safety net, shouldn't fail webhook
+        }
       } else {
         // Create new auth user (unconfirmed - they'll set password via email)
         const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
@@ -524,6 +566,20 @@ async function handleIndividualPlanCheckout(
         })
         
         console.log('✅ User account created successfully for individual plan:', userId)
+        
+        // Send post-checkout email with login link as a safety net in case redirect fails
+        try {
+          const { sendPostCheckoutEmail } = await import('@/lib/email/send')
+          await sendPostCheckoutEmail(
+            userEmail.toLowerCase(),
+            userName || userEmail.split('@')[0],
+            session.id,
+            adminClient
+          )
+        } catch (emailError) {
+          console.error('⚠️ Failed to send post-checkout email (non-critical):', emailError)
+          // Don't throw - email is a safety net, shouldn't fail webhook
+        }
       }
     } catch (error) {
       console.error('❌ Error creating user for individual checkout:', error)
