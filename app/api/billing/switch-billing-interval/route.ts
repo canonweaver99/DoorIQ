@@ -10,7 +10,7 @@ function getStripeClient() {
     return null
   }
   return new Stripe(stripeKey, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: '2025-09-30.clover',
   })
 }
 
@@ -112,45 +112,95 @@ export async function POST(request: NextRequest) {
 
     const currentPrice = subscriptionItem.price
     const currentQuantity = subscriptionItem.quantity || org.seat_limit || 1
+    const productId = typeof currentPrice.product === 'string' ? currentPrice.product : currentPrice.product?.id
 
-    // If switching to annual, create a checkout session
+    if (!productId) {
+      return NextResponse.json(
+        { error: 'Could not determine product ID from current subscription' },
+        { status: 400 }
+      )
+    }
+
+    // If switching to annual, find the annual price ID for the same product
     if (billingInterval === 'annual') {
       const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-      // Create discount coupon for annual billing (16.67% = 2 months free)
-      let discountId: string | undefined
+      // Find annual price ID for the same product
+      let annualPriceId: string | null = null
       try {
-        const coupons = await stripe!.coupons.list({ limit: 100 })
-        const existingCoupon = coupons.data.find(
-          (c) => c.percent_off === 16.67 && c.name === 'Annual Billing - 2 Months Free'
+        const prices = await stripe.prices.list({
+          product: productId,
+          active: true,
+          limit: 100,
+        })
+
+        // Find annual price (interval === 'year')
+        const annualPrice = prices.data.find(
+          (p) => p.recurring?.interval === 'year' && p.type === 'recurring'
         )
 
-        if (existingCoupon) {
-          discountId = existingCoupon.id
+        if (annualPrice) {
+          annualPriceId = annualPrice.id
+          console.log(`Found annual price ID: ${annualPriceId} for product ${productId}`)
         } else {
-          const coupon = await stripe!.coupons.create({
-            name: 'Annual Billing - 2 Months Free',
-            percent_off: 16.67,
-            duration: 'forever',
-            metadata: {
-              type: 'annual_billing',
-              description: '2 months free with annual billing',
-            },
-          })
-          discountId = coupon.id
+          // If no annual price exists, fall back to monthly price with discount
+          console.warn(`No annual price found for product ${productId}, using monthly price with discount`)
+          annualPriceId = currentPrice.id
         }
       } catch (error) {
-        console.error('Error creating discount coupon:', error)
-        // Continue without discount if coupon creation fails
+        console.error('Error finding annual price:', error)
+        return NextResponse.json(
+          { error: 'Failed to find annual pricing. Please contact support.' },
+          { status: 500 }
+        )
+      }
+
+      if (!annualPriceId) {
+        return NextResponse.json(
+          { error: 'Annual pricing not available for this plan. Please contact support.' },
+          { status: 400 }
+        )
+      }
+
+      // Create discount coupon for annual billing (16.67% = 2 months free) if using monthly price
+      // Note: If annualPriceId is different from currentPrice.id, we're using a true annual price
+      // and may not need the discount, but we'll still apply it for consistency
+      let discountId: string | undefined
+      if (annualPriceId === currentPrice.id) {
+        // Only apply discount if we're using the monthly price
+        try {
+          const coupons = await stripe.coupons.list({ limit: 100 })
+          const existingCoupon = coupons.data.find(
+            (c) => c.percent_off === 16.67 && c.name === 'Annual Billing - 2 Months Free'
+          )
+
+          if (existingCoupon) {
+            discountId = existingCoupon.id
+          } else {
+            const coupon = await stripe.coupons.create({
+              name: 'Annual Billing - 2 Months Free',
+              percent_off: 16.67,
+              duration: 'forever',
+              metadata: {
+                type: 'annual_billing',
+                description: '2 months free with annual billing',
+              },
+            })
+            discountId = coupon.id
+          }
+        } catch (error) {
+          console.error('Error creating discount coupon:', error)
+          // Continue without discount if coupon creation fails
+        }
       }
 
       // Create checkout session to update subscription to annual billing
-      const session = await stripe!.checkout.sessions.create({
+      const session = await stripe.checkout.sessions.create({
         customer: org.stripe_customer_id,
         mode: 'subscription',
         line_items: [
           {
-            price: currentPrice.id, // Use same price, discount will be applied
+            price: annualPriceId, // Use annual price ID
             quantity: currentQuantity,
           },
         ],

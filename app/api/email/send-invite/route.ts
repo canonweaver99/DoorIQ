@@ -48,7 +48,7 @@ line-height: 1.6; color: #333; margin: 0; padding: 0; }
               .header { background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; padding: 40px; text-align: center; border-radius: 8px 8px 0 0; }
               .content { background: #ffffff; padding: 40px; border: 1px solid #e5e7eb; border-top: none; }
               .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
-              .button { display: inline-block; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; margin: 24px 0; font-weight: 600; }
+              .button { display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%); color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; margin: 24px 0; font-weight: 700; font-size: 16px; letter-spacing: 0.5px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
               .role-badge { display: inline-block; background: #f3e8ff; color: #a855f7; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin: 16px 0; }
             </style>
           </head>

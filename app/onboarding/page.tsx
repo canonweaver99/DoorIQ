@@ -48,145 +48,234 @@ function OnboardingContent() {
   const steps = role === 'manager' ? MANAGER_STEPS : REP_STEPS
 
   useEffect(() => {
+    let cancelled = false
+
     const checkAuth = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
 
-      if (user) {
-        setIsAuthenticated(true)
-        setEmail(user.email || emailParam || '')
+        if (cancelled) return
 
-        const { data: profile } = await supabase
-          .from('users')
-          .select('full_name, role, onboarding_current_step, onboarding_role')
-          .eq('id', user.id)
-          .single()
+        if (user) {
+          setIsAuthenticated(true)
+          setEmail(user.email || emailParam || '')
 
-        if (profile) {
-          // SIMPLE RULE: If user has a role, go to home immediately
-          if (profile.role && ['manager', 'rep', 'admin'].includes(profile.role)) {
-            router.replace('/home')
-            return
-          }
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('full_name, role, onboarding_current_step, onboarding_role')
+            .eq('id', user.id)
+            .single()
 
-          setUserName(profile.full_name || '')
-          if (profile.onboarding_role) setRole(profile.onboarding_role as 'manager' | 'rep')
-          if (profile.onboarding_current_step && profile.onboarding_current_step > 0) {
-            setCurrentStep(profile.onboarding_current_step)
+          if (cancelled) return
+
+          if (profile) {
+            // SIMPLE RULE: If user has a role, go to home immediately
+            if (profile.role && ['manager', 'rep', 'admin'].includes(profile.role)) {
+              router.replace('/home')
+              return
+            }
+
+            setUserName(profile.full_name || '')
+            if (profile.onboarding_role) setRole(profile.onboarding_role as 'manager' | 'rep')
+            
+            // Validate step is within bounds
+            const roleSteps = profile.onboarding_role === 'manager' ? MANAGER_STEPS : REP_STEPS
+            const maxStep = roleSteps.length - 1
+            
+            if (profile.onboarding_current_step && profile.onboarding_current_step > 0 && profile.onboarding_current_step <= maxStep) {
+              setCurrentStep(profile.onboarding_current_step)
+            } else {
+              setCurrentStep(1) // Skip to role selection if authenticated
+            }
           } else {
-            setCurrentStep(1) // Skip to role selection if authenticated
+            if (profileError) {
+              console.error('Error fetching profile:', profileError)
+            }
+            setCurrentStep(1)
           }
+        } else if (emailParam) {
+          setEmail(emailParam)
+          setCurrentStep(0)
         } else {
-          setCurrentStep(1)
+          router.push('/checkout')
+          return
         }
-      } else if (emailParam) {
-        setEmail(emailParam)
-        setCurrentStep(0)
-      } else {
-        router.push('/checkout')
+      } catch (error) {
+        console.error('Error in checkAuth:', error)
+        if (!cancelled) {
+          setLoading(false)
+        }
         return
       }
 
-      setLoading(false)
+      if (!cancelled) {
+        setLoading(false)
+      }
     }
 
     checkAuth()
+
+    return () => {
+      cancelled = true
+    }
   }, [emailParam, router])
 
   const saveProgress = async (step: number, selectedRole?: 'manager' | 'rep') => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase.from('users').update({
-        onboarding_current_step: step,
-        ...(selectedRole && { onboarding_role: selectedRole, role_selected_at: new Date().toISOString() }),
-      }).eq('id', user.id)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { error } = await supabase.from('users').update({
+          onboarding_current_step: step,
+          ...(selectedRole && { onboarding_role: selectedRole, role_selected_at: new Date().toISOString() }),
+        }).eq('id', user.id)
+        
+        if (error) {
+          console.error('Error saving progress:', error)
+        }
+      }
+    } catch (error) {
+      console.error('Error in saveProgress:', error)
     }
   }
 
   const handleAccountComplete = async () => {
-    setIsAuthenticated(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (user) {
-      const { data: profile } = await supabase
-        .from('users')
-        .select('full_name, organization_id')
-        .eq('id', user.id)
-        .single()
+    try {
+      setIsAuthenticated(true)
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('full_name, organization_id')
+          .eq('id', user.id)
+          .single()
 
-      if (profile) {
-        setUserName(profile.full_name || '')
-        if (profile.organization_id) {
-          const { data: org } = await supabase
-            .from('organizations')
-            .select('seat_limit')
-            .eq('id', profile.organization_id)
-            .single()
-          if (org?.seat_limit) {
-            setPlanName(org.seat_limit === 1 ? 'Individual Plan' : 'Team Plan')
+        if (profile) {
+          setUserName(profile.full_name || '')
+          if (profile.organization_id) {
+            const { data: org, error: orgError } = await supabase
+              .from('organizations')
+              .select('seat_limit')
+              .eq('id', profile.organization_id)
+              .single()
+            if (orgError) {
+              console.error('Error fetching organization:', orgError)
+            } else if (org?.seat_limit) {
+              setPlanName(org.seat_limit === 1 ? 'Individual Plan' : 'Team Plan')
+            }
           }
+        } else if (profileError) {
+          console.error('Error fetching profile:', profileError)
+        }
+
+        const { error: updateError } = await supabase.from('users').update({
+          account_setup_completed_at: new Date().toISOString(),
+          checkout_session_id: sessionId,
+        }).eq('id', user.id)
+
+        if (updateError) {
+          console.error('Error updating account setup:', updateError)
         }
       }
 
-      await supabase.from('users').update({
-        account_setup_completed_at: new Date().toISOString(),
-        checkout_session_id: sessionId,
-      }).eq('id', user.id)
+      setCurrentStep(1)
+      await saveProgress(1)
+    } catch (error) {
+      console.error('Error in handleAccountComplete:', error)
     }
-
-    setCurrentStep(1)
-    await saveProgress(1)
   }
 
   const handleRoleSelect = async (selectedRole: 'manager' | 'rep') => {
-    setRole(selectedRole)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (user) {
-      await supabase.from('users').update({
-        role: selectedRole,
-        onboarding_role: selectedRole,
-        role_selected_at: new Date().toISOString(),
-      }).eq('id', user.id)
-    }
+    try {
+      setRole(selectedRole)
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { error } = await supabase.from('users').update({
+          role: selectedRole,
+          onboarding_role: selectedRole,
+          role_selected_at: new Date().toISOString(),
+        }).eq('id', user.id)
 
-    setCurrentStep(2)
-    await saveProgress(2, selectedRole)
+        if (error) {
+          console.error('Error updating role:', error)
+          throw error
+        }
+      }
+
+      setCurrentStep(2)
+      await saveProgress(2, selectedRole)
+    } catch (error) {
+      console.error('Error in handleRoleSelect:', error)
+      // Don't advance step if role update failed
+    }
   }
 
   const goToStep = async (step: number) => {
-    setCurrentStep(step)
-    await saveProgress(step)
+    // Validate step is within bounds
+    const roleSteps = role === 'manager' ? MANAGER_STEPS : REP_STEPS
+    const maxStep = roleSteps.length - 1
+    const validStep = Math.max(0, Math.min(step, maxStep))
+    
+    setCurrentStep(validStep)
+    await saveProgress(validStep)
   }
 
-  const nextStep = () => goToStep(currentStep + 1)
+  const nextStep = () => {
+    const roleSteps = role === 'manager' ? MANAGER_STEPS : REP_STEPS
+    const maxStep = roleSteps.length - 1
+    if (currentStep < maxStep) {
+      goToStep(currentStep + 1)
+    }
+  }
+  
   const prevStep = () => goToStep(Math.max(0, currentStep - 1))
 
   const handleStartFirstSession = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
-    if (user) {
-      await supabase.from('users').update({
-        onboarding_completed: true,
-        onboarding_completed_at: new Date().toISOString(),
-        checkout_session_id: null,
-      }).eq('id', user.id)
+      if (user) {
+        const { error: updateError } = await supabase.from('users').update({
+          onboarding_completed: true,
+          onboarding_completed_at: new Date().toISOString(),
+          checkout_session_id: null,
+        }).eq('id', user.id)
 
-      try {
-        await fetch('/api/onboarding/complete-step', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ step: 'first_session' }),
-        })
-      } catch {}
+        if (updateError) {
+          console.error('Error completing onboarding:', updateError)
+          // Continue anyway - don't block user from starting session
+        }
+
+        try {
+          const response = await fetch('/api/onboarding/complete-step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step: 'first_session' }),
+          })
+          
+          if (!response.ok) {
+            console.error('Error completing onboarding step:', await response.text())
+          }
+        } catch (fetchError) {
+          console.error('Error calling complete-step API:', fetchError)
+          // Non-critical - continue to trainer
+        }
+      }
+
+      const austinAgentId = PERSONA_METADATA['Average Austin']?.card?.elevenAgentId
+      router.push(austinAgentId ? `/trainer?agent=${encodeURIComponent(austinAgentId)}` : '/trainer')
+    } catch (error) {
+      console.error('Error in handleStartFirstSession:', error)
+      // Still redirect to trainer even if there's an error
+      const austinAgentId = PERSONA_METADATA['Average Austin']?.card?.elevenAgentId
+      router.push(austinAgentId ? `/trainer?agent=${encodeURIComponent(austinAgentId)}` : '/trainer')
     }
-
-    const austinAgentId = PERSONA_METADATA['Average Austin']?.card?.elevenAgentId
-    router.push(austinAgentId ? `/trainer?agent=${encodeURIComponent(austinAgentId)}` : '/trainer')
   }
 
   if (loading) {
@@ -204,7 +293,9 @@ function OnboardingContent() {
     if (currentStep === 0) return 'account'
     if (currentStep === 1) return 'role'
     const roleSteps = role === 'manager' ? MANAGER_STEPS : REP_STEPS
-    return roleSteps[currentStep]?.id || 'session'
+    // Ensure currentStep is within bounds
+    const validStep = Math.max(0, Math.min(currentStep, roleSteps.length - 1))
+    return roleSteps[validStep]?.id || 'session'
   }
 
   const currentStepId = getCurrentStepId()

@@ -17,7 +17,13 @@ export function RoleSelection({ onSelect, loading }: RoleSelectionProps) {
   const handleContinue = async () => {
     if (!selectedRole) return
     setIsSubmitting(true)
-    await onSelect(selectedRole)
+    try {
+      await onSelect(selectedRole)
+    } catch (error) {
+      console.error('Error selecting role:', error)
+      // Reset submitting state on error so user can try again
+      setIsSubmitting(false)
+    }
   }
 
   const roles = [

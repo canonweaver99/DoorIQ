@@ -507,10 +507,10 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             change: '', 
             changeValue: 0,
             icon: Target,
-            bgColor: '#1a1a1a',
-            borderColor: '#2a2a2a',
-            textColor: 'text-gray-300',
-            iconColor: 'text-gray-400',
+            bgColor: '#1a3a2a',
+            borderColor: '#10b981',
+            textColor: 'text-emerald-200',
+            iconColor: 'text-emerald-400',
             subtitle: 'Percentage of sessions closed'
           },
         ].map((metric, idx) => {

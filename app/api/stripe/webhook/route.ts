@@ -758,35 +758,83 @@ async function handleSwitchBillingIntervalCheckout(
     console.error('Stripe is not configured')
     return
   }
+  
   try {
-    // Get the new subscription to get subscription item ID
+    // Get the new subscription to get subscription item ID and verify billing interval
     const newSubscription = await stripe.subscriptions.retrieve(newSubscriptionId, {
       expand: ['items.data.price'],
     })
 
     const subscriptionItem = newSubscription.items.data[0]
+    
+    if (!subscriptionItem) {
+      console.error('No subscription items found in new subscription:', newSubscriptionId)
+      throw new Error('No subscription items found in new subscription')
+    }
 
-    // Cancel the old subscription
+    // Verify the billing interval matches what we expect
+    const actualInterval = newSubscription.items.data[0]?.price?.recurring?.interval
+    const expectedInterval = billingInterval === 'annual' ? 'year' : 'month'
+    
+    if (actualInterval !== expectedInterval) {
+      console.warn(`Billing interval mismatch: expected ${expectedInterval}, got ${actualInterval}. Using subscription interval.`)
+      // Update billingInterval to match actual subscription interval
+      const actualBillingInterval = actualInterval === 'year' ? 'annual' : 'monthly'
+      
+      // Cancel the old subscription first (before updating database)
+      await stripe.subscriptions.cancel(currentSubscriptionId)
+      
+      // Update organization with new subscription details and actual billing interval
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({
+          stripe_subscription_id: newSubscriptionId,
+          stripe_subscription_item_id: subscriptionItem.id,
+          billing_interval: actualBillingInterval,
+        })
+        .eq('id', organizationId)
+
+      if (updateError) {
+        console.error('Error updating organization billing interval:', updateError)
+        // Try to restore old subscription if database update fails
+        try {
+          await stripe.subscriptions.update(currentSubscriptionId, { cancel_at_period_end: false })
+          console.log('Restored old subscription due to database update failure')
+        } catch (restoreError) {
+          console.error('Failed to restore old subscription:', restoreError)
+        }
+        throw updateError
+      }
+
+      console.log(`Successfully switched organization ${organizationId} to ${actualBillingInterval} billing. New subscription: ${newSubscriptionId}`)
+      return
+    }
+
+    // Cancel the old subscription (only after verifying new subscription is valid)
     await stripe.subscriptions.cancel(currentSubscriptionId)
+    console.log(`Cancelled old subscription: ${currentSubscriptionId}`)
 
     // Update organization with new subscription details and billing interval
     const { error: updateError } = await supabase
       .from('organizations')
       .update({
         stripe_subscription_id: newSubscriptionId,
-        stripe_subscription_item_id: subscriptionItem?.id,
+        stripe_subscription_item_id: subscriptionItem.id,
         billing_interval: billingInterval,
       })
       .eq('id', organizationId)
 
     if (updateError) {
       console.error('Error updating organization billing interval:', updateError)
+      // Old subscription is already cancelled, but new one is active
+      // This is recoverable - subscription.updated webhook should sync it
       throw updateError
     }
 
     console.log(`Successfully switched organization ${organizationId} to ${billingInterval} billing. New subscription: ${newSubscriptionId}`)
   } catch (error: any) {
     console.error('Error handling switch billing interval checkout:', error)
+    // Re-throw to ensure webhook retries if there's a critical error
     throw error
   }
 }
@@ -948,10 +996,11 @@ async function handleSubscriptionUpdated(
       const subscriptionItem = subscription.items.data[0]
       const quantity = subscriptionItem?.quantity || 0
 
-      // Determine billing interval from subscription
-      const billingInterval = subscription.interval === 'year' ? 'annual' : 'monthly'
+      // Determine billing interval from subscription item price interval (more reliable)
+      const priceInterval = subscriptionItem?.price?.recurring?.interval
+      const billingInterval = priceInterval === 'year' ? 'annual' : 'monthly'
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('organizations')
         .update({
           stripe_subscription_id: subscription.id,
@@ -960,6 +1009,12 @@ async function handleSubscriptionUpdated(
           billing_interval: billingInterval,
         })
         .eq('id', org.id)
+
+      if (updateError) {
+        console.error('Error updating organization subscription in subscription.updated:', updateError)
+      } else {
+        console.log(`Updated organization ${org.id} subscription: ${subscription.id}, billing: ${billingInterval}, seats: ${quantity}`)
+      }
     }
   } else {
     // Update individual subscription status

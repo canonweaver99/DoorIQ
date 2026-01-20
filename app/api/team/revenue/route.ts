@@ -63,10 +63,10 @@ export async function GET(request: Request) {
         break
     }
 
-    // Get sessions in date range
+    // Get sessions in date range - include overall_score for performance calculation
     const { data: sessions, error: sessionsError } = await supabase
       .from('live_sessions')
-      .select('user_id, virtual_earnings, sale_closed, created_at')
+      .select('user_id, virtual_earnings, sale_closed, created_at, overall_score')
       .in('user_id', teamMemberIds)
       .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: true })
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
     }
 
     // Group sessions by period
-    const groupedData: { [key: string]: { revenue: number; repsWhoSold: Set<string>; totalSales: number } } = {}
+    const groupedData: { [key: string]: { revenue: number; repsWhoSold: Set<string>; totalSales: number; scores: number[] } } = {}
 
     sessions?.forEach(session => {
       const date = new Date(session.created_at)
@@ -111,7 +111,7 @@ export async function GET(request: Request) {
       }
 
       if (!groupedData[periodKey]) {
-        groupedData[periodKey] = { revenue: 0, repsWhoSold: new Set(), totalSales: 0, fullPeriod }
+        groupedData[periodKey] = { revenue: 0, repsWhoSold: new Set(), totalSales: 0, scores: [], fullPeriod }
       }
 
       groupedData[periodKey].revenue += session.virtual_earnings || 0
@@ -119,16 +119,28 @@ export async function GET(request: Request) {
         groupedData[periodKey].repsWhoSold.add(session.user_id)
         groupedData[periodKey].totalSales += 1
       }
+      // Collect scores for average calculation
+      if (session.overall_score !== null && session.overall_score !== undefined) {
+        groupedData[periodKey].scores.push(session.overall_score)
+      }
     })
 
     // Convert to array format
-    let revenueData = Object.entries(groupedData).map(([period, data]) => ({
-      period,
-      fullPeriod: (data as any).fullPeriod,
-      revenue: Math.round(data.revenue),
-      repsWhoSold: data.repsWhoSold.size,
-      totalSales: data.totalSales
-    }))
+    let revenueData = Object.entries(groupedData).map(([period, data]) => {
+      // Calculate average score for this period
+      const avgScore = data.scores.length > 0
+        ? Math.round(data.scores.reduce((sum, score) => sum + score, 0) / data.scores.length)
+        : 0
+
+      return {
+        period,
+        fullPeriod: (data as any).fullPeriod,
+        revenue: Math.round(data.revenue),
+        repsWhoSold: data.repsWhoSold.size,
+        totalSales: data.totalSales,
+        avgScore
+      }
+    })
 
     // For day period, fill in missing days with 0 revenue
     if (period === 'day') {
@@ -150,7 +162,8 @@ export async function GET(request: Request) {
             fullPeriod: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
             revenue: 0,
             repsWhoSold: 0,
-            totalSales: 0
+            totalSales: 0,
+            avgScore: 0
           })
         }
       }
