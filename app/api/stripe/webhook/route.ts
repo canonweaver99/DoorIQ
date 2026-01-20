@@ -658,13 +658,14 @@ async function handleAddSeatsCheckout(
   const subscriptionId = metadata.subscription_id
   const subscriptionItemId = metadata.subscription_item_id
   const priceId = metadata.price_id
+  const currentTier = metadata.current_tier || 'starter'
+  const newTier = metadata.new_tier
 
-  if (!organizationId || !subscriptionId || !subscriptionItemId || !priceId || seatsToAdd <= 0) {
+  if (!organizationId || !subscriptionId || !subscriptionItemId || seatsToAdd <= 0) {
     console.error('Missing required metadata for adding seats:', {
       organizationId,
       subscriptionId,
       subscriptionItemId,
-      priceId,
       seatsToAdd,
     })
     return
@@ -675,25 +676,54 @@ async function handleAddSeatsCheckout(
     console.error('Stripe is not configured')
     return
   }
-  try {
-    // Update the subscription quantity in Stripe
-    await stripe.subscriptionItems.update(subscriptionItemId, {
-      quantity: newQuantity,
-      proration_behavior: 'always_invoice',
-    })
 
-    // Update organization seat_limit in database
+  try {
+    // Get current subscription to check if we need to update the price
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+    const currentSubscriptionItem = subscription.items.data.find(
+      (item) => item.id === subscriptionItemId
+    )
+
+    if (!currentSubscriptionItem) {
+      console.error('Subscription item not found:', subscriptionItemId)
+      return
+    }
+
+    // If tier changed, we need to update the subscription item price
+    if (newTier && newTier !== currentTier && priceId) {
+      // Update subscription item with new price and quantity
+      await stripe.subscriptionItems.update(subscriptionItemId, {
+        price: priceId,
+        quantity: newQuantity,
+        proration_behavior: 'always_invoice',
+      })
+      console.log(`Updated subscription item to ${newTier} tier with ${newQuantity} seats`)
+    } else {
+      // Just update quantity if tier hasn't changed
+      await stripe.subscriptionItems.update(subscriptionItemId, {
+        quantity: newQuantity,
+        proration_behavior: 'always_invoice',
+      })
+      console.log(`Updated subscription quantity to ${newQuantity}`)
+    }
+
+    // Update organization seat_limit and tier in database
+    const updateData: any = { seat_limit: newQuantity }
+    if (newTier && newTier !== currentTier) {
+      updateData.plan_tier = newTier
+    }
+
     const { error: updateError } = await supabase
       .from('organizations')
-      .update({ seat_limit: newQuantity })
+      .update(updateData)
       .eq('id', organizationId)
 
     if (updateError) {
-      console.error('Error updating organization seat limit:', updateError)
+      console.error('Error updating organization:', updateError)
       throw updateError
     }
 
-    console.log(`Successfully added ${seatsToAdd} seats to organization ${organizationId}. New quantity: ${newQuantity}`)
+    console.log(`Successfully added ${seatsToAdd} seats to organization ${organizationId}. New quantity: ${newQuantity}, New tier: ${newTier || currentTier}`)
   } catch (error: any) {
     console.error('Error handling add seats checkout:', error)
     throw error

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, UserPlus, Loader2, CheckSquare, Square, ArrowRight, Building2 } from 'lucide-react'
+import { Users, UserPlus, Loader2, CheckSquare, Square, ArrowRight, Building2, ChevronRight, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,6 +47,9 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
   const [newTeamName, setNewTeamName] = useState('')
   const [creatingTeam, setCreatingTeam] = useState(false)
   const [movingReps, setMovingReps] = useState(false)
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
+  const [showMoveModal, setShowMoveModal] = useState(false)
+  const [targetTeamId, setTargetTeamId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -220,7 +223,7 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
         </div>
         <Button
           onClick={() => setCreateTeamOpen(true)}
-          className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium font-sans"
+          className="bg-white hover:bg-gray-100 text-black font-medium font-sans border border-gray-300"
         >
           <UserPlus className="w-4 h-4 mr-2" />
           Create Team
@@ -244,30 +247,102 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {teams.map((team) => (
-                <div
-                  key={team.id}
-                  className="p-4 rounded-lg bg-[#0a0a0a] border border-[#2a2a2a] hover:border-[#3a3a3a] transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-white font-sans mb-1">{team.name}</h4>
-                      <p className="text-sm text-[#a0a0a0] font-sans">
-                        {team.member_count} member{team.member_count !== 1 ? 's' : ''}
-                      </p>
+              {teams.map((team) => {
+                const teamReps = reps.filter(r => r.team_id === team.id)
+                const isSelected = selectedTeamId === team.id
+                
+                return (
+                  <div
+                    key={team.id}
+                    className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                      isSelected 
+                        ? 'bg-[#0a0a0a] border-[#00d4aa]' 
+                        : 'bg-[#0a0a0a] border-[#2a2a2a] hover:border-[#3a3a3a]'
+                    }`}
+                    onClick={() => setSelectedTeamId(isSelected ? null : team.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-white font-sans">{team.name}</h4>
+                          {isSelected && (
+                            <span className="text-xs text-[#00d4aa] font-sans">Selected</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-[#a0a0a0] font-sans">
+                          {team.member_count} member{team.member_count !== 1 ? 's' : ''}
+                        </p>
+                        {isSelected && teamReps.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-[#2a2a2a]">
+                            <p className="text-xs text-[#a0a0a0] font-sans mb-1">Members:</p>
+                            <div className="space-y-1">
+                              {teamReps.slice(0, 3).map((rep) => (
+                                <p key={rep.id} className="text-xs text-[#888] font-sans truncate">
+                                  {rep.full_name || rep.email}
+                                </p>
+                              ))}
+                              {teamReps.length > 3 && (
+                                <p className="text-xs text-[#666] font-sans">
+                                  +{teamReps.length - 3} more
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2 ml-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (selectedReps.size > 0) {
+                              setTargetTeamId(team.id)
+                              setShowMoveModal(true)
+                            } else {
+                              showToast({ 
+                                type: 'error', 
+                                title: 'No reps selected', 
+                                message: 'Please select reps to move first' 
+                              })
+                            }
+                          }}
+                          disabled={selectedReps.size === 0 || movingReps}
+                          className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a] min-w-[32px]"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                        {!isSelected && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedTeamId(team.id)
+                            }}
+                            className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a] min-w-[32px]"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {isSelected && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedTeamId(null)
+                            }}
+                            className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a] min-w-[32px]"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleMoveReps(team.id)}
-                      disabled={selectedReps.size === 0 || movingReps}
-                      className="ml-2 border-[#2a2a2a] text-white hover:bg-[#2a2a2a]"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -280,18 +355,44 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
             <div>
               <h3 className="text-lg font-semibold text-white mb-2 font-space">Sales Reps</h3>
               <p className="text-sm text-[#a0a0a0] font-sans">
-                {reps.length} rep{reps.length !== 1 ? 's' : ''} • {selectedReps.size} selected
+                {selectedTeamId 
+                  ? `${reps.filter(r => r.team_id === selectedTeamId).length} rep${reps.filter(r => r.team_id === selectedTeamId).length !== 1 ? 's' : ''} in ${teams.find(t => t.id === selectedTeamId)?.name || 'team'}`
+                  : `${reps.length} rep${reps.length !== 1 ? 's' : ''} total`
+                } • {selectedReps.size} selected
               </p>
             </div>
             {reps.length > 0 && (
               <div className="flex gap-2">
+                {selectedTeamId && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedTeamId(null)}
+                    className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a]"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    View All
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={toggleAllReps}
+                  onClick={() => {
+                    const visibleReps = selectedTeamId 
+                      ? reps.filter(r => r.team_id === selectedTeamId)
+                      : reps
+                    if (selectedReps.size === visibleReps.length) {
+                      setSelectedReps(new Set())
+                    } else {
+                      setSelectedReps(new Set(visibleReps.map(r => r.id)))
+                    }
+                  }}
                   className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a]"
                 >
-                  {selectedReps.size === reps.length ? (
+                  {(selectedTeamId 
+                    ? reps.filter(r => r.team_id === selectedTeamId)
+                    : reps
+                  ).every(r => selectedReps.has(r.id)) ? (
                     <>
                       <CheckSquare className="w-4 h-4 mr-2" />
                       Deselect All
@@ -306,7 +407,18 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => handleMoveReps(null)}
+                  onClick={() => {
+                    if (selectedReps.size > 0) {
+                      setTargetTeamId(null)
+                      setShowMoveModal(true)
+                    } else {
+                      showToast({ 
+                        type: 'error', 
+                        title: 'No reps selected', 
+                        message: 'Please select reps to move first' 
+                      })
+                    }
+                  }}
                   disabled={selectedReps.size === 0 || movingReps}
                   className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a]"
                 >
@@ -333,7 +445,10 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
             </div>
           ) : (
             <div className="space-y-2">
-              {reps.map((rep) => (
+              {(selectedTeamId 
+                ? reps.filter(r => r.team_id === selectedTeamId)
+                : reps
+              ).map((rep) => (
                 <div
                   key={rep.id}
                   className={`
@@ -365,10 +480,70 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                   </div>
                 </div>
               ))}
+              {selectedTeamId && reps.filter(r => r.team_id === selectedTeamId).length === 0 && (
+                <div className="text-center py-8">
+                  <Users className="w-10 h-10 text-[#666] mx-auto mb-2" />
+                  <p className="text-[#a0a0a0] font-sans">No members in this team</p>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Move Reps Confirmation Dialog */}
+      <Dialog
+        open={showMoveModal}
+        onOpenChange={(open) => {
+          setShowMoveModal(open)
+          if (!open) {
+            setTargetTeamId(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move Reps</DialogTitle>
+            <DialogDescription>
+              {targetTeamId 
+                ? `Move ${selectedReps.size} selected rep${selectedReps.size !== 1 ? 's' : ''} to ${teams.find(t => t.id === targetTeamId)?.name || 'this team'}?`
+                : `Unassign ${selectedReps.size} selected rep${selectedReps.size !== 1 ? 's' : ''} from their current team?`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowMoveModal(false)
+                setTargetTeamId(null)
+              }}
+              disabled={movingReps}
+              className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                await handleMoveReps(targetTeamId)
+                setShowMoveModal(false)
+                setTargetTeamId(null)
+              }}
+              disabled={movingReps}
+              className="bg-white hover:bg-gray-100 text-black font-medium font-sans border border-gray-300"
+            >
+              {movingReps ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Moving...
+                </>
+              ) : (
+                'Confirm Move'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Team Dialog */}
       <Dialog
@@ -424,7 +599,7 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
             <Button
               onClick={handleCreateTeam}
               disabled={creatingTeam || !newTeamName.trim()}
-              className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium font-sans"
+              className="bg-white hover:bg-gray-100 text-black font-medium font-sans border border-gray-300"
             >
               {creatingTeam ? (
                 <>

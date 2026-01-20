@@ -112,7 +112,7 @@ export function PasswordChange() {
         <Button
           onClick={handleChangePassword}
           disabled={changingPassword || !canSave}
-          className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-white hover:bg-gray-100 text-black font-medium px-6 border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {changingPassword ? (
             <>

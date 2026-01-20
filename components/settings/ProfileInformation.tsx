@@ -295,7 +295,7 @@ export function ProfileInformation({
           <Button
             onClick={handleSaveAll}
             disabled={saving}
-            className="w-full sm:w-auto bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium px-6 py-3 sm:py-2 min-h-[48px] sm:min-h-0 font-sans touch-manipulation active:scale-95"
+            className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black font-medium px-6 py-3 sm:py-2 min-h-[48px] sm:min-h-0 font-sans border border-gray-300 touch-manipulation active:scale-95"
           >
             {saving ? (
               <>

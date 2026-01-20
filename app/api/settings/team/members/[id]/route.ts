@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase/server'
 import { sendManagerPromotionEmail } from '@/lib/email/send'
 
 export async function PATCH(
@@ -47,9 +47,9 @@ export async function PATCH(
       )
     }
 
-    // Verify member belongs to same organization
-    // Query with organization_id filter to ensure member is in the same org
-    const { data: member, error: memberError } = await supabase
+    // Verify member belongs to same organization using service client to bypass RLS
+    const serviceSupabase = await createServiceSupabaseClient()
+    const { data: member, error: memberError } = await serviceSupabase
       .from('users')
       .select('organization_id, role, email, full_name')
       .eq('id', id)
@@ -66,7 +66,7 @@ export async function PATCH(
         )
       }
       return NextResponse.json(
-        { error: 'Failed to verify member' },
+        { error: 'Failed to verify member', details: memberError.message },
         { status: 500 }
       )
     }
@@ -97,13 +97,15 @@ export async function PATCH(
       .single()
     const promotedBy = promoterData?.full_name || undefined
 
-    // Update role
-    const { error: updateError } = await supabase
+    // Update role using service client to bypass RLS
+    const { error: updateError } = await serviceSupabase
       .from('users')
       .update({ role })
       .eq('id', id)
+      .eq('organization_id', userData.organization_id) // Extra safety check
 
     if (updateError) {
+      console.error('Error updating member role:', updateError)
       throw updateError
     }
 
@@ -160,9 +162,9 @@ export async function DELETE(
 
     const { id } = params
 
-    // Verify member belongs to same organization
-    // Query with organization_id filter to ensure member is in the same org
-    const { data: member, error: memberError } = await supabase
+    // Verify member belongs to same organization using service client to bypass RLS
+    const serviceSupabase = await createServiceSupabaseClient()
+    const { data: member, error: memberError } = await serviceSupabase
       .from('users')
       .select('organization_id, role')
       .eq('id', id)
@@ -178,7 +180,7 @@ export async function DELETE(
         )
       }
       return NextResponse.json(
-        { error: 'Failed to verify member' },
+        { error: 'Failed to verify member', details: memberError.message },
         { status: 500 }
       )
     }
@@ -205,11 +207,12 @@ export async function DELETE(
       )
     }
 
-    // Remove from organization (set organization_id to null)
-    const { error: updateError } = await supabase
+    // Remove from organization (set organization_id to null) using service client
+    const { error: updateError } = await serviceSupabase
       .from('users')
       .update({ organization_id: null, is_active: false })
       .eq('id', id)
+      .eq('organization_id', userData.organization_id) // Extra safety check
 
     if (updateError) {
       throw updateError

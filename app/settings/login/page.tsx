@@ -191,7 +191,7 @@ export default function LoginSettingsPage() {
           <Button
             onClick={handleSignOutAllDevices}
             disabled={signingOut}
-            className="bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium px-6 font-sans disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-white hover:bg-gray-100 text-black font-medium px-6 font-sans border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {signingOut ? (
               <>

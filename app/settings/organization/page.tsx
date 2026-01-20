@@ -344,7 +344,7 @@ function OrganizationSettingsPage() {
                     <Button
                       onClick={handleInvite}
                       disabled={inviting || !inviteEmail.trim()}
-                      className="w-full sm:w-auto bg-[#00d4aa] hover:bg-[#00c19a] text-black font-medium font-sans min-h-[48px] sm:min-h-0 touch-manipulation active:scale-95"
+                      className="w-full sm:w-auto bg-white hover:bg-gray-100 text-black font-medium font-sans border border-gray-300 min-h-[48px] sm:min-h-0 touch-manipulation active:scale-95"
                     >
                       {inviting ? (
                         <>

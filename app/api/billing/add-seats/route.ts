@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Stripe from 'stripe'
 import { STRIPE_CONFIG } from '@/lib/stripe/config'
+import { calculateSeatAdditionCost, getPricingTier } from '@/lib/billing/pricing'
 
 // Lazy initialize Stripe to avoid build-time errors
 function getStripeClient() {
@@ -98,73 +99,201 @@ export async function POST(request: NextRequest) {
 
     const newQuantity = currentQuantity + seatsToAdd
 
-    // Check plan limits
-    if (org.plan_tier === 'starter' && newQuantity > 20) {
+    // Calculate pricing based on new total seat count
+    const pricingInfo = calculateSeatAdditionCost(currentQuantity, seatsToAdd)
+    const newTier = pricingInfo.newTier
+
+    // Check if we need to upgrade the plan tier
+    if (pricingInfo.requiresTierUpgrade && org.plan_tier !== newTier) {
       return NextResponse.json(
-        { 
-          error: 'Starter plan limit is 20 seats. Please upgrade to Team plan.',
+        {
+          error: `Adding ${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} would require upgrading from ${org.plan_tier} to ${newTier} plan. Please upgrade your plan first.`,
           requiresUpgrade: true,
-          currentTier: 'starter',
-          maxSeats: 20,
+          currentTier: org.plan_tier,
+          requiredTier: newTier,
+          currentSeats: currentQuantity,
+          newSeats: newQuantity,
         },
         { status: 400 }
       )
     }
 
-    if (org.plan_tier === 'team' && newQuantity > 100) {
-      return NextResponse.json(
-        { 
-          error: 'Team plan limit is 100 seats. Please upgrade to Enterprise plan.',
-          requiresUpgrade: true,
-          currentTier: 'team',
-          maxSeats: 100,
-        },
-        { status: 400 }
-      )
-    }
-
-    // FAKE PAYWALL: Always add seats directly without payment
-    // This bypasses Stripe checkout for development/testing
-    try {
-      // Update subscription quantity directly (if subscription exists)
-      if (subscriptionItem && org.stripe_subscription_item_id) {
-        const stripe = getStripeClient()
-        if (stripe) {
-          try {
-            await stripe.subscriptionItems.update(org.stripe_subscription_item_id, {
-              quantity: newQuantity,
-            })
-          } catch (stripeError) {
-            // If Stripe update fails, just update database (for testing without Stripe)
-            console.log('Stripe update skipped (fake paywall mode)')
-          }
-        }
-      }
-
-      // Update organization seat_limit in database
+    // If no Stripe subscription exists, allow direct addition (for testing/trials)
+    if (!org.stripe_subscription_id || !org.stripe_subscription_item_id) {
+      // Update organization seat_limit and tier in database
       const { error: updateError } = await supabase
         .from('organizations')
-        .update({ seat_limit: newQuantity })
+        .update({ 
+          seat_limit: newQuantity,
+          plan_tier: newTier, // Update tier if it changed
+        })
         .eq('id', org.id)
 
       if (updateError) {
-        console.error('Error updating organization seat limit:', updateError)
+        console.error('Error updating organization:', updateError)
         throw updateError
       }
 
       return NextResponse.json({
         success: true,
-        message: `${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} added successfully.`,
+        message: `${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} added successfully. No charge during trial period.`,
         seatsAdded: seatsToAdd,
         newQuantity,
+        newTier,
       })
-    } catch (error: any) {
-      console.error('Error adding seats:', error)
+    }
+
+    // Has active subscription - create checkout session
+    const stripe = getStripeClient()
+    if (!stripe) {
       return NextResponse.json(
-        { error: error.message || 'Failed to add seats' },
+        { error: 'Stripe is not configured' },
         { status: 500 }
       )
     }
+
+    // Get the correct price ID for the new tier
+    const planConfig = STRIPE_CONFIG[newTier as keyof typeof STRIPE_CONFIG]
+    if (!planConfig) {
+      return NextResponse.json(
+        { error: `Price ID not configured for ${newTier} plan` },
+        { status: 500 }
+      )
+    }
+
+    const priceId = planConfig.perSeatPriceId || planConfig.priceId
+    if (!priceId) {
+      return NextResponse.json(
+        { error: `Price ID not found for ${newTier} plan` },
+        { status: 500 }
+      )
+    }
+
+    // Get subscription to check billing period
+    let subscription: Stripe.Subscription
+    try {
+      subscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id)
+    } catch (error) {
+      console.error('Error retrieving subscription:', error)
+      return NextResponse.json(
+        { error: 'Failed to retrieve subscription' },
+        { status: 500 }
+      )
+    }
+
+    // Check if we're on trial - if so, allow direct addition
+    if (subscription.status === 'trialing') {
+      // Update subscription quantity directly
+      try {
+        await stripe.subscriptionItems.update(org.stripe_subscription_item_id, {
+          quantity: newQuantity,
+        })
+      } catch (stripeError) {
+        console.error('Error updating subscription:', stripeError)
+        // Continue to update database even if Stripe fails
+      }
+
+      // Update organization seat_limit and tier in database
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ 
+          seat_limit: newQuantity,
+          plan_tier: newTier,
+        })
+        .eq('id', org.id)
+
+      if (updateError) {
+        console.error('Error updating organization:', updateError)
+        throw updateError
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} added successfully. No charge during trial period.`,
+        seatsAdded: seatsToAdd,
+        newQuantity,
+        newTier,
+      })
+    }
+
+    // Not on trial - create checkout session for payment
+    // Calculate prorated amount for the additional seats
+    let proratedAmount = 0
+    try {
+      const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+        customer: org.stripe_customer_id!,
+        subscription: org.stripe_subscription_id,
+        subscription_items: [{
+          id: org.stripe_subscription_item_id,
+          quantity: newQuantity,
+        }],
+      })
+      proratedAmount = upcomingInvoice.amount_due
+    } catch (invoiceError: any) {
+      // If we can't calculate prorated amount, estimate it
+      console.warn('Could not retrieve upcoming invoice, estimating prorated amount:', invoiceError.message)
+      
+      // Get the price to calculate estimated cost
+      const price = await stripe.prices.retrieve(priceId)
+      const priceAmount = (price.unit_amount || 0) / 100 // Convert from cents to dollars
+      
+      // Estimate prorated cost
+      const daysRemaining = Math.ceil(
+        (subscription.current_period_end * 1000 - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+      const daysInPeriod = Math.ceil(
+        (subscription.current_period_end - subscription.current_period_start) / (60 * 60 * 24)
+      )
+      const prorationRatio = daysRemaining / daysInPeriod
+      
+      // Calculate cost difference
+      const currentPricing = calculateSeatAdditionCost(currentQuantity, 0)
+      const additionalCost = pricingInfo.additionalMonthlyCost
+      proratedAmount = Math.round(additionalCost * prorationRatio * 100) // Convert back to cents
+    }
+
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+    // Create checkout session for payment
+    const session = await stripe.checkout.sessions.create({
+      customer: org.stripe_customer_id!,
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Add ${seatsToAdd} seat${seatsToAdd !== 1 ? 's' : ''} to ${newTier} plan`,
+              description: `Prorated charge for ${seatsToAdd} additional seat${seatsToAdd !== 1 ? 's' : ''}. New total: ${newQuantity} seats at $${pricingInfo.newPricePerSeat}/seat/month.`,
+            },
+            unit_amount: proratedAmount, // Amount in cents
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        action: 'add_seats',
+        organization_id: org.id,
+        seats_to_add: seatsToAdd.toString(),
+        current_quantity: currentQuantity.toString(),
+        new_quantity: newQuantity.toString(),
+        current_tier: org.plan_tier || 'starter',
+        new_tier: newTier,
+        subscription_id: org.stripe_subscription_id,
+        subscription_item_id: org.stripe_subscription_item_id,
+        price_id: priceId,
+        supabase_user_id: user.id,
+      },
+      success_url: `${origin}/settings/billing?seats_added=success`,
+      cancel_url: `${origin}/settings/billing?seats_added=canceled`,
+      allow_promotion_codes: true,
+    })
+
+    return NextResponse.json({
+      success: true,
+      url: session.url,
+      sessionId: session.id,
+    })
 
     // ARCHIVED: Original Stripe checkout code (bypassed for fake paywall)
     /*

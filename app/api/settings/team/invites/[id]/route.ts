@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient, createServiceSupabaseClient } from '@/lib/supabase/server'
 
 export async function DELETE(
   request: NextRequest,
@@ -39,14 +39,24 @@ export async function DELETE(
       )
     }
 
-    // Verify invite belongs to same organization and is pending
-    const { data: invite, error: inviteError } = await supabase
+    // Verify invite belongs to same organization and is pending using service client
+    const serviceSupabase = await createServiceSupabaseClient()
+    
+    // First, try with organization_id
+    let inviteQuery = serviceSupabase
       .from('team_invites')
       .select('id, organization_id, team_id, status, email')
       .eq('id', id)
       .eq('status', 'pending')
-      .or(`organization_id.eq.${orgId},team_id.eq.${orgId}`)
-      .single()
+
+    // Check both organization_id and team_id
+    if (userData.organization_id) {
+      inviteQuery = inviteQuery.eq('organization_id', userData.organization_id)
+    } else if (userData.team_id) {
+      inviteQuery = inviteQuery.eq('team_id', userData.team_id)
+    }
+
+    const { data: invite, error: inviteError } = await inviteQuery.single()
 
     if (inviteError) {
       console.error('Error fetching invite:', inviteError)
@@ -57,7 +67,7 @@ export async function DELETE(
         )
       }
       return NextResponse.json(
-        { error: 'Failed to verify invite' },
+        { error: 'Failed to verify invite', details: inviteError.message },
         { status: 500 }
       )
     }
@@ -69,8 +79,17 @@ export async function DELETE(
       )
     }
 
-    // Delete the invite
-    const { error: deleteError } = await supabase
+    // Verify the invite belongs to the user's org/team
+    const inviteOrgId = invite.organization_id || invite.team_id
+    if (inviteOrgId !== orgId) {
+      return NextResponse.json(
+        { error: 'Invite not found or not in your organization' },
+        { status: 404 }
+      )
+    }
+
+    // Delete the invite using service client to bypass RLS
+    const { error: deleteError } = await serviceSupabase
       .from('team_invites')
       .delete()
       .eq('id', id)
