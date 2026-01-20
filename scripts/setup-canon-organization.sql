@@ -59,41 +59,7 @@ BEGIN
         RAISE NOTICE 'Using existing organization: % (%)', org_name, org_id;
     END IF;
     
-    -- Update Canon's user profile to be manager in the organization
-    UPDATE users
-    SET 
-        organization_id = org_id,
-        role = CASE 
-            WHEN role IS NULL OR role = 'rep' THEN 'manager'
-            ELSE role -- Keep admin if already admin
-        END,
-        is_active = true
-    WHERE id = canon_user_id;
-    
-    RAISE NOTICE 'Updated Canon Weaver to manager role in organization';
-    
-    -- Count existing teammates
-    SELECT COUNT(*) INTO teammate_count
-    FROM users u
-    JOIN auth.users au ON u.id = au.id
-    WHERE au.email LIKE 'test.teammate%@looplne.design'
-      AND u.role = 'rep';
-    
-    RAISE NOTICE 'Found % teammates to add', teammate_count;
-    
-    -- Add all teammates to the same organization
-    UPDATE users u
-    SET 
-        organization_id = org_id,
-        is_active = true
-    FROM auth.users au
-    WHERE u.id = au.id
-      AND au.email LIKE 'test.teammate%@looplne.design'
-      AND u.role = 'rep';
-    
-    RAISE NOTICE 'Added all teammates to organization';
-    
-    -- Find or create a team within the organization
+    -- Find or create team first (needed for assigning Canon to team)
     SELECT t.id INTO target_team_id
     FROM teams t
     WHERE t.organization_id = org_id
@@ -115,6 +81,41 @@ BEGIN
     ELSE
         RAISE NOTICE 'Using existing team: %', target_team_id;
     END IF;
+    
+    -- Update Canon's user profile to be manager in the organization AND assign to team
+    UPDATE users
+    SET 
+        organization_id = org_id,
+        team_id = target_team_id,
+        role = CASE 
+            WHEN role IS NULL OR role = 'rep' THEN 'manager'
+            ELSE role -- Keep admin if already admin
+        END,
+        is_active = true
+    WHERE id = canon_user_id;
+    
+    RAISE NOTICE 'Updated Canon Weaver to manager role in organization and assigned to team';
+    
+    -- Count existing teammates
+    SELECT COUNT(*) INTO teammate_count
+    FROM users u
+    JOIN auth.users au ON u.id = au.id
+    WHERE au.email LIKE 'test.teammate%@looplne.design'
+      AND u.role = 'rep';
+    
+    RAISE NOTICE 'Found % teammates to add', teammate_count;
+    
+    -- Add all teammates to the same organization
+    UPDATE users u
+    SET 
+        organization_id = org_id,
+        is_active = true
+    FROM auth.users au
+    WHERE u.id = au.id
+      AND au.email LIKE 'test.teammate%@looplne.design'
+      AND u.role = 'rep';
+    
+    RAISE NOTICE 'Added all teammates to organization';
     
     -- Assign teammates to the team (if they don't have a team already)
     -- Use target_team_id variable to avoid column name conflict
