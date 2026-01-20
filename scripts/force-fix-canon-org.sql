@@ -18,7 +18,8 @@ SELECT
 FROM auth.users au
 LEFT JOIN users u ON au.id = u.id
 LEFT JOIN organizations o ON u.organization_id = o.id
-WHERE au.email ILIKE '%canon%'
+WHERE au.email ILIKE '%canonweaver@mechaweaver.com%'
+   OR au.email ILIKE '%canon%mecha%'
 LIMIT 1;
 
 -- Step 2: Find or create organization
@@ -31,7 +32,9 @@ BEGIN
     -- Get Canon's user ID
     SELECT id INTO canon_user_id
     FROM auth.users
-    WHERE email ILIKE '%canon%'
+    WHERE email ILIKE '%canonweaver@mechaweaver.com%'
+       OR email ILIKE '%canonweaver%mechaweaver%'
+       OR email ILIKE '%canon%mecha%'
     LIMIT 1;
     
     IF canon_user_id IS NULL THEN
@@ -154,7 +157,8 @@ FROM auth.users au
 JOIN users u ON au.id = u.id
 LEFT JOIN organizations o ON u.organization_id = o.id
 LEFT JOIN teams t ON u.team_id = t.id
-WHERE au.email ILIKE '%canon%'
+WHERE au.email ILIKE '%canonweaver@mechaweaver.com%'
+   OR au.email ILIKE '%canon%mecha%'
 LIMIT 1;
 
 -- Step 4: Test what the API sees (exact query from API)
@@ -170,6 +174,9 @@ SELECT
 FROM users u
 LEFT JOIN organizations o ON u.organization_id = o.id
 WHERE u.id IN (
-    SELECT id FROM auth.users WHERE email ILIKE '%canon%' LIMIT 1
+    SELECT id FROM auth.users 
+    WHERE email ILIKE '%canonweaver@mechaweaver.com%'
+       OR email ILIKE '%canon%mecha%'
+    LIMIT 1
 )
 LIMIT 1;

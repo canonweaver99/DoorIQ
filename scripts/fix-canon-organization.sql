@@ -32,7 +32,9 @@ BEGIN
     -- Find Canon's user
     SELECT id, email INTO canon_user_id, canon_email
     FROM auth.users
-    WHERE email ILIKE '%canon%'
+    WHERE email ILIKE '%canonweaver@mechaweaver.com%'
+       OR email ILIKE '%canonweaver%mechaweaver%'
+       OR email ILIKE '%canon%mecha%'
     LIMIT 1;
     
     IF canon_user_id IS NULL THEN
