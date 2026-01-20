@@ -6,13 +6,14 @@
 DO $$
 DECLARE
     org_id UUID;
-    team_id UUID;
+    target_team_id UUID;
     canon_user_id UUID;
+    canon_email TEXT;
     teammate_count INTEGER;
     org_name TEXT := 'Loopline Design';
 BEGIN
     -- Find Canon Weaver's user account (try multiple email patterns)
-    SELECT id INTO canon_user_id
+    SELECT id, email INTO canon_user_id, canon_email
     FROM auth.users
     WHERE email ILIKE '%canonweaver%'
        OR email ILIKE '%canon%loopline%'
@@ -20,10 +21,15 @@ BEGIN
     LIMIT 1;
     
     IF canon_user_id IS NULL THEN
+        -- Show available emails for debugging
+        RAISE NOTICE 'Could not find Canon Weaver. Available emails:';
+        FOR teammate_record IN SELECT email FROM auth.users WHERE email ILIKE '%canon%' LIMIT 10 LOOP
+            RAISE NOTICE '  - %', teammate_record.email;
+        END LOOP;
         RAISE EXCEPTION 'Could not find Canon Weaver user account. Please check email address.';
     END IF;
     
-    RAISE NOTICE 'Found Canon Weaver user: %', canon_user_id;
+    RAISE NOTICE 'Found Canon Weaver user: % (%)', canon_user_id, canon_email;
     
     -- Check if organization already exists for this user
     SELECT u.organization_id INTO org_id
@@ -70,7 +76,7 @@ BEGIN
     SELECT COUNT(*) INTO teammate_count
     FROM users u
     JOIN auth.users au ON u.id = au.id
-    WHERE u.email LIKE 'test.teammate%@looplne.design'
+    WHERE au.email LIKE 'test.teammate%@looplne.design'
       AND u.role = 'rep';
     
     RAISE NOTICE 'Found % teammates to add', teammate_count;
@@ -88,12 +94,12 @@ BEGIN
     RAISE NOTICE 'Added all teammates to organization';
     
     -- Find or create a team within the organization
-    SELECT t.id INTO team_id
+    SELECT t.id INTO target_team_id
     FROM teams t
     WHERE t.organization_id = org_id
     LIMIT 1;
     
-    IF team_id IS NULL THEN
+    IF target_team_id IS NULL THEN
         INSERT INTO teams (
             name,
             organization_id,
@@ -103,22 +109,24 @@ BEGIN
             org_id,
             canon_user_id
         )
-        RETURNING id INTO team_id;
+        RETURNING id INTO target_team_id;
         
-        RAISE NOTICE 'Created new team: Canon''s Team (%)', team_id;
+        RAISE NOTICE 'Created new team: Canon''s Team (%)', target_team_id;
     ELSE
-        RAISE NOTICE 'Using existing team: %', team_id;
+        RAISE NOTICE 'Using existing team: %', target_team_id;
     END IF;
     
     -- Assign teammates to the team (if they don't have a team already)
-    -- Use explicit variable reference to avoid column name conflict
-    EXECUTE format('UPDATE users SET team_id = $1 WHERE id IN (
-        SELECT u.id FROM users u
-        JOIN auth.users au ON u.id = au.id
-        WHERE au.email LIKE ''test.teammate%%@looplne.design''
-          AND u.role = ''rep''
-          AND (u.team_id IS NULL OR u.team_id != $1)
-    )') USING team_id;
+    -- Use target_team_id variable to avoid column name conflict
+    UPDATE users u
+    SET team_id = target_team_id
+    FROM auth.users au
+    WHERE u.id = au.id
+      AND au.email LIKE 'test.teammate%@looplne.design'
+      AND u.role = 'rep'
+      AND (u.team_id IS NULL OR u.team_id != target_team_id);
+    
+    RAISE NOTICE 'Assigned teammates to team';
     
     -- Update organization seat count
     UPDATE organizations
@@ -133,7 +141,7 @@ BEGIN
     RAISE NOTICE '';
     RAISE NOTICE '✅ Setup complete!';
     RAISE NOTICE '   Organization: % (%)', org_name, org_id;
-    RAISE NOTICE '   Team: Canon''s Team (%)', team_id;
+    RAISE NOTICE '   Team: Canon''s Team (%)', target_team_id;
     RAISE NOTICE '   Manager: Canon Weaver';
     RAISE NOTICE '   Teammates: %', teammate_count;
     RAISE NOTICE '   Seats used: %', (SELECT seats_used FROM organizations WHERE id = org_id);
@@ -167,6 +175,7 @@ SELECT
     au.email,
     u.role,
     u.is_active,
+    u.organization_id,
     t.name as team_name,
     o.name as organization_name
 FROM users u
@@ -174,6 +183,7 @@ JOIN auth.users au ON u.id = au.id
 LEFT JOIN teams t ON u.team_id = t.id
 LEFT JOIN organizations o ON u.organization_id = o.id
 WHERE o.name = 'Loopline Design'
+   OR au.email ILIKE '%canonweaver%'
 ORDER BY 
     CASE WHEN u.role IN ('manager', 'admin') THEN 1 ELSE 2 END,
     u.full_name;
