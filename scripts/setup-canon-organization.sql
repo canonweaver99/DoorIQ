@@ -111,13 +111,14 @@ BEGIN
     END IF;
     
     -- Assign teammates to the team (if they don't have a team already)
-    UPDATE users u
-    SET team_id = team_id
-    FROM auth.users au
-    WHERE u.id = au.id
-      AND au.email LIKE 'test.teammate%@looplne.design'
-      AND u.role = 'rep'
-      AND (u.team_id IS NULL OR u.team_id != team_id);
+    -- Use explicit variable reference to avoid column name conflict
+    EXECUTE format('UPDATE users SET team_id = $1 WHERE id IN (
+        SELECT u.id FROM users u
+        JOIN auth.users au ON u.id = au.id
+        WHERE au.email LIKE ''test.teammate%%@looplne.design''
+          AND u.role = ''rep''
+          AND (u.team_id IS NULL OR u.team_id != $1)
+    )') USING team_id;
     
     -- Update organization seat count
     UPDATE organizations
