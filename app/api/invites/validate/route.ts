@@ -24,16 +24,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid invite token' }, { status: 404 })
     }
 
-    // Get team info separately
-    const { data: team, error: teamError } = await (supabase as any)
-      .from('teams')
-      .select('id, name')
-      .eq('id', invite.team_id)
-      .single()
+    // Get team or organization info based on what's available
+    let teamOrOrg: { id: string; name: string } | null = null
+    
+    if (invite.team_id) {
+      // Legacy: invite has team_id
+      const { data: team, error: teamError } = await (supabase as any)
+        .from('teams')
+        .select('id, name')
+        .eq('id', invite.team_id)
+        .single()
 
-    if (teamError || !team) {
-      console.error('Team error:', teamError)
-      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
+      if (teamError || !team) {
+        console.error('Team error:', teamError)
+        return NextResponse.json({ error: 'Team not found' }, { status: 404 })
+      }
+      teamOrOrg = team
+    } else if (invite.organization_id) {
+      // New: invite has organization_id
+      const { data: org, error: orgError } = await (supabase as any)
+        .from('organizations')
+        .select('id, name')
+        .eq('id', invite.organization_id)
+        .single()
+
+      if (orgError || !org) {
+        console.error('Organization error:', orgError)
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+      }
+      teamOrOrg = org
+    } else {
+      return NextResponse.json({ error: 'Invite is missing team or organization information' }, { status: 400 })
     }
 
     // Get inviter info separately
@@ -48,8 +69,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Inviter not found' }, { status: 404 })
     }
 
-    // Combine the data
-    invite.team = team
+    // Combine the data - use 'team' key for compatibility with existing frontend
+    invite.team = teamOrOrg
     invite.inviter = inviter
 
     // Check if invite is still valid

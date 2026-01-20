@@ -94,8 +94,21 @@ export default function InviteAcceptPage() {
         throw new Error(data.error || 'Failed to accept invite')
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard')
+      // Check if user needs onboarding
+      const supabase = createClient()
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('onboarding_completed, role')
+        .eq('id', user.id)
+        .single()
+
+      // If user has a role but hasn't completed onboarding, send them to onboarding
+      // Otherwise, send them to dashboard/home
+      if (userProfile?.role && !userProfile.onboarding_completed) {
+        router.push('/onboarding')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (err: any) {
       console.error('Error accepting invite:', err)
       setError(err.message || 'Failed to accept invite')
