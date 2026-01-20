@@ -309,7 +309,20 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
 
   // Move hooks before early returns to comply with Rules of Hooks
   const topPerformers = useMemo(() => analytics?.repPerformance?.slice(0, 3) || [], [analytics?.repPerformance])
-  const needsAttention = useMemo(() => analytics?.repPerformance?.filter(r => r.trend < 0).slice(0, 3) || [], [analytics?.repPerformance])
+  const needsAttention = useMemo(() => {
+    if (!analytics?.repPerformance) return []
+    // Sort by lowest avgScore first, then lowest revenue, then take top 3
+    return [...analytics.repPerformance]
+      .sort((a, b) => {
+        // First sort by avgScore (ascending - lowest first)
+        if (a.avgScore !== b.avgScore) {
+          return a.avgScore - b.avgScore
+        }
+        // If scores are equal, sort by revenue (ascending - lowest first)
+        return a.revenue - b.revenue
+      })
+      .slice(0, 3)
+  }, [analytics?.repPerformance])
 
   const displayTeamStats = useMemo(() => teamStats || {
     totalReps: analytics?.activeReps || 0,
@@ -456,10 +469,10 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             change: '', 
             changeValue: 0,
             icon: DollarSign,
-            bgColor: '#1a3a2a',
-            borderColor: '#2a6a4a',
-            textColor: 'text-emerald-200',
-            iconColor: 'text-emerald-300',
+            bgColor: '#1e3a5f',
+            borderColor: '#3b82f6',
+            textColor: 'text-blue-200',
+            iconColor: 'text-blue-400',
             subtitle: 'Virtual earnings from training'
           },
           { 
@@ -468,10 +481,10 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             change: `${analytics.changes.sessions > 0 ? '+' : ''}${analytics.changes.sessions}%`, 
             changeValue: analytics.changes.sessions,
             icon: Target,
-            bgColor: '#1a1a1a',
-            borderColor: '#2a2a2a',
-            textColor: 'text-gray-300',
-            iconColor: 'text-gray-400',
+            bgColor: '#3a1a3a',
+            borderColor: '#a855f7',
+            textColor: 'text-purple-200',
+            iconColor: 'text-purple-400',
             subtitle: 'Training sessions completed'
           },
           { 
@@ -481,10 +494,10 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
             change: `${analytics.changes.score > 0 ? '+' : ''}${analytics.changes.score}%`, 
             changeValue: analytics.changes.score,
             icon: TrendingUp,
-            bgColor: '#1a1a1a',
-            borderColor: '#2a2a2a',
-            textColor: 'text-gray-300',
-            iconColor: 'text-gray-400',
+            bgColor: '#3a2a1a',
+            borderColor: '#f97316',
+            textColor: 'text-orange-200',
+            iconColor: 'text-orange-400',
             subtitle: 'Overall performance rating'
           },
           { 
@@ -513,15 +526,15 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
               style={{
                 backgroundColor: metric.bgColor,
                 border: `2px solid ${metric.borderColor}`,
-                boxShadow: metric.bgColor === '#1a3a2a' 
-                  ? 'inset 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 16px rgba(0, 0, 0, 0.4)'
+                boxShadow: metric.bgColor !== '#1a1a1a'
+                  ? `inset 0 0 20px ${metric.borderColor}33, 0 4px 16px rgba(0, 0, 0, 0.4)`
                   : 'inset 0 0 20px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.4)'
               }}
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 rounded-xl border" style={{ 
-                    backgroundColor: metric.bgColor === '#1a3a2a' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    backgroundColor: metric.bgColor !== '#1a1a1a' ? `${metric.borderColor}33` : 'rgba(255, 255, 255, 0.05)',
                     borderColor: metric.borderColor 
                   }}>
                     <Icon className={`w-5 h-5 ${metric.iconColor}`} />
@@ -729,6 +742,7 @@ export default function AnalyticsDashboard({ timePeriod = '30' }: AnalyticsDashb
                     axisLine={{ stroke: '#3a3a3a', strokeWidth: 2 }}
                     width={65}
                     tickMargin={8}
+                    domain={[0, 100]}
                     tickFormatter={(value) => `${value}%`}
                     label={{ value: 'Score', angle: 90, position: 'insideRight', style: { textAnchor: 'middle', fill: '#A855F7', fontSize: 12, fontWeight: 600 } }}
                   />

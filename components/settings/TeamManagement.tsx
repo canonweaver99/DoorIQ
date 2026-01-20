@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, UserPlus, Loader2, CheckSquare, Square, ArrowRight, Building2, ChevronRight, X } from 'lucide-react'
+import { Users, UserPlus, Loader2, CheckSquare, Square, ArrowRight, Building2, ChevronDown, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface Team {
   id: string
@@ -206,7 +212,7 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-[#00d4aa]" />
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     )
   }
@@ -254,19 +260,18 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                 return (
                   <div
                     key={team.id}
-                    className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                    className={`p-4 rounded-lg border transition-colors ${
                       isSelected 
-                        ? 'bg-[#0a0a0a] border-[#00d4aa]' 
+                        ? 'bg-[#0a0a0a] border-purple-500' 
                         : 'bg-[#0a0a0a] border-[#2a2a2a] hover:border-[#3a3a3a]'
                     }`}
-                    onClick={() => setSelectedTeamId(isSelected ? null : team.id)}
                   >
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                      <div className="flex-1 cursor-pointer" onClick={() => setSelectedTeamId(isSelected ? null : team.id)}>
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-medium text-white font-sans">{team.name}</h4>
                           {isSelected && (
-                            <span className="text-xs text-[#00d4aa] font-sans">Selected</span>
+                            <span className="text-xs text-purple-400 font-sans">Selected</span>
                           )}
                         </div>
                         <p className="text-sm text-[#a0a0a0] font-sans">
@@ -290,54 +295,43 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2 ml-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (selectedReps.size > 0) {
-                              setTargetTeamId(team.id)
-                              setShowMoveModal(true)
-                            } else {
-                              showToast({ 
-                                type: 'error', 
-                                title: 'No reps selected', 
-                                message: 'Please select reps to move first' 
-                              })
-                            }
-                          }}
-                          disabled={selectedReps.size === 0 || movingReps}
-                          className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a] min-w-[32px]"
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                        {!isSelected && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedTeamId(team.id)
-                            }}
-                            className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a] min-w-[32px]"
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {isSelected && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setSelectedTeamId(null)
-                            }}
-                            className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a] min-w-[32px]"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
+                      <div className="ml-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => e.stopPropagation()}
+                              className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a] min-w-[32px]"
+                            >
+                              <ChevronDown className={`w-4 h-4 transition-transform ${isSelected ? 'rotate-180' : ''}`} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#2a2a2a]">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedTeamId(isSelected ? null : team.id)
+                              }}
+                              className="text-white hover:bg-[#2a2a2a] cursor-pointer"
+                            >
+                              {isSelected ? 'Collapse' : 'Expand'}
+                            </DropdownMenuItem>
+                            {selectedReps.size > 0 && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setTargetTeamId(team.id)
+                                  setShowMoveModal(true)
+                                }}
+                                disabled={movingReps}
+                                className="text-white hover:bg-[#2a2a2a] cursor-pointer"
+                              >
+                                Move Selected Reps Here
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>
@@ -404,6 +398,56 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                     </>
                   )}
                 </Button>
+                {selectedReps.size > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={movingReps}
+                        className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
+                      >
+                        <ArrowRight className="w-4 h-4 mr-2" />
+                        Move ({selectedReps.size})
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#2a2a2a]">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setTargetTeamId(null)
+                          setShowMoveModal(true)
+                        }}
+                        className="text-white hover:bg-[#2a2a2a] cursor-pointer"
+                      >
+                        Unassign
+                      </DropdownMenuItem>
+                      {teams.map((team) => {
+                        // Get the current team of selected reps (if they're all in the same team)
+                        const selectedRepsArray = Array.from(selectedReps)
+                        const selectedRepsData = reps.filter(r => selectedRepsArray.includes(r.id))
+                        const currentTeamId = selectedRepsData.length > 0 && selectedRepsData.every(r => r.team_id === team.id) 
+                          ? team.id 
+                          : null
+                        
+                        // Don't show the current team as an option
+                        if (currentTeamId === team.id) return null
+                        
+                        return (
+                          <DropdownMenuItem
+                            key={team.id}
+                            onClick={() => {
+                              setTargetTeamId(team.id)
+                              setShowMoveModal(true)
+                            }}
+                            className="text-white hover:bg-[#2a2a2a] cursor-pointer"
+                          >
+                            {team.name}
+                          </DropdownMenuItem>
+                        )
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -453,14 +497,14 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                   key={rep.id}
                   className={`
                     p-4 rounded-lg border transition-colors cursor-pointer
-                    ${selectedReps.has(rep.id) ? 'bg-[#0a0a0a] border-[#00d4aa]' : 'bg-[#0a0a0a] border-[#2a2a2a] hover:border-[#3a3a3a]'}
+                    ${selectedReps.has(rep.id) ? 'bg-[#0a0a0a] border-purple-500' : 'bg-[#0a0a0a] border-[#2a2a2a] hover:border-[#3a3a3a]'}
                   `}
                   onClick={() => toggleRepSelection(rep.id)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
                       {selectedReps.has(rep.id) ? (
-                        <CheckSquare className="w-5 h-5 text-[#00d4aa]" />
+                        <CheckSquare className="w-5 h-5 text-purple-500" />
                       ) : (
                         <Square className="w-5 h-5 text-[#666]" />
                       )}
@@ -572,7 +616,7 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 placeholder="e.g., Sales Team A"
-                className="mt-2 bg-[#0a0a0a] border-[#2a2a2a] text-white focus:border-[#00d4aa] focus:ring-[#00d4aa]/20"
+                className="mt-2 bg-[#0a0a0a] border-[#2a2a2a] text-white focus:border-purple-500 focus:ring-purple-500/20"
                 onKeyPress={(e) => e.key === 'Enter' && !creatingTeam && newTeamName.trim() && handleCreateTeam()}
               />
             </div>

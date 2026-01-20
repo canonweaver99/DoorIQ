@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Loader2, CheckCircle2, XCircle, UserPlus } from 'lucide-react'
@@ -20,9 +20,10 @@ interface InviteData {
   email: string
 }
 
-export default function InviteAcceptPage() {
+function InviteAcceptPageContent() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const token = params.token as string
 
   const [loading, setLoading] = useState(true)
@@ -30,10 +31,25 @@ export default function InviteAcceptPage() {
   const [invite, setInvite] = useState<InviteData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [autoSigningIn, setAutoSigningIn] = useState(false)
 
   useEffect(() => {
+    // Check for error messages from callback
+    const errorParam = searchParams.get('error')
+    if (errorParam) {
+      const errorMessages: Record<string, string> = {
+        email_mismatch: 'The email you signed in with does not match the invited email address.',
+        invalid_invite: 'This invite is no longer valid or has expired.',
+        no_seats: 'No seats available in this organization. Please contact the organization admin.',
+        update_failed: 'Failed to join the team. Please try again.',
+      }
+      setError(errorMessages[errorParam] || 'An error occurred while processing your invite.')
+      setLoading(false)
+      return
+    }
+    
     checkAuthAndValidateInvite()
-  }, [token])
+  }, [token, searchParams])
 
   const checkAuthAndValidateInvite = async () => {
     try {
@@ -57,11 +73,63 @@ export default function InviteAcceptPage() {
       }
 
       setInvite(data.invite)
+
+      // If user is not authenticated, automatically trigger Google OAuth
+      if (!currentUser && data.invite) {
+        await autoSignInWithGoogle()
+      }
     } catch (err: any) {
       console.error('Error validating invite:', err)
       setError(err.message || 'Failed to validate invite')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const autoSignInWithGoogle = async () => {
+    try {
+      setAutoSigningIn(true)
+      const supabase = createClient()
+      
+      if (typeof window === 'undefined') {
+        return
+      }
+
+      const origin = window.location.origin
+      
+      // Build callback URL with invite token
+      const callbackUrl = `${origin}/auth/callback?invite=${token}&next=${encodeURIComponent(`/invite/${token}`)}`
+
+      console.log('🔐 Auto-initiating Google OAuth for invite')
+      console.log('📍 Callback URL:', callbackUrl)
+
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: callbackUrl,
+          skipBrowserRedirect: false,
+        },
+      })
+
+      if (signInError) {
+        console.error('❌ OAuth error:', signInError)
+        setError('Failed to sign in with Google. Please try manually.')
+        setAutoSigningIn(false)
+        return
+      }
+
+      // Redirect to OAuth URL
+      if (data?.url) {
+        console.log('✅ Redirecting to OAuth URL:', data.url)
+        window.location.replace(data.url)
+        return // Don't reset loading - redirect is happening
+      }
+
+      setAutoSigningIn(false)
+    } catch (err: any) {
+      console.error('❌ Auto sign-in error:', err)
+      setError('Failed to automatically sign in. Please use the button below.')
+      setAutoSigningIn(false)
     }
   }
 
@@ -117,12 +185,14 @@ export default function InviteAcceptPage() {
     }
   }
 
-  if (loading) {
+  if (loading || autoSigningIn) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-purple-500 mx-auto mb-4" />
-          <p className="text-slate-400">Validating invite...</p>
+          <p className="text-slate-400">
+            {autoSigningIn ? 'Signing you in with Google...' : 'Validating invite...'}
+          </p>
         </div>
       </div>
     )
@@ -243,6 +313,21 @@ export default function InviteAcceptPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function InviteAcceptPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-purple-500 mx-auto mb-4" />
+          <p className="text-slate-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <InviteAcceptPageContent />
+    </Suspense>
   )
 }
 

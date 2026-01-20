@@ -121,10 +121,11 @@ function LoginForm() {
 
       // Preserve redirect params in OAuth callback
       let callbackUrl = `${origin}/auth/callback`
-      if (nextUrl || checkoutIntent) {
+      if (nextUrl || checkoutIntent || inviteToken) {
         const params = new URLSearchParams()
         if (nextUrl) params.set('next', nextUrl)
         if (checkoutIntent) params.set('checkout', checkoutIntent)
+        if (inviteToken) params.set('invite', inviteToken)
         callbackUrl += `?${params.toString()}`
       }
 
