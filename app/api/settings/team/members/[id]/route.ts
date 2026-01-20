@@ -5,9 +5,10 @@ import { sendManagerPromotionEmail } from '@/lib/email/send'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -35,8 +36,6 @@ export async function PATCH(
         { status: 400 }
       )
     }
-
-    const { id } = params
     const body = await request.json()
     const { role } = body
 
@@ -49,34 +48,38 @@ export async function PATCH(
 
     // Verify member belongs to same organization using service client to bypass RLS
     const serviceSupabase = await createServiceSupabaseClient()
-    const { data: member, error: memberError } = await serviceSupabase
+    
+    // First, get the member without organization filter to check if they exist
+    const { data: memberCheck, error: checkError } = await serviceSupabase
       .from('users')
-      .select('organization_id, role, email, full_name')
+      .select('id, organization_id, role, email, full_name')
       .eq('id', id)
-      .eq('organization_id', userData.organization_id)
-      .single()
+      .maybeSingle()
 
-    if (memberError) {
-      console.error('Error fetching member:', memberError)
-      // Check if it's a "not found" error or a different error
-      if (memberError.code === 'PGRST116') {
-        return NextResponse.json(
-          { error: 'Member not found or not in your organization' },
-          { status: 404 }
-        )
-      }
+    if (checkError) {
+      console.error('Error fetching member:', checkError)
       return NextResponse.json(
-        { error: 'Failed to verify member', details: memberError.message },
+        { error: 'Failed to verify member', details: checkError.message },
         { status: 500 }
       )
     }
 
-    if (!member) {
+    if (!memberCheck) {
       return NextResponse.json(
-        { error: 'Member not found or not in your organization' },
+        { error: 'Member not found' },
         { status: 404 }
       )
     }
+
+    // Verify member belongs to same organization
+    if (memberCheck.organization_id !== userData.organization_id) {
+      return NextResponse.json(
+        { error: 'Member does not belong to your organization' },
+        { status: 403 }
+      )
+    }
+
+    const member = memberCheck
 
     // Don't allow changing admin role
     if (member.role === 'admin') {
@@ -129,9 +132,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -160,37 +164,40 @@ export async function DELETE(
       )
     }
 
-    const { id } = params
-
     // Verify member belongs to same organization using service client to bypass RLS
     const serviceSupabase = await createServiceSupabaseClient()
-    const { data: member, error: memberError } = await serviceSupabase
+    
+    // First, get the member without organization filter to check if they exist
+    const { data: memberCheck, error: checkError } = await serviceSupabase
       .from('users')
-      .select('organization_id, role')
+      .select('id, organization_id, role')
       .eq('id', id)
-      .eq('organization_id', userData.organization_id)
-      .single()
+      .maybeSingle()
 
-    if (memberError) {
-      console.error('Error fetching member:', memberError)
-      if (memberError.code === 'PGRST116') {
-        return NextResponse.json(
-          { error: 'Member not found or not in your organization' },
-          { status: 404 }
-        )
-      }
+    if (checkError) {
+      console.error('Error fetching member:', checkError)
       return NextResponse.json(
-        { error: 'Failed to verify member', details: memberError.message },
+        { error: 'Failed to verify member', details: checkError.message },
         { status: 500 }
       )
     }
 
-    if (!member) {
+    if (!memberCheck) {
       return NextResponse.json(
-        { error: 'Member not found or not in your organization' },
+        { error: 'Member not found' },
         { status: 404 }
       )
     }
+
+    // Verify member belongs to same organization
+    if (memberCheck.organization_id !== userData.organization_id) {
+      return NextResponse.json(
+        { error: 'Member does not belong to your organization' },
+        { status: 403 }
+      )
+    }
+
+    const member = memberCheck
 
     // Don't allow removing admin or yourself
     if (member.role === 'admin') {
