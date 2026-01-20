@@ -97,7 +97,8 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'Think About It Tina': '/Think About It Tina.png',
     'Veteran Victor': '/Veteran Victor Landcape.png',
     'Tag Team Tanya & Tom': '/tanya and tom.png',
-    'Angry Indian': '/angry-indian.png'
+    'Angry Indian': '/angry-indian.png',
+    'Nick Fuentes': '/nick-fuentes.png'
   }
   
   if (agentImageMap[agent.name]) {
@@ -1468,40 +1469,45 @@ function TrainerPageContent() {
         }
       }
       
-      // Fetch ElevenLabs conversation token
-      console.log('🎟️ Fetching ElevenLabs conversation token...')
-      try {
-        const tokenResponse = await fetch('/api/eleven/conversation-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            agentId: selectedAgent.eleven_agent_id,
-            is_free_demo: isFreeDemo
+      // Fetch ElevenLabs conversation token (skip for Nick Fuentes - no AI connection needed)
+      if (selectedAgent.name !== 'Nick Fuentes') {
+        console.log('🎟️ Fetching ElevenLabs conversation token...')
+        try {
+          const tokenResponse = await fetch('/api/eleven/conversation-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              agentId: selectedAgent.eleven_agent_id,
+              is_free_demo: isFreeDemo
+            })
           })
-        })
-        
-        if (!tokenResponse.ok) {
-          const errorData = await tokenResponse.json().catch(() => ({}))
-          throw new Error(errorData.error || `Token request failed: ${tokenResponse.status}`)
+          
+          if (!tokenResponse.ok) {
+            const errorData = await tokenResponse.json().catch(() => ({}))
+            throw new Error(errorData.error || `Token request failed: ${tokenResponse.status}`)
+          }
+          
+          const tokenData = await tokenResponse.json()
+          const token = tokenData.conversation_token || tokenData.token
+          
+          if (!token) {
+            throw new Error('No conversation token received from server')
+          }
+          
+          const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+          console.log('✅ Got conversation token:', token.substring(0, 30) + '...', {
+            isMobile,
+            windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A',
+            tokenLength: token.length
+          })
+          setConversationToken(token)
+        } catch (tokenError: any) {
+          console.error('❌ Failed to get conversation token:', tokenError)
+          throw new Error(`Failed to connect to AI agent: ${tokenError.message}`)
         }
-        
-        const tokenData = await tokenResponse.json()
-        const token = tokenData.conversation_token || tokenData.token
-        
-        if (!token) {
-          throw new Error('No conversation token received from server')
-        }
-        
-        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-        console.log('✅ Got conversation token:', token.substring(0, 30) + '...', {
-          isMobile,
-          windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A',
-          tokenLength: token.length
-        })
-        setConversationToken(token)
-      } catch (tokenError: any) {
-        console.error('❌ Failed to get conversation token:', tokenError)
-        throw new Error(`Failed to connect to AI agent: ${tokenError.message}`)
+      } else {
+        console.log('🎬 Nick Fuentes session - skipping ElevenLabs connection')
+        setConversationToken(null) // Explicitly set to null for Nick Fuentes
       }
       
       setSessionId(newId)
@@ -2869,7 +2875,8 @@ function TrainerPageContent() {
       >
       {/* ElevenLabs WebRTC Conversation - invisible component that manages the voice connection */}
       {/* CRITICAL: Always render when conditions are met - don't hide on mobile */}
-      {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && (
+      {/* Skip ElevenLabs for Nick Fuentes - no AI connection needed */}
+      {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && selectedAgent.name !== 'Nick Fuentes' && (
         <Suspense fallback={null}>
           <div className="hidden" key={`eleven-labs-${sessionId}-${conversationToken.substring(0, 10)}`}>
             <ElevenLabsConversation
@@ -4526,7 +4533,8 @@ function TrainerPageContent() {
       <div className="min-h-screen bg-black font-sans">
       {/* ElevenLabs WebRTC Conversation - invisible component that manages the voice connection */}
       {/* CRITICAL: Always render when conditions are met - identical to desktop version */}
-      {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && (
+      {/* Skip ElevenLabs for Nick Fuentes - no AI connection needed */}
+      {sessionActive && conversationToken && selectedAgent?.eleven_agent_id && sessionId && selectedAgent.name !== 'Nick Fuentes' && (
         <Suspense fallback={null}>
           <div className="hidden" key={`eleven-labs-${sessionId}-${conversationToken.substring(0, 10)}`}>
             <ElevenLabsConversation
