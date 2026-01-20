@@ -1410,6 +1410,13 @@ function TrainerPageContent() {
       // Play knock sound when starting session
       playSound('/sounds/knock.mp3', 0.95)
 
+      // Play Nick Fuentes voice audio 5 seconds after door knock
+      if (selectedAgent.name === 'Nick Fuentes') {
+        setTimeout(() => {
+          playSound('/sounds/nick-fuentes-voice.mp3', 0.9)
+        }, 5000)
+      }
+
       // Play door opening video on initial knock
       setShowDoorOpeningVideo(true)
       try {
