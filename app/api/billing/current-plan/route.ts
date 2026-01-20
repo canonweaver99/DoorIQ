@@ -24,17 +24,42 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's organization
-    const { data: userData } = await supabase
+    const { data: userData, error: userDataError } = await supabase
       .from('users')
-      .select('organization_id, role')
+      .select('organization_id, role, team_id, email, full_name')
       .eq('id', user.id)
       .single()
 
-    if (!userData?.organization_id) {
+    // Log for debugging
+    console.log('Billing API - User data:', {
+      userId: user.id,
+      userEmail: user.email,
+      userData,
+      userDataError
+    })
+
+    if (!userData) {
+      console.error('Billing API - User record not found in users table')
+      return NextResponse.json({
+        plan: null,
+        isOrganization: false,
+        message: 'User record not found',
+      })
+    }
+
+    if (!userData.organization_id) {
+      console.warn('Billing API - No organization_id found for user:', user.id)
       return NextResponse.json({
         plan: null,
         isOrganization: false,
         message: 'No organization found',
+        debug: {
+          userId: user.id,
+          userEmail: user.email,
+          hasUserRecord: !!userData,
+          organizationId: userData.organization_id,
+          teamId: userData.team_id
+        }
       })
     }
 

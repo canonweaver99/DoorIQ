@@ -125,16 +125,28 @@ function BillingSettingsPage() {
   const fetchBillingData = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/billing/current-plan')
+      // Add cache-busting parameter to force fresh data
+      const response = await fetch(`/api/billing/current-plan?t=${Date.now()}`, {
+        cache: 'no-store'
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch billing data')
       }
       const data = await response.json()
+      
+      // Log for debugging
+      console.log('Billing data response:', data)
+      
       setPlan(data.plan)
       setSubscription(data.subscription)
       setUsage(data.usage)
       setIsManager(data.isManager)
       setIsIndividualPlan(data.isIndividualPlan || false)
+      
+      // If plan is null, log the message for debugging
+      if (!data.plan && data.message) {
+        console.warn('No plan found:', data.message)
+      }
     } catch (err: any) {
       console.error('Error fetching billing data:', err)
       setError(err.message || 'Failed to load billing information')
