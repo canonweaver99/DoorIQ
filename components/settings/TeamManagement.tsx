@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, UserPlus, Loader2, CheckSquare, Square, ArrowRight, Building2, ChevronDown, X } from 'lucide-react'
+import { Users, UserPlus, Loader2, CheckSquare, Square, ArrowRight, Building2, ChevronDown, X, Trash2, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,6 +56,9 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [showMoveModal, setShowMoveModal] = useState(false)
   const [targetTeamId, setTargetTeamId] = useState<string | null>(null)
+  const [deletingTeamId, setDeletingTeamId] = useState<string | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [teamToDelete, setTeamToDelete] = useState<Team | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -209,6 +212,41 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
     }
   }
 
+  const handleDeleteTeam = async (team: Team) => {
+    setDeletingTeamId(team.id)
+    try {
+      const response = await fetch(`/api/settings/organization/teams/${team.id}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete team')
+      }
+
+      showToast({
+        type: 'success',
+        title: 'Team deleted',
+        message: data.message || `Team "${team.name}" has been deleted`,
+      })
+
+      // Clear selection if deleted team was selected
+      if (selectedTeamId === team.id) {
+        setSelectedTeamId(null)
+      }
+
+      await fetchData()
+    } catch (err: any) {
+      console.error('Error deleting team:', err)
+      showToast({ type: 'error', title: 'Failed to delete team', message: err.message })
+    } finally {
+      setDeletingTeamId(null)
+      setShowDeleteModal(false)
+      setTeamToDelete(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -330,6 +368,27 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                                 Move Selected Reps Here
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setTeamToDelete(team)
+                                setShowDeleteModal(true)
+                              }}
+                              disabled={deletingTeamId === team.id}
+                              className="text-red-400 hover:bg-red-500/10 cursor-pointer"
+                            >
+                              {deletingTeamId === team.id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Deleting...
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Team
+                                </>
+                              )}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -583,6 +642,67 @@ export function TeamManagement({ organizationId }: TeamManagementProps) {
                 </>
               ) : (
                 'Confirm Move'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Team Confirmation Dialog */}
+      <Dialog
+        open={showDeleteModal}
+        onOpenChange={(open) => {
+          setShowDeleteModal(open)
+          if (!open) {
+            setTeamToDelete(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Team
+            </DialogTitle>
+            <DialogDescription>
+              {teamToDelete && (
+                <>
+                  Are you sure you want to delete <strong className="text-white">{teamToDelete.name}</strong>?
+                  <br />
+                  <br />
+                  This will unassign all {teamToDelete.member_count} member{teamToDelete.member_count !== 1 ? 's' : ''} from this team.
+                  This action cannot be undone.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteModal(false)
+                setTeamToDelete(null)
+              }}
+              disabled={deletingTeamId !== null}
+              className="border-[#2a2a2a] text-white hover:bg-[#2a2a2a]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => teamToDelete && handleDeleteTeam(teamToDelete)}
+              disabled={deletingTeamId !== null || !teamToDelete}
+              className="bg-red-600 hover:bg-red-700 text-white font-medium font-sans"
+            >
+              {deletingTeamId ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Team
+                </>
               )}
             </Button>
           </DialogFooter>

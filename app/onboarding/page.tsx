@@ -43,7 +43,7 @@ function OnboardingContent() {
   const [userName, setUserName] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [planName, setPlanName] = useState<string>('Team Plan')
+  const [planName, setPlanName] = useState<string>('Individual Plan')
 
   const steps = role === 'manager' ? MANAGER_STEPS : REP_STEPS
 
@@ -63,7 +63,7 @@ function OnboardingContent() {
 
           const { data: profile, error: profileError } = await supabase
             .from('users')
-            .select('full_name, role, onboarding_current_step, onboarding_role')
+            .select('full_name, role, onboarding_current_step, onboarding_role, organization_id')
             .eq('id', user.id)
             .single()
 
@@ -78,6 +78,19 @@ function OnboardingContent() {
 
             setUserName(profile.full_name || '')
             if (profile.onboarding_role) setRole(profile.onboarding_role as 'manager' | 'rep')
+            
+            // Fetch organization plan name
+            if (profile.organization_id) {
+              const { data: org, error: orgError } = await supabase
+                .from('organizations')
+                .select('seat_limit')
+                .eq('id', profile.organization_id)
+                .single()
+              
+              if (!cancelled && !orgError && org?.seat_limit) {
+                setPlanName(org.seat_limit === 1 ? 'Individual Plan' : 'Team Plan')
+              }
+            }
             
             // Validate step is within bounds
             const roleSteps = profile.onboarding_role === 'manager' ? MANAGER_STEPS : REP_STEPS

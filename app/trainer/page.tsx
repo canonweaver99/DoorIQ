@@ -1411,28 +1411,47 @@ function TrainerPageContent() {
       // Play knock sound when starting session
       playSound('/sounds/knock.mp3', 0.95)
 
-      // Play Nick Fuentes voice audio 5 seconds after door knock
+      // Play Nick Fuentes voice audio 8 seconds after door knock
       if (selectedAgent.name === 'Nick Fuentes') {
         setTimeout(() => {
           playSound('/sounds/nick-fuentes-voice.mp3', 0.9)
-        }, 5000)
+        }, 8000)
       }
 
       // Play door opening video on initial knock
       setShowDoorOpeningVideo(true)
       try {
-        // Wait for video element to be ready
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Wait for video element to be ready - increased wait time for better reliability
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // Retry logic for video element
+        let retries = 0
+        const maxRetries = 10
+        while (!doorOpeningVideoRef.current && retries < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          retries++
+        }
         
         if (doorOpeningVideoRef.current) {
           const video = doorOpeningVideoRef.current
           video.currentTime = 0
+          
+          // Ensure video is loaded before playing
+          if (video.readyState < 2) {
+            await new Promise((resolve) => {
+              video.addEventListener('loadeddata', resolve, { once: true })
+              video.load()
+            })
+          }
+          
           await video.play()
+          console.log('✅ Door opening video started playing')
           
           // Wait for video to finish playing
           await new Promise<void>((resolve) => {
             const handleEnded = () => {
               video.removeEventListener('ended', handleEnded)
+              console.log('✅ Door opening video finished')
               resolve()
             }
             video.addEventListener('ended', handleEnded)
@@ -1440,11 +1459,15 @@ function TrainerPageContent() {
             // Fallback timeout in case video doesn't fire ended event
             setTimeout(() => {
               video.removeEventListener('ended', handleEnded)
+              console.log('⚠️ Door opening video timeout - continuing anyway')
               resolve()
-            }, 5000) // Max 5 seconds wait
+            }, 10000) // Max 10 seconds wait
           })
+        } else {
+          console.warn('⚠️ Door opening video ref not available after retries')
         }
       } catch (e) {
+        console.error('❌ Could not play door opening video:', e)
         logger.warn('Could not play door opening video', { error: e })
       }
       
@@ -3265,6 +3288,14 @@ function TrainerPageContent() {
                           autoPlay
                           muted
                           playsInline
+                          onLoadedData={() => {
+                            console.log('✅ Door opening video loaded:', videoPathRaw)
+                            if (doorOpeningVideoRef.current) {
+                              doorOpeningVideoRef.current.play().catch(err => {
+                                console.error('❌ Failed to autoplay door opening video:', err)
+                              })
+                            }
+                          }}
                           onError={(e) => {
                             console.error('❌ Door opening video failed to load:', videoPathRaw, 'Encoded:', videoPath, e)
                             setShowDoorOpeningVideo(false)
@@ -3573,8 +3604,16 @@ function TrainerPageContent() {
                             autoPlay
                             muted
                             playsInline
+                            onLoadedData={() => {
+                              console.log('✅ Door opening video loaded:', videoPathRaw)
+                              if (doorOpeningVideoRef.current) {
+                                doorOpeningVideoRef.current.play().catch(err => {
+                                  console.error('❌ Failed to autoplay door opening video:', err)
+                                })
+                              }
+                            }}
                             onError={(e) => {
-                              console.error('❌ Door opening video failed to load:', videoPathRaw)
+                              console.error('❌ Door opening video failed to load:', videoPathRaw, 'Encoded:', videoPath, e)
                               setShowDoorOpeningVideo(false)
                             }}
                           />
@@ -3960,8 +3999,16 @@ function TrainerPageContent() {
                             autoPlay
                             muted
                             playsInline
+                            onLoadedData={() => {
+                              console.log('✅ Door opening video loaded:', videoPathRaw)
+                              if (doorOpeningVideoRef.current) {
+                                doorOpeningVideoRef.current.play().catch(err => {
+                                  console.error('❌ Failed to autoplay door opening video:', err)
+                                })
+                              }
+                            }}
                             onError={(e) => {
-                              console.error('❌ Door opening video failed to load:', videoPathRaw)
+                              console.error('❌ Door opening video failed to load:', videoPathRaw, 'Encoded:', videoPath, e)
                               setShowDoorOpeningVideo(false)
                             }}
                           />

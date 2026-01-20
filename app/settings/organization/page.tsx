@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Users, UserPlus, Mail, Trash2, Shield, User, Loader2, UserCog, X } from 'lucide-react'
+import { Users, UserPlus, Mail, Trash2, Shield, User, Loader2, UserCog, X, Building2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,8 @@ interface TeamMember {
   full_name: string
   role: string
   joined_at: string
+  team_id: string | null
+  team_name: string | null
 }
 
 const tabs = [
@@ -36,6 +38,7 @@ function OrganizationSettingsPage() {
   const [loading, setLoading] = useState(true)
   
   const [members, setMembers] = useState<TeamMember[]>([])
+  const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([])
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
@@ -45,6 +48,10 @@ function OrganizationSettingsPage() {
   const [invitesLoading, setInvitesLoading] = useState(false)
   const [cancelingInviteId, setCancelingInviteId] = useState<string | null>(null)
   const [showWalkthrough, setShowWalkthrough] = useState(false)
+  const [updatingTeamId, setUpdatingTeamId] = useState<string | null>(null)
+  const [organizationName, setOrganizationName] = useState<string>('')
+  const [editingOrgName, setEditingOrgName] = useState(false)
+  const [savingOrgName, setSavingOrgName] = useState(false)
 
   // Initialize activeTab from URL parameter
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -124,25 +131,42 @@ function OrganizationSettingsPage() {
 
       const { data: org } = await supabase
         .from('organizations')
-        .select('seat_limit, seats_used')
+        .select('seat_limit, seats_used, name')
         .eq('id', userData.organization_id)
         .single()
 
       if (org) {
         setSeatUsage({ used: org.seats_used, limit: org.seat_limit })
+        setOrganizationName(org.name || '')
+      }
+
+      // Fetch teams for team name mapping
+      const { data: teamsData } = await supabase
+        .from('teams')
+        .select('id, name')
+        .eq('organization_id', userData.organization_id)
+        .order('name', { ascending: true })
+
+      if (teamsData) {
+        setTeams(teamsData)
       }
 
       const { data: teamMembers } = await supabase
         .from('users')
-        .select('id, email, full_name, role, created_at')
+        .select('id, email, full_name, role, created_at, team_id')
         .eq('organization_id', userData.organization_id)
         .order('created_at', { ascending: false })
 
       if (teamMembers) {
-        setMembers(teamMembers.map(m => ({
-          ...m,
-          joined_at: m.created_at,
-        })))
+        setMembers(teamMembers.map(m => {
+          const team = teamsData?.find(t => t.id === m.team_id)
+          return {
+            ...m,
+            joined_at: m.created_at,
+            team_id: m.team_id,
+            team_name: team?.name || null,
+          }
+        }))
       }
     } catch (err: any) {
       console.error('Error fetching team data:', err)
@@ -236,6 +260,31 @@ function OrganizationSettingsPage() {
     }
   }
 
+  const handleUpdateTeam = async (memberId: string, newTeamId: string | null) => {
+    setUpdatingTeamId(memberId)
+    try {
+      const response = await fetch(`/api/settings/organization/members/${memberId}/team`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_id: newTeamId, member_ids: [memberId] }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update team')
+      }
+
+      const teamName = newTeamId ? teams.find(t => t.id === newTeamId)?.name || 'team' : 'Unassigned'
+      showToast({ type: 'success', title: 'Team updated', message: `Member moved to ${teamName}` })
+      await fetchTeamData()
+    } catch (err: any) {
+      showToast({ type: 'error', title: 'Failed to update team', message: err.message })
+    } finally {
+      setUpdatingTeamId(null)
+    }
+  }
+
   const handleCancelInvite = async (inviteId: string, inviteEmail: string) => {
     if (!confirm(`Are you sure you want to cancel the invitation to ${inviteEmail}?`)) {
       return
@@ -259,6 +308,35 @@ function OrganizationSettingsPage() {
       showToast({ type: 'error', title: 'Failed to cancel invitation', message: err.message })
     } finally {
       setCancelingInviteId(null)
+    }
+  }
+
+  const handleSaveOrgName = async () => {
+    if (!organizationName.trim()) {
+      showToast({ type: 'error', title: 'Organization name cannot be empty' })
+      return
+    }
+
+    setSavingOrgName(true)
+    try {
+      const response = await fetch('/api/settings/organization/name', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: organizationName.trim() }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update organization name')
+      }
+
+      showToast({ type: 'success', title: 'Organization name updated successfully' })
+      setEditingOrgName(false)
+    } catch (err: any) {
+      showToast({ type: 'error', title: 'Failed to update organization name', message: err.message })
+    } finally {
+      setSavingOrgName(false)
     }
   }
 
@@ -297,6 +375,49 @@ function OrganizationSettingsPage() {
       default:
         return (
           <>
+            {/* Organization Name (for managers) */}
+            {isManager && (
+              <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
+                <div className="space-y-3 sm:space-y-4">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 font-space">Organization Name</h2>
+                    <p className="text-xs sm:text-sm text-[#a0a0a0] font-sans">
+                      Update your organization's display name
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666] z-10" />
+                      <Input
+                        type="text"
+                        value={organizationName}
+                        onChange={(e) => setOrganizationName(e.target.value)}
+                        onFocus={() => setEditingOrgName(true)}
+                        placeholder="Organization Name"
+                        className="pl-10 h-12 sm:h-10 bg-[#0a0a0a] border-[#2a2a2a] text-white text-base sm:text-sm focus:border-[#00d4aa] focus:ring-[#00d4aa]/20 w-full"
+                      />
+                    </div>
+                    {editingOrgName && (
+                      <Button
+                        onClick={handleSaveOrgName}
+                        disabled={savingOrgName}
+                        className="bg-white hover:bg-gray-100 text-black font-medium font-sans border border-gray-300 min-h-[48px] sm:min-h-[40px] touch-manipulation active:scale-95"
+                      >
+                        {savingOrgName ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          'Save'
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Seat Usage */}
             <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 sm:p-6 md:p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
@@ -440,17 +561,35 @@ function OrganizationSettingsPage() {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
                             {isManager && (
-                              <select
-                                value={member.role}
-                                onChange={(e) => handleUpdateRole(member.id, e.target.value)}
-                                className="flex-1 sm:flex-none px-3 py-2.5 sm:py-1.5 h-10 sm:h-auto rounded-lg border border-[#2a2a2a] bg-[#0a0a0a] text-white text-sm font-sans touch-manipulation"
-                                {...(index === 0 ? { 'data-walkthrough': 'roles-section' } : {})}
-                              >
-                                <option value="rep">Rep</option>
-                                <option value="manager">Manager</option>
-                              </select>
+                              <>
+                                <div className="relative flex-1 sm:flex-none min-w-[140px]">
+                                  <select
+                                    value={member.team_id || ''}
+                                    onChange={(e) => handleUpdateTeam(member.id, e.target.value || null)}
+                                    disabled={updatingTeamId === member.id}
+                                    className="w-full px-3 py-2.5 sm:py-1.5 h-10 sm:h-auto rounded-lg border border-[#2a2a2a] bg-[#0a0a0a] text-white text-sm font-sans touch-manipulation disabled:opacity-50 pr-8"
+                                  >
+                                    <option value="">Unassigned</option>
+                                    {teams.map(team => (
+                                      <option key={team.id} value={team.id}>{team.name}</option>
+                                    ))}
+                                  </select>
+                                  {updatingTeamId === member.id && (
+                                    <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-purple-400" />
+                                  )}
+                                </div>
+                                <select
+                                  value={member.role}
+                                  onChange={(e) => handleUpdateRole(member.id, e.target.value)}
+                                  className="flex-1 sm:flex-none px-3 py-2.5 sm:py-1.5 h-10 sm:h-auto rounded-lg border border-[#2a2a2a] bg-[#0a0a0a] text-white text-sm font-sans touch-manipulation"
+                                  {...(index === 0 ? { 'data-walkthrough': 'roles-section' } : {})}
+                                >
+                                  <option value="rep">Rep</option>
+                                  <option value="manager">Manager</option>
+                                </select>
+                              </>
                             )}
                             {isManager && member.role !== 'admin' && (
                               <Button
@@ -463,16 +602,26 @@ function OrganizationSettingsPage() {
                               </Button>
                             )}
                             {!isManager && (
-                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2a2a2a] border border-[#2a2a2a] ml-auto sm:ml-0">
-                                {member.role === 'manager' || member.role === 'admin' ? (
-                                  <Shield className="w-4 h-4 text-[#00d4aa]" />
-                                ) : (
-                                  <User className="w-4 h-4 text-[#00d4aa]" />
+                              <>
+                                {member.team_name && (
+                                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2a2a2a] border border-[#2a2a2a]">
+                                    <Building2 className="w-4 h-4 text-purple-400" />
+                                    <span className="text-xs sm:text-sm font-medium text-purple-400 font-sans">
+                                      {member.team_name}
+                                    </span>
+                                  </div>
                                 )}
-                                <span className="text-xs sm:text-sm font-medium text-[#00d4aa] capitalize font-sans">
-                                  {member.role}
-                                </span>
-                              </div>
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2a2a2a] border border-[#2a2a2a] ml-auto sm:ml-0">
+                                  {member.role === 'manager' || member.role === 'admin' ? (
+                                    <Shield className="w-4 h-4 text-[#00d4aa]" />
+                                  ) : (
+                                    <User className="w-4 h-4 text-[#00d4aa]" />
+                                  )}
+                                  <span className="text-xs sm:text-sm font-medium text-[#00d4aa] capitalize font-sans">
+                                    {member.role}
+                                  </span>
+                                </div>
+                              </>
                             )}
                           </div>
                         </div>

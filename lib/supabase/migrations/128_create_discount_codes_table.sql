@@ -97,3 +97,4 @@ COMMENT ON COLUMN discount_codes.created_by IS 'Admin user who created this disc
 COMMENT ON COLUMN discount_codes.max_uses IS 'Maximum number of times this code can be used (NULL = unlimited)';
 COMMENT ON COLUMN discount_codes.uses_count IS 'Number of times this code has been used';
 
+

@@ -124,3 +124,4 @@ COMMENT ON VIEW speech_analysis_latest IS 'View showing the most recent speech a
 COMMENT ON CONSTRAINT speech_analysis_session_id_unique ON speech_analysis IS 
 'Ensures one speech_analysis record per session, allowing upsert operations';
 
+

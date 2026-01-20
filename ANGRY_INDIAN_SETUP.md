@@ -104,3 +104,4 @@ https://yourdomain.com/creator/angry-indian
 - Only difference is feedback form is skipped
 - Session is still saved to database with full transcript and analytics
 
+

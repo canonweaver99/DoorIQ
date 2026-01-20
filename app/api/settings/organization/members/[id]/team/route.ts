@@ -9,9 +9,10 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -44,7 +45,7 @@ export async function PATCH(
     const { team_id, member_ids } = body
 
     // Support both single member (from URL param) and bulk (from body)
-    const memberIds = member_ids && Array.isArray(member_ids) ? member_ids : [params.id]
+    const memberIds = member_ids && Array.isArray(member_ids) ? member_ids : [id]
 
     if (memberIds.length === 0) {
       return NextResponse.json(

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Home } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import dynamic from 'next/dynamic'
 import { AnalyticsErrorBoundary } from '@/components/analytics/AnalyticsErrorBoundary'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 // Dynamically import heavy analytics components to reduce initial bundle size
 const HeroSection = dynamic(() => import('@/components/analytics/HeroSection').then(mod => ({ default: mod.HeroSection })), {
@@ -829,6 +830,19 @@ export default function AnalyticsPage() {
         ) : null}
           </>
         )}
+        
+        {/* Back to Home Button */}
+        <div className="mt-12 mb-8 flex justify-center">
+          <Button
+            onClick={() => router.push('/home')}
+            variant="brand"
+            size="lg"
+            className="flex items-center gap-2"
+          >
+            <Home className="w-5 h-5" />
+            Back to Home
+          </Button>
+        </div>
         
         </div>
       </div>
