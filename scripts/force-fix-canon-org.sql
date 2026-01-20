@@ -95,7 +95,11 @@ BEGIN
     SELECT 
         canon_user_id,
         au.email,
-        COALESCE(au.user_metadata->>'full_name', au.email),
+        COALESCE(
+            (SELECT full_name FROM users WHERE id = canon_user_id),
+            SPLIT_PART(au.email, '@', 1),
+            'Canon Weaver'
+        ),
         org_id,
         target_team_id,
         'manager',
