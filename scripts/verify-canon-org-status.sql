@@ -10,8 +10,9 @@ SELECT
     email,
     created_at
 FROM auth.users
-WHERE email ILIKE '%canonweaver@mechaweaver.com%'
-   OR email ILIKE '%canon%mecha%'
+WHERE email ILIKE '%canonweaver@loopline.design%'
+   OR email ILIKE '%canonweaver%loopline%'
+   OR email = 'canonweaver@loopline.design'
 ORDER BY email;
 
 -- Check users table
@@ -31,10 +32,12 @@ FROM users u
 LEFT JOIN auth.users au ON u.id = au.id
 LEFT JOIN organizations o ON u.organization_id = o.id
 LEFT JOIN teams t ON u.team_id = t.id
-WHERE au.email ILIKE '%canonweaver@mechaweaver.com%'
-   OR au.email ILIKE '%canon%mecha%'
-   OR u.email ILIKE '%canonweaver@mechaweaver.com%'
-   OR u.email ILIKE '%canon%mecha%'
+WHERE au.email ILIKE '%canonweaver@loopline.design%'
+   OR au.email ILIKE '%canonweaver%loopline%'
+   OR au.email = 'canonweaver@loopline.design'
+   OR u.email ILIKE '%canonweaver@loopline.design%'
+   OR u.email ILIKE '%canonweaver%loopline%'
+   OR u.email = 'canonweaver@loopline.design'
 ORDER BY COALESCE(au.email, u.email);
 
 -- Check if there's a mismatch
@@ -54,10 +57,12 @@ SELECT
     u.role
 FROM auth.users au
 FULL OUTER JOIN users u ON au.id = u.id
-WHERE au.email ILIKE '%canonweaver@mechaweaver.com%'
-   OR au.email ILIKE '%canon%mecha%'
-   OR u.email ILIKE '%canonweaver@mechaweaver.com%'
-   OR u.email ILIKE '%canon%mecha%';
+WHERE au.email ILIKE '%canonweaver@loopline.design%'
+   OR au.email ILIKE '%canonweaver%loopline%'
+   OR au.email = 'canonweaver@loopline.design'
+   OR u.email ILIKE '%canonweaver@loopline.design%'
+   OR u.email ILIKE '%canonweaver%loopline%'
+   OR u.email = 'canonweaver@loopline.design';
 
 -- Direct check: What does the API see?
 -- This simulates what the billing API query does
@@ -72,11 +77,13 @@ SELECT
     o.seats_used
 FROM users u
 LEFT JOIN organizations o ON u.organization_id = o.id
-WHERE u.email ILIKE '%canonweaver@mechaweaver.com%'
-   OR u.email ILIKE '%canon%mecha%'
+WHERE u.email ILIKE '%canonweaver@loopline.design%'
+   OR u.email ILIKE '%canonweaver%loopline%'
+   OR u.email = 'canonweaver@loopline.design'
    OR u.id IN (
        SELECT id FROM auth.users 
-       WHERE email ILIKE '%canonweaver@mechaweaver.com%'
-          OR email ILIKE '%canon%mecha%'
+       WHERE email ILIKE '%canonweaver@loopline.design%'
+          OR email ILIKE '%canonweaver%loopline%'
+          OR email = 'canonweaver@loopline.design'
    )
 LIMIT 1;
