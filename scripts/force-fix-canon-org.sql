@@ -81,39 +81,46 @@ BEGIN
     WHERE id = canon_user_id;
     
     -- Ensure user record exists (create if missing)
-    INSERT INTO users (
-        id,
-        email,
-        full_name,
-        organization_id,
-        team_id,
-        role,
-        is_active,
-        rep_id,
-        virtual_earnings
-    )
-    SELECT 
-        canon_user_id,
-        au.email,
-        COALESCE(
-            (SELECT full_name FROM users WHERE id = canon_user_id),
-            SPLIT_PART(au.email, '@', 1),
-            'Canon Weaver'
-        ),
-        org_id,
-        target_team_id,
-        'manager',
-        true,
-        'REP-' || TO_CHAR(EXTRACT(EPOCH FROM NOW())::bigint, 'FM999999'),
-        0
-    FROM auth.users au
-    WHERE au.id = canon_user_id
-      AND NOT EXISTS (SELECT 1 FROM users WHERE id = canon_user_id)
-    ON CONFLICT (id) DO UPDATE SET
-        organization_id = EXCLUDED.organization_id,
-        team_id = EXCLUDED.team_id,
-        role = EXCLUDED.role,
-        is_active = EXCLUDED.is_active;
+    -- First check if user record exists
+    IF NOT EXISTS (SELECT 1 FROM users WHERE id = canon_user_id) THEN
+        -- Create new user record
+        INSERT INTO users (
+            id,
+            email,
+            full_name,
+            organization_id,
+            team_id,
+            role,
+            is_active,
+            rep_id,
+            virtual_earnings
+        )
+        SELECT 
+            canon_user_id,
+            email,
+            'Canon Weaver',
+            org_id,
+            target_team_id,
+            'manager',
+            true,
+            'REP-' || TO_CHAR(EXTRACT(EPOCH FROM NOW())::bigint, 'FM999999'),
+            0
+        FROM auth.users
+        WHERE id = canon_user_id;
+        
+        RAISE NOTICE 'Created new user record';
+    ELSE
+        -- Update existing user record
+        UPDATE users
+        SET 
+            organization_id = org_id,
+            team_id = target_team_id,
+            role = 'manager',
+            is_active = true
+        WHERE id = canon_user_id;
+        
+        RAISE NOTICE 'Updated existing user record';
+    END IF;
     
     RAISE NOTICE 'Updated user record';
     
