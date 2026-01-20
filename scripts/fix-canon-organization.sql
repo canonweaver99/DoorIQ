@@ -27,7 +27,7 @@ DECLARE
     canon_user_id UUID;
     canon_email TEXT;
     org_id UUID;
-    team_id UUID;
+    target_team_id UUID;
 BEGIN
     -- Find Canon's user
     SELECT id, email INTO canon_user_id, canon_email
@@ -58,45 +58,41 @@ BEGIN
     END IF;
     
     -- Find or create team
-    SELECT t.id INTO team_id
+    SELECT t.id INTO target_team_id
     FROM teams t
     WHERE t.organization_id = org_id
     LIMIT 1;
     
-    IF team_id IS NULL THEN
+    IF target_team_id IS NULL THEN
         INSERT INTO teams (name, organization_id, owner_id)
         VALUES ('Canon''s Team', org_id, canon_user_id)
-        RETURNING id INTO team_id;
-        RAISE NOTICE 'Created team: Canon''s Team (%)', team_id;
+        RETURNING id INTO target_team_id;
+        RAISE NOTICE 'Created team: Canon''s Team (%)', target_team_id;
     ELSE
-        RAISE NOTICE 'Found team: %', team_id;
+        RAISE NOTICE 'Found team: %', target_team_id;
     END IF;
     
     -- Update Canon's user record
     UPDATE users
     SET 
         organization_id = org_id,
-        team_id = (SELECT team_id FROM (VALUES (team_id::UUID)) AS v(team_id)),
+        team_id = target_team_id,
         role = COALESCE(NULLIF(role, ''), 'manager'),
         is_active = true
     WHERE id = canon_user_id;
     
-    RAISE NOTICE 'Updated Canon user with organization_id: % and team_id: %', org_id, team_id;
+    RAISE NOTICE 'Updated Canon user with organization_id: % and team_id: %', org_id, target_team_id;
     
     -- Update all teammates to same organization
-    -- Use subquery to avoid variable/column name conflict
-    UPDATE users
+    UPDATE users u
     SET 
         organization_id = org_id,
-        team_id = (SELECT team_id FROM (VALUES (team_id::UUID)) AS v(team_id)),
+        team_id = target_team_id,
         is_active = true
-    WHERE id IN (
-        SELECT u.id
-        FROM users u
-        JOIN auth.users au ON u.id = au.id
-        WHERE au.email LIKE 'test.teammate%@looplne.design'
-          AND u.role = 'rep'
-    );
+    FROM auth.users au
+    WHERE u.id = au.id
+      AND au.email LIKE 'test.teammate%@looplne.design'
+      AND u.role = 'rep';
     
     RAISE NOTICE 'Updated teammates';
     
