@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Users, UserPlus, Mail, Trash2, Shield, User, Loader2, UserCog } from 'lucide-react'
+import { Users, UserPlus, Mail, Trash2, Shield, User, Loader2, UserCog, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -43,6 +43,7 @@ function OrganizationSettingsPage() {
   const [seatUsage, setSeatUsage] = useState({ used: 0, limit: 0 })
   const [pendingInvites, setPendingInvites] = useState<any[]>([])
   const [invitesLoading, setInvitesLoading] = useState(false)
+  const [cancelingInviteId, setCancelingInviteId] = useState<string | null>(null)
   const [showWalkthrough, setShowWalkthrough] = useState(false)
 
   // Initialize activeTab from URL parameter
@@ -171,7 +172,17 @@ function OrganizationSettingsPage() {
         throw new Error(data.error || 'Failed to send invite')
       }
 
-      showToast({ type: 'success', title: `Invitation sent to ${inviteEmail}` })
+      // Check if email was sent successfully
+      if (data.warning) {
+        showToast({ 
+          type: 'warning', 
+          title: `Invitation created but email may not have been sent`,
+          message: data.warning + (data.inviteUrl ? ` You can manually share this invite link: ${data.inviteUrl}` : '')
+        })
+      } else {
+        showToast({ type: 'success', title: `Invitation sent to ${inviteEmail}` })
+      }
+      
       setInviteEmail('')
       await fetchPendingInvites()
     } catch (err: any) {
@@ -222,6 +233,32 @@ function OrganizationSettingsPage() {
       await fetchTeamData()
     } catch (err: any) {
       showToast({ type: 'error', title: 'Failed to update role', message: err.message })
+    }
+  }
+
+  const handleCancelInvite = async (inviteId: string, inviteEmail: string) => {
+    if (!confirm(`Are you sure you want to cancel the invitation to ${inviteEmail}?`)) {
+      return
+    }
+
+    setCancelingInviteId(inviteId)
+    try {
+      const response = await fetch(`/api/settings/team/invites/${inviteId}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel invite')
+      }
+
+      showToast({ type: 'success', title: 'Invitation canceled successfully' })
+      await fetchPendingInvites()
+    } catch (err: any) {
+      showToast({ type: 'error', title: 'Failed to cancel invitation', message: err.message })
+    } finally {
+      setCancelingInviteId(null)
     }
   }
 
@@ -348,6 +385,19 @@ function OrganizationSettingsPage() {
                             {invite.role} • Expires {new Date(invite.expires_at).toLocaleDateString()}
                           </p>
                         </div>
+                        <Button
+                          onClick={() => handleCancelInvite(invite.id, invite.email)}
+                          disabled={cancelingInviteId === invite.id}
+                          variant="outline"
+                          size="sm"
+                          className="border-red-500/30 text-red-400 hover:bg-red-500/10 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 touch-manipulation active:scale-95 flex-shrink-0"
+                        >
+                          {cancelingInviteId === invite.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <X className="w-4 h-4" />
+                          )}
+                        </Button>
                       </div>
                     ))}
                   </div>

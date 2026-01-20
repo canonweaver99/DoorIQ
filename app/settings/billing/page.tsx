@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { SeatCounter } from '@/components/settings/SeatCounter'
 import { InvoiceList } from '@/components/settings/InvoiceList'
-import { PlanCard } from '@/components/settings/PlanCard'
 import { CancelSubscriptionModal } from '@/components/settings/CancelSubscriptionModal'
 import { UpgradePrompt } from '@/components/settings/UpgradePrompt'
 import { BillingIntervalToggle } from '@/components/settings/BillingIntervalToggle'
@@ -563,67 +562,6 @@ function BillingSettingsPage() {
           </div>
         </div>
       )}
-
-      {/* Upgrade Plans */}
-      <div className="p-4 sm:p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-space font-bold text-foreground mb-1 sm:mb-2">Available Plans</h2>
-            <p className="text-sm text-foreground/60 font-sans">
-              Upgrade or change your plan
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            <PlanCard
-              tier="starter"
-              currentTier={plan.tier}
-              pricePerSeat={49}
-              minSeats={1}
-              maxSeats={20}
-              features={[
-                'Unlimited practice sessions',
-                'All AI personas',
-                'Team leaderboard',
-                'Basic analytics & reporting',
-                'Manager dashboard',
-                'Basic sales playbook',
-              ]}
-              onSelect={() => router.push('/')}
-            />
-            <PlanCard
-              tier="team"
-              currentTier={plan.tier}
-              pricePerSeat={39}
-              minSeats={21}
-              maxSeats={100}
-              features={[
-                'Everything in Starter',
-                'Advanced analytics & reporting',
-                'Team performance insights',
-                'Custom practice scenarios',
-                'Custom sales playbook',
-              ]}
-              onSelect={() => router.push('/team/signup?plan=team&upgrade=true')}
-            />
-            <PlanCard
-              tier="enterprise"
-              currentTier={plan.tier}
-              pricePerSeat={29}
-              minSeats={101}
-              maxSeats={500}
-              features={[
-                'Everything in Team',
-                'Custom AI personas',
-                'Dedicated account team',
-                'Custom integrations',
-                'SSO',
-                'API access',
-              ]}
-              onContactSales={() => setIsCalendarModalOpen(true)}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Invoice History */}
       <div className="p-6 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">

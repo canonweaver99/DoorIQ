@@ -29,6 +29,13 @@ export async function PATCH(
       )
     }
 
+    if (!userData.organization_id) {
+      return NextResponse.json(
+        { error: 'You are not part of an organization' },
+        { status: 400 }
+      )
+    }
+
     const { id } = params
     const body = await request.json()
     const { role } = body
@@ -41,13 +48,30 @@ export async function PATCH(
     }
 
     // Verify member belongs to same organization
-    const { data: member } = await supabase
+    // Query with organization_id filter to ensure member is in the same org
+    const { data: member, error: memberError } = await supabase
       .from('users')
       .select('organization_id, role, email, full_name')
       .eq('id', id)
+      .eq('organization_id', userData.organization_id)
       .single()
 
-    if (!member || member.organization_id !== userData.organization_id) {
+    if (memberError) {
+      console.error('Error fetching member:', memberError)
+      // Check if it's a "not found" error or a different error
+      if (memberError.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Member not found or not in your organization' },
+          { status: 404 }
+        )
+      }
+      return NextResponse.json(
+        { error: 'Failed to verify member' },
+        { status: 500 }
+      )
+    }
+
+    if (!member) {
       return NextResponse.json(
         { error: 'Member not found or not in your organization' },
         { status: 404 }
@@ -127,16 +151,39 @@ export async function DELETE(
       )
     }
 
+    if (!userData.organization_id) {
+      return NextResponse.json(
+        { error: 'You are not part of an organization' },
+        { status: 400 }
+      )
+    }
+
     const { id } = params
 
     // Verify member belongs to same organization
-    const { data: member } = await supabase
+    // Query with organization_id filter to ensure member is in the same org
+    const { data: member, error: memberError } = await supabase
       .from('users')
       .select('organization_id, role')
       .eq('id', id)
+      .eq('organization_id', userData.organization_id)
       .single()
 
-    if (!member || member.organization_id !== userData.organization_id) {
+    if (memberError) {
+      console.error('Error fetching member:', memberError)
+      if (memberError.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Member not found or not in your organization' },
+          { status: 404 }
+        )
+      }
+      return NextResponse.json(
+        { error: 'Failed to verify member' },
+        { status: 500 }
+      )
+    }
+
+    if (!member) {
       return NextResponse.json(
         { error: 'Member not found or not in your organization' },
         { status: 404 }
