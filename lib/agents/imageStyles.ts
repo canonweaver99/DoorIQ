@@ -59,6 +59,46 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     objectPosition: '44% 58%', // Lowered vertically
     scale: 1.15,
   },
+  'How Much Is It?': {
+    objectPosition: '0% 65%', // Moved all the way to the left, moved down more
+    scale: 1.5, // Zoomed in more on face
+  },
+  'I Need to Talk to My Spouse': {
+    objectPosition: '15% 78%', // Moved down more
+    scale: 1.8, // Zoomed in more on face
+  },
+  'I Already Have Internet': {
+    objectPosition: '55% 78%', // Moved more down
+    scale: 2.0, // Zoomed in even more on face
+  },
+  'I\'m in a Contract': {
+    objectPosition: '25% 75%', // Moved more down and to the left
+    scale: 1.5, // Zoomed in more on face
+  },
+  'I\'m Happy With What I Have': {
+    objectPosition: '30% 75%', // Moved more down and to the left
+    scale: 1.7, // Zoomed in more on face
+  },
+  'I Just Signed Up': {
+    objectPosition: '85% 72%', // Moved 15% more to the right
+    scale: 1.5, // Zoomed in more on face
+  },
+  'I Don\'t Want to Deal With Switching': {
+    objectPosition: '40% 78%', // Moved down more and to the left
+    scale: 1.65, // Zoomed in more on face
+  },
+  'My Internet Works Fine': {
+    objectPosition: '65% 65%', // Moved to the right
+    scale: 1.7, // Zoomed in more on face
+  },
+  'What\'s the Catch?': {
+    objectPosition: '95% 65%', // Moved to the right
+    scale: 1.5, // Zoomed in more on face
+  },
+  'I\'m Moving Soon': {
+    objectPosition: '15% 65%', // Moved to the left
+    scale: 1.5, // Zoomed in more on face
+  },
 }
 
 export function getAgentImageStyle(agentName?: string | null): CSSProperties {

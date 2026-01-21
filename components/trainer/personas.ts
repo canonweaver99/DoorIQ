@@ -602,6 +602,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (50%+). Wants to disqualify quickly or price shopping.',
       difficulty: 'Hard',
       color: 'quaternary',
+      image: '/Michael Chen.png',
     },
     card: {
       age: 44,
@@ -632,6 +633,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (40%+). Sometimes legitimate, often an easy exit.',
       difficulty: 'Moderate',
       color: 'quinary',
+      image: '/Jessica Martinez.png',
     },
     card: {
       age: 39,
@@ -842,6 +844,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Most common (70%+). They have service and don\'t see a reason to switch.',
       difficulty: 'Moderate',
       color: 'secondary',
+      image: '/Brian Thompson.png',
     },
     card: {
       age: 42,
@@ -872,6 +875,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (50%+). Locked in for 12-24 months with early termination fees.',
       difficulty: 'Hard',
       color: 'tertiary',
+      image: '/Amanda Stevens.png',
     },
     card: {
       age: 38,
@@ -902,6 +906,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (50%+). Internet works "well enough" - they don\'t know what they\'re missing.',
       difficulty: 'Moderate',
       color: 'quaternary',
+      image: '/Linda Morrison.png',
     },
     card: {
       age: 40,
@@ -932,6 +937,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (20-25%). Literally just got new service, fresh contract.',
       difficulty: 'Hard',
       color: 'quinary',
+      image: '/Marcus Johnson.png',
     },
     card: {
       age: 35,
@@ -962,6 +968,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (30%+). Switching seems like too much work.',
       difficulty: 'Moderate',
       color: 'senary',
+      image: '/Kevin Richardson.png',
     },
     card: {
       age: 45,
@@ -992,6 +999,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (40%+). They don\'t experience obvious problems.',
       difficulty: 'Moderate',
       color: 'septenary',
+      image: '/Tom Henderson.png',
     },
     card: {
       age: 37,
@@ -1022,6 +1030,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (25-30%). Been burned before by hidden fees.',
       difficulty: 'Hard',
       color: 'octonary',
+      image: '/Rob Davis.png',
     },
     card: {
       age: 43,
@@ -1052,6 +1061,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Moderate (15-20%). Sometimes true, often an excuse.',
       difficulty: 'Moderate',
       color: 'nonary',
+      image: '/Sarah Kim.png',
     },
     card: {
       age: 39,
