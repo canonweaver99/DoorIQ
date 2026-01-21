@@ -104,7 +104,7 @@ export default function PricingPage() {
       period: 'month',
       description: 'Perfect for individual sales professionals (1 seat)',
       features: [
-        'All 14 AI training agents',
+        '60+ AI training agents',
         'Unlimited practice sessions',
         'Basic analytics & reporting',
         'Performance tracking',
@@ -321,7 +321,7 @@ export default function PricingPage() {
               
               <div className="mt-6 pt-6 border-t border-white/10">
                 <p className="text-xs text-white/60 font-sans leading-relaxed">
-                  <span className="text-white/80 font-semibold">*</span> ROI Calculation: DoorIQ provides comprehensive training and unlimited practice sessions with 14 AI agents, enabling sales reps to improve their skills and close more deals. On average, reps using DoorIQ close a minimum of 1 extra deal per month. The calculator multiplies your number of reps by your average deal value to estimate additional monthly revenue, then subtracts your monthly DoorIQ cost to show your net profit and ROI.
+                  <span className="text-white/80 font-semibold">*</span> ROI Calculation: DoorIQ provides comprehensive training and unlimited practice sessions with 60+ AI agents, enabling sales reps to improve their skills and close more deals. On average, reps using DoorIQ close a minimum of 1 extra deal per month. The calculator multiplies your number of reps by your average deal value to estimate additional monthly revenue, then subtracts your monthly DoorIQ cost to show your net profit and ROI.
                 </p>
               </div>
             </motion.div>

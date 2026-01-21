@@ -15,10 +15,10 @@ export async function GET() {
     if (error) {
       console.error('Error fetching agent count:', error)
       // Return default count if error
-      return NextResponse.json({ count: 12 })
+      return NextResponse.json({ count: 60 })
     }
     
-    return NextResponse.json({ count: count || 12 })
+    return NextResponse.json({ count: count || 60 })
   } catch (error) {
     console.error('Error in agent count API:', error)
     // Return default count if error

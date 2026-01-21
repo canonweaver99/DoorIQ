@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 export default function AffiliateLandingPage() {
   const router = useRouter()
   const [referralId, setReferralId] = useState<string | null>(null)
-  const [agentCount, setAgentCount] = useState<number>(12)
+  const [agentCount, setAgentCount] = useState<number>(60)
 
   useEffect(() => {
     // Check if Rewardful is loaded and has a referral ID
@@ -37,7 +37,7 @@ export default function AffiliateLandingPage() {
       })
       .catch(error => {
         console.error('Error fetching agent count:', error)
-        // Keep default of 12 if fetch fails
+        // Keep default of 60 if fetch fails
       })
   }, [])
 

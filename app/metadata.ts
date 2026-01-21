@@ -7,13 +7,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ||
 // Home page metadata
 export const homeMetadata: Metadata = {
   title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
-  description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
+  description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 60+ AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
-    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas.",
+    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 60+ AI homeowner personas.",
     url: siteUrl,
     images: [
       {

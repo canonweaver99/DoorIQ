@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useInView, useAnimation } from "framer-motion";
+import { motion, useInView, useAnimation, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -72,10 +72,17 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Clock,
   Mail,
   Phone,
   MapPin,
+  Bug,
+  Wifi,
+  DoorOpen,
+  Sun,
+  Home,
+  Shield,
 } from "lucide-react";
 
 // Animated Counter Component
@@ -897,6 +904,527 @@ function SolutionSection() {
   );
 }
 
+// Industry Agents Section
+function IndustryAgentsSection() {
+  const isMobile = useIsMobile();
+  const [expandedIndustries, setExpandedIndustries] = useState<Set<string>>(new Set());
+
+  const toggleIndustry = (industrySlug: string) => {
+    setExpandedIndustries(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(industrySlug)) {
+        newSet.delete(industrySlug);
+      } else {
+        newSet.add(industrySlug);
+      }
+      return newSet;
+    });
+  };
+
+  const industryAgents = {
+    pest: {
+      name: 'Pest Control',
+      icon: Bug,
+      agents: [
+        { 
+          name: 'I Already Have a Pest Guy', 
+          description: 'Most common (60%+). They do have someone, but haven\'t compared prices in years.',
+          type: 'Smokescreen/Real objection',
+          percentage: 45
+        },
+        { 
+          name: 'I Don\'t Have Any Bugs', 
+          description: 'Very common (40%+). They don\'t see bugs RIGHT NOW, so they don\'t think they need service.',
+          type: 'Smokescreen',
+          percentage: 30
+        },
+        { 
+          name: 'How Much Is It?', 
+          description: 'Very common (50%+). They want to disqualify you quickly or they\'re price shopping.',
+          type: 'Smokescreen/Qualification',
+          percentage: 25
+        },
+        { 
+          name: 'I Need to Talk to My Spouse', 
+          description: 'Very common (40%+). Sometimes legitimate, often an easy exit strategy.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I\'m Renting/Don\'t Own', 
+          description: 'Common (20-30%). Landlord handles pest control OR they don\'t want to pay for something temporary.',
+          type: 'Real objection/Disqualifier'
+        },
+        { 
+          name: 'I Just Spray Myself', 
+          description: 'Common (25%+). They\'re handling it themselves and think it\'s working.',
+          type: 'Real objection/DIY mindset'
+        },
+        { 
+          name: 'Send Me Information', 
+          description: 'Very common (35%+). Polite way to get you to leave without saying no.',
+          type: 'Smokescreen'
+        },
+        { 
+          name: 'We\'re Selling/Moving Soon', 
+          description: 'Moderate (15-20%). Sometimes true, often an excuse.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I Have Pets/Kids - Worried About Chemicals', 
+          description: 'Common (20-25%). Legitimate safety concern, especially with young kids or pets.',
+          type: 'Real concern/Objection'
+        },
+        { 
+          name: 'Bad Timing - Call Me Back Later', 
+          description: 'Common (20%+). Rarely actually about timing, usually just want you gone.',
+          type: 'Smokescreen'
+        },
+      ]
+    },
+    fiber: {
+      name: 'Fiber Internet',
+      icon: Wifi,
+      agents: [
+        { 
+          name: 'I Already Have Internet', 
+          description: 'Most common (70%+). They have service and don\'t see a reason to switch.',
+          type: 'Smokescreen/Real objection',
+          percentage: 50
+        },
+        { 
+          name: 'I\'m in a Contract', 
+          description: 'Very common (50%+). Locked in for 12-24 months with early termination fees.',
+          type: 'Real objection',
+          percentage: 30
+        },
+        { 
+          name: 'How Much Is It?', 
+          description: 'Very common (60%+). Want to compare to current bill or disqualify you quickly.',
+          type: 'Smokescreen/Qualification',
+          percentage: 20
+        },
+        { 
+          name: 'I\'m Happy With What I Have', 
+          description: 'Very common (50%+). Internet works "well enough" - they don\'t know what they\'re missing.',
+          type: 'Smokescreen'
+        },
+        { 
+          name: 'I Need to Talk to My Spouse', 
+          description: 'Very common (45%+). Joint decision for household service, or easy exit.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I Just Signed Up', 
+          description: 'Common (20-25%). Literally just got new service, fresh contract.',
+          type: 'Real objection/Timing issue'
+        },
+        { 
+          name: 'I Don\'t Want to Deal With Switching', 
+          description: 'Common (30%+). Switching seems like too much work.',
+          type: 'Real objection - Hassle factor'
+        },
+        { 
+          name: 'My Internet Works Fine', 
+          description: 'Common (40%+). They don\'t experience obvious problems or don\'t know their internet is slow.',
+          type: 'Smokescreen'
+        },
+        { 
+          name: 'What\'s the Catch?', 
+          description: 'Common (25-30%). Been burned before by hidden fees, price hikes after promo.',
+          type: 'Skepticism/Real concern'
+        },
+        { 
+          name: 'I\'m Moving Soon', 
+          description: 'Moderate (15-20%). Sometimes true, often an excuse to avoid commitment.',
+          type: 'Smokescreen/Real objection'
+        },
+      ]
+    },
+    roofing: {
+      name: 'Roofing',
+      icon: Home,
+      agents: [
+        { 
+          name: 'My Roof is Fine', 
+          description: 'Most common (70%+). They haven\'t inspected it or don\'t see obvious issues from ground level.',
+          type: 'Smokescreen/Real objection',
+          percentage: 50
+        },
+        { 
+          name: 'I\'m Not Interested', 
+          description: 'Very common (60%+). Roofing reps have bad reputation, they assume you\'re pushy/scammy.',
+          type: 'Smokescreen',
+          percentage: 35
+        },
+        { 
+          name: 'How Much Does a Roof Cost?', 
+          description: 'Common (40%+). They\'ve heard roofs are expensive ($10k-$30k+) and want to disqualify you.',
+          type: 'Smokescreen/Real concern',
+          percentage: 15
+        },
+        { 
+          name: 'I Just Had My Roof Done', 
+          description: 'Common (25-30%). Recent replacement or roof is relatively new.',
+          type: 'Real objection/Disqualifier'
+        },
+        { 
+          name: 'I Need to Talk to My Spouse', 
+          description: 'Very common (50%+). Major purchase decision, both need to agree, or easy exit.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I\'ll Call You When I Need a Roof', 
+          description: 'Very common (45%+). Polite dismissal - they\'re never calling you.',
+          type: 'Smokescreen'
+        },
+        { 
+          name: 'I Already Have Someone', 
+          description: 'Common (30%+). They used someone 15 years ago or have a "guy" they\'ve never called.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'My Insurance Won\'t Cover It', 
+          description: 'Common (35%+). They assume insurance won\'t pay or don\'t know they can file a claim.',
+          type: 'Real concern/Misconception'
+        },
+        { 
+          name: 'I\'m Selling Soon', 
+          description: 'Moderate (20%+). Sometimes true, often an easy excuse.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I Don\'t Trust Door-to-Door Roofers', 
+          description: 'Common (25-30%). Storm chasers and scammers have ruined D2D roofing reputation.',
+          type: 'Real concern - Industry reputation'
+        },
+      ]
+    },
+    solar: {
+      name: 'Solar',
+      icon: Sun,
+      agents: [
+        { 
+          name: 'I\'m Not Interested in Solar', 
+          description: 'Most common (65%+). Pre-programmed response to solar reps, haven\'t actually considered it.',
+          type: 'Smokescreen',
+          percentage: 45
+        },
+        { 
+          name: 'Solar is Too Expensive', 
+          description: 'Very common (60%+). Think they need $30k-$50k upfront cash.',
+          type: 'Misconception/Real concern',
+          percentage: 35
+        },
+        { 
+          name: 'How Much Does It Cost?', 
+          description: 'Very common (55%+). Want a number to disqualify you or compare against what they\'ve heard.',
+          type: 'Smokescreen/Qualification',
+          percentage: 20
+        },
+        { 
+          name: 'I Need to Talk to My Spouse', 
+          description: 'Very common (60%+). MAJOR household decision, requires both parties, or easy out.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I\'m Selling/Moving Soon', 
+          description: 'Common (30%+). Sometimes true, often convenient excuse for major commitment.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'My Electric Bill is Too Low', 
+          description: 'Common (25-30%). Bill under $100/month, solar doesn\'t make financial sense.',
+          type: 'Real objection - Disqualifier'
+        },
+        { 
+          name: 'What If It Doesn\'t Work?', 
+          description: 'Common (30%+). Don\'t understand how solar works or think panels only work in direct sun.',
+          type: 'Real concern - Lack of understanding'
+        },
+        { 
+          name: 'My Roof is Too Old', 
+          description: 'Common (25%+). Roof is 15-20+ years old, worried about removing panels later.',
+          type: 'Real objection - Legitimate concern'
+        },
+        { 
+          name: 'I\'ve Heard Bad Things About Solar', 
+          description: 'Common (20-25%). Early solar horror stories, shady companies, lease nightmares.',
+          type: 'Real concern - Industry reputation'
+        },
+        { 
+          name: 'I Don\'t Qualify', 
+          description: 'Moderate (20%+). Bad credit history or assume they won\'t qualify.',
+          type: 'Real objection - Self-disqualification'
+        },
+      ]
+    },
+    windows: {
+      name: 'Windows & Doors',
+      icon: DoorOpen,
+      agents: [
+        { 
+          name: 'My Windows Are Fine', 
+          description: 'Most common (70%+). Windows work (open/close), so they don\'t see a problem.',
+          type: 'Smokescreen/Real objection',
+          percentage: 50
+        },
+        { 
+          name: 'How Much Does It Cost?', 
+          description: 'Very common (60%+). Heard windows are $1k+ per window, want to disqualify you.',
+          type: 'Smokescreen/Real concern',
+          percentage: 30
+        },
+        { 
+          name: 'That\'s Too Expensive', 
+          description: 'Very common (65%+). $15k-$40k for whole house is legitimately expensive.',
+          type: 'Real objection - Sticker shock',
+          percentage: 20
+        },
+        { 
+          name: 'I Need to Talk to My Spouse', 
+          description: 'Very common (55%+). Major home improvement decision, both must agree, or easy out.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I\'m Going to Get Multiple Quotes', 
+          description: 'Very common (50%+). Legitimately want to compare 3-5 companies for major purchase.',
+          type: 'Real objection - Smart consumer behavior'
+        },
+        { 
+          name: 'I Just Need One or Two Windows', 
+          description: 'Common (30%+). Want to replace broken/problem windows only, not whole house.',
+          type: 'Real objection - Partial project'
+        },
+        { 
+          name: 'I\'m Selling/Moving Soon', 
+          description: 'Common (25%+). Sometimes true, often convenient excuse.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I\'ll Just Do It Myself', 
+          description: 'Common (25-30%). Handy homeowner or has contractor friend/family.',
+          type: 'Real objection - DIY or existing relationship'
+        },
+        { 
+          name: 'What\'s Wrong With My Current Windows?', 
+          description: 'Common (35%+). Don\'t understand energy loss, single-pane issues, or how old their windows are.',
+          type: 'Real objection - Need education'
+        },
+        { 
+          name: 'I\'m Waiting Until...', 
+          description: 'Common (40%+). Putting off major expense/decision indefinitely.',
+          type: 'Smokescreen - Procrastination'
+        },
+      ]
+    },
+    security: {
+      name: 'Home Security',
+      icon: Shield,
+      agents: [
+        { 
+          name: 'I Already Have a Security System', 
+          description: 'Most common (65%+). They have existing service and don\'t see a reason to switch.',
+          type: 'Smokescreen/Real objection',
+          percentage: 45
+        },
+        { 
+          name: 'I Don\'t Need It - My Neighborhood is Safe', 
+          description: 'Very common (50%+). They feel secure and don\'t see the value.',
+          type: 'Smokescreen',
+          percentage: 35
+        },
+        { 
+          name: 'How Much Does It Cost?', 
+          description: 'Very common (55%+). Want to compare pricing or disqualify you quickly.',
+          type: 'Smokescreen/Qualification',
+          percentage: 20
+        },
+        { 
+          name: 'I Need to Talk to My Spouse', 
+          description: 'Very common (50%+). Security is a joint household decision, or easy exit.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I\'m Renting/Don\'t Own', 
+          description: 'Common (25-30%). Landlord handles security OR they don\'t want to pay for something temporary.',
+          type: 'Real objection/Disqualifier'
+        },
+        { 
+          name: 'I Have a Dog', 
+          description: 'Common (30%+). They think their pet provides enough security.',
+          type: 'Real objection/Misconception'
+        },
+        { 
+          name: 'I Don\'t Want Monthly Fees', 
+          description: 'Very common (45%+). Don\'t want ongoing monitoring costs.',
+          type: 'Real objection - Cost concern'
+        },
+        { 
+          name: 'I\'m Moving Soon', 
+          description: 'Moderate (20%+). Sometimes true, often an excuse to avoid commitment.',
+          type: 'Smokescreen/Real objection'
+        },
+        { 
+          name: 'I Don\'t Trust These Companies', 
+          description: 'Common (25%+). Concerns about data privacy, false alarms, or company reputation.',
+          type: 'Real concern - Trust issue'
+        },
+        { 
+          name: 'Send Me Information', 
+          description: 'Very common (35%+). Polite way to get you to leave without saying no.',
+          type: 'Smokescreen'
+        },
+      ]
+    },
+  };
+
+
+  return (
+    <section id="industry-agents" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
+      {/* Animated background gradients */}
+      {!isMobile && (
+        <>
+          <motion.div
+            animate={{
+              x: [0, 30, 0],
+              y: [0, 40, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 18,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent rounded-full blur-[120px]"
+          />
+          <motion.div
+            animate={{
+              x: [0, -25, 0],
+              y: [0, -35, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 22,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-pink-500/10 via-purple-500/10 to-transparent rounded-full blur-[100px]"
+          />
+        </>
+      )}
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
+        {/* Section Header */}
+        <motion.div
+          initial={isMobile ? false : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={isMobile ? {} : { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="text-center mb-8 sm:mb-10 md:mb-12"
+          style={isMobile ? {} : { willChange: 'transform, opacity' }}
+        >
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 font-medium text-xs sm:text-sm md:text-base uppercase tracking-[0.2em] font-space mb-3 sm:mb-4 block">
+            Industry-Specific Training
+          </span>
+          <h2 className="font-space text-3xl sm:text-5xl md:text-4xl lg:text-6xl xl:text-7xl text-white font-bold tracking-tight leading-[0.95] mb-4 sm:mb-6 px-4">
+            Train Against Real Objections
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">From Your Industry</span>
+          </h2>
+          <p className="font-sans text-white/80 max-w-3xl mx-auto text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light px-4">
+            Practice with AI homeowners trained on the exact objections your reps face every day
+          </p>
+        </motion.div>
+
+        {/* Industry Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+          {Object.entries(industryAgents).map(([slug, industry], index) => {
+            const Icon = industry.icon;
+            const isExpanded = expandedIndustries.has(slug);
+            const visibleAgents = isExpanded ? industry.agents.slice(0, 3) : [];
+
+            return (
+              <motion.div
+                key={slug}
+                initial={isMobile ? false : { opacity: 0, y: 30 }}
+                whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={isMobile ? {} : { delay: index * 0.1, duration: 0.6 }}
+                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 sm:p-8 hover:border-white/20 hover:bg-white/[0.025] transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
+                onClick={() => toggleIndustry(slug)}
+              >
+                {/* Subtle purple glow at bottom for depth */}
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Industry Header */}
+                <div className="flex items-center gap-4 mb-4 relative z-10">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-space text-xl sm:text-2xl text-white font-bold tracking-tight">
+                      {industry.name}
+                    </h3>
+                    <p className="font-sans text-white/60 text-sm">
+                      {industry.agents.length} objection{industry.agents.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    {isExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-white/60" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-white/60" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Objections List - Only shown when expanded */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="space-y-3 mb-4 relative z-10 overflow-hidden"
+                    >
+                      {visibleAgents.map((agent, agentIndex) => (
+                        <motion.div
+                          key={agent.name}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ 
+                            duration: 0.3, 
+                            delay: agentIndex * 0.05,
+                            ease: "easeInOut"
+                          }}
+                          className="bg-white/[0.03] border border-white/5 rounded-md p-3 hover:border-white/10 transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-3 w-full">
+                            <h4 className="font-space text-sm sm:text-base text-white font-semibold flex-1">
+                              {agent.name}
+                            </h4>
+                            {agent.percentage && (
+                              <span className="font-space text-lg sm:text-xl text-white font-bold flex-shrink-0">
+                                {agent.percentage}%
+                              </span>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // Features Section
 function FeaturesSection() {
   const isMobile = useIsMobile();
@@ -1409,7 +1937,7 @@ function CTASection() {
                 <p className="text-xs sm:text-sm text-white/70 font-sans mb-3">1 seat • 7-day free trial</p>
                 <ul className="text-xs text-white/60 font-sans space-y-1">
                   <li>• Unlimited practice sessions</li>
-                  <li>• All 14 AI training agents</li>
+                  <li>• 60+ AI training agents</li>
                   <li>• Basic analytics</li>
                 </ul>
               </div>
@@ -1737,6 +2265,7 @@ export default function LandingPage() {
       <MeetTrainerSection />
       <ProblemSection />
       <SolutionSection />
+      <IndustryAgentsSection />
       <FeaturesSection />
       <StatsSection />
       <TestimonialsSection />

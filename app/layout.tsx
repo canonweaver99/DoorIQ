@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     default: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
     template: "%s | DoorIQ"
   },
-  description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
+  description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 60+ AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
   keywords: [
     "door to door sales training",
     "sales pitch practice",
@@ -114,7 +114,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
-    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
+    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 60+ AI homeowner personas. Get instant feedback, track performance, and ramp reps 3x faster.",
     url: siteUrl,
     siteName: "DoorIQ",
     images: [
@@ -131,7 +131,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "DoorIQ - Practice Your Sales Pitch with AI Homeowners",
-    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 14 AI homeowner personas.",
+    description: "Master door-to-door sales with realistic AI voice interactions. Practice unlimited pitches with 60+ AI homeowner personas.",
     images: ['/FullLogo.png'],
     creator: '@dooriq',
   },

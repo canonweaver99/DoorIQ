@@ -75,7 +75,7 @@ line-height: 1.6; color: #333; margin: 0; padding: 0; }
                   <strong>What you'll get:</strong>
                 </p>
                 <ul style="color: #4b5563; margin: 8px 0;">
-                  <li>Access to 14 AI training agents with unique objections</li>
+                  <li>Access to 60+ AI training agents with unique objections</li>
                   <li>Real-time performance analytics and feedback</li>
                   <li>Team leaderboards and competitions</li>
                   <li>Manager coaching and insights</li>

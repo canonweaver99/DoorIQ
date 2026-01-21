@@ -20,7 +20,7 @@ max-width: 600px; margin: 0 auto;">
         <h1 style="color: #8b5cf6;">Welcome to DoorIQ!</h1>
         <p>Your 7-day free trial has started! You now have full access to all premium features:</p>
         <ul>
-          <li>✅ Access to ALL 14 AI training agents</li>
+          <li>✅ Access to 60+ AI training agents</li>
           <li>✅ Unlimited practice sessions</li>
           <li>✅ Advanced analytics & scoring</li>
           <li>✅ Real-time feedback & coaching</li>
@@ -74,7 +74,7 @@ max-width: 600px; margin: 0 auto;">
         <p>Your trial has ended and your subscription is now active. Thank you for choosing DoorIQ!</p>
         <p>You now have continued access to:</p>
         <ul>
-          <li>✅ All 14 AI training agents</li>
+          <li>✅ 60+ AI training agents</li>
           <li>✅ Unlimited practice sessions</li>
           <li>✅ Advanced analytics</li>
           <li>✅ Priority support</li>
