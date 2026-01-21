@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Bug, Wifi, DoorOpen, Sun, Home } from 'lucide-react'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -25,6 +25,7 @@ import {
 } from '@/components/trainer/personas'
 
 type AgentRow = Database['public']['Tables']['agents']['Row']
+type IndustryRow = Database['public']['Tables']['industries']['Row']
 
 interface HomeownerAgentDisplay {
   hasClosed?: boolean
@@ -41,6 +42,16 @@ interface HomeownerAgentDisplay {
   avgDuration?: number | null
   isLocked?: boolean
   isMastered?: boolean
+  industries?: string[] // Array of industry slugs
+}
+
+// Industry icon mapping for Lucide icons
+const INDUSTRY_ICONS: Record<string, string> = {
+  pest: 'Bug',
+  fiber: 'Wifi',
+  windows: 'DoorOpen',
+  solar: 'Sun',
+  roofing: 'Home',
 }
 const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
   'primary',
@@ -141,6 +152,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   const [filter, setFilter] = useState<'all' | 'difficulty' | 'unplayed' | 'struggles'>('all')
   const [sortedAgents, setSortedAgents] = useState<HomeownerAgentDisplay[]>([])
   const [suggestedAgent, setSuggestedAgent] = useState<string | null>(null)
+  const [industries, setIndustries] = useState<IndustryRow[]>([])
+  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null)
   const [challengeModeEnabled, setChallengeModeEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('challengeModeEnabled') === 'true'
@@ -194,6 +207,40 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           console.error('Error fetching agents:', error)
           setLoading(false)
           return
+        }
+        
+        // Fetch industries
+        const { data: industriesData, error: industriesError } = await supabase
+          .from('industries')
+          .select('*')
+          .order('name', { ascending: true })
+        
+        if (industriesError) {
+          console.error('Error fetching industries:', industriesError)
+        } else if (industriesData) {
+          setIndustries(industriesData)
+        }
+        
+        // Fetch agent-industry mappings
+        const { data: agentIndustriesData, error: agentIndustriesError } = await supabase
+          .from('agent_industries')
+          .select('agent_id, industry_id, industries(slug)')
+        
+        if (agentIndustriesError) {
+          console.error('Error fetching agent industries:', agentIndustriesError)
+        }
+        
+        // Create a map of agent_id -> array of industry slugs
+        const agentIndustryMap: Record<string, string[]> = {}
+        if (agentIndustriesData) {
+          agentIndustriesData.forEach((ai: any) => {
+            if (!agentIndustryMap[ai.agent_id]) {
+              agentIndustryMap[ai.agent_id] = []
+            }
+            if (ai.industries?.slug) {
+              agentIndustryMap[ai.agent_id].push(ai.industries.slug)
+            }
+          })
         }
         
         // Stripe/billing removed - no subscription checks needed
@@ -265,7 +312,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
               hasClosed,
               avgDuration,
               isLocked: isLocked || isComingSoon, // Treat coming soon as locked
-              isMastered
+              isMastered,
+              industries: agentIndustryMap[agent.id] || []
             }
           })
           setAgents(hydrated)
@@ -296,10 +344,14 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     fetchAgents()
   }, [])
   
-  // Apply filtering
+  // Apply filtering (industry + sort)
   useEffect(() => {
-    let filtered = [...agents]
+    // First filter by industry
+    let filtered = selectedIndustry 
+      ? agents.filter(a => a.industries?.includes(selectedIndustry))
+      : agents.filter(a => !a.agentId.startsWith('placeholder_')) // Only show agents with real ElevenLabs IDs when "All Industries" is selected
     
+    // Then apply sorting
     switch (filter) {
       case 'difficulty':
         const difficultyOrder = ['Easy', 'Moderate', 'Hard', 'Expert']
@@ -312,11 +364,12 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         filtered.sort((a, b) => (a.bestScore || 100) - (b.bestScore || 100))
         break
       default:
-        filtered = [...agents]
+        // Keep filtered array as is
+        break
     }
     
     setSortedAgents(filtered)
-  }, [filter, agents])
+  }, [filter, agents, selectedIndustry])
 
   const handleRandomAgent = () => {
     if (agents.length === 0) return
@@ -600,6 +653,72 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             </div>
           </div>
         </motion.div>
+
+        {/* Mobile Industry Filter */}
+        {industries.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08 }}
+            className="mb-4 flex items-center justify-center"
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "px-4 py-2 rounded-2xl text-sm font-medium transition-all font-space flex items-center gap-2 bg-slate-900/60 backdrop-blur-sm border min-w-[160px] justify-between",
+                    selectedIndustry 
+                      ? "text-white border-purple-500/50" 
+                      : "text-white/70 border-white/10"
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    {selectedIndustry === 'pest' && <Bug className="w-4 h-4" />}
+                    {selectedIndustry === 'fiber' && <Wifi className="w-4 h-4" />}
+                    {selectedIndustry === 'windows' && <DoorOpen className="w-4 h-4" />}
+                    {selectedIndustry === 'solar' && <Sun className="w-4 h-4" />}
+                    {selectedIndustry === 'roofing' && <Home className="w-4 h-4" />}
+                    {selectedIndustry 
+                      ? industries.find(i => i.slug === selectedIndustry)?.name 
+                      : 'All Industries'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="center" 
+                className="bg-slate-900 border-white/10 text-white min-w-[160px]"
+              >
+                <DropdownMenuItem
+                  onClick={() => setSelectedIndustry(null)}
+                  className={cn(
+                    "cursor-pointer focus:bg-white/10 focus:text-white",
+                    !selectedIndustry && "bg-white/10 text-white"
+                  )}
+                >
+                  All Industries
+                </DropdownMenuItem>
+                {industries.map((industry) => (
+                  <DropdownMenuItem
+                    key={industry.id}
+                    onClick={() => setSelectedIndustry(industry.slug)}
+                    className={cn(
+                      "cursor-pointer focus:bg-white/10 focus:text-white flex items-center gap-2",
+                      selectedIndustry === industry.slug && "bg-white/10 text-white"
+                    )}
+                  >
+                    {industry.slug === 'pest' && <Bug className="w-4 h-4" />}
+                    {industry.slug === 'fiber' && <Wifi className="w-4 h-4" />}
+                    {industry.slug === 'windows' && <DoorOpen className="w-4 h-4" />}
+                    {industry.slug === 'solar' && <Sun className="w-4 h-4" />}
+                    {industry.slug === 'roofing' && <Home className="w-4 h-4" />}
+                    {industry.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </motion.div>
+        )}
 
         {/* Mobile Filter Dropdown */}
         <motion.div
@@ -986,13 +1105,73 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           </div>
           </motion.div>
 
-          {/* Filter Dropdown */}
+          {/* Industry Dropdown + Filter Dropdown */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex items-center gap-3 lg:flex-shrink-0"
           >
+            {/* Industry Dropdown */}
+            {industries.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={cn(
+                      "px-4 py-2.5 rounded-md text-sm sm:text-base font-medium transition-all font-space flex items-center gap-2 bg-slate-900/60 backdrop-blur-sm border hover:bg-slate-900/70 hover:border-white/20 min-w-[160px] justify-between",
+                      selectedIndustry 
+                        ? "text-white border-purple-500/50" 
+                        : "text-white/80 border-white/10 hover:text-white"
+                    )}
+                  >
+                    <span className="flex items-center gap-2">
+                      {selectedIndustry === 'pest' && <Bug className="w-4 h-4" />}
+                      {selectedIndustry === 'fiber' && <Wifi className="w-4 h-4" />}
+                      {selectedIndustry === 'windows' && <DoorOpen className="w-4 h-4" />}
+                      {selectedIndustry === 'solar' && <Sun className="w-4 h-4" />}
+                      {selectedIndustry === 'roofing' && <Home className="w-4 h-4" />}
+                      {selectedIndustry 
+                        ? industries.find(i => i.slug === selectedIndustry)?.name 
+                        : 'All Industries'}
+                    </span>
+                    <ChevronDown className="w-4 h-4 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="start" 
+                  className="bg-slate-900 border-white/10 text-white min-w-[160px]"
+                >
+                  <DropdownMenuItem
+                    onClick={() => setSelectedIndustry(null)}
+                    className={cn(
+                      "cursor-pointer focus:bg-white/10 focus:text-white",
+                      !selectedIndustry && "bg-white/10 text-white"
+                    )}
+                  >
+                    All Industries
+                  </DropdownMenuItem>
+                  {industries.map((industry) => (
+                    <DropdownMenuItem
+                      key={industry.id}
+                      onClick={() => setSelectedIndustry(industry.slug)}
+                      className={cn(
+                        "cursor-pointer focus:bg-white/10 focus:text-white flex items-center gap-2",
+                        selectedIndustry === industry.slug && "bg-white/10 text-white"
+                      )}
+                    >
+                      {industry.slug === 'pest' && <Bug className="w-4 h-4" />}
+                      {industry.slug === 'fiber' && <Wifi className="w-4 h-4" />}
+                      {industry.slug === 'windows' && <DoorOpen className="w-4 h-4" />}
+                      {industry.slug === 'solar' && <Sun className="w-4 h-4" />}
+                      {industry.slug === 'roofing' && <Home className="w-4 h-4" />}
+                      {industry.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* Sort Filter Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button

@@ -55,6 +55,10 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     objectPosition: '40% 52%', // Moved to the left
     scale: 1.4, // Made bigger
   },
+  'Angry Indian': {
+    objectPosition: '44% 58%', // Lowered vertically
+    scale: 1.15,
+  },
 }
 
 export function getAgentImageStyle(agentName?: string | null): CSSProperties {

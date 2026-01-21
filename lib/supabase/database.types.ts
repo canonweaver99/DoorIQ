@@ -512,6 +512,49 @@ export interface Database {
           created_at?: string
         }
       }
+      industries: {
+        Row: {
+          id: string
+          slug: 'pest' | 'fiber' | 'windows' | 'solar' | 'roofing'
+          name: string
+          icon: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          slug: 'pest' | 'fiber' | 'windows' | 'solar' | 'roofing'
+          name: string
+          icon?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: 'pest' | 'fiber' | 'windows' | 'solar' | 'roofing'
+          name?: string
+          icon?: string | null
+          created_at?: string
+        }
+      }
+      agent_industries: {
+        Row: {
+          id: string
+          agent_id: string
+          industry_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          agent_id: string
+          industry_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          agent_id?: string
+          industry_id?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

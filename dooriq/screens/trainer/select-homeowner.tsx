@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { supabase } from '../../lib/supabase/client'
@@ -14,10 +16,33 @@ import { Agent } from '../../lib/types'
 import { MobileNavMenu } from '../../components/navigation/MobileNavMenu'
 import { PERSONA_METADATA, type AllowedAgentName } from '../../lib/personas/personas'
 
+interface Industry {
+  id: string
+  slug: string
+  name: string
+  icon: string | null
+}
+
+interface AgentWithIndustries extends Agent {
+  industries?: string[]
+}
+
+// Industry icons as emoji for React Native
+const INDUSTRY_ICONS: Record<string, string> = {
+  pest: '🐛',
+  fiber: '📡',
+  windows: '🚪',
+  solar: '☀️',
+  roofing: '🏠',
+}
+
 export default function SelectHomeownerScreen() {
   const router = useRouter()
-  const [agents, setAgents] = useState<Agent[]>([])
+  const [agents, setAgents] = useState<AgentWithIndustries[]>([])
   const [loading, setLoading] = useState(true)
+  const [industries, setIndustries] = useState<Industry[]>([])
+  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null)
+  const [showIndustryPicker, setShowIndustryPicker] = useState(false)
 
   useEffect(() => {
     fetchAgents()
@@ -25,6 +50,7 @@ export default function SelectHomeownerScreen() {
 
   const fetchAgents = async () => {
     try {
+      // Fetch agents
       const { data, error } = await supabase
         .from('agents')
         .select('*')
@@ -32,13 +58,63 @@ export default function SelectHomeownerScreen() {
         .order('name', { ascending: true })
 
       if (error) throw error
-      setAgents(data || [])
+
+      // Fetch industries
+      const { data: industriesData, error: industriesError } = await supabase
+        .from('industries')
+        .select('*')
+        .order('name', { ascending: true })
+
+      if (industriesError) {
+        console.error('Error fetching industries:', industriesError)
+      } else if (industriesData) {
+        setIndustries(industriesData)
+      }
+
+      // Fetch agent-industry mappings
+      const { data: agentIndustriesData, error: agentIndustriesError } = await supabase
+        .from('agent_industries')
+        .select('agent_id, industry_id, industries(slug)')
+
+      if (agentIndustriesError) {
+        console.error('Error fetching agent industries:', agentIndustriesError)
+      }
+
+      // Create a map of agent_id -> array of industry slugs
+      const agentIndustryMap: Record<string, string[]> = {}
+      if (agentIndustriesData) {
+        agentIndustriesData.forEach((ai: any) => {
+          if (!agentIndustryMap[ai.agent_id]) {
+            agentIndustryMap[ai.agent_id] = []
+          }
+          if (ai.industries?.slug) {
+            agentIndustryMap[ai.agent_id].push(ai.industries.slug)
+          }
+        })
+      }
+
+      // Add industries to agents
+      const agentsWithIndustries = (data || []).map(agent => ({
+        ...agent,
+        industries: agentIndustryMap[agent.id] || []
+      }))
+
+      setAgents(agentsWithIndustries)
     } catch (error) {
       console.error('Error fetching agents:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  // Filter agents by selected industry
+  const filteredAgents = useMemo(() => {
+    if (!selectedIndustry) {
+      // Only show agents with real ElevenLabs IDs (not placeholders) when "All Industries" is selected
+      return agents.filter(a => !a.eleven_agent_id.startsWith('placeholder_'))
+    }
+    return agents.filter(a => a.industries?.includes(selectedIndustry))
+  }, [agents, selectedIndustry])
 
   const handleSelectAgent = (agent: Agent) => {
     // Temporarily disable Tanya & Tom
@@ -49,10 +125,16 @@ export default function SelectHomeownerScreen() {
   }
 
   const handleRandomAgent = () => {
-    const availableAgents = agents.filter(a => a.name !== 'Tag Team Tanya & Tom')
+    const availableAgents = filteredAgents.filter(a => a.name !== 'Tag Team Tanya & Tom')
     if (availableAgents.length === 0) return
     const randomAgent = availableAgents[Math.floor(Math.random() * availableAgents.length)]
     handleSelectAgent(randomAgent)
+  }
+
+  const getSelectedIndustryName = () => {
+    if (!selectedIndustry) return 'All Industries'
+    const industry = industries.find(i => i.slug === selectedIndustry)
+    return industry ? `${INDUSTRY_ICONS[industry.slug] || ''} ${industry.name}` : 'All Industries'
   }
 
   const getAgentMetadata = (agentName: string) => {
@@ -91,26 +173,94 @@ export default function SelectHomeownerScreen() {
         <Text style={styles.headerSubtitle}>
           Practice with AI homeowners who react like real customers. Each has unique objections and personality traits.
         </Text>
+        
+        {/* Industry Filter */}
+        {industries.length > 0 && (
+          <TouchableOpacity 
+            style={styles.industryButton}
+            onPress={() => setShowIndustryPicker(true)}
+          >
+            <Text style={styles.industryButtonText}>{getSelectedIndustryName()}</Text>
+            <Text style={styles.industryButtonArrow}>▼</Text>
+          </TouchableOpacity>
+        )}
+        
         <TouchableOpacity 
           style={styles.randomButton}
           onPress={handleRandomAgent}
-          disabled={agents.length === 0}
+          disabled={filteredAgents.length === 0}
         >
           <Text style={styles.randomButtonText}>🎲 Pick Random</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Industry Picker Modal */}
+      <Modal
+        visible={showIndustryPicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowIndustryPicker(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setShowIndustryPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Industry</Text>
+            <TouchableOpacity
+              style={[
+                styles.modalOption,
+                !selectedIndustry && styles.modalOptionSelected
+              ]}
+              onPress={() => {
+                setSelectedIndustry(null)
+                setShowIndustryPicker(false)
+              }}
+            >
+              <Text style={[
+                styles.modalOptionText,
+                !selectedIndustry && styles.modalOptionTextSelected
+              ]}>
+                All Industries
+              </Text>
+            </TouchableOpacity>
+            {industries.map((industry) => (
+              <TouchableOpacity
+                key={industry.id}
+                style={[
+                  styles.modalOption,
+                  selectedIndustry === industry.slug && styles.modalOptionSelected
+                ]}
+                onPress={() => {
+                  setSelectedIndustry(industry.slug)
+                  setShowIndustryPicker(false)
+                }}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  selectedIndustry === industry.slug && styles.modalOptionTextSelected
+                ]}>
+                  {INDUSTRY_ICONS[industry.slug] || ''} {industry.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
 
       <ScrollView 
         style={styles.scrollView} 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {agents.length === 0 ? (
+        {filteredAgents.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No agents available</Text>
+            <Text style={styles.emptyStateText}>
+              {selectedIndustry ? 'No agents available for this industry' : 'No agents available'}
+            </Text>
           </View>
         ) : (
-          agents.map((agent) => {
+          filteredAgents.map((agent) => {
             const isComingSoon = agent.name === 'Tag Team Tanya & Tom'
             const metadata = getAgentMetadata(agent.name)
             const difficulty = metadata?.bubble?.difficulty || metadata?.card?.challengeLabel || 'Moderate'
@@ -229,6 +379,29 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  industryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#333',
+    alignSelf: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  industryButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  industryButtonArrow: {
+    color: '#888',
+    fontSize: 12,
+  },
   randomButton: {
     backgroundColor: '#a855f7',
     paddingVertical: 14,
@@ -246,6 +419,47 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    padding: 24,
+    width: '80%',
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#0a0a0a',
+  },
+  modalOptionSelected: {
+    backgroundColor: '#a855f7',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  modalOptionTextSelected: {
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,

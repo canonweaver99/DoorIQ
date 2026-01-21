@@ -140,12 +140,15 @@ const AnimatedGrid = () => (
 // Create agent data with avatars
 const AGENTS_WITH_AVATARS = ALLOWED_AGENT_ORDER.map((agentName) => {
   const metadata = PERSONA_METADATA[agentName];
+  if (!metadata || !metadata.bubble) {
+    return null;
+  }
   return {
     name: agentName,
     image: metadata.bubble.image,
     color: metadata.bubble.color,
   };
-}).filter((agent) => agent.image); // Only include agents with images
+}).filter((agent) => agent && agent.image); // Only include agents with images
 
 const TOTAL_AGENTS = AGENTS_WITH_AVATARS.length;
 
