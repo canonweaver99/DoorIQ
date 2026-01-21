@@ -542,6 +542,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Most common (60%+). They have someone but haven\'t compared prices in years.',
       difficulty: 'Moderate',
       color: 'secondary',
+      image: '/Dan Mitchell.png', // Bubble image for pest industry
     },
     card: {
       age: 42,
@@ -572,6 +573,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (40%+). They don\'t see bugs RIGHT NOW.',
       difficulty: 'Moderate',
       color: 'tertiary',
+      image: '/Rachel Cooper.png', // Bubble image for pest industry
     },
     card: {
       age: 38,
@@ -664,6 +666,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (20-30%). Landlord handles it OR doesn\'t want temporary expense.',
       difficulty: 'Hard',
       color: 'senary',
+      image: '/Tyler Jackson.png', // Bubble image for pest industry
     },
     card: {
       age: 28,
@@ -694,6 +697,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (25%+). Handles it themselves and thinks it\'s working.',
       difficulty: 'Hard',
       color: 'septenary',
+      image: '/Greg Wilson.png', // Bubble image for pest industry
     },
     card: {
       age: 48,
@@ -724,6 +728,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (35%+). Polite way to get you to leave.',
       difficulty: 'Moderate',
       color: 'octonary',
+      image: '/Jennifer Lee.png', // Bubble image for pest industry
     },
     card: {
       age: 35,
@@ -754,6 +759,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Moderate (15-20%). Sometimes true, often an excuse.',
       difficulty: 'Moderate',
       color: 'nonary',
+      image: '/Chris Bennett.png', // Bubble image for pest industry
     },
     card: {
       age: 45,
@@ -784,6 +790,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (20-25%). Legitimate safety concern with kids/pets.',
       difficulty: 'Moderate',
       color: 'denary',
+      image: '/Nicole Rodriguez.png', // Bubble image for pest industry
     },
     card: {
       age: 36,
@@ -814,6 +821,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (20%+). Rarely about timing, usually wants you gone.',
       difficulty: 'Moderate',
       color: 'duodenary',
+      image: '/Mike Sullivan.png', // Bubble image for pest industry
     },
     card: {
       age: 40,

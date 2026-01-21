@@ -99,6 +99,32 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     objectPosition: '15% 65%', // Moved to the left
     scale: 1.5, // Zoomed in more on face
   },
+  'I Already Have a Pest Guy': {
+    objectPosition: '50% 82%', // Moved up a bit from 85%
+    scale: 1.7, // Zoomed in on face (reduced from 2.0)
+  },
+  'I Don\'t Have Any Bugs': {
+    objectPosition: '95% 70%', // Moved to the right and down
+    scale: 1.7, // Zoomed in on face
+  },
+  'I\'m Renting/Don\'t Own': {
+    objectPosition: '15% 70%', // Moved to the left and down
+    scale: 1.5, // Zoomed in
+  },
+  'I Just Spray Myself': {
+    objectPosition: '70% 78%', // Moved to the right and down
+    scale: 1.5, // Zoomed in
+  },
+  'Send Me Information': {
+    objectPosition: '120% 65%', // Moved far to the right and down
+  },
+  'I Have Pets/Kids - Worried About Chemicals': {
+    objectPosition: '70% 60%', // Moved to the right and down
+  },
+  'Bad Timing - Call Me Back Later': {
+    objectPosition: '50% 70%', // Moved down
+    scale: 1.5, // Zoomed in
+  },
 }
 
 export function getAgentImageStyle(agentName?: string | null): CSSProperties {
