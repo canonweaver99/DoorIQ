@@ -102,6 +102,84 @@ export function generatePDF(
 }
 
 /**
+ * Generate detailed PDF report with section headers
+ */
+export function generateDetailedPDF(
+  title: string,
+  data: any[],
+  headers: string[],
+  metadata?: { [key: string]: string }
+): Blob {
+  const doc = new jsPDF()
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const margin = 20
+  const startY = 30
+  let yPos = startY
+  
+  // Add title
+  doc.setFontSize(18)
+  doc.setFont(undefined, 'bold')
+  doc.text(title, margin, yPos)
+  yPos += 10
+  
+  // Add metadata if provided
+  if (metadata) {
+    doc.setFontSize(10)
+    doc.setFont(undefined, 'normal')
+    Object.entries(metadata).forEach(([key, value]) => {
+      doc.text(`${key}: ${value}`, margin, yPos)
+      yPos += 6
+    })
+    yPos += 5
+  }
+  
+  // Add data rows with section handling
+  const colWidth = (pageWidth - 2 * margin) / headers.length
+  data.forEach((row, rowIndex) => {
+    // Check if we need a new page
+    if (yPos > doc.internal.pageSize.getHeight() - 30) {
+      doc.addPage()
+      yPos = startY
+    }
+    
+    const metricValue = String(row[headers[0]] ?? '')
+    const valueValue = String(row[headers[1]] ?? '')
+    
+    // Handle section headers (lines starting with ===)
+    if (metricValue.startsWith('===')) {
+      yPos += 5
+      doc.setFontSize(12)
+      doc.setFont(undefined, 'bold')
+      doc.text(metricValue.replace(/=/g, '').trim(), margin, yPos)
+      yPos += 8
+      doc.setFontSize(10)
+      doc.setFont(undefined, 'normal')
+    } else if (metricValue === '') {
+      // Empty row for spacing
+      yPos += 5
+    } else {
+      // Regular data row
+      doc.setFontSize(10)
+      doc.setFont(undefined, 'normal')
+      
+      // Format metric column
+      const displayMetric = metricValue.length > 40 ? metricValue.substring(0, 37) + '...' : metricValue
+      doc.text(displayMetric, margin, yPos)
+      
+      // Format value column (can be longer, wrap if needed)
+      const displayValue = valueValue.length > 50 ? valueValue.substring(0, 47) + '...' : valueValue
+      doc.text(displayValue, margin + colWidth, yPos)
+      
+      yPos += 7
+    }
+  })
+  
+  // Generate blob
+  const pdfBlob = doc.output('blob')
+  return pdfBlob
+}
+
+/**
  * Generate monthly analytics report
  */
 export function generateMonthlyAnalyticsReport(
@@ -112,29 +190,79 @@ export function generateMonthlyAnalyticsReport(
   const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   const filename = `monthly-analytics-${monthName.toLowerCase().replace(' ', '-')}`
   
-  const headers = ['Metric', 'Value']
-  const data = [
-    { Metric: 'Total Sessions', Value: analytics.totalSessions || 0 },
-    { Metric: 'Team Average Score', Value: `${analytics.teamAverage || 0}%` },
-    { Metric: 'Active Reps', Value: analytics.activeReps || 0 },
-    { Metric: 'Training ROI', Value: `$${analytics.trainingROI || 0}` },
-    { Metric: 'Sessions Change', Value: `${analytics.changes?.sessions || 0}%` },
-    { Metric: 'Score Change', Value: `${analytics.changes?.score || 0}%` },
-  ]
+  // Build comprehensive data array
+  const data: any[] = []
+  
+  // Overview Section
+  data.push({ Metric: '=== OVERVIEW ===', Value: '' })
+  data.push({ Metric: 'Total Sessions', Value: analytics.totalSessions || 0 })
+  data.push({ Metric: 'Team Average Score', Value: `${analytics.teamAverage || 0}%` })
+  data.push({ Metric: 'Close Rate', Value: `${analytics.teamClosePercentage || 0}%` })
+  data.push({ Metric: 'Active Reps', Value: analytics.activeReps || 0 })
+  data.push({ Metric: 'Training ROI', Value: `$${analytics.trainingROI || 0}` })
+  data.push({ Metric: '', Value: '' })
+  
+  // Performance Changes
+  data.push({ Metric: '=== PERFORMANCE CHANGES ===', Value: '' })
+  const sessionsChange = analytics.changes?.sessions || 0
+  const scoreChange = analytics.changes?.score || 0
+  const roiChange = analytics.changes?.roi || 0
+  data.push({ Metric: 'Sessions Change', Value: `${sessionsChange >= 0 ? '+' : ''}${sessionsChange}%` })
+  data.push({ Metric: 'Score Change', Value: `${scoreChange >= 0 ? '+' : ''}${scoreChange}%` })
+  data.push({ Metric: 'ROI Change', Value: `${roiChange >= 0 ? '+' : ''}${roiChange}%` })
+  data.push({ Metric: '', Value: '' })
+  
+  // Skill Breakdown
+  if (analytics.skillDistribution && analytics.skillDistribution.length > 0) {
+    data.push({ Metric: '=== SKILL BREAKDOWN ===', Value: '' })
+    analytics.skillDistribution.forEach((skill: any) => {
+      data.push({ Metric: skill.name, Value: `${skill.value}%` })
+    })
+    data.push({ Metric: '', Value: '' })
+  }
+  
+  // Top Performers
+  if (analytics.repPerformance && analytics.repPerformance.length > 0) {
+    data.push({ Metric: '=== TOP PERFORMERS ===', Value: '' })
+    const topPerformers = analytics.repPerformance.slice(0, 5)
+    topPerformers.forEach((rep: any, index: number) => {
+      data.push({ 
+        Metric: `${index + 1}. ${rep.name}`, 
+        Value: `${rep.avgScore}% (${rep.sessions} sessions, ${rep.closePercentage || 0}% close rate)` 
+      })
+    })
+    data.push({ Metric: '', Value: '' })
+  }
+  
+  // Performance Trends
+  if (analytics.performanceData && analytics.performanceData.length > 0) {
+    data.push({ Metric: '=== MONTHLY TRENDS ===', Value: '' })
+    analytics.performanceData.slice(-6).forEach((month: any) => {
+      data.push({ 
+        Metric: month.month, 
+        Value: `Avg: ${month.teamAvg}% | Top: ${month.topPerformer}%` 
+      })
+    })
+  }
   
   if (format === 'csv') {
     return {
-      content: generateCSV(data, headers),
+      content: generateCSV(data, ['Metric', 'Value']),
       filename: `${filename}.csv`,
       mimeType: 'text/csv'
     }
   } else {
     return {
-      content: generatePDF(
+      content: generateDetailedPDF(
         `Monthly Analytics Report - ${monthName}`,
         data,
-        headers,
-        { 'Generated': now.toLocaleDateString() }
+        ['Metric', 'Value'],
+        { 
+          'Generated': now.toLocaleDateString(),
+          'Period': monthName,
+          'Total Sessions': (analytics.totalSessions || 0).toString(),
+          'Team Average': `${analytics.teamAverage || 0}%`
+        }
       ),
       filename: `${filename}.pdf`,
       mimeType: 'application/pdf'
@@ -158,28 +286,77 @@ export function generateWeeklyAnalyticsReport(
   const weekRange = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
   const filename = `weekly-analytics-${weekStart.toISOString().split('T')[0]}`
   
-  const headers = ['Metric', 'Value']
-  const data = [
-    { Metric: 'Total Sessions', Value: analytics.totalSessions || 0 },
-    { Metric: 'Team Average Score', Value: `${analytics.teamAverage || 0}%` },
-    { Metric: 'Active Reps', Value: analytics.activeReps || 0 },
-    { Metric: 'Sessions Change', Value: `${analytics.changes?.sessions || 0}%` },
-    { Metric: 'Score Change', Value: `${analytics.changes?.score || 0}%` },
-  ]
+  // Build comprehensive data array
+  const data: any[] = []
+  
+  // Overview Section
+  data.push({ Metric: '=== OVERVIEW ===', Value: '' })
+  data.push({ Metric: 'Total Sessions', Value: analytics.totalSessions || 0 })
+  data.push({ Metric: 'Team Average Score', Value: `${analytics.teamAverage || 0}%` })
+  data.push({ Metric: 'Close Rate', Value: `${analytics.teamClosePercentage || 0}%` })
+  data.push({ Metric: 'Active Reps', Value: analytics.activeReps || 0 })
+  data.push({ Metric: 'Avg Sessions per Rep', Value: analytics.activeReps > 0 ? Math.round((analytics.totalSessions || 0) / analytics.activeReps) : 0 })
+  data.push({ Metric: '', Value: '' })
+  
+  // Performance Changes
+  data.push({ Metric: '=== WEEK-OVER-WEEK CHANGES ===', Value: '' })
+  const sessionsChange = analytics.changes?.sessions || 0
+  const scoreChange = analytics.changes?.score || 0
+  data.push({ Metric: 'Sessions Change', Value: `${sessionsChange >= 0 ? '+' : ''}${sessionsChange}%` })
+  data.push({ Metric: 'Score Change', Value: `${scoreChange >= 0 ? '+' : ''}${scoreChange}%` })
+  data.push({ Metric: '', Value: '' })
+  
+  // Skill Breakdown
+  if (analytics.skillDistribution && analytics.skillDistribution.length > 0) {
+    data.push({ Metric: '=== SKILL BREAKDOWN ===', Value: '' })
+    analytics.skillDistribution.forEach((skill: any) => {
+      data.push({ Metric: skill.name, Value: `${skill.value}%` })
+    })
+    data.push({ Metric: '', Value: '' })
+  }
+  
+  // Top Performers
+  if (analytics.repPerformance && analytics.repPerformance.length > 0) {
+    data.push({ Metric: '=== TOP PERFORMERS THIS WEEK ===', Value: '' })
+    const topPerformers = analytics.repPerformance.slice(0, 5)
+    topPerformers.forEach((rep: any, index: number) => {
+      data.push({ 
+        Metric: `${index + 1}. ${rep.name}`, 
+        Value: `${rep.avgScore}% (${rep.sessions} sessions, ${rep.closePercentage || 0}% close rate)` 
+      })
+    })
+    data.push({ Metric: '', Value: '' })
+  }
+  
+  // Rep Performance Summary
+  if (analytics.repPerformance && analytics.repPerformance.length > 0) {
+    data.push({ Metric: '=== REP PERFORMANCE SUMMARY ===', Value: '' })
+    analytics.repPerformance.forEach((rep: any) => {
+      data.push({ 
+        Metric: rep.name, 
+        Value: `Score: ${rep.avgScore}% | Sessions: ${rep.sessions} | Close Rate: ${rep.closePercentage || 0}% | Trend: ${rep.trend >= 0 ? '+' : ''}${rep.trend}%` 
+      })
+    })
+  }
   
   if (format === 'csv') {
     return {
-      content: generateCSV(data, headers),
+      content: generateCSV(data, ['Metric', 'Value']),
       filename: `${filename}.csv`,
       mimeType: 'text/csv'
     }
   } else {
     return {
-      content: generatePDF(
+      content: generateDetailedPDF(
         `Weekly Analytics Report - ${weekRange}`,
         data,
-        headers,
-        { 'Generated': now.toLocaleDateString() }
+        ['Metric', 'Value'],
+        { 
+          'Generated': now.toLocaleDateString(),
+          'Week': weekRange,
+          'Total Sessions': (analytics.totalSessions || 0).toString(),
+          'Team Average': `${analytics.teamAverage || 0}%`
+        }
       ),
       filename: `${filename}.pdf`,
       mimeType: 'application/pdf'

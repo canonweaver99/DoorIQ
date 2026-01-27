@@ -453,6 +453,7 @@ async function handleIndividualPlanCheckout(
   const metadata = session.metadata || {}
   const userEmail = metadata.user_email || customer.email || session.customer_email
   const userName = metadata.user_name || customer.name
+  const industrySlug = metadata.industry_slug || session.subscription_data?.metadata?.industry_slug
   
   // For guest checkouts, we need to create the user account
   if (!userId && userEmail) {
@@ -532,6 +533,7 @@ async function handleIndividualPlanCheckout(
             role: 'rep',
             virtual_earnings: 0,
             checkout_session_id: session.id || null,
+            industry_slug: industrySlug || null,
           })
 
         if (profileError) {

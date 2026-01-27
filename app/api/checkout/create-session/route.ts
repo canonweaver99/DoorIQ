@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       plan, // 'starter' | 'team' | 'enterprise'
       billingPeriod, // 'monthly' | 'annual'
       discountCode, // Optional discount code
+      industry, // Industry slug
     } = body
 
     // Validation
@@ -66,6 +67,15 @@ export async function POST(request: NextRequest) {
     if (repCount < 1 || repCount > 500) {
       return NextResponse.json(
         { error: 'Number of reps must be between 1 and 500' },
+        { status: 400 }
+      )
+    }
+
+    // Validate industry
+    const validIndustries = ['pest', 'fiber', 'roofing', 'solar', 'windows', 'security']
+    if (!industry || typeof industry !== 'string' || !validIndustries.includes(industry)) {
+      return NextResponse.json(
+        { error: 'Valid industry selection is required' },
         { status: 400 }
       )
     }
@@ -332,10 +342,12 @@ export async function POST(request: NextRequest) {
           seat_count: repCount.toString(),
           user_name: yourName.trim(),
           user_email: workEmail.trim(),
+          industry_slug: industry,
           source: 'checkout_page',
         },
       },
       metadata: {
+        industry_slug: industry,
         plan_type: plan,
         billing_period: billingPeriod,
         organization_name: companyName.trim(),

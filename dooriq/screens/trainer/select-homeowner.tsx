@@ -110,8 +110,8 @@ export default function SelectHomeownerScreen() {
   // Filter agents by selected industry
   const filteredAgents = useMemo(() => {
     if (!selectedIndustry) {
-      // Only show agents with real ElevenLabs IDs (not placeholders) when "All Industries" is selected
-      return agents.filter(a => !a.eleven_agent_id.startsWith('placeholder_'))
+      // Only show agents with real ElevenLabs IDs (not placeholders) when "All Industries" is selected, exclude Angry Indian
+      return agents.filter(a => !a.eleven_agent_id.startsWith('placeholder_') && a.name !== 'Angry Indian')
     }
     return agents.filter(a => a.industries?.includes(selectedIndustry))
   }, [agents, selectedIndustry])

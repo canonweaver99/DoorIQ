@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Navigation } from '@/app/landing/page'
-import { ArrowLeft, CreditCard, Building2, User, Mail, Phone, Users, Tag } from 'lucide-react'
+import { ArrowLeft, CreditCard, Building2, User, Mail, Phone, Users, Tag, Briefcase } from 'lucide-react'
 import Link from 'next/link'
 
 function CheckoutForm() {
@@ -36,7 +36,17 @@ function CheckoutForm() {
     phone: '',
     numberOfReps: getInitialReps(),
     discountCode: '',
+    industry: '',
   })
+
+  const industries = [
+    { value: 'pest', label: 'Pest Control' },
+    { value: 'fiber', label: 'Fiber Internet' },
+    { value: 'roofing', label: 'Roofing' },
+    { value: 'solar', label: 'Solar' },
+    { value: 'windows', label: 'Windows & Doors' },
+    { value: 'security', label: 'Home Security' },
+  ]
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -175,6 +185,10 @@ function CheckoutForm() {
       newErrors.numberOfReps = 'Maximum 500 reps allowed'
     }
 
+    if (!formData.industry) {
+      newErrors.industry = 'Please select your industry'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -206,6 +220,7 @@ function CheckoutForm() {
           plan: detectedPlan,
           billingPeriod: billingPeriod,
           discountCode: validatedDiscount?.code || undefined,
+          industry: formData.industry,
         }),
       })
 
@@ -336,6 +351,30 @@ function CheckoutForm() {
                     className="bg-white/10 border-white/20 text-white"
                     placeholder="(555) 123-4567"
                   />
+                </div>
+
+                {/* Industry */}
+                <div>
+                  <Label htmlFor="industry" className="text-white/80 font-sans mb-2 flex items-center gap-2">
+                    <Briefcase className="w-4 h-4" />
+                    Industry *
+                  </Label>
+                  <select
+                    id="industry"
+                    value={formData.industry}
+                    onChange={(e) => handleInputChange('industry', e.target.value)}
+                    className="w-full h-10 px-3 bg-white/10 border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="">Select your industry</option>
+                    {industries.map((industry) => (
+                      <option key={industry.value} value={industry.value} className="bg-gray-900">
+                        {industry.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.industry && (
+                    <p className="text-xs text-red-400 mt-1">{errors.industry}</p>
+                  )}
                 </div>
 
                 {/* Number of Reps */}

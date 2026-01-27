@@ -1350,14 +1350,14 @@ function IndustryAgentsSection() {
                 whileInView={isMobile ? false : { opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={isMobile ? {} : { delay: index * 0.1, duration: 0.6 }}
-                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 sm:p-8 hover:border-white/20 hover:bg-white/[0.025] transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
+                className="group relative bg-white/[0.02] border-2 border-white/5 rounded-lg p-6 sm:p-8 hover:border-white/20 hover:bg-white/[0.025] transition-all duration-300 overflow-hidden flex flex-col cursor-pointer justify-center"
                 onClick={() => toggleIndustry(slug)}
               >
                 {/* Subtle purple glow at bottom for depth */}
                 <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-500/10 via-purple-500/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 {/* Industry Header */}
-                <div className="flex items-center gap-4 mb-4 relative z-10">
+                <div className="flex items-center gap-4 relative z-10">
                   <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center flex-shrink-0">
                     <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
@@ -1365,9 +1365,11 @@ function IndustryAgentsSection() {
                     <h3 className="font-space text-xl sm:text-2xl text-white font-bold tracking-tight">
                       {industry.name}
                     </h3>
-                    <p className="font-sans text-white/60 text-sm">
-                      {industry.agents.length} objection{industry.agents.length !== 1 ? 's' : ''}
-                    </p>
+                    {!isMobile && (
+                      <p className="font-sans text-white/60 text-sm mt-1">
+                        {industry.agents.length} objections
+                      </p>
+                    )}
                   </div>
                   <div className="flex-shrink-0">
                     {isExpanded ? (

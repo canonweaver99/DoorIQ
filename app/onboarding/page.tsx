@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react'
 import { OnboardingProgress, OnboardingStep } from '@/components/onboarding/OnboardingProgress'
 import { AccountSetup } from '@/components/onboarding/AccountSetup'
 import { RoleSelection } from '@/components/onboarding/RoleSelection'
+import { IndustrySelection } from '@/components/onboarding/IndustrySelection'
 import { WelcomeStep } from '@/components/onboarding/WelcomeStep'
 import { FeaturesStep } from '@/components/onboarding/FeaturesStep'
 import { TeamInviteStep } from '@/components/onboarding/TeamInviteStep'
@@ -17,6 +18,7 @@ import { PERSONA_METADATA } from '@/components/trainer/personas'
 const MANAGER_STEPS: OnboardingStep[] = [
   { id: 'account', title: 'Account' },
   { id: 'role', title: 'Role' },
+  { id: 'industry', title: 'Industry' },
   { id: 'welcome', title: 'Welcome' },
   { id: 'features', title: 'Features' },
   { id: 'team', title: 'Team' },
@@ -26,6 +28,7 @@ const MANAGER_STEPS: OnboardingStep[] = [
 const REP_STEPS: OnboardingStep[] = [
   { id: 'account', title: 'Account' },
   { id: 'role', title: 'Role' },
+  { id: 'industry', title: 'Industry' },
   { id: 'welcome', title: 'Welcome' },
   { id: 'features', title: 'Features' },
   { id: 'session', title: 'First Session' },
@@ -305,10 +308,16 @@ function OnboardingContent() {
   const getCurrentStepId = () => {
     if (currentStep === 0) return 'account'
     if (currentStep === 1) return 'role'
+    if (currentStep === 2) return 'industry'
     const roleSteps = role === 'manager' ? MANAGER_STEPS : REP_STEPS
     // Ensure currentStep is within bounds
     const validStep = Math.max(0, Math.min(currentStep, roleSteps.length - 1))
     return roleSteps[validStep]?.id || 'session'
+  }
+
+  const handleIndustrySelect = async (industry: string) => {
+    setCurrentStep(3) // Move to welcome step
+    await saveProgress(3)
   }
 
   const currentStepId = getCurrentStepId()
@@ -326,6 +335,7 @@ function OnboardingContent() {
           <AccountSetup email={email} sessionId={sessionId || undefined} onComplete={handleAccountComplete} />
         )}
         {currentStepId === 'role' && <RoleSelection onSelect={handleRoleSelect} />}
+        {currentStepId === 'industry' && <IndustrySelection onSelect={handleIndustrySelect} />}
         {currentStepId === 'welcome' && role && (
           <WelcomeStep userName={userName} role={role} planName={planName} onContinue={nextStep} />
         )}

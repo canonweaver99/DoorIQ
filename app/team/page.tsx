@@ -92,9 +92,12 @@ function TeamPageContent() {
       setMembers(membersData.members || [])
       setOrganization(membersData.organization)
       
-      // Fetch pending invites (would need a separate endpoint or include in members response)
-      // For now, we'll use a placeholder
-      setPendingInvites([])
+      // Fetch pending invites
+      const invitesResponse = await fetch('/api/settings/team/pending-invites')
+      if (invitesResponse.ok) {
+        const invitesData = await invitesResponse.json()
+        setPendingInvites(invitesData.invites || [])
+      }
     } catch (err: any) {
       console.error('Error fetching team data:', err)
       setError(err.message || 'Failed to load team data')
@@ -178,6 +181,27 @@ function TeamPageContent() {
       await fetchTeamData() // Refresh data
     } catch (err: any) {
       setError(err.message || 'Failed to activate member')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleCancelInvite = async (inviteId: string) => {
+    try {
+      setActionLoading(true)
+      const response = await fetch(`/api/settings/team/invites/${inviteId}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel invite')
+      }
+
+      await fetchTeamData() // Refresh data
+    } catch (err: any) {
+      setError(err.message || 'Failed to cancel invite')
     } finally {
       setActionLoading(false)
     }
@@ -279,6 +303,7 @@ function TeamPageContent() {
           <div>
             <PendingInvites
               invites={pendingInvites}
+              onCancel={handleCancelInvite}
               loading={actionLoading}
             />
           </div>

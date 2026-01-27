@@ -18,6 +18,7 @@ export interface Database {
           team_id: string | null
           role: 'rep' | 'manager' | 'admin'
           virtual_earnings: number
+          industry_slug: string | null
           created_at: string
           updated_at: string
         }
@@ -29,6 +30,7 @@ export interface Database {
           team_id?: string | null
           role?: 'rep' | 'manager' | 'admin'
           virtual_earnings?: number
+          industry_slug?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -40,6 +42,7 @@ export interface Database {
           team_id?: string | null
           role?: 'rep' | 'manager' | 'admin'
           virtual_earnings?: number
+          industry_slug?: string | null
           created_at?: string
           updated_at?: string
         }

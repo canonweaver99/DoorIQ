@@ -54,6 +54,7 @@ export const ALLOWED_AGENT_ORDER = [
   'I\'ll Just Do It Myself',
   'What\'s Wrong With My Current Windows?',
   'I\'m Waiting Until...',
+  'The Karen',
   'Angry Indian',
 ] as const
 
@@ -1820,7 +1821,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Angry and confrontational homeowner. Tests your ability to handle difficult situations and maintain professionalism under pressure.',
       difficulty: 'Expert',
       color: 'primary',
-      image: '/Indian no backround.png',
+      image: '/angry-indian.png',
       liveSessionImage: '/angry-indian.png',
     },
     card: {
@@ -1845,6 +1846,39 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       color: 'red',
       mostChallenging: true,
       elevenAgentId: 'agent_3301kf4hmz0qfcdsms0djvq8wf2z',
+    },
+  },
+  'The Karen': {
+    bubble: {
+      subtitle: 'Demanding & Entitled',
+      description: 'Demanding, entitled, and difficult homeowner. Tests your patience and ability to handle unreasonable requests while maintaining professionalism.',
+      difficulty: 'Expert',
+      color: 'primary',
+      image: '/The Karen.png',
+      liveSessionImage: '/The Karen.png',
+    },
+    card: {
+      age: 45,
+      occupation: 'Homeowner',
+      location: 'Suburban neighborhood',
+      personality: 'Demanding, entitled, and difficult. Tests patience and professionalism',
+      challengeLevel: 5,
+      challengeLabel: 'Expert',
+      difficultyKey: 'expert',
+      traits: [
+        'Makes unreasonable demands',
+        'Tests your patience constantly',
+        'Entitled attitude and expectations',
+        'Responds to firm boundaries and professional assertiveness',
+      ],
+      bestFor: 'Handling difficult customers and maintaining professionalism with demanding personalities',
+      estimatedTime: '5-10 min',
+      startingScore: 30,
+      targetScore: 65,
+      avatar: '😤',
+      color: 'red',
+      mostChallenging: true,
+      elevenAgentId: 'placeholder_karen_001',
     },
   },
   // TEMPORARILY REMOVED: 'English Second Language Elena' - can be restored by adding back to ALLOWED_AGENT_ORDER and uncommenting below

@@ -125,6 +125,10 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     objectPosition: '50% 70%', // Moved down
     scale: 1.5, // Zoomed in
   },
+  'The Karen': {
+    objectPosition: '60% 50%', // Moved to the right
+    scale: 1.0, // Zoomed out
+  },
 }
 
 export function getAgentImageStyle(agentName?: string | null): CSSProperties {

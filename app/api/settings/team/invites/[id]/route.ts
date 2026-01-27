@@ -47,7 +47,6 @@ export async function DELETE(
       .from('team_invites')
       .select('id, organization_id, team_id, status, email')
       .eq('id', id)
-      .eq('status', 'pending')
 
     // Check both organization_id and team_id
     if (userData.organization_id) {
@@ -62,7 +61,7 @@ export async function DELETE(
       console.error('Error fetching invite:', inviteError)
       if (inviteError.code === 'PGRST116') {
         return NextResponse.json(
-          { error: 'Invite not found or already processed' },
+          { error: 'Invite not found' },
           { status: 404 }
         )
       }
@@ -74,7 +73,7 @@ export async function DELETE(
 
     if (!invite) {
       return NextResponse.json(
-        { error: 'Invite not found or already processed' },
+        { error: 'Invite not found' },
         { status: 404 }
       )
     }

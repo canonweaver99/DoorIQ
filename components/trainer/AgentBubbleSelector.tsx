@@ -154,6 +154,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   const [suggestedAgent, setSuggestedAgent] = useState<string | null>(null)
   const [industries, setIndustries] = useState<IndustryRow[]>([])
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null)
+  const [userIndustry, setUserIndustry] = useState<string | null>(null)
   const [challengeModeEnabled, setChallengeModeEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('challengeModeEnabled') === 'true'
@@ -245,6 +246,24 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         
         // Stripe/billing removed - no subscription checks needed
         
+        // Fetch user's industry
+        let userIndustrySlug: string | null = null
+        if (user) {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('industry_slug')
+            .eq('id', user.id)
+            .single()
+          if (!userError && userData?.industry_slug) {
+            userIndustrySlug = userData.industry_slug
+            setUserIndustry(userIndustrySlug)
+            // Set as selected industry if user has one
+            if (!selectedIndustry) {
+              setSelectedIndustry(userIndustrySlug)
+            }
+          }
+        }
+
         // Fetch user's sessions for stats
         let sessions: any[] = []
         if (user) {
@@ -346,10 +365,11 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   
   // Apply filtering (industry + sort)
   useEffect(() => {
-    // First filter by industry
-    let filtered = selectedIndustry 
-      ? agents.filter(a => a.industries?.includes(selectedIndustry))
-      : agents.filter(a => !a.agentId.startsWith('placeholder_')) // Only show agents with real ElevenLabs IDs when "All Industries" is selected
+    // First filter by industry - use selectedIndustry if set, otherwise use userIndustry
+    const industryToFilter = selectedIndustry !== null ? selectedIndustry : userIndustry
+    let filtered = industryToFilter 
+      ? agents.filter(a => a.industries?.includes(industryToFilter))
+      : agents.filter(a => !a.agentId.startsWith('placeholder_') && a.name !== 'Angry Indian') // Only show agents with real ElevenLabs IDs when "All Industries" is selected, exclude Angry Indian
     
     // Then apply sorting
     switch (filter) {
@@ -369,7 +389,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
     }
     
     setSortedAgents(filtered)
-  }, [filter, agents, selectedIndustry])
+  }, [filter, agents, selectedIndustry, userIndustry])
 
   const handleRandomAgent = () => {
     if (agents.length === 0) return
