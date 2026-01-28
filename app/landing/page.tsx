@@ -1359,11 +1359,6 @@ function IndustryAgentsSection() {
                     <h3 className="font-space text-xl sm:text-2xl text-white font-bold tracking-tight">
                       {industry.name}
                     </h3>
-                    {!isMobile && (
-                      <p className="font-sans text-white/60 text-sm mt-1">
-                        {industry.agents.length} objections
-                      </p>
-                    )}
                   </div>
                   <div className="flex-shrink-0">
                     {isExpanded ? (
