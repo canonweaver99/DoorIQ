@@ -70,20 +70,27 @@ export function AIVoiceInput({
             let errorMsg = errorData.error || errorData.details || 'Audio service unavailable';
             
             // Provide user-friendly messages for common errors
-            if (errorMsg.includes('quota_exceeded') || errorMsg.includes('quota exceeded')) {
+            const isQuotaError = errorMsg.includes('quota_exceeded') || errorMsg.includes('quota exceeded') ||
+                                 (errorData.details && errorData.details.includes('quota'));
+            
+            if (isQuotaError) {
               errorMsg = 'Audio temporarily unavailable - quota exceeded. Please check your ElevenLabs account.';
             } else if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
-              // Check if it's quota or auth issue
-              if (errorData.details && errorData.details.includes('quota')) {
-                errorMsg = 'Audio temporarily unavailable - quota exceeded. Please check your ElevenLabs account.';
-              } else {
-                errorMsg = 'Audio service unavailable - authentication error. Please check API configuration.';
-              }
+              errorMsg = 'Audio service unavailable - authentication error. Please check API configuration.';
             }
             
             setAudioError(errorMsg);
             setIsLoading(false);
-            console.error('Audio API error:', errorMsg, errorData);
+            
+            // Quota errors are expected operational issues, log as warning instead of error
+            // Other errors should be logged for debugging
+            if (isQuotaError) {
+              // Quota exceeded is an operational issue, not a code error
+              console.warn('Audio API quota exceeded - this is expected when quota limits are reached');
+            } else {
+              // Other errors should be logged for debugging
+              console.error('Audio API error:', errorMsg, errorData);
+            }
             return;
           } catch {
             // If JSON parsing fails, use status text

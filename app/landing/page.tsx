@@ -411,34 +411,12 @@ function HeroSection() {
         />
       </motion.div>
 
-      {/* Animated accent glows */}
-      <motion.div
-        animate={shouldAnimate ? {
-          x: [0, 30, 0],
-          y: [0, 20, 0],
-          scale: [1, 1.1, 1],
-        } : { x: 0, y: 0, scale: 1 }}
-        transition={shouldAnimate ? {
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut",
-        } : {}}
-        className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
-        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
-      />
-      <motion.div
-        animate={shouldAnimate ? {
-          x: [0, -25, 0],
-          y: [0, 30, 0],
-          scale: [1, 1.2, 1],
-        } : { x: 0, y: 0, scale: 1 }}
-        transition={shouldAnimate ? {
-          duration: 20,
-          repeat: Infinity,
-          ease: "easeInOut",
-        } : {}}
-        className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
-        style={{ transform: 'translateZ(0)', willChange: 'transform' }}
+      {/* Purple light at top to illuminate hero title - fixed position so it stays at top while scrolling */}
+      <div
+        className="fixed top-[-100px] left-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-purple-500/25 via-purple-500/20 to-purple-500/5 rounded-full blur-[120px] pointer-events-none z-[1]"
+        style={{ 
+          transform: 'translateX(-50%)',
+        }}
       />
 
       {/* Desktop Hero Section - Laptop (md and above) */}
@@ -842,37 +820,6 @@ function SolutionSection() {
 
   return (
     <section id="solution" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
-      {/* Animated background gradients */}
-      {!isMobile && (
-        <>
-          <motion.div
-            animate={{
-              x: [0, 50, 0],
-              y: [0, 30, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 15,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute top-1/2 left-0 w-[600px] h-[600px] bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent rounded-full blur-[150px] -translate-y-1/2"
-          />
-          <motion.div
-            animate={{
-              x: [0, -40, 0],
-              y: [0, -50, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-pink-500/10 via-purple-500/10 to-transparent rounded-full blur-[120px]"
-          />
-        </>
-      )}
 
       <div className="relative max-w-7xl mx-auto px-0 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
@@ -1276,37 +1223,6 @@ function IndustryAgentsSection() {
 
   return (
     <section id="industry-agents" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
-      {/* Animated background gradients */}
-      {!isMobile && (
-        <>
-          <motion.div
-            animate={{
-              x: [0, 30, 0],
-              y: [0, 40, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 18,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent rounded-full blur-[120px]"
-          />
-          <motion.div
-            animate={{
-              x: [0, -25, 0],
-              y: [0, -35, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 22,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-pink-500/10 via-purple-500/10 to-transparent rounded-full blur-[100px]"
-          />
-        </>
-      )}
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
@@ -1715,37 +1631,6 @@ function StatsSection() {
 
   return (
     <section id="stats" className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
-      {/* Animated background elements */}
-      {!isMobile && (
-        <div className="absolute inset-0">
-          <motion.div
-            animate={{
-              x: [0, 30, 0],
-              y: [0, 40, 0],
-              scale: [1, 1.15, 1],
-            }}
-            transition={{
-              duration: 18,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[120px]"
-          />
-          <motion.div
-            animate={{
-              x: [0, -25, 0],
-              y: [0, -35, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 22,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-pink-500/15 via-purple-500/10 to-transparent rounded-full blur-[100px]"
-          />
-        </div>
-      )}
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         {/* Section Header */}
@@ -1857,38 +1742,6 @@ function CTASection() {
   const isMobile = useIsMobile();
   return (
     <section className="relative bg-black py-12 sm:py-16 md:py-20 overflow-hidden">
-      {/* Animated background gradients - reduced glow */}
-      <div className="absolute inset-0 bg-gradient-to-t from-white/[0.02] via-transparent to-transparent" />
-      {!isMobile && (
-        <>
-          <motion.div
-            animate={{
-              x: [0, 50, 0],
-              y: [0, 30, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-t from-indigo-500/8 via-purple-500/6 to-pink-500/4 rounded-full blur-[150px]"
-          />
-          <motion.div
-            animate={{
-              x: [0, -40, 0],
-              y: [0, -20, 0],
-              scale: [1, 1.15, 1],
-            }}
-            transition={{
-              duration: 25,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent rounded-full blur-[120px]"
-          />
-        </>
-      )}
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         <motion.div
@@ -2251,7 +2104,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <main className="bg-black min-h-screen text-white relative">
+    <main className="bg-black min-h-screen text-white relative overflow-hidden">
       <Navigation />
       <HeroSection />
       <MeetTrainerSection />
