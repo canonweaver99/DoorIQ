@@ -171,13 +171,19 @@ BEGIN
     AND a.is_active = true
   ON CONFLICT (agent_id, industry_id) DO NOTHING;
 
-  -- Ensure Spouse Check Susan is assigned to all industries (keeping original name)
+  -- Ensure Spouse Check Susan is assigned to all industries EXCEPT solar (solar has Michelle Torres)
+  -- Remove Spouse Check Susan from solar industry
+  DELETE FROM agent_industries
+  WHERE agent_id IN (SELECT id FROM agents WHERE name = 'Spouse Check Susan')
+    AND industry_id IN (SELECT id FROM industries WHERE slug = 'solar');
+  
+  -- Assign Spouse Check Susan to all industries EXCEPT solar
   INSERT INTO agent_industries (agent_id, industry_id)
   SELECT a.id, i.id
   FROM agents a
   CROSS JOIN industries i
   WHERE a.name = 'Spouse Check Susan'
-    AND i.slug IN ('pest', 'fiber', 'roofing', 'solar', 'windows')
+    AND i.slug IN ('pest', 'fiber', 'roofing', 'windows')
     AND a.is_active = true
   ON CONFLICT (agent_id, industry_id) DO NOTHING;
 

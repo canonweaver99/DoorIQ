@@ -215,7 +215,7 @@ export function Navigation() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`relative z-50 transition-all duration-500 ${
         scrolled
           ? "bg-black/95 backdrop-blur-xl"
           : "bg-black/50 backdrop-blur-sm"
@@ -388,7 +388,7 @@ function HeroSection() {
   }, []);
 
   return (
-    <div id="hero" className="relative bg-black overflow-hidden pt-32 sm:pt-36 md:pt-40 lg:pt-44 xl:pt-48 2xl:pt-52">
+    <div id="hero" className="relative bg-black overflow-hidden pt-8 sm:pt-10 md:pt-12 lg:pt-16">
       {/* Animated grid pattern */}
       <motion.div
         animate={shouldAnimate ? {
@@ -411,9 +411,9 @@ function HeroSection() {
         />
       </motion.div>
 
-      {/* Purple light at top to illuminate hero title - fixed position so it stays at top while scrolling */}
+      {/* Purple light at top to illuminate hero title */}
       <div
-        className="fixed top-[-100px] left-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-purple-500/25 via-purple-500/20 to-purple-500/5 rounded-full blur-[120px] pointer-events-none z-[1]"
+        className="absolute top-[-100px] left-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-purple-500/25 via-purple-500/20 to-purple-500/5 rounded-full blur-[120px] pointer-events-none z-[1]"
         style={{ 
           transform: 'translateX(-50%)',
         }}
