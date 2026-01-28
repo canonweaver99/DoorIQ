@@ -1118,7 +1118,8 @@ function IndustryAgentsSection() {
         { 
           name: 'I Need to Talk to My Spouse', 
           description: 'Very common (60%+). MAJOR household decision, requires both parties, or easy out.',
-          type: 'Smokescreen/Real objection'
+          type: 'Smokescreen/Real objection',
+          percentage: 20
         },
         { 
           name: 'I\'m Selling/Moving Soon', 
@@ -1392,8 +1393,8 @@ function IndustryAgentsSection() {
                           }}
                           className="bg-white/[0.03] border border-white/5 rounded-md p-3 hover:border-white/10 transition-colors"
                         >
-                          <div className="flex items-center justify-between gap-3 w-full">
-                            <h4 className="font-space text-sm sm:text-base text-white font-semibold flex-1">
+                          <div className="flex items-center justify-between gap-4 w-full">
+                            <h4 className="font-space text-sm sm:text-base text-white font-semibold flex-1 pr-2">
                               {agent.name}
                             </h4>
                             {agent.percentage && (

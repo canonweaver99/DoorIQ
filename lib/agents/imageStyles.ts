@@ -59,6 +59,10 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     objectPosition: '44% 58%', // Lowered vertically
     scale: 1.15,
   },
+  'Travis "T-Bone" Hendricks': {
+    objectPosition: '50% 65%', // Centered, lowered more to focus on face
+    scale: 1.6, // Zoomed in on face
+  },
   'How Much Is It?': {
     objectPosition: '0% 65%', // Moved all the way to the left, moved down more
     scale: 1.5, // Zoomed in more on face

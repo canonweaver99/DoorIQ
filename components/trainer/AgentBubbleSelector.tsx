@@ -71,6 +71,7 @@ const UNIVERSAL_AGENT_NAMES = [
   'The Karen',
   'Angry Indian',
   'Tag Team Tanya & Tom',
+  'Travis "T-Bone" Hendricks',
 ]
 
 // Check if agent belongs to all industries (universal agent)
@@ -167,6 +168,7 @@ const AGENT_REAL_NAMES: Record<string, string> = {
   'The Karen': 'Karen Smith',
   'Angry Indian': 'Raj Patel',
   'Tag Team Tanya & Tom': 'Tanya & Tom',
+  'Travis "T-Bone" Hendricks': 'Travis "T-Bone" Hendricks',
 }
 const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
   'primary',

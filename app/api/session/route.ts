@@ -79,9 +79,9 @@ export async function POST(req: Request) {
       sessionData.agent_id = agent_id
     }
     
-    // Skip feedback for content creator agents (Angry Indian, Nick Fuentes)
+    // Skip feedback for content creator agents (Angry Indian, Nick Fuentes, Travis "T-Bone" Hendricks)
     // Set user_feedback_submitted_at immediately so feedback form is skipped
-    if (agent_name === 'Angry Indian' || agent_name === 'Nick Fuentes') {
+    if (agent_name === 'Angry Indian' || agent_name === 'Nick Fuentes' || agent_name === 'Travis "T-Bone" Hendricks') {
       sessionData.user_feedback_submitted_at = new Date().toISOString()
       console.log(`🎯 ${agent_name} session: Feedback will be skipped`)
     }

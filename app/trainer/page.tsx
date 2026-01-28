@@ -233,6 +233,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'Tag Team Tanya & Tom': '/tanya and tom.png',
     'Angry Indian': '/angry-indian.png',
     'Nick Fuentes': '/nick-fuentes.png',
+    'Travis "T-Bone" Hendricks': '/Travis "T-Bone" Hendricks.png',
     // 'I Need to Talk to My Spouse': Handled by industry-specific logic above (Windows only)
     'My Roof is Fine': '/Mark Patterson.png',
     // 'I\'m Not Interested': handled by industry-specific logic above

@@ -62,6 +62,7 @@ export const ALLOWED_AGENT_ORDER = [
   'Not the Right Time / Maybe Next Year',
   'The Karen',
   'Angry Indian',
+  'Travis "T-Bone" Hendricks',
 ] as const
 
 export type AllowedAgentName = typeof ALLOWED_AGENT_ORDER[number]
@@ -2096,6 +2097,39 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       color: 'red',
       mostChallenging: true,
       elevenAgentId: 'placeholder_karen_001',
+    },
+  },
+  'Travis "T-Bone" Hendricks': {
+    bubble: {
+      subtitle: 'Safety Training',
+      description: 'Expert/Safety Training - 38 but looks 50, clearly under the influence, paranoid, aggressive, erratic. Tests your ability to recognize dangerous situations and exit safely while maintaining professionalism.',
+      difficulty: 'Expert',
+      color: 'primary',
+      image: '/Travis "T-Bone" Hendricks.png',
+      liveSessionImage: '/Travis "T-Bone" Hendricks.png',
+    },
+    card: {
+      age: 38,
+      occupation: 'Homeowner',
+      location: 'Residential neighborhood',
+      personality: 'Under the influence, paranoid, aggressive, erratic. Safety training scenario',
+      challengeLevel: 5,
+      challengeLabel: 'Expert/Safety Training',
+      difficultyKey: 'expert',
+      traits: [
+        'Clearly under the influence of substances',
+        'Paranoid and aggressive behavior',
+        'Erratic and unpredictable responses',
+        'Tests ability to recognize danger and exit safely',
+      ],
+      bestFor: 'Safety training - Recognizing dangerous situations and exiting safely while maintaining professionalism',
+      estimatedTime: '3-5 min',
+      startingScore: 20,
+      targetScore: 70,
+      avatar: '⚠️',
+      color: 'red',
+      mostChallenging: true,
+      elevenAgentId: 'agent_2601kg2zz82zf2mst4mrdj9mjr76',
     },
   },
   // TEMPORARILY REMOVED: 'English Second Language Elena' - can be restored by adding back to ALLOWED_AGENT_ORDER and uncommenting below
