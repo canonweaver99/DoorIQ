@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { ChevronDown, Bug, Wifi, DoorOpen, Sun, Home } from 'lucide-react'
+import { ChevronDown, Bug, Wifi, DoorOpen, Sun, Home, Globe } from 'lucide-react'
 import { getAgentImageStyle } from '@/lib/agents/imageStyles'
 import { cn } from '@/lib/utils'
 import { COLOR_VARIANTS } from '@/components/ui/background-circles'
@@ -46,12 +46,44 @@ interface HomeownerAgentDisplay {
 }
 
 // Industry icon mapping for Lucide icons
-const INDUSTRY_ICONS: Record<string, string> = {
-  pest: 'Bug',
-  fiber: 'Wifi',
-  windows: 'DoorOpen',
-  solar: 'Sun',
-  roofing: 'Home',
+const INDUSTRY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  pest: Bug,
+  fiber: Wifi,
+  windows: DoorOpen,
+  solar: Sun,
+  roofing: Home,
+}
+
+// Universal/All Industries icon
+const UNIVERSAL_ICON = Globe
+
+// Helper function to get industry icon component
+const getIndustryIcon = (industrySlug: string) => {
+  return INDUSTRY_ICONS[industrySlug] || null
+}
+
+// Universal agent names (agents that belong to all industries)
+const UNIVERSAL_AGENT_NAMES = [
+  'Average Austin',
+  'Not Interested Nick',
+  'Too Expensive Tim',
+  'Spouse Check Susan',
+  'The Karen',
+  'Angry Indian',
+  'Tag Team Tanya & Tom',
+]
+
+// Check if agent belongs to all industries (universal agent)
+const isUniversalAgent = (agentName: string, industries?: string[]): boolean => {
+  // Check by agent name first (most reliable)
+  if (UNIVERSAL_AGENT_NAMES.includes(agentName)) {
+    return true
+  }
+  // Fallback: check if agent belongs to all 5 industries
+  if (industries && industries.length >= 5) {
+    return true
+  }
+  return false
 }
 
 // Agent name to real name mapping for personalized display
@@ -72,57 +104,58 @@ const AGENT_REAL_NAMES: Record<string, string> = {
   'Veteran Victor': 'Victor Anderson',
   
   // Pest control agents
-  'I Already Have a Pest Guy': 'Michael Chen',
-  'I Don\'t Have Any Bugs': 'Sarah Johnson',
-  'How Much Is It?': 'James Wilson',
+  'I Already Have a Pest Guy': 'Dan Mitchell',
+  'I Don\'t Have Any Bugs': 'Rachel Cooper',
+  'How Much Is It?': 'James Wilson', // Used for other industries (fiber, solar, windows)
+  'What\'s the Price?': 'Vincent "Vinny" Caruso', // Pest-specific agent
   // 'I Need to Talk to My Spouse': Handled by industry-specific logic (Windows only uses Angela White)
   'I\'m Not Interested in Solar': 'Gary Thompson',
   'I\'m Renting/Don\'t Own': 'Tyler Jackson',
-  'I Just Spray Myself': 'Brian Thompson',
-  'Send Me Information': 'Amanda Stevens',
-  'We\'re Selling/Moving Soon': 'Jennifer Lee',
-  'I Have Pets/Kids - Worried About Chemicals': 'Jessica Martinez',
-  'Bad Timing - Call Me Back Later': 'Chris Bennett',
+  'I Just Spray Myself': 'Greg Wilson',
+  'Send Me Information': 'Jennifer Lee',
+  'We\'re Selling/Moving Soon': 'Chris Bennett',
+  'I Have Pets/Kids - Worried About Chemicals': 'Nicole Rodriguez',
+  'Bad Timing - Call Me Back Later': 'Mike Sullivan',
   
   // Fiber/Internet agents
   'I Already Have Internet': 'Daniel Mitchell',
   'I\'m in a Contract': 'Nicole Rodriguez',
   'I\'m Happy With What I Have': 'Rachel Cooper',
   'I Just Signed Up': 'Marcus Johnson',
-  'I Don\'t Want to Deal With Switching': 'Linda Morrison',
-  'My Internet Works Fine': 'Greg Wilson',
-  'What\'s the Catch?': 'Sarah Kim',
-  'I\'m Moving Soon': 'Tom Henderson',
+  'I Don\'t Want to Deal With Switching': 'Kevin Richardson',
+  'My Internet Works Fine': 'Tom Henderson',
+  'What\'s the Catch?': 'Rob Davis',
+  'I\'m Moving Soon': 'Sarah Kim',
   'I Need to Talk to My Spouse': 'Jessica Martinez', // Fiber agent (Windows=Angela White, Roofing=Patricia Wells, Solar=Michelle Torres - handled by agent ID check)
   
   // Roofing agents
   'My Roof is Fine': 'Mark Patterson',
-  // 'I\'m Not Interested': Reverted - no specific person for roofing
+  'I\'m Not Interested': 'Frank Rodriguez', // Roofing-specific
   'How Much Does a Roof Cost?': 'David Kim',
   'I Just Had My Roof Done': 'Carlos Mendez',
   'I\'ll Call You When I Need a Roof': 'Tom Bradley',
   'I Already Have Someone': 'Kevin Anderson',
   'My Insurance Won\'t Cover It': 'Lisa Martinez',
-  'I\'m Selling Soon': 'Sherry Green',
+  'I\'m Selling Soon': 'Robert Williams', // Changed from Sherry Green
   'I Don\'t Trust Door-to-Door Roofers': 'Harold Stevens',
   
   // Solar agents
-  'I\'m Not Interested in Solar': 'Mike Sullivan',
+  'I\'m Not Interested in Solar': 'Gary Thompson',
   'Solar is Too Expensive': 'Brian Walsh',
-  'How Much Does It Cost?': 'Kai Shin',
+  'How Much Does It Cost?': 'James Porter', // Solar-specific (changed from Kai Shin)
   'My Electric Bill is Too Low': 'Sarah Chen',
   'What If It Doesn\'t Work?': 'David Martinez',
   'My Roof is Too Old': 'Robert Jenkins',
   'I\'ve Heard Bad Things About Solar': 'Linda Morrison',
-  'I Don\'t Qualify': 'Lamar Johnson',
+  'I Don\'t Qualify': 'Terrell Washington', // Changed from Marcus Johnson to Terrell Washington
   
   // Windows agents
   'My Windows Are Fine': 'Robert Lee',
   'That\'s Too Expensive': 'Kellie Adams',
-  'Just Got New Windows': 'Toby Robin',
-  'I\'m Selling/Moving Soon': 'Sherry Green',
+  'How Much Does It Cost?': 'James Porter', // Windows-specific (Solar also uses James Porter)
   'I\'m Going to Get Multiple Quotes': 'Jeffrey Clark',
   'I Just Need One or Two Windows': 'Maria Gonzalez',
+  'I\'m Selling/Moving Soon': 'Sherry Green',
   'I\'ll Just Do It Myself': 'Patrick Murphy',
   'What\'s Wrong With My Current Windows?': 'Laura Thompson',
   'I\'m Waiting Until...': 'Jonathan Wright',
@@ -185,7 +218,12 @@ const getIndustrySpecificImage = (agentName: string, elevenAgentId: string, agen
       'I\'m Not Interested': '/Lewis McArthur.png',
       'My Windows Are Fine': '/Robert Lee.png',
       'That\'s Too Expensive': '/Kellie Adams.png',
-      'How Much Does It Cost?': '/Kai Shin.png',
+      'How Much Does It Cost?': '/James Porter.png', // Windows-specific (changed from Kai Shin)
+      'I\'m Going to Get Multiple Quotes': '/Jeffrey Clark.png',
+      'I Just Need One or Two Windows': '/Maria Gonzalez.png',
+      'I\'ll Just Do It Myself': '/Patrick Murphy.png',
+      'What\'s Wrong With My Current Windows?': '/Laura Thompson.png',
+      'I\'m Waiting Until...': '/Jonathan Wright.png',
       'Just Got New Windows': '/Toby Robin.png',
       'I\'m Selling/Moving Soon': '/Sherry Green.png',
       'I Don\'t Trust Window Companies': '/Arron Black.png',
@@ -198,16 +236,19 @@ const getIndustrySpecificImage = (agentName: string, elevenAgentId: string, agen
     },
     solar: {
       'I Need to Talk to My Spouse': '/Michelle Torres.png',
+      'How Much Does It Cost?': '/James Porter.png',
+      'I\'m Selling Soon': '/Diane Martinez.png', // Changed from Robert Williams to Diane Martinez
     },
     roofing: {
       'I Need to Talk to My Spouse': '/Patricia Wells.png',
+      'I\'m Selling Soon': '/Robert Williams.png',
     },
   }
 
   // Special handling for "I Need to Talk to My Spouse" - check eleven_agent_id first
   if (agentName === 'I Need to Talk to My Spouse') {
     // Check for Angela White's actual agent ID (Windows)
-    if (elevenAgentId === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+    if (elevenAgentId === 'agent_3301kg2vydhnf28s2q2b6thzhfa4') {
       return industryImageMap.windows[agentName] // Angela White
     }
     // Check for Jessica Martinez's actual agent ID (Fiber)
@@ -234,6 +275,30 @@ const getIndustrySpecificImage = (agentName: string, elevenAgentId: string, agen
     }
     if (elevenAgentId?.startsWith('placeholder_roofing_')) {
       return industryImageMap.roofing[agentName] // Patricia Wells
+    }
+  }
+
+  // Special handling for "How Much Does It Cost?" - check eleven_agent_id to determine industry
+  if (agentName === 'How Much Does It Cost?') {
+    // Check for James Porter's actual agent ID (Solar)
+    if (elevenAgentId === 'agent_5001kfgygawzf3z9prjqkqv1wj85') {
+      return industryImageMap.solar[agentName] // James Porter (Solar)
+    }
+    // Check for James Porter's actual agent ID (Windows)
+    if (elevenAgentId === 'agent_6201kg2w5zfxe0dr1cwnb5qp1416') {
+      return industryImageMap.windows[agentName] // James Porter (Windows)
+    }
+  }
+
+  // Special handling for "I'm Selling Soon" - check eleven_agent_id to determine industry
+  if (agentName === 'I\'m Selling Soon') {
+    // Check for Diane Martinez's actual agent ID (Solar)
+    if (elevenAgentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
+      return industryImageMap.solar[agentName] // Diane Martinez (Solar)
+    }
+    // Check for Robert Williams's actual agent ID (Roofing)
+    if (elevenAgentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
+      return industryImageMap.roofing[agentName] // Robert Williams (Roofing)
     }
   }
 
@@ -301,6 +366,7 @@ const mapAgentToDisplay = (agent: AgentRow, index: number, agentIndustries?: str
     color,
     description,
     image: image || undefined,
+    industries: agentIndustries || undefined,
   }
 }
 
@@ -556,9 +622,20 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   useEffect(() => {
     // First filter by industry - use selectedIndustry if set, otherwise use userIndustry
     const industryToFilter = selectedIndustry !== null ? selectedIndustry : userIndustry
+    // Exclude the 4 spouse agents (Angela White, Jessica Martinez, Patricia Wells, Michelle Torres) from "All Industries"
+    const spouseAgentIds = [
+      'agent_3301kg2vydhnf28s2q2b6thzhfa4', // Angela White (Windows)
+      'agent_7201kfgssnt8eb2a8a4kghb421vd', // Jessica Martinez (Fiber)
+      'agent_2001kfgxefjcefk9r6s1m5vkfzxn', // Patricia Wells (Roofing)
+      'agent_9101kfgy6d0jft18a06r0zj19jp1', // Michelle Torres (Solar)
+    ]
     let filtered = industryToFilter 
       ? agents.filter(a => a.industries?.includes(industryToFilter))
-      : agents.filter(a => !a.agentId.startsWith('placeholder_') && a.name !== 'Angry Indian') // Only show agents with real ElevenLabs IDs when "All Industries" is selected, exclude Angry Indian
+      : agents.filter(a => 
+          !a.agentId.startsWith('placeholder_') && 
+          a.name !== 'Angry Indian' &&
+          !spouseAgentIds.includes(a.agentId)
+        ) // Only show agents with real ElevenLabs IDs when "All Industries" is selected, exclude Angry Indian and the 4 spouse agents
     
     // Then apply sorting
     switch (filter) {
@@ -1048,13 +1125,53 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     agent.isLocked && "opacity-50"
                   )}
                 >
+                  {/* Industry Badge - Top Right */}
+                  {agent.industries && agent.industries.length > 0 && (
+                    <div className="absolute top-2 right-2 z-10">
+                      {isUniversalAgent(agent.name, agent.industries) ? (
+                        // Show single Globe icon for universal agents
+                        <div
+                          className="bg-black/60 backdrop-blur-sm rounded-full p-1.5 border border-white/20 shadow-lg"
+                          title="All Industries"
+                        >
+                          <UNIVERSAL_ICON className="w-3.5 h-3.5 text-white/90" />
+                        </div>
+                      ) : (
+                        // Show individual icons for non-universal agents
+                        <div className={cn(
+                          "flex flex-wrap gap-1 max-w-[calc(100%-1rem)] justify-end",
+                          agent.industries.length > 3 && "gap-0.5" // Tighter spacing for many icons
+                        )}>
+                          {agent.industries.map((industrySlug) => {
+                            const IconComponent = getIndustryIcon(industrySlug)
+                            if (!IconComponent) return null
+                            const iconSize = agent.industries && agent.industries.length > 4 ? 'w-3 h-3' : 'w-3.5 h-3.5'
+                            const padding = agent.industries && agent.industries.length > 4 ? 'p-1' : 'p-1.5'
+                            return (
+                              <div
+                                key={industrySlug}
+                                className={cn(
+                                  "bg-black/60 backdrop-blur-sm rounded-full border border-white/20 shadow-lg",
+                                  padding
+                                )}
+                                title={industrySlug.charAt(0).toUpperCase() + industrySlug.slice(1)}
+                              >
+                                <IconComponent className={cn(iconSize, "text-white/90")} />
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   {/* Agent Real Name - show for all agents, extract from name if needed */}
                   <div className="mb-2 text-center">
                     <h4 className="text-sm font-semibold text-white/90 font-space tracking-tight">
                       {(() => {
                         // Special handling for "I Need to Talk to My Spouse" - resolve by agent ID
                         if (agent.name === 'I Need to Talk to My Spouse') {
-                          if (agent.agentId === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+                          if (agent.agentId === 'agent_3301kg2vydhnf28s2q2b6thzhfa4') {
                             return 'Angela White' // Windows
                           }
                           if (agent.agentId === 'agent_7201kfgssnt8eb2a8a4kghb421vd') {
@@ -1065,6 +1182,15 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                           }
                           if (agent.agentId === 'agent_9101kfgy6d0jft18a06r0zj19jp1') {
                             return 'Michelle Torres' // Solar
+                          }
+                        }
+                        // Special handling for "I'm Selling Soon" - resolve by agent ID
+                        if (agent.name === 'I\'m Selling Soon') {
+                          if (agent.agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
+                            return 'Diane Martinez' // Solar
+                          }
+                          if (agent.agentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
+                            return 'Robert Williams' // Roofing
                           }
                         }
                         return AGENT_REAL_NAMES[agent.name]
@@ -1162,7 +1288,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         >
                           <div className="relative w-full h-full rounded-full overflow-hidden shadow-xl">
                             {(() => {
-                              const imageStyle = getAgentImageStyle(agent.name)
+                              const imageStyle = getAgentImageStyle(agent.name, agent.agentId)
                               const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
                               let translateY = '0'
                               const verticalNum = parseFloat(vertical)
@@ -1547,13 +1673,55 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         agent.isLocked && "opacity-50"
                       )}
                     >
+                      {/* Industry Badge - Top Right */}
+                      {agent.industries && agent.industries.length > 0 && (
+                        <div className="absolute top-2 right-2 sm:top-2 sm:right-2 z-10">
+                          {isUniversalAgent(agent.name, agent.industries) ? (
+                            // Show single Globe icon for universal agents
+                            <div
+                              className="bg-black/60 backdrop-blur-sm rounded-full p-1.5 sm:p-2 border border-white/20 shadow-lg"
+                              title="All Industries"
+                            >
+                              <UNIVERSAL_ICON className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/90" />
+                            </div>
+                          ) : (
+                            // Show individual icons for non-universal agents
+                            <div className={cn(
+                              "flex flex-wrap gap-1 max-w-[calc(100%-1rem)] justify-end",
+                              agent.industries.length > 3 && "gap-0.5" // Tighter spacing for many icons
+                            )}>
+                              {agent.industries.map((industrySlug) => {
+                                const IconComponent = getIndustryIcon(industrySlug)
+                                if (!IconComponent) return null
+                                const iconSize = agent.industries && agent.industries.length > 4 
+                                  ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' 
+                                  : 'w-3.5 h-3.5 sm:w-4 sm:h-4'
+                                const padding = agent.industries && agent.industries.length > 4 ? 'p-1 sm:p-1.5' : 'p-1.5 sm:p-2'
+                                return (
+                                  <div
+                                    key={industrySlug}
+                                    className={cn(
+                                      "bg-black/60 backdrop-blur-sm rounded-full border border-white/20 shadow-lg",
+                                      padding
+                                    )}
+                                    title={industrySlug.charAt(0).toUpperCase() + industrySlug.slice(1)}
+                                  >
+                                    <IconComponent className={cn(iconSize, "text-white/90")} />
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
                     {/* Agent Real Name - show for all agents, extract from name if needed */}
                     <div className="mb-2 sm:mb-3 text-center">
                       <h4 className="text-xs sm:text-sm md:text-base font-semibold text-white/90 font-space tracking-tight">
                         {(() => {
                           // Special handling for "I Need to Talk to My Spouse" - resolve by agent ID
                           if (agent.name === 'I Need to Talk to My Spouse') {
-                            if (agent.agentId === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+                            if (agent.agentId === 'agent_3301kg2vydhnf28s2q2b6thzhfa4') {
                               return 'Angela White' // Windows
                             }
                             if (agent.agentId === 'agent_7201kfgssnt8eb2a8a4kghb421vd') {
@@ -1564,6 +1732,15 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             }
                             if (agent.agentId === 'agent_9101kfgy6d0jft18a06r0zj19jp1') {
                               return 'Michelle Torres' // Solar
+                            }
+                          }
+                          // Special handling for "I'm Selling Soon" - resolve by agent ID
+                          if (agent.name === 'I\'m Selling Soon') {
+                            if (agent.agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
+                              return 'Diane Martinez' // Solar
+                            }
+                            if (agent.agentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
+                              return 'Robert Williams' // Roofing
                             }
                           }
                           return AGENT_REAL_NAMES[agent.name]
@@ -1663,7 +1840,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                           >
                             <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl">
                               {(() => {
-                                const imageStyle = getAgentImageStyle(agent.name)
+                                const imageStyle = getAgentImageStyle(agent.name, agent.agentId)
                                 const [horizontal, vertical] = (imageStyle.objectPosition?.toString() || '50% 52%').split(' ')
                                 let translateY = '0'
                                 const verticalNum = parseFloat(vertical)

@@ -15,6 +15,7 @@ export const ALLOWED_AGENT_ORDER = [
   'I Already Have a Pest Guy',
   'I Don\'t Have Any Bugs',
   'How Much Is It?',
+  'What\'s the Price?',
   'I Need to Talk to My Spouse',
   'I\'m Renting/Don\'t Own',
   'I Just Spray Myself',
@@ -570,7 +571,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '🏠',
       color: 'blue',
-      elevenAgentId: 'placeholder_pest_001',
+      elevenAgentId: 'agent_7801kfgwtwrnfjn998jh1xztrgen',
     },
   },
   'I Don\'t Have Any Bugs': {
@@ -601,7 +602,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 78,
       avatar: '🐛',
       color: 'green',
-      elevenAgentId: 'placeholder_pest_002',
+      elevenAgentId: 'agent_5901kfgwvwq1e49smdr13zc3mwj0',
     },
   },
   'How Much Is It?': {
@@ -632,7 +633,38 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 72,
       avatar: '💰',
       color: 'yellow',
-      elevenAgentId: 'placeholder_pest_003',
+      elevenAgentId: 'agent_7301kfgsf649e8jah8qme3csnvpx',
+    },
+  },
+  'What\'s the Price?': {
+    bubble: {
+      subtitle: 'Smokescreen/Qualification',
+      description: 'Very common (50%+). Wants to disqualify quickly or price shopping.',
+      difficulty: 'Moderate',
+      color: 'quaternary',
+      image: '/Vincent "Vinny" Caruso.png',
+    },
+    card: {
+      age: 44,
+      occupation: 'Budget-conscious homeowner',
+      location: 'Various',
+      personality: 'Price-focused, wants quick disqualification or genuine price sensitivity',
+      challengeLevel: 2,
+      challengeLabel: 'Moderate',
+      difficultyKey: 'moderate',
+      traits: [
+        'Asks price immediately',
+        'Wants to disqualify quickly OR genuinely price-sensitive',
+        'Needs value built before price discussion',
+        'Responds to value anchoring',
+      ],
+      bestFor: 'Building value before price, value anchoring techniques',
+      estimatedTime: '7-11 min',
+      startingScore: 48,
+      targetScore: 75,
+      avatar: '💰',
+      color: 'yellow',
+      elevenAgentId: 'agent_4701kg2tk5d9f5ksab7r3e7q9t1b',
     },
   },
   'I Need to Talk to My Spouse': {
@@ -694,7 +726,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 68,
       avatar: '🏠',
       color: 'cyan',
-      elevenAgentId: 'placeholder_pest_005',
+      elevenAgentId: 'agent_9801kfgwyjz8ffkbbr1xscdwxfdt',
     },
   },
   'I Just Spray Myself': {
@@ -725,7 +757,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 70,
       avatar: '🔧',
       color: 'orange',
-      elevenAgentId: 'placeholder_pest_006',
+      elevenAgentId: 'agent_5601kfgwzpnweks9myh96gy91zea',
     },
   },
   'Send Me Information': {
@@ -756,7 +788,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 78,
       avatar: '📧',
       color: 'teal',
-      elevenAgentId: 'placeholder_pest_007',
+      elevenAgentId: 'agent_8501kfgx77bsfd7bjm9nh30g8z4c',
     },
   },
   'We\'re Selling/Moving Soon': {
@@ -787,7 +819,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 76,
       avatar: '📦',
       color: 'emerald',
-      elevenAgentId: 'placeholder_pest_008',
+      elevenAgentId: 'agent_1201kfgx8761fv7vkygynecyg5y1',
     },
   },
   'I Have Pets/Kids - Worried About Chemicals': {
@@ -818,7 +850,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '🐕',
       color: 'indigo',
-      elevenAgentId: 'placeholder_pest_009',
+      elevenAgentId: 'agent_4901kfgx9acaee6bpmnb0vjhfevx',
     },
   },
   'Bad Timing - Call Me Back Later': {
@@ -849,7 +881,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 78,
       avatar: '⏰',
       color: 'violet',
-      elevenAgentId: 'placeholder_pest_010',
+      elevenAgentId: 'agent_3801kfgxa5v1fg9van0enjj6qf3p',
     },
   },
   'I Already Have Internet': {
@@ -880,7 +912,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '📡',
       color: 'blue',
-      elevenAgentId: 'placeholder_fiber_001',
+      elevenAgentId: 'agent_3401kfgsy2vdfcrb9gesp3zw8jqw',
     },
   },
   'I\'m in a Contract': {
@@ -911,7 +943,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 70,
       avatar: '📋',
       color: 'purple',
-      elevenAgentId: 'placeholder_fiber_002',
+      elevenAgentId: 'agent_0401kfgt10g0f5xbtxm3a7y92p27',
     },
   },
   'I\'m Happy With What I Have': {
@@ -942,7 +974,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 78,
       avatar: '😊',
       color: 'green',
-      elevenAgentId: 'placeholder_fiber_004',
+      elevenAgentId: 'agent_0501kfgtdkcxfs28bb022mc5g9bw',
     },
   },
   'I Just Signed Up': {
@@ -973,7 +1005,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 68,
       avatar: '📅',
       color: 'orange',
-      elevenAgentId: 'placeholder_fiber_006',
+      elevenAgentId: 'agent_8601kfgt8mv3ey09nb14fwbwd3jb',
     },
   },
   'I Don\'t Want to Deal With Switching': {
@@ -1004,7 +1036,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '🔄',
       color: 'cyan',
-      elevenAgentId: 'placeholder_fiber_007',
+      elevenAgentId: 'agent_7401kfgt21gtebxt2tasfk46tpyk',
     },
   },
   'My Internet Works Fine': {
@@ -1035,7 +1067,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 78,
       avatar: '✅',
       color: 'teal',
-      elevenAgentId: 'placeholder_fiber_008',
+      elevenAgentId: 'agent_5901kfgtcpaneyqs2c7ajb3fnb8w',
     },
   },
   'What\'s the Catch?': {
@@ -1066,7 +1098,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 72,
       avatar: '🤔',
       color: 'yellow',
-      elevenAgentId: 'placeholder_fiber_009',
+      elevenAgentId: 'agent_5701kfgt9n2ff06ajk6bfq7974w5',
     },
   },
   'I\'m Moving Soon': {
@@ -1097,7 +1129,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 76,
       avatar: '📦',
       color: 'emerald',
-      elevenAgentId: 'placeholder_fiber_010',
+      elevenAgentId: 'agent_9101kfgtbp2me14t01n0c0nbanw3',
     },
   },
   'My Roof is Fine': {
@@ -1128,7 +1160,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '🏠',
       color: 'blue',
-      elevenAgentId: 'placeholder_roofing_001',
+      elevenAgentId: 'agent_3401kfgxgp5cfgkbt18dsedj21f1',
     },
   },
   'I\'m Not Interested': {
@@ -1137,7 +1169,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (60%+). Roofing reps have bad reputation.',
       difficulty: 'Hard',
       color: 'tertiary',
-      // Roofing agent - image removed, will use default or industry-specific
+      image: '/Frank Rodriguez.png', // Roofing agent
     },
     card: {
       age: 42,
@@ -1159,7 +1191,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 65,
       avatar: '🚫',
       color: 'red',
-      elevenAgentId: 'placeholder_roofing_002',
+      elevenAgentId: 'agent_4701kfgxhm6bff0949sm66mr8n21',
     },
   },
   'How Much Does a Roof Cost?': {
@@ -1190,7 +1222,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 70,
       avatar: '💰',
       color: 'yellow',
-      elevenAgentId: 'placeholder_roofing_003',
+      elevenAgentId: 'agent_3201kfgxs63qf3yrz6spva0xmn76',
     },
   },
   'I Just Had My Roof Done': {
@@ -1221,7 +1253,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 68,
       avatar: '🔨',
       color: 'orange',
-      elevenAgentId: 'placeholder_roofing_004',
+      elevenAgentId: 'agent_6801kfgxt1bxfzvrc1xatssc5f1m',
     },
   },
   'I\'ll Call You When I Need a Roof': {
@@ -1252,14 +1284,14 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 76,
       avatar: '📞',
       color: 'cyan',
-      elevenAgentId: 'placeholder_roofing_006',
+      elevenAgentId: 'agent_3001kfgxy6vfe3fe3wbsjeqpczh4gje',
     },
   },
   'I Already Have Someone': {
     bubble: {
       subtitle: 'Smokescreen/Real Objection',
       description: 'Common (30%+). They used someone 15 years ago or have a "guy" they\'ve never called.',
-      difficulty: 'Moderate',
+      difficulty: 'Easy',
       color: 'septenary',
       image: '/Kevin Anderson.png',
     },
@@ -1268,9 +1300,9 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       occupation: 'Homeowner',
       location: 'Suburban neighborhood',
       personality: 'Loyal to old roofer or has easy excuse',
-      challengeLevel: 2,
-      challengeLabel: 'Moderate',
-      difficultyKey: 'moderate',
+      challengeLevel: 1,
+      challengeLabel: 'Easy',
+      difficultyKey: 'easy',
       traits: [
         'Used someone years ago',
         'Has a "guy" never called',
@@ -1283,7 +1315,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '👷',
       color: 'teal',
-      elevenAgentId: 'placeholder_roofing_007',
+      elevenAgentId: 'agent_9201kfgy0r49fc09xn6t28bcr7n5',
     },
   },
   'My Insurance Won\'t Cover It': {
@@ -1314,7 +1346,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 74,
       avatar: '🛡️',
       color: 'indigo',
-      elevenAgentId: 'placeholder_roofing_008',
+      elevenAgentId: 'agent_3801kfgy1qw9eyxa31hxdy66syrm',
     },
   },
   'I\'m Selling Soon': {
@@ -1323,7 +1355,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Moderate (20%+). Sometimes true, often an easy excuse.',
       difficulty: 'Moderate',
       color: 'nonary',
-      image: '/Sherry Green.png',
+      image: '/Robert Williams.png', // Default (Roofing) - Solar uses Diane Martinez via industry-specific mapping
     },
     card: {
       age: 41,
@@ -1345,7 +1377,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 76,
       avatar: '🏡',
       color: 'emerald',
-      elevenAgentId: 'placeholder_roofing_009',
+      elevenAgentId: 'agent_9701kfgy2ptff7x8je2fcca13jp1', // Default (Roofing) - Solar uses agent_2701kg2yvease7b89h6nx6p1eqjy (Diane Martinez)
     },
   },
   'I Don\'t Trust Door-to-Door Roofers': {
@@ -1376,7 +1408,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 70,
       avatar: '🤨',
       color: 'violet',
-      elevenAgentId: 'placeholder_roofing_010',
+      elevenAgentId: 'agent_7201kfgy3kgeexwvkw15c30n3q3n',
     },
   },
   'I\'m Not Interested in Solar': {
@@ -1407,7 +1439,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 65,
       avatar: '☀️',
       color: 'yellow',
-      elevenAgentId: 'placeholder_solar_001',
+      elevenAgentId: 'agent_2101kfgybvm0fz1shb4msy1q5qxz',
     },
   },
   'Solar is Too Expensive': {
@@ -1438,7 +1470,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 70,
       avatar: '💰',
       color: 'orange',
-      elevenAgentId: 'placeholder_solar_002',
+      elevenAgentId: 'agent_1501kfgycw6wff3vd46tnzjr8xkb',
     },
   },
   'My Electric Bill is Too Low': {
@@ -1469,7 +1501,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 72,
       avatar: '📊',
       color: 'green',
-      elevenAgentId: 'placeholder_solar_006',
+      elevenAgentId: 'agent_0501kfgyh9vrea4v9sb923t6vtfv',
     },
   },
   'What If It Doesn\'t Work?': {
@@ -1500,7 +1532,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 74,
       avatar: '❓',
       color: 'cyan',
-      elevenAgentId: 'placeholder_solar_007',
+      elevenAgentId: 'agent_1801kfgyj8hxf4p91mg5tfpwq9pp',
     },
   },
   'My Roof is Too Old': {
@@ -1531,7 +1563,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '🏠',
       color: 'teal',
-      elevenAgentId: 'placeholder_solar_008',
+      elevenAgentId: 'agent_0201kfgymyrpe6yvb7f0ay8efd72',
     },
   },
   'I\'ve Heard Bad Things About Solar': {
@@ -1562,7 +1594,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 70,
       avatar: '⚠️',
       color: 'red',
-      elevenAgentId: 'placeholder_solar_009',
+      elevenAgentId: 'agent_0901kfgyntt4ekz9xfj3q5srk3sh',
     },
   },
   'I Don\'t Qualify': {
@@ -1571,7 +1603,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Moderate (20%+). Bad credit history or assume they won\'t qualify.',
       difficulty: 'Moderate',
       color: 'octonary',
-      image: '/Lamar Johnson.png',
+      image: '/Terrell Washington.png', // Changed from Marcus Johnson to Terrell Washington
     },
     card: {
       age: 41,
@@ -1593,7 +1625,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '📋',
       color: 'indigo',
-      elevenAgentId: 'placeholder_solar_010',
+      elevenAgentId: 'agent_7401kg2vf3twe1xr9d66asfc43sv',
     },
   },
   'How Much Does It Cost?': {
@@ -1602,7 +1634,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (55%+). Want a number to disqualify you or compare.',
       difficulty: 'Hard',
       color: 'quaternary',
-      image: '/Kai Shin.png', // Windows agent
+      image: '/James Porter.png', // Solar agent (changed from Kai Shin)
     },
     card: {
       age: 44,
@@ -1624,7 +1656,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 72,
       avatar: '💰',
       color: 'yellow',
-      elevenAgentId: 'placeholder_solar_003',
+      elevenAgentId: 'agent_5001kfgygawzf3z9prjqkqv1wj85',
     },
   },
   'My Windows Are Fine': {
@@ -1655,7 +1687,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '🪟',
       color: 'blue',
-      elevenAgentId: 'placeholder_windows_001',
+      elevenAgentId: 'agent_5901kg2w2pbke0p81575yq1c6spj',
     },
   },
   'That\'s Too Expensive': {
@@ -1686,7 +1718,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 70,
       avatar: '💸',
       color: 'orange',
-      elevenAgentId: 'placeholder_windows_003',
+      elevenAgentId: 'agent_0801kg2w6rdpe2jtdpg6s4ge2xct',
     },
   },
   'I\'m Going to Get Multiple Quotes': {
@@ -1695,7 +1727,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (50%+). Legitimately want to compare 3-5 companies.',
       difficulty: 'Moderate',
       color: 'quaternary',
-      image: '/James Porter.png',
+      image: '/Jeffrey Clark.png', // Changed from James Porter to Jeffrey Clark
     },
     card: {
       age: 43,
@@ -1717,7 +1749,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 78,
       avatar: '📋',
       color: 'yellow',
-      elevenAgentId: 'placeholder_windows_005',
+      elevenAgentId: 'agent_9801kg2w89tqfy3tht3zwjp5w3qc',
     },
   },
   'I Just Need One or Two Windows': {
@@ -1726,7 +1758,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (30%+). Want to replace broken/problem windows only.',
       difficulty: 'Moderate',
       color: 'quinary',
-      image: '/Michelle Torres.png',
+      image: '/Maria Gonzalez.png', // Changed from Michelle Torres to Maria Gonzalez
     },
     card: {
       age: 42,
@@ -1748,7 +1780,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '🪟',
       color: 'cyan',
-      elevenAgentId: 'placeholder_windows_006',
+      elevenAgentId: 'agent_9901kg2w904weyjv9xjs9sxjzszt',
     },
   },
   'Just Got New Windows': {
@@ -1810,7 +1842,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 76,
       avatar: '🏡',
       color: 'emerald',
-      elevenAgentId: 'placeholder_windows_007',
+      elevenAgentId: 'agent_1401kg2w9r2tf13bwqebxrn9m3g0',
     },
   },
   'I\'ll Just Do It Myself': {
@@ -1819,7 +1851,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (25-30%). Handy homeowner or has contractor friend/family.',
       difficulty: 'Moderate',
       color: 'senary',
-      image: '/Frank Rodriguez.png',
+      image: '/Patrick Murphy.png', // Changed from Frank Rodriguez to Patrick Murphy
     },
     card: {
       age: 46,
@@ -1841,7 +1873,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '🔧',
       color: 'teal',
-      elevenAgentId: 'placeholder_windows_008',
+      elevenAgentId: 'agent_6601kg2wav3hebnvq04zeymzkbhb',
     },
   },
   'What\'s Wrong With My Current Windows?': {
@@ -1850,7 +1882,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (35%+). Don\'t understand energy loss or how old their windows are.',
       difficulty: 'Moderate',
       color: 'septenary',
-      image: '/Patricia Wells.png',
+      image: '/Laura Thompson.png', // Changed from Patricia Wells to Laura Thompson
     },
     card: {
       age: 44,
@@ -1872,7 +1904,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 78,
       avatar: '❓',
       color: 'indigo',
-      elevenAgentId: 'placeholder_windows_009',
+      elevenAgentId: 'agent_7701kg2wbfn0e7mvw4p69wr13rb4',
     },
   },
   'I\'m Waiting Until...': {
@@ -1881,7 +1913,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (40%+). Putting off major expense/decision indefinitely.',
       difficulty: 'Moderate',
       color: 'octonary',
-      image: '/Robert Williams.png',
+      image: '/Jonathan Wright.png', // Changed from Robert Williams to Jonathan Wright
     },
     card: {
       age: 41,
@@ -1903,7 +1935,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 76,
       avatar: '⏳',
       color: 'violet',
-      elevenAgentId: 'placeholder_windows_010',
+      elevenAgentId: 'agent_7801kg2wc55se38vwwrj6dafec7d',
     },
   },
   'I Don\'t Trust Window Companies': {
@@ -1934,7 +1966,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 70,
       avatar: '🤨',
       color: 'violet',
-      elevenAgentId: 'placeholder_windows_011',
+      elevenAgentId: 'agent_7201kfgy3kgeexwvkw15c30n3q3n', // Note: This is Harold Stevens ID, but user list doesn't include this agent
     },
   },
   'I\'m Not Interested': {
@@ -1965,7 +1997,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 65,
       avatar: '🚫',
       color: 'red',
-      elevenAgentId: 'placeholder_windows_012',
+      elevenAgentId: 'agent_4701kfgxhm6bff0949sm66mr8n21', // Note: This is Frank Rodriguez ID, but user list doesn't include this agent
     },
   },
   'Not the Right Time / Maybe Next Year': {
@@ -1997,7 +2029,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 75,
       avatar: '📅',
       color: 'violet',
-      elevenAgentId: 'placeholder_timing_001',
+      elevenAgentId: 'agent_2601kg2wcsw2f16sw06e5mxaeras',
     },
   },
   'Angry Indian': {

@@ -88,7 +88,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
       'I\'m Not Interested': '/Lewis McArthur.png',
       'My Windows Are Fine': '/Robert Lee.png',
       'That\'s Too Expensive': '/Kellie Adams.png',
-      'How Much Does It Cost?': '/Kai Shin.png',
+      'How Much Does It Cost?': '/James Porter.png', // Windows-specific (changed from Kai Shin)
       'Just Got New Windows': '/Toby Robin.png',
       'I\'m Selling/Moving Soon': '/Sherry Green.png',
       'I Don\'t Trust Window Companies': '/Arron Black.png',
@@ -101,6 +101,8 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     },
     solar: {
       'I Need to Talk to My Spouse': '/Michelle Torres.png',
+      'How Much Does It Cost?': '/James Porter.png',
+      'I\'m Selling Soon': '/Diane Martinez.png', // Changed from Robert Williams to Diane Martinez
     },
     roofing: {
       'I Need to Talk to My Spouse': '/Patricia Wells.png',
@@ -111,7 +113,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
       'I\'ll Call You When I Need a Roof': '/Tom Bradley.png',
       'I Already Have Someone': '/Kevin Anderson.png',
       'My Insurance Won\'t Cover It': '/Lisa Martinez.png',
-      'I\'m Selling Soon': '/Sherry Green.png',
+      'I\'m Selling Soon': '/Robert Williams.png', // Changed from Sherry Green to Robert Williams
       'I Don\'t Trust Door-to-Door Roofers': '/Harold Stevens.png',
     },
   }
@@ -120,7 +122,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
   // Special handling for "I Need to Talk to My Spouse" - check eleven_agent_id to determine industry
   if (agent.name === 'I Need to Talk to My Spouse') {
     // Check for Angela White's actual agent ID (Windows)
-    if (agent.eleven_agent_id === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+    if (agent.eleven_agent_id === 'agent_3301kg2vydhnf28s2q2b6thzhfa4') {
       return industryImageMap.windows[agent.name] // Angela White
     }
     // Check for Jessica Martinez's actual agent ID (Fiber)
@@ -147,6 +149,30 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     }
     if (agent.eleven_agent_id?.startsWith('placeholder_roofing_')) {
       return industryImageMap.roofing[agent.name] // Patricia Wells
+    }
+  }
+
+  // Special handling for "How Much Does It Cost?" - check eleven_agent_id to determine industry
+  if (agent.name === 'How Much Does It Cost?') {
+    // Check for James Porter's actual agent ID (Solar)
+    if (agent.eleven_agent_id === 'agent_5001kfgygawzf3z9prjqkqv1wj85') {
+      return industryImageMap.solar[agent.name] // James Porter (Solar)
+    }
+    // Check for James Porter's actual agent ID (Windows)
+    if (agent.eleven_agent_id === 'agent_6201kg2w5zfxe0dr1cwnb5qp1416') {
+      return industryImageMap.windows[agent.name] // James Porter (Windows)
+    }
+  }
+
+  // Special handling for "I'm Selling Soon" - check eleven_agent_id to determine industry
+  if (agent.name === 'I\'m Selling Soon') {
+    // Check for Diane Martinez's actual agent ID (Solar)
+    if (agent.eleven_agent_id === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
+      return industryImageMap.solar[agent.name] // Diane Martinez (Solar)
+    }
+    // Check for Robert Williams's actual agent ID (Roofing)
+    if (agent.eleven_agent_id === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
+      return industryImageMap.roofing[agent.name] // Robert Williams (Roofing)
     }
   }
   
@@ -215,7 +241,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'I\'ll Call You When I Need a Roof': '/Tom Bradley.png',
     'I Already Have Someone': '/Kevin Anderson.png',
     'My Insurance Won\'t Cover It': '/Lisa Martinez.png',
-    'I\'m Selling Soon': '/Sherry Green.png',
+    'I\'m Selling Soon': '/Robert Williams.png', // Changed from Sherry Green to Robert Williams
     'I Don\'t Trust Door-to-Door Roofers': '/Harold Stevens.png',
     'I\'m Not Interested in Solar': '/Gary Thompson.png',
     'Solar is Too Expensive': '/Brian Walsh.png',
@@ -229,11 +255,11 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'That\'s Too Expensive': '/Kellie Adams.png',
     'Just Got New Windows': '/Toby Robin.png',
     'I Don\'t Trust Window Companies': '/Arron Black.png',
-    'I\'m Going to Get Multiple Quotes': '/James Porter.png',
-    'I Just Need One or Two Windows': '/Michelle Torres.png',
-    'I\'ll Just Do It Myself': '/Frank Rodriguez.png',
-    'What\'s Wrong With My Current Windows?': '/Patricia Wells.png',
-    'I\'m Waiting Until...': '/Robert Williams.png',
+    'I\'m Going to Get Multiple Quotes': '/Jeffrey Clark.png',
+    'I Just Need One or Two Windows': '/Maria Gonzalez.png',
+    'I\'ll Just Do It Myself': '/Patrick Murphy.png',
+    'What\'s Wrong With My Current Windows?': '/Laura Thompson.png',
+    'I\'m Waiting Until...': '/Jonathan Wright.png',
     'Not the Right Time / Maybe Next Year': '/Steve Harry.png'
   }
   
@@ -275,7 +301,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
 const resolveAgentRealName = (agentName: string, agentId: string | null | undefined): string => {
   // Special handling for "I Need to Talk to My Spouse" - resolve by agent ID
   if (agentName === 'I Need to Talk to My Spouse') {
-    if (agentId === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+    if (agentId === 'agent_3301kg2vydhnf28s2q2b6thzhfa4') {
       return 'Angela White' // Windows
     }
     if (agentId === 'agent_7201kfgssnt8eb2a8a4kghb421vd') {
@@ -286,6 +312,15 @@ const resolveAgentRealName = (agentName: string, agentId: string | null | undefi
     }
     if (agentId === 'agent_9101kfgy6d0jft18a06r0zj19jp1') {
       return 'Michelle Torres' // Solar
+    }
+  }
+  // Special handling for "I'm Selling Soon" - resolve by agent ID
+  if (agentName === 'I\'m Selling Soon') {
+    if (agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
+      return 'Diane Martinez' // Solar
+    }
+    if (agentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
+      return 'Robert Williams' // Roofing
     }
   }
   // For other agents, return the agent name as-is (or could add more mappings here)

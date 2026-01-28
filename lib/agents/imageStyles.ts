@@ -63,8 +63,17 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     objectPosition: '0% 65%', // Moved all the way to the left, moved down more
     scale: 1.5, // Zoomed in more on face
   },
+  'What\'s the Price?': {
+    objectPosition: '50% 75%', // Centered horizontally, moved down more (from 70% to 75%)
+    scale: 1.5, // Zoomed in on face
+  },
+  // Industry-specific positioning for "I Need to Talk to My Spouse" based on elevenAgentId
+  // Jessica Martinez (Fiber): agent_7201kfgssnt8eb2a8a4kghb421vd
+  // Angela White (Windows): agent_3301kg2vydhnf28s2q2b6thzhfa4
+  // Patricia Wells (Roofing): agent_2001kfgxefjcefk9r6s1m5vkfzxn
+  // Michelle Torres (Solar): agent_9101kfgy6d0jft18a06r0zj19jp1
   'I Need to Talk to My Spouse': {
-    objectPosition: '-15% 75%', // Moved up (75%) from 85%
+    objectPosition: '75% 80%', // Default (Angela White - Windows)
     scale: 1.8, // Zoomed in more on face
   },
   'I Already Have Internet': {
@@ -76,8 +85,8 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.5, // Zoomed in more on face
   },
   'I\'m Happy With What I Have': {
-    objectPosition: '30% 75%', // Moved more down and to the left
-    scale: 1.7, // Zoomed in more on face
+    objectPosition: '50% 75%', // Moved more to the right (from 30% to 50%)
+    scale: 1.3, // Zoomed out (from 1.7 to 1.3)
   },
   'I Just Signed Up': {
     objectPosition: '85% 72%', // Moved 15% more to the right
@@ -104,8 +113,8 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.7, // Zoomed in on face (reduced from 2.0)
   },
   'I Don\'t Have Any Bugs': {
-    objectPosition: '95% 70%', // Moved to the right and down
-    scale: 1.7, // Zoomed in on face
+    objectPosition: '100% 70%', // Moved more to the right (from 95% to 100%)
+    scale: 1.5, // Zoomed in a little (from 1.3 to 1.5)
   },
   'I\'m Renting/Don\'t Own': {
     objectPosition: '15% 70%', // Moved to the left and down
@@ -116,7 +125,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.5, // Zoomed in
   },
   'Send Me Information': {
-    objectPosition: '120% 65%', // Moved far to the right and down
+    objectPosition: '120% 60%', // Moved up a little (from 65% to 60%)
   },
   'I Have Pets/Kids - Worried About Chemicals': {
     objectPosition: '70% 60%', // Moved to the right and down
@@ -124,6 +133,10 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
   'Bad Timing - Call Me Back Later': {
     objectPosition: '50% 70%', // Moved down
     scale: 1.5, // Zoomed in
+  },
+  'We\'re Selling/Moving Soon': {
+    objectPosition: '50% 80%', // Moved up a little (from 85% to 80%)
+    scale: 1.6, // Zoomed out a little (from 1.8 to 1.6)
   },
   'The Karen': {
     objectPosition: '60% 50%', // Moved to the right
@@ -134,7 +147,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.4, // Zoomed in from 1.15 to 1.4
   },
   'I\'m Not Interested': {
-    objectPosition: '50% 52%', // Default position
+    objectPosition: '80% 52%', // Moved more to the right (from 65% to 80%)
     scale: 1.0, // Zoomed out from default 1.15 to 1.0
   },
   'How Much Does a Roof Cost?': {
@@ -194,16 +207,98 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.15,
   },
   'I Don\'t Qualify': {
-    objectPosition: '75% 75%', // Moved down more (75%) from 65% and to the right (75%)
+    objectPosition: '65% 85%', // Moved down more (from 80% to 85%) and more to the left (from 70% to 65%)
     scale: 1.7, // Zoomed in a little more from 1.5 to 1.7
+  },
+  'My Windows Are Fine': {
+    objectPosition: '80% 80%', // Moved more to the right (from 65% to 80%)
+    scale: 1.6, // Zoomed in a little more (from 1.4 to 1.6)
+  },
+  'That\'s Too Expensive': {
+    objectPosition: '0% 75%', // Moved even more to the left (from 15% to 0%) and up more (from 80% to 75%)
+    scale: 1.4, // Zoomed in
+  },
+  'I\'m Going to Get Multiple Quotes': {
+    objectPosition: '50% 65%', // Moved up more (from 75% to 65%)
+    scale: 1.6, // Zoomed in
+  },
+  'I Just Need One or Two Windows': {
+    objectPosition: '85% 70%', // Moved up (from 80% to 70%) and more to the right (from 75% to 85%)
+    scale: 1.4, // Zoomed out a little (from 1.6 to 1.4)
+  },
+  'I\'ll Just Do It Myself': {
+    objectPosition: '80% 70%', // Moved down (from 52% to 70%) and more to the right (from 70% to 80%)
+    scale: 1.5, // Zoomed in a little
+  },
+  'What\'s Wrong With My Current Windows?': {
+    objectPosition: '50% 72%', // Moved up a little more (from 75% to 72%)
+    scale: 1.4, // Zoomed in
+  },
+  'I\'m Waiting Until...': {
+    objectPosition: '-10% 70%', // Moved more to the left (from -5% to -10%) and up (from 80% to 70%)
+    scale: 1.4, // Zoomed in
   },
 }
 
-export function getAgentImageStyle(agentName?: string | null): CSSProperties {
+// Industry-specific styles for "I Need to Talk to My Spouse" based on elevenAgentId
+const SPOUSE_AGENT_STYLES: Record<string, AgentImageStyle> = {
+  'agent_7201kfgssnt8eb2a8a4kghb421vd': { // Jessica Martinez (Fiber)
+    objectPosition: '10% 78%', // Moved to the left a lot
+    scale: 1.8,
+  },
+  'agent_3301kg2vydhnf28s2q2b6thzhfa4': { // Angela White (Windows)
+    objectPosition: '75% 80%', // Moved to the right
+    scale: 1.8,
+  },
+  'agent_2001kfgxefjcefk9r6s1m5vkfzxn': { // Patricia Wells (Roofing)
+    objectPosition: '10% 70%', // Moved up more
+    scale: 1.8,
+  },
+  'agent_9101kfgy6d0jft18a06r0zj19jp1': { // Michelle Torres (Solar)
+    objectPosition: '-5% 80%', // Moved down and to the left
+    scale: 1.8,
+  },
+}
+
+// Industry-specific styles for "I'm Selling Soon" based on elevenAgentId
+const SELLING_SOON_AGENT_STYLES: Record<string, AgentImageStyle> = {
+  'agent_2701kg2yvease7b89h6nx6p1eqjy': { // Diane Martinez (Solar)
+    objectPosition: '40% 60%', // Moved up more and to the right
+    scale: 1.2, // Zoomed in a tiny bit
+  },
+  'agent_9701kfgy2ptff7x8je2fcca13jp1': { // Robert Williams (Roofing)
+    objectPosition: '5% 52%', // Keep existing position
+    scale: 1.15,
+  },
+}
+
+export function getAgentImageStyle(agentName?: string | null, elevenAgentId?: string | null): CSSProperties {
   if (!agentName) {
     return {
       objectPosition: DEFAULT_STYLE.objectPosition,
       transform: `scale(${DEFAULT_STYLE.scale})`,
+    }
+  }
+
+  // Check for industry-specific positioning for "I Need to Talk to My Spouse"
+  if (agentName === 'I Need to Talk to My Spouse' && elevenAgentId) {
+    const spouseStyle = SPOUSE_AGENT_STYLES[elevenAgentId]
+    if (spouseStyle) {
+      return {
+        objectPosition: spouseStyle.objectPosition ?? DEFAULT_STYLE.objectPosition,
+        transform: `scale(${spouseStyle.scale ?? DEFAULT_STYLE.scale})`,
+      }
+    }
+  }
+
+  // Check for industry-specific positioning for "I'm Selling Soon"
+  if (agentName === 'I\'m Selling Soon' && elevenAgentId) {
+    const sellingSoonStyle = SELLING_SOON_AGENT_STYLES[elevenAgentId]
+    if (sellingSoonStyle) {
+      return {
+        objectPosition: sellingSoonStyle.objectPosition ?? DEFAULT_STYLE.objectPosition,
+        transform: `scale(${sellingSoonStyle.scale ?? DEFAULT_STYLE.scale})`,
+      }
     }
   }
 

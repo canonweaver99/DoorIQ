@@ -111,7 +111,18 @@ export default function SelectHomeownerScreen() {
   const filteredAgents = useMemo(() => {
     if (!selectedIndustry) {
       // Only show agents with real ElevenLabs IDs (not placeholders) when "All Industries" is selected, exclude Angry Indian
-      return agents.filter(a => !a.eleven_agent_id.startsWith('placeholder_') && a.name !== 'Angry Indian')
+      // Also exclude the 4 spouse agents (Angela White, Jessica Martinez, Patricia Wells, Michelle Torres) from "All Industries"
+      const spouseAgentIds = [
+        'agent_9301kg0vggg4em0aqfs72f9r3bp4', // Angela White (Windows)
+        'agent_7201kfgssnt8eb2a8a4kghb421vd', // Jessica Martinez (Fiber)
+        'agent_2001kfgxefjcefk9r6s1m5vkfzxn', // Patricia Wells (Roofing)
+        'agent_9101kfgy6d0jft18a06r0zj19jp1', // Michelle Torres (Solar)
+      ]
+      return agents.filter(a => 
+        !a.eleven_agent_id.startsWith('placeholder_') && 
+        a.name !== 'Angry Indian' &&
+        !spouseAgentIds.includes(a.eleven_agent_id)
+      )
     }
     return agents.filter(a => a.industries?.includes(selectedIndustry))
   }, [agents, selectedIndustry])
