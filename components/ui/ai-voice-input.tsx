@@ -50,86 +50,162 @@ export function AIVoiceInput({
   useEffect(() => {
     if (!currentAudioUrl) return;
 
-    const audio = new Audio(currentAudioUrl);
-    audioRef.current = audio;
+    let audio: HTMLAudioElement | null = null;
+    let cleanupFn: (() => void) | null = null;
 
-    const handleTimeUpdate = () => {
-      if (audio.currentTime && !isNaN(audio.currentTime)) {
-        setTime(Math.floor(audio.currentTime));
-      }
-    };
-
-    const handlePlay = () => {
-      setIsPlaying(true);
-      setSubmitted(true);
-      setIsLoading(false);
-      onStart?.();
-    };
-
-    const handlePause = () => {
-      setIsPlaying(false);
-      setSubmitted(false);
-    };
-
-    const handleEnded = () => {
-      // Stop playing and reset state when audio ends
-      setIsPlaying(false);
-      setSubmitted(false);
-      setTime(0);
-      setIsLoading(false);
-      // Reset audio to beginning so it's ready for next play
-      audio.pause();
-      audio.currentTime = 0;
-      onStop?.(audio.duration || 0);
-    };
-
-    const handleLoadedMetadata = async () => {
-      // Audio is ready
-      setIsLoading(false);
-      // Auto-play if user clicked to get a new audio clip
-      if (shouldAutoPlay) {
-        setShouldAutoPlay(false);
-        try {
-          await audio.play();
-        } catch (error) {
-          console.error('Error auto-playing audio:', error);
-        }
-      }
-    };
-
-    const handleError = () => {
-      setIsLoading(false);
-      setIsPlaying(false);
-      setSubmitted(false);
-      setAudioError('Failed to load audio');
-      console.error('Audio loading error');
-    };
-
-    const handleLoadStart = () => {
+    // Pre-flight check: verify URL returns audio before creating Audio element
+    const validateAndLoadAudio = async () => {
       setIsLoading(true);
       setAudioError(null);
+
+      try {
+        // Fetch URL to check if it returns audio or an error
+        const response = await fetch(currentAudioUrl, { method: 'GET' });
+        const contentType = response.headers.get('content-type') || '';
+
+        // If response is JSON or not OK, it's likely an error
+        if (contentType.includes('application/json') || !response.ok) {
+          try {
+            const errorData = await response.json();
+            const errorMsg = errorData.error || errorData.details || 'Audio service unavailable';
+            setAudioError(errorMsg);
+            setIsLoading(false);
+            console.error('Audio API error:', errorMsg, errorData);
+            return;
+          } catch {
+            // If JSON parsing fails, use status text
+            setAudioError(response.statusText || 'Failed to load audio');
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // If not audio content type and not ok, it's an error
+        if (!response.ok) {
+          setAudioError('Failed to load audio');
+          setIsLoading(false);
+          return;
+        }
+
+        // Create audio element
+        audio = new Audio(currentAudioUrl);
+        audioRef.current = audio;
+
+        const handleTimeUpdate = () => {
+          if (audio && audio.currentTime && !isNaN(audio.currentTime)) {
+            setTime(Math.floor(audio.currentTime));
+          }
+        };
+
+        const handlePlay = () => {
+          setIsPlaying(true);
+          setSubmitted(true);
+          setIsLoading(false);
+          onStart?.();
+        };
+
+        const handlePause = () => {
+          setIsPlaying(false);
+          setSubmitted(false);
+        };
+
+        const handleEnded = () => {
+          setIsPlaying(false);
+          setSubmitted(false);
+          setTime(0);
+          setIsLoading(false);
+          if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+          }
+          onStop?.(audio?.duration || 0);
+        };
+
+        const handleLoadedMetadata = async () => {
+          setIsLoading(false);
+          if (shouldAutoPlay && audio) {
+            setShouldAutoPlay(false);
+            try {
+              await audio.play();
+            } catch (error) {
+              console.error('Error auto-playing audio:', error);
+              setAudioError('Failed to play audio');
+            }
+          }
+        };
+
+        const handleError = () => {
+          setIsLoading(false);
+          setIsPlaying(false);
+          setSubmitted(false);
+          
+          if (audio && audio.error) {
+            let errorMessage = 'Failed to load audio';
+            switch (audio.error.code) {
+              case MediaError.MEDIA_ERR_ABORTED:
+                errorMessage = 'Audio loading aborted';
+                break;
+              case MediaError.MEDIA_ERR_NETWORK:
+                errorMessage = 'Network error';
+                break;
+              case MediaError.MEDIA_ERR_DECODE:
+                errorMessage = 'Audio format not supported';
+                break;
+              case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                errorMessage = 'Audio source not supported';
+                break;
+            }
+            setAudioError(errorMessage);
+            console.error('Audio error:', audio.error);
+          } else {
+            setAudioError('Failed to load audio');
+          }
+        };
+
+        const handleLoadStart = () => {
+          setIsLoading(true);
+          setAudioError(null);
+        };
+
+        audio.addEventListener('timeupdate', handleTimeUpdate);
+        audio.addEventListener('play', handlePlay);
+        audio.addEventListener('pause', handlePause);
+        audio.addEventListener('ended', handleEnded);
+        audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.addEventListener('error', handleError);
+        audio.addEventListener('loadstart', handleLoadStart);
+
+        cleanupFn = () => {
+          if (audio) {
+            audio.removeEventListener('timeupdate', handleTimeUpdate);
+            audio.removeEventListener('play', handlePlay);
+            audio.removeEventListener('pause', handlePause);
+            audio.removeEventListener('ended', handleEnded);
+            audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            audio.removeEventListener('error', handleError);
+            audio.removeEventListener('loadstart', handleLoadStart);
+            audio.pause();
+            audio.src = '';
+          }
+        };
+      } catch (error: any) {
+        console.error('Error loading audio:', error);
+        setAudioError(error?.message || 'Failed to load audio');
+        setIsLoading(false);
+      }
     };
 
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('error', handleError);
-    audio.addEventListener('loadstart', handleLoadStart);
+    validateAndLoadAudio();
 
     return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('error', handleError);
-      audio.removeEventListener('loadstart', handleLoadStart);
-      audio.pause();
-      audio.src = '';
+      if (cleanupFn) cleanupFn();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
     };
-  }, [currentAudioUrl, onStart, onStop]);
+  }, [currentAudioUrl, onStart, onStop, shouldAutoPlay]);
 
   useEffect(() => {
     if (!currentAudioUrl) {
