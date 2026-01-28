@@ -210,10 +210,30 @@ export async function GET(request: NextRequest) {
         body: errorText,
       })
       
+      // Parse error details for better error messages
+      let errorMessage = `ElevenLabs TTS error: ${response.status}`
+      let errorDetails = errorText || response.statusText
+      
+      try {
+        const errorJson = JSON.parse(errorText)
+        if (errorJson.detail) {
+          // Handle quota exceeded specifically
+          if (errorJson.detail.status === 'quota_exceeded') {
+            errorMessage = 'ElevenLabs quota exceeded'
+            errorDetails = errorJson.detail.message || 'Your ElevenLabs account has run out of credits. Please add credits to continue.'
+          } else if (errorJson.detail.message) {
+            errorMessage = errorJson.detail.message
+            errorDetails = errorText
+          }
+        }
+      } catch {
+        // If parsing fails, use the original error text
+      }
+      
       return NextResponse.json(
         { 
-          error: `ElevenLabs TTS error: ${response.status}`,
-          details: errorText || response.statusText
+          error: errorMessage,
+          details: errorDetails
         },
         { status: response.status }
       )

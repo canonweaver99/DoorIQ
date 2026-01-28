@@ -335,21 +335,38 @@ export default function RootLayout({
               // Monitor for Rewardful/share-modal errors and prevent them from blocking
               const originalError = window.onerror;
               window.onerror = function(msg, url, line, col, error) {
-                if (typeof msg === 'string' && (
-                  msg.toLowerCase().includes('share-modal') ||
-                  msg.toLowerCase().includes('rewardful') ||
-                  (msg.toLowerCase().includes('addeventlistener') && msg.toLowerCase().includes('null'))
-                )) {
-                  console.warn('Rewardful/share-modal error suppressed (non-critical):', msg);
-                  return true; // Suppress error
+                if (typeof msg === 'string') {
+                  const msgLower = msg.toLowerCase();
+                  if (
+                    msgLower.includes('share-modal') ||
+                    msgLower.includes('rewardful') ||
+                    (msgLower.includes('addeventlistener') && msgLower.includes('null')) ||
+                    (msgLower.includes('cannot read properties') && msgLower.includes('null')) ||
+                    (url && url.includes('share-modal'))
+                  ) {
+                    // Silently suppress - don't even log to avoid console noise
+                    return true; // Suppress error
+                  }
                 }
                 return originalError ? originalError.call(this, msg, url, line, col, error) : false;
               };
               
+              // Also handle unhandled promise rejections from share-modal
+              window.addEventListener('unhandledrejection', function(e) {
+                const reason = e.reason?.toString() || '';
+                if (reason.includes('share-modal') || reason.includes('rewardful')) {
+                  e.preventDefault();
+                  return false;
+                }
+              });
+              
               // Also handle script load errors
               document.addEventListener('error', function(e) {
-                if (e.target && e.target.src && e.target.src.includes('rw.js')) {
-                  console.warn('Rewardful script load error (non-critical) - continuing anyway');
+                if (e.target && e.target.src && (
+                  e.target.src.includes('rw.js') ||
+                  e.target.src.includes('rewardful') ||
+                  e.target.src.includes('share-modal')
+                )) {
                   e.preventDefault();
                   e.stopPropagation();
                 }

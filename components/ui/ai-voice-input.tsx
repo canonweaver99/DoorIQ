@@ -67,7 +67,20 @@ export function AIVoiceInput({
         if (contentType.includes('application/json') || !response.ok) {
           try {
             const errorData = await response.json();
-            const errorMsg = errorData.error || errorData.details || 'Audio service unavailable';
+            let errorMsg = errorData.error || errorData.details || 'Audio service unavailable';
+            
+            // Provide user-friendly messages for common errors
+            if (errorMsg.includes('quota_exceeded') || errorMsg.includes('quota exceeded')) {
+              errorMsg = 'Audio temporarily unavailable - quota exceeded. Please check your ElevenLabs account.';
+            } else if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
+              // Check if it's quota or auth issue
+              if (errorData.details && errorData.details.includes('quota')) {
+                errorMsg = 'Audio temporarily unavailable - quota exceeded. Please check your ElevenLabs account.';
+              } else {
+                errorMsg = 'Audio service unavailable - authentication error. Please check API configuration.';
+              }
+            }
+            
             setAudioError(errorMsg);
             setIsLoading(false);
             console.error('Audio API error:', errorMsg, errorData);
