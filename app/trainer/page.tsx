@@ -81,6 +81,114 @@ function playSound(src: string, volume = 0.9) {
 const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) => {
   if (!agent) return null
 
+  // Industry-specific image mappings
+  const industryImageMap: Record<string, Record<string, string>> = {
+    windows: {
+      'I Need to Talk to My Spouse': '/Angela White.png',
+      'I\'m Not Interested': '/Lewis McArthur.png',
+      'My Windows Are Fine': '/Robert Lee.png',
+      'That\'s Too Expensive': '/Kellie Adams.png',
+      'How Much Does It Cost?': '/Kai Shin.png',
+      'Just Got New Windows': '/Toby Robin.png',
+      'I\'m Selling/Moving Soon': '/Sherry Green.png',
+      'I Don\'t Trust Window Companies': '/Arron Black.png',
+    },
+    pest: {
+      // 'I Need to Talk to My Spouse': No specific image for pest - different person
+    },
+    fiber: {
+      'I Need to Talk to My Spouse': '/Jessica Martinez.png',
+    },
+    solar: {
+      'I Need to Talk to My Spouse': '/Michelle Torres.png',
+    },
+    roofing: {
+      'I Need to Talk to My Spouse': '/Patricia Wells.png',
+      'I\'m Not Interested': '', // Reverted - no specific image
+      'My Roof is Fine': '/Mark Patterson.png',
+      'How Much Does a Roof Cost?': '/David Kim.png',
+      'I Just Had My Roof Done': '/Carlos Mendez.png',
+      'I\'ll Call You When I Need a Roof': '/Tom Bradley.png',
+      'I Already Have Someone': '/Kevin Anderson.png',
+      'My Insurance Won\'t Cover It': '/Lisa Martinez.png',
+      'I\'m Selling Soon': '/Sherry Green.png',
+      'I Don\'t Trust Door-to-Door Roofers': '/Harold Stevens.png',
+    },
+  }
+
+  // Check for industry-specific image first based on eleven_agent_id
+  // Special handling for "I Need to Talk to My Spouse" - check eleven_agent_id to determine industry
+  if (agent.name === 'I Need to Talk to My Spouse') {
+    // Check for Angela White's actual agent ID (Windows)
+    if (agent.eleven_agent_id === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+      return industryImageMap.windows[agent.name] // Angela White
+    }
+    // Check for Jessica Martinez's actual agent ID (Fiber)
+    if (agent.eleven_agent_id === 'agent_7201kfgssnt8eb2a8a4kghb421vd') {
+      return industryImageMap.fiber[agent.name] // Jessica Martinez
+    }
+    // Check for Patricia Wells's actual agent ID (Roofing)
+    if (agent.eleven_agent_id === 'agent_2001kfgxefjcefk9r6s1m5vkfzxn') {
+      return industryImageMap.roofing[agent.name] // Patricia Wells
+    }
+    // Check for Michelle Torres's actual agent ID (Solar)
+    if (agent.eleven_agent_id === 'agent_9101kfgy6d0jft18a06r0zj19jp1') {
+      return industryImageMap.solar[agent.name] // Michelle Torres
+    }
+    // Fallback to placeholder IDs
+    if (agent.eleven_agent_id?.startsWith('placeholder_windows_')) {
+      return industryImageMap.windows[agent.name] // Angela White
+    }
+    if (agent.eleven_agent_id?.startsWith('placeholder_fiber_')) {
+      return industryImageMap.fiber[agent.name] // Jessica Martinez
+    }
+    if (agent.eleven_agent_id?.startsWith('placeholder_solar_')) {
+      return industryImageMap.solar[agent.name] // Michelle Torres
+    }
+    if (agent.eleven_agent_id?.startsWith('placeholder_roofing_')) {
+      return industryImageMap.roofing[agent.name] // Patricia Wells
+    }
+  }
+  
+  // For other agents, check in order: windows > fiber > pest > solar > roofing
+  if (agent.eleven_agent_id?.startsWith('placeholder_windows_')) {
+    const industryImages = industryImageMap.windows
+    if (industryImages && industryImages[agent.name]) {
+      const image = industryImages[agent.name]
+      if (image) return image
+    }
+  } else if (agent.eleven_agent_id?.startsWith('placeholder_fiber_')) {
+    const industryImages = industryImageMap.fiber
+    if (industryImages && industryImages[agent.name]) {
+      const image = industryImages[agent.name]
+      if (image) return image
+    }
+  } else if (agent.eleven_agent_id?.startsWith('placeholder_windows_')) {
+    const industryImages = industryImageMap.windows
+    if (industryImages && industryImages[agent.name]) {
+      const image = industryImages[agent.name]
+      if (image) return image
+    }
+  } else if (agent.eleven_agent_id?.startsWith('placeholder_pest_')) {
+    const industryImages = industryImageMap.pest
+    if (industryImages && industryImages[agent.name]) {
+      const image = industryImages[agent.name]
+      if (image) return image
+    }
+  } else if (agent.eleven_agent_id?.startsWith('placeholder_solar_')) {
+    const industryImages = industryImageMap.solar
+    if (industryImages && industryImages[agent.name]) {
+      const image = industryImages[agent.name]
+      if (image) return image
+    }
+  } else if (agent.eleven_agent_id?.startsWith('placeholder_roofing_')) {
+    const industryImages = industryImageMap.roofing
+    if (industryImages && industryImages[agent.name]) {
+      const image = industryImages[agent.name]
+      if (image) return image
+    }
+  }
+
   // ALWAYS USE THESE IMAGES - both pre-session and during session
   const agentImageMap: Record<string, string> = {
     'Average Austin': '/Austin Boss.png',
@@ -98,14 +206,50 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'Veteran Victor': '/Veteran Victor Landcape.png',
     'Tag Team Tanya & Tom': '/tanya and tom.png',
     'Angry Indian': '/angry-indian.png',
-    'Nick Fuentes': '/nick-fuentes.png'
+    'Nick Fuentes': '/nick-fuentes.png',
+    // 'I Need to Talk to My Spouse': Handled by industry-specific logic above (Windows only)
+    'My Roof is Fine': '/Mark Patterson.png',
+    // 'I\'m Not Interested': handled by industry-specific logic above
+    'How Much Does a Roof Cost?': '/David Kim.png',
+    'I Just Had My Roof Done': '/Carlos Mendez.png',
+    'I\'ll Call You When I Need a Roof': '/Tom Bradley.png',
+    'I Already Have Someone': '/Kevin Anderson.png',
+    'My Insurance Won\'t Cover It': '/Lisa Martinez.png',
+    'I\'m Selling Soon': '/Sherry Green.png',
+    'I Don\'t Trust Door-to-Door Roofers': '/Harold Stevens.png',
+    'I\'m Not Interested in Solar': '/Gary Thompson.png',
+    'Solar is Too Expensive': '/Brian Walsh.png',
+    'How Much Does It Cost?': '/Kai Shin.png',
+    'My Electric Bill is Too Low': '/Sarah Chen.png',
+    'What If It Doesn\'t Work?': '/David Martinez.png',
+    'My Roof is Too Old': '/Robert Jenkins.png',
+    'I\'ve Heard Bad Things About Solar': '/Linda Morrison.png',
+    'I Don\'t Qualify': '/Lamar Johnson.png',
+    'My Windows Are Fine': '/Robert Lee.png',
+    'That\'s Too Expensive': '/Kellie Adams.png',
+    'Just Got New Windows': '/Toby Robin.png',
+    'I Don\'t Trust Window Companies': '/Arron Black.png',
+    'I\'m Going to Get Multiple Quotes': '/James Porter.png',
+    'I Just Need One or Two Windows': '/Michelle Torres.png',
+    'I\'ll Just Do It Myself': '/Frank Rodriguez.png',
+    'What\'s Wrong With My Current Windows?': '/Patricia Wells.png',
+    'I\'m Waiting Until...': '/Robert Williams.png',
+    'Not the Right Time / Maybe Next Year': '/Steve Harry.png'
   }
   
   if (agentImageMap[agent.name]) {
     return agentImageMap[agent.name]
   }
 
-  // For other agents, use the metadata
+  // For other agents, use the metadata (but skip "I Need to Talk to My Spouse" 
+  // as it's handled by industry-specific logic above - Windows uses Angela White, Fiber uses Jessica Martinez)
+  if (agent.name === 'I Need to Talk to My Spouse') {
+    // Already handled by industry-specific logic above
+    // If we got here, it means no industry-specific image was found
+    // Return null to use default/fallback (not Angela White)
+    return null
+  }
+  
   const directName = agent.name as AllowedAgentName
   if (ALLOWED_AGENT_SET.has(directName)) {
     const metadata = PERSONA_METADATA[directName]
@@ -125,6 +269,27 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
   // Fallback to generic agent image
   const normalized = agent.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
   return normalized ? `/agents/${normalized}.png` : '/agents/default.png'
+}
+
+// Helper function to resolve agent real name based on agent ID for industry-specific agents
+const resolveAgentRealName = (agentName: string, agentId: string | null | undefined): string => {
+  // Special handling for "I Need to Talk to My Spouse" - resolve by agent ID
+  if (agentName === 'I Need to Talk to My Spouse') {
+    if (agentId === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+      return 'Angela White' // Windows
+    }
+    if (agentId === 'agent_7201kfgssnt8eb2a8a4kghb421vd') {
+      return 'Jessica Martinez' // Fiber
+    }
+    if (agentId === 'agent_2001kfgxefjcefk9r6s1m5vkfzxn') {
+      return 'Patricia Wells' // Roofing
+    }
+    if (agentId === 'agent_9101kfgy6d0jft18a06r0zj19jp1') {
+      return 'Michelle Torres' // Solar
+    }
+  }
+  // For other agents, return the agent name as-is (or could add more mappings here)
+  return agentName
 }
 
 function TrainerPageContent() {
@@ -2989,7 +3154,7 @@ function TrainerPageContent() {
           <div className="hidden md:flex items-center justify-between px-4 py-3 border-b border-slate-800/80 flex-shrink-0 bg-slate-900/98 w-full z-50">
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-white font-space">
-                {selectedAgent?.name || 'Training Session'}
+{selectedAgent ? resolveAgentRealName(selectedAgent.name, selectedAgent.eleven_agent_id) : 'Training Session'}
               </span>
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <Clock className="w-4 h-4" />
@@ -4829,7 +4994,7 @@ function TrainerPageContent() {
                             </div>
                             {/* Agent Name */}
                             <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white font-space leading-tight drop-shadow-2xl">
-                              {selectedAgent.name}
+                              {resolveAgentRealName(selectedAgent.name, selectedAgent.eleven_agent_id)}
                             </h2>
                             {/* Subtitle */}
                             <p className="text-base lg:text-lg text-white font-medium max-w-xl mx-auto drop-shadow-lg">

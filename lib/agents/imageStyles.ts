@@ -64,7 +64,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.5, // Zoomed in more on face
   },
   'I Need to Talk to My Spouse': {
-    objectPosition: '15% 78%', // Moved down more
+    objectPosition: '-15% 75%', // Moved up (75%) from 85%
     scale: 1.8, // Zoomed in more on face
   },
   'I Already Have Internet': {
@@ -128,6 +128,74 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
   'The Karen': {
     objectPosition: '60% 50%', // Moved to the right
     scale: 1.0, // Zoomed out
+  },
+  'My Roof is Fine': {
+    objectPosition: '50% 72%', // Moved down more from 65% to 72%
+    scale: 1.4, // Zoomed in from 1.15 to 1.4
+  },
+  'I\'m Not Interested': {
+    objectPosition: '50% 52%', // Default position
+    scale: 1.0, // Zoomed out from default 1.15 to 1.0
+  },
+  'How Much Does a Roof Cost?': {
+    objectPosition: '50% 72%', // Moved down more from 65% to 72%
+    scale: 1.4, // Zoomed in from default 1.15 to 1.4
+  },
+  'I Just Had My Roof Done': {
+    objectPosition: '88% 58%', // Moved a tiny bit more to the right (88%) and down (58%)
+    scale: 1.15,
+  },
+  'I\'ll Call You When I Need a Roof': {
+    objectPosition: '50% 65%', // Moved down more from 58% to 65%
+    scale: 1.4, // Zoomed in from default 1.15 to 1.4
+  },
+  'I Already Have Someone': {
+    objectPosition: '25% 72%', // Moved down more (72%) while keeping left position (25%)
+    scale: 1.6, // Zoomed in more from 1.4 to 1.6
+  },
+  'My Insurance Won\'t Cover It': {
+    objectPosition: '90% 65%', // Moved more to the right (90%) and down (65%)
+    scale: 1.5, // Zoomed in from default 1.15 to 1.5
+  },
+  'I\'m Selling Soon': {
+    objectPosition: '5% 52%', // Moved more to the left (5%) from 15%
+    scale: 1.15,
+  },
+  'I Don\'t Trust Door-to-Door Roofers': {
+    objectPosition: '5% 72%', // Moved down more (72%) from 65%
+    scale: 1.5, // Zoomed in from 1.15 to 1.5
+  },
+  'I\'m Not Interested in Solar': {
+    objectPosition: '65% 72%', // Moved down more (72%) from 65% and to the right (65%)
+    scale: 1.4, // Zoomed in from 1.15 to 1.4
+  },
+  'Solar is Too Expensive': {
+    objectPosition: '50% 80%', // Moved down a lot (80%) from default 52%
+    scale: 1.6, // Zoomed in from default 1.15 to 1.6
+  },
+  'How Much Does It Cost?': {
+    objectPosition: '50% 80%', // Moved down a lot (80%) from default 52%
+    scale: 1.6, // Zoomed in from default 1.15 to 1.6
+  },
+  'My Electric Bill is Too Low': {
+    objectPosition: '50% 65%', // Moved down (65%) from default 52%
+    scale: 1.6, // Zoomed in from default 1.15 to 1.6
+  },
+  'What If It Doesn\'t Work?': {
+    objectPosition: '5% 68%', // Moved down a little (68%) from 65%
+    scale: 1.5, // Zoomed in from default 1.15 to 1.5
+  },
+  'My Roof is Too Old': {
+    objectPosition: '10% 80%', // Moved more to the left (10%) and down a lot (80%)
+    scale: 1.7, // Zoomed in a little more from 1.5 to 1.7
+  },
+  'I\'ve Heard Bad Things About Solar': {
+    objectPosition: '58% 58%', // Moved down (58%) and to the right a little (58%) from default 50% 52%
+    scale: 1.15,
+  },
+  'I Don\'t Qualify': {
+    objectPosition: '75% 75%', // Moved down more (75%) from 65% and to the right (75%)
+    scale: 1.7, // Zoomed in a little more from 1.5 to 1.7
   },
 }
 

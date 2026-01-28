@@ -181,6 +181,7 @@ WHERE a.name IN (
   'I''ll Just Do It Myself',
   'What''s Wrong With My Current Windows?',
   'I''m Waiting Until...',
+  'Not the Right Time / Maybe Next Year',
   'Angry Indian'
 )
   AND i.slug = 'windows'
@@ -203,6 +204,7 @@ WHERE industry_id = (SELECT id FROM industries WHERE slug = 'windows')
       'I''ll Just Do It Myself',
       'What''s Wrong With My Current Windows?',
       'I''m Waiting Until...',
+      'Not the Right Time / Maybe Next Year',
       'Angry Indian'
     )
   );

@@ -51,9 +51,14 @@ export const ALLOWED_AGENT_ORDER = [
   'That\'s Too Expensive',
   'I\'m Going to Get Multiple Quotes',
   'I Just Need One or Two Windows',
+  'Just Got New Windows',
+  'I\'m Selling/Moving Soon',
   'I\'ll Just Do It Myself',
   'What\'s Wrong With My Current Windows?',
   'I\'m Waiting Until...',
+  'I Don\'t Trust Window Companies',
+  'I\'m Not Interested',
+  'Not the Right Time / Maybe Next Year',
   'The Karen',
   'Angry Indian',
 ] as const
@@ -636,7 +641,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (40%+). Sometimes legitimate, often an easy exit.',
       difficulty: 'Moderate',
       color: 'quinary',
-      image: '/Jessica Martinez.png',
+      // Image handled by industry-specific logic (Windows uses Angela White, Fiber uses Jessica Martinez)
     },
     card: {
       age: 39,
@@ -1101,6 +1106,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Most common (70%+). They haven\'t inspected it or don\'t see obvious issues.',
       difficulty: 'Moderate',
       color: 'secondary',
+      image: '/Mark Patterson.png',
     },
     card: {
       age: 45,
@@ -1131,6 +1137,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (60%+). Roofing reps have bad reputation.',
       difficulty: 'Hard',
       color: 'tertiary',
+      // Roofing agent - image removed, will use default or industry-specific
     },
     card: {
       age: 42,
@@ -1161,6 +1168,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (40%+). They\'ve heard roofs are expensive and want to disqualify you.',
       difficulty: 'Hard',
       color: 'quaternary',
+      image: '/David Kim.png',
     },
     card: {
       age: 48,
@@ -1191,6 +1199,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (25-30%). Recent replacement or roof is relatively new.',
       difficulty: 'Hard',
       color: 'quinary',
+      image: '/Carlos Mendez.png',
     },
     card: {
       age: 40,
@@ -1221,6 +1230,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (45%+). Polite dismissal - they\'re never calling you.',
       difficulty: 'Moderate',
       color: 'senary',
+      image: '/Tom Bradley.png',
     },
     card: {
       age: 44,
@@ -1251,6 +1261,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (30%+). They used someone 15 years ago or have a "guy" they\'ve never called.',
       difficulty: 'Moderate',
       color: 'septenary',
+      image: '/Kevin Anderson.png',
     },
     card: {
       age: 46,
@@ -1281,6 +1292,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (35%+). They assume insurance won\'t pay or don\'t know they can file a claim.',
       difficulty: 'Moderate',
       color: 'octonary',
+      image: '/Lisa Martinez.png',
     },
     card: {
       age: 43,
@@ -1311,6 +1323,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Moderate (20%+). Sometimes true, often an easy excuse.',
       difficulty: 'Moderate',
       color: 'nonary',
+      image: '/Sherry Green.png',
     },
     card: {
       age: 41,
@@ -1341,6 +1354,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (25-30%). Storm chasers and scammers have ruined D2D roofing reputation.',
       difficulty: 'Hard',
       color: 'denary',
+      image: '/Harold Stevens.png',
     },
     card: {
       age: 47,
@@ -1371,6 +1385,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Most common (65%+). Pre-programmed response to solar reps.',
       difficulty: 'Hard',
       color: 'secondary',
+      image: '/Gary Thompson.png',
     },
     card: {
       age: 42,
@@ -1401,6 +1416,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (60%+). Think they need $30k-$50k upfront cash.',
       difficulty: 'Hard',
       color: 'tertiary',
+      image: '/Brian Walsh.png',
     },
     card: {
       age: 45,
@@ -1431,6 +1447,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (25-30%). Bill under $100/month, solar doesn\'t make financial sense.',
       difficulty: 'Hard',
       color: 'quaternary',
+      image: '/Sarah Chen.png',
     },
     card: {
       age: 38,
@@ -1461,6 +1478,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (30%+). Don\'t understand how solar works.',
       difficulty: 'Moderate',
       color: 'quinary',
+      image: '/David Martinez.png',
     },
     card: {
       age: 44,
@@ -1491,6 +1509,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (25%+). Roof is 15-20+ years old, worried about removing panels.',
       difficulty: 'Moderate',
       color: 'senary',
+      image: '/Robert Jenkins.png',
     },
     card: {
       age: 47,
@@ -1521,6 +1540,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (20-25%). Early solar horror stories, shady companies.',
       difficulty: 'Hard',
       color: 'septenary',
+      image: '/Linda Morrison.png',
     },
     card: {
       age: 46,
@@ -1551,6 +1571,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Moderate (20%+). Bad credit history or assume they won\'t qualify.',
       difficulty: 'Moderate',
       color: 'octonary',
+      image: '/Lamar Johnson.png',
     },
     card: {
       age: 41,
@@ -1581,6 +1602,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (55%+). Want a number to disqualify you or compare.',
       difficulty: 'Hard',
       color: 'quaternary',
+      image: '/Kai Shin.png', // Windows agent
     },
     card: {
       age: 44,
@@ -1611,6 +1633,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Most common (70%+). Windows work (open/close), so they don\'t see a problem.',
       difficulty: 'Moderate',
       color: 'secondary',
+      image: '/Robert Lee.png',
     },
     card: {
       age: 45,
@@ -1641,6 +1664,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (65%+). $15k-$40k for whole house is legitimately expensive.',
       difficulty: 'Hard',
       color: 'tertiary',
+      image: '/Kellie Adams.png',
     },
     card: {
       age: 48,
@@ -1671,6 +1695,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Very common (50%+). Legitimately want to compare 3-5 companies.',
       difficulty: 'Moderate',
       color: 'quaternary',
+      image: '/James Porter.png',
     },
     card: {
       age: 43,
@@ -1701,6 +1726,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (30%+). Want to replace broken/problem windows only.',
       difficulty: 'Moderate',
       color: 'quinary',
+      image: '/Michelle Torres.png',
     },
     card: {
       age: 42,
@@ -1725,12 +1751,75 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       elevenAgentId: 'placeholder_windows_006',
     },
   },
+  'Just Got New Windows': {
+    bubble: {
+      subtitle: 'Real Objection/Disqualifier',
+      description: 'Common (20-25%). Literally just got new windows installed, worst possible timing.',
+      difficulty: 'Hard',
+      color: 'quinary',
+      image: '/Toby Robin.png',
+    },
+    card: {
+      age: 38,
+      occupation: 'Homeowner',
+      location: 'Suburban home',
+      personality: 'Just spent money, worst possible timing',
+      challengeLevel: 3,
+      challengeLabel: 'Hard',
+      difficultyKey: 'hard',
+      traits: [
+        'Recent window replacement',
+        'Just spent money',
+        'Worst possible timing',
+        'Responds to warranty issues and future needs',
+      ],
+      bestFor: 'Warranty issues, future needs, additional windows, quality concerns',
+      estimatedTime: '5-8 min',
+      startingScore: 38,
+      targetScore: 68,
+      avatar: '🪟',
+      color: 'orange',
+      elevenAgentId: 'placeholder_windows_007',
+    },
+  },
+  'I\'m Selling/Moving Soon': {
+    bubble: {
+      subtitle: 'Smokescreen/Real Objection',
+      description: 'Common (25%+). Sometimes true, often convenient excuse.',
+      difficulty: 'Moderate',
+      color: 'nonary',
+      image: '/Sherry Green.png', // Windows agent
+    },
+    card: {
+      age: 41,
+      occupation: 'Homeowner',
+      location: 'Property for sale',
+      personality: 'May be selling OR doesn\'t want to invest',
+      challengeLevel: 2,
+      challengeLabel: 'Moderate',
+      difficultyKey: 'moderate',
+      traits: [
+        'Says selling/moving soon',
+        'May be legitimate OR excuse',
+        'Doesn\'t want to invest',
+        'Responds to home value increase and sale requirements',
+      ],
+      bestFor: 'Home value increase, sale inspection requirements, buyer demands',
+      estimatedTime: '5-8 min',
+      startingScore: 50,
+      targetScore: 76,
+      avatar: '🏡',
+      color: 'emerald',
+      elevenAgentId: 'placeholder_windows_007',
+    },
+  },
   'I\'ll Just Do It Myself': {
     bubble: {
       subtitle: 'Real Objection - DIY',
       description: 'Common (25-30%). Handy homeowner or has contractor friend/family.',
       difficulty: 'Moderate',
       color: 'senary',
+      image: '/Frank Rodriguez.png',
     },
     card: {
       age: 46,
@@ -1761,6 +1850,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (35%+). Don\'t understand energy loss or how old their windows are.',
       difficulty: 'Moderate',
       color: 'septenary',
+      image: '/Patricia Wells.png',
     },
     card: {
       age: 44,
@@ -1791,6 +1881,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Common (40%+). Putting off major expense/decision indefinitely.',
       difficulty: 'Moderate',
       color: 'octonary',
+      image: '/Robert Williams.png',
     },
     card: {
       age: 41,
@@ -1813,6 +1904,100 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       avatar: '⏳',
       color: 'violet',
       elevenAgentId: 'placeholder_windows_010',
+    },
+  },
+  'I Don\'t Trust Window Companies': {
+    bubble: {
+      subtitle: 'Real Concern - Industry Reputation',
+      description: 'Common (25-30%). Window companies have reputation issues - scammers, high-pressure sales, poor quality.',
+      difficulty: 'Hard',
+      color: 'denary',
+      image: '/Arron Black.png',
+    },
+    card: {
+      age: 46,
+      occupation: 'Skeptical homeowner',
+      location: 'Suburban neighborhood',
+      personality: 'Distrustful of window companies, assumes scam or poor quality',
+      challengeLevel: 3,
+      challengeLabel: 'Hard',
+      difficultyKey: 'hard',
+      traits: [
+        'Doesn\'t trust window companies',
+        'Assumes scam/rip-off/poor quality',
+        'Industry reputation concerns',
+        'Responds to local proof, references, certifications',
+      ],
+      bestFor: 'Local company proof, references, reviews, certifications, warranties, BBB rating',
+      estimatedTime: '7-11 min',
+      startingScore: 40,
+      targetScore: 70,
+      avatar: '🤨',
+      color: 'violet',
+      elevenAgentId: 'placeholder_windows_011',
+    },
+  },
+  'I\'m Not Interested': {
+    bubble: {
+      subtitle: 'Smokescreen',
+      description: 'Very common (60%+). Window companies have bad reputation.',
+      difficulty: 'Hard',
+      color: 'tertiary',
+      image: '/Lewis McArthur.png', // Windows agent
+    },
+    card: {
+      age: 42,
+      occupation: 'Homeowner',
+      location: 'Suburban neighborhood',
+      personality: 'Assumes you\'re pushy/scammy, hates door-to-door window companies',
+      challengeLevel: 3,
+      challengeLabel: 'Hard',
+      difficultyKey: 'hard',
+      traits: [
+        'Immediate dismissal',
+        'Assumes bad reputation',
+        'Thinks you\'re pushy/scammy',
+        'Responds to pattern interrupts and social proof',
+      ],
+      bestFor: 'Pattern interrupts, energy savings angle, neighbor social proof',
+      estimatedTime: '3-6 min',
+      startingScore: 35,
+      targetScore: 65,
+      avatar: '🚫',
+      color: 'red',
+      elevenAgentId: 'placeholder_windows_012',
+    },
+  },
+  'Not the Right Time / Maybe Next Year': {
+    bubble: {
+      subtitle: 'Timing Objection',
+      description: 'Common (30%+). Says it\'s not the right time or maybe next year. Often a smokescreen for other concerns.',
+      difficulty: 'Moderate',
+      color: 'octonary',
+      image: '/Steve Harry.png',
+      liveSessionImage: '/Steve Harry.png',
+    },
+    card: {
+      age: 44,
+      occupation: 'Homeowner',
+      location: 'Suburban neighborhood',
+      personality: 'Uses timing as excuse, avoids commitment',
+      challengeLevel: 2,
+      challengeLabel: 'Moderate',
+      difficultyKey: 'moderate',
+      traits: [
+        'Says "not the right time" or "maybe next year"',
+        'Often a smokescreen for other concerns',
+        'Avoids making a decision',
+        'Responds to urgency and immediate benefits',
+      ],
+      bestFor: 'Creating urgency, addressing underlying concerns, immediate value propositions',
+      estimatedTime: '5-8 min',
+      startingScore: 48,
+      targetScore: 75,
+      avatar: '📅',
+      color: 'violet',
+      elevenAgentId: 'placeholder_timing_001',
     },
   },
   'Angry Indian': {

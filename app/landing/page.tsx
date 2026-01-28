@@ -1116,12 +1116,6 @@ function IndustryAgentsSection() {
           percentage: 35
         },
         { 
-          name: 'How Much Does It Cost?', 
-          description: 'Very common (55%+). Want a number to disqualify you or compare against what they\'ve heard.',
-          type: 'Smokescreen/Qualification',
-          percentage: 20
-        },
-        { 
           name: 'I Need to Talk to My Spouse', 
           description: 'Very common (60%+). MAJOR household decision, requires both parties, or easy out.',
           type: 'Smokescreen/Real objection'

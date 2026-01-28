@@ -53,6 +53,88 @@ const INDUSTRY_ICONS: Record<string, string> = {
   solar: 'Sun',
   roofing: 'Home',
 }
+
+// Agent name to real name mapping for personalized display
+const AGENT_REAL_NAMES: Record<string, string> = {
+  // Core agents (names already in agent name)
+  'Average Austin': 'Austin Mitchell',
+  'No Problem Nancy': 'Nancy Chen',
+  'Switchover Steve': 'Steve Johnson',
+  'Not Interested Nick': 'Nick Thompson',
+  'DIY Dave': 'Dave Martinez',
+  'Too Expensive Tim': 'Tim Wilson',
+  'Spouse Check Susan': 'Susan Davis',
+  'Busy Beth': 'Beth Rodriguez',
+  'Renter Randy': 'Randy Lee',
+  'Skeptical Sam': 'Sam Brown',
+  'Just Treated Jerry': 'Jerry White',
+  'Think About It Tina': 'Tina Garcia',
+  'Veteran Victor': 'Victor Anderson',
+  
+  // Pest control agents
+  'I Already Have a Pest Guy': 'Michael Chen',
+  'I Don\'t Have Any Bugs': 'Sarah Johnson',
+  'How Much Is It?': 'James Wilson',
+  // 'I Need to Talk to My Spouse': Handled by industry-specific logic (Windows only uses Angela White)
+  'I\'m Not Interested in Solar': 'Gary Thompson',
+  'I\'m Renting/Don\'t Own': 'Tyler Jackson',
+  'I Just Spray Myself': 'Brian Thompson',
+  'Send Me Information': 'Amanda Stevens',
+  'We\'re Selling/Moving Soon': 'Jennifer Lee',
+  'I Have Pets/Kids - Worried About Chemicals': 'Jessica Martinez',
+  'Bad Timing - Call Me Back Later': 'Chris Bennett',
+  
+  // Fiber/Internet agents
+  'I Already Have Internet': 'Daniel Mitchell',
+  'I\'m in a Contract': 'Nicole Rodriguez',
+  'I\'m Happy With What I Have': 'Rachel Cooper',
+  'I Just Signed Up': 'Marcus Johnson',
+  'I Don\'t Want to Deal With Switching': 'Linda Morrison',
+  'My Internet Works Fine': 'Greg Wilson',
+  'What\'s the Catch?': 'Sarah Kim',
+  'I\'m Moving Soon': 'Tom Henderson',
+  'I Need to Talk to My Spouse': 'Jessica Martinez', // Fiber agent (Windows=Angela White, Roofing=Patricia Wells, Solar=Michelle Torres - handled by agent ID check)
+  
+  // Roofing agents
+  'My Roof is Fine': 'Mark Patterson',
+  // 'I\'m Not Interested': Reverted - no specific person for roofing
+  'How Much Does a Roof Cost?': 'David Kim',
+  'I Just Had My Roof Done': 'Carlos Mendez',
+  'I\'ll Call You When I Need a Roof': 'Tom Bradley',
+  'I Already Have Someone': 'Kevin Anderson',
+  'My Insurance Won\'t Cover It': 'Lisa Martinez',
+  'I\'m Selling Soon': 'Sherry Green',
+  'I Don\'t Trust Door-to-Door Roofers': 'Harold Stevens',
+  
+  // Solar agents
+  'I\'m Not Interested in Solar': 'Mike Sullivan',
+  'Solar is Too Expensive': 'Brian Walsh',
+  'How Much Does It Cost?': 'Kai Shin',
+  'My Electric Bill is Too Low': 'Sarah Chen',
+  'What If It Doesn\'t Work?': 'David Martinez',
+  'My Roof is Too Old': 'Robert Jenkins',
+  'I\'ve Heard Bad Things About Solar': 'Linda Morrison',
+  'I Don\'t Qualify': 'Lamar Johnson',
+  
+  // Windows agents
+  'My Windows Are Fine': 'Robert Lee',
+  'That\'s Too Expensive': 'Kellie Adams',
+  'Just Got New Windows': 'Toby Robin',
+  'I\'m Selling/Moving Soon': 'Sherry Green',
+  'I\'m Going to Get Multiple Quotes': 'Jeffrey Clark',
+  'I Just Need One or Two Windows': 'Maria Gonzalez',
+  'I\'ll Just Do It Myself': 'Patrick Murphy',
+  'What\'s Wrong With My Current Windows?': 'Laura Thompson',
+  'I\'m Waiting Until...': 'Jonathan Wright',
+  'I Don\'t Trust Window Companies': 'Arron Black',
+  'I\'m Not Interested': 'Lewis McArthur', // Windows agent
+  'Not the Right Time / Maybe Next Year': 'Steve Harry',
+  
+  // Special agents
+  'The Karen': 'Karen Smith',
+  'Angry Indian': 'Raj Patel',
+  'Tag Team Tanya & Tom': 'Tanya & Tom',
+}
 const COLOR_CYCLE: (keyof typeof COLOR_VARIANTS)[] = [
   'primary',
   'tertiary',
@@ -95,13 +177,120 @@ const parseDifficulty = (agentName: string, persona?: string | null): Difficulty
   return (fallback as DifficultyKey) ?? 'Moderate'
 }
 
-const mapAgentToDisplay = (agent: AgentRow, index: number): HomeownerAgentDisplay => {
+// Industry-specific image mappings (same as in trainer/page.tsx)
+const getIndustrySpecificImage = (agentName: string, elevenAgentId: string, agentIndustries?: string[]): string | undefined => {
+  const industryImageMap: Record<string, Record<string, string>> = {
+    windows: {
+      'I Need to Talk to My Spouse': '/Angela White.png',
+      'I\'m Not Interested': '/Lewis McArthur.png',
+      'My Windows Are Fine': '/Robert Lee.png',
+      'That\'s Too Expensive': '/Kellie Adams.png',
+      'How Much Does It Cost?': '/Kai Shin.png',
+      'Just Got New Windows': '/Toby Robin.png',
+      'I\'m Selling/Moving Soon': '/Sherry Green.png',
+      'I Don\'t Trust Window Companies': '/Arron Black.png',
+    },
+    pest: {
+      // 'I Need to Talk to My Spouse': No specific image for pest
+    },
+    fiber: {
+      'I Need to Talk to My Spouse': '/Jessica Martinez.png',
+    },
+    solar: {
+      'I Need to Talk to My Spouse': '/Michelle Torres.png',
+    },
+    roofing: {
+      'I Need to Talk to My Spouse': '/Patricia Wells.png',
+    },
+  }
+
+  // Special handling for "I Need to Talk to My Spouse" - check eleven_agent_id first
+  if (agentName === 'I Need to Talk to My Spouse') {
+    // Check for Angela White's actual agent ID (Windows)
+    if (elevenAgentId === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+      return industryImageMap.windows[agentName] // Angela White
+    }
+    // Check for Jessica Martinez's actual agent ID (Fiber)
+    if (elevenAgentId === 'agent_7201kfgssnt8eb2a8a4kghb421vd') {
+      return industryImageMap.fiber[agentName] // Jessica Martinez
+    }
+    // Check for Patricia Wells's actual agent ID (Roofing)
+    if (elevenAgentId === 'agent_2001kfgxefjcefk9r6s1m5vkfzxn') {
+      return industryImageMap.roofing[agentName] // Patricia Wells
+    }
+    // Check for Michelle Torres's actual agent ID (Solar)
+    if (elevenAgentId === 'agent_9101kfgy6d0jft18a06r0zj19jp1') {
+      return industryImageMap.solar[agentName] // Michelle Torres
+    }
+    // Fallback to placeholder IDs
+    if (elevenAgentId?.startsWith('placeholder_windows_')) {
+      return industryImageMap.windows[agentName] // Angela White
+    }
+    if (elevenAgentId?.startsWith('placeholder_fiber_')) {
+      return industryImageMap.fiber[agentName] // Jessica Martinez
+    }
+    if (elevenAgentId?.startsWith('placeholder_solar_')) {
+      return industryImageMap.solar[agentName] // Michelle Torres
+    }
+    if (elevenAgentId?.startsWith('placeholder_roofing_')) {
+      return industryImageMap.roofing[agentName] // Patricia Wells
+    }
+  }
+
+  // If agent industries are provided, check them first (prioritizes windows over fiber)
+  // This handles the case where the same agent name exists in multiple industries
+  if (agentIndustries && agentIndustries.length > 0) {
+    // Priority order: windows > fiber > others (windows takes precedence)
+    const priorityOrder = ['windows', 'fiber', 'solar', 'roofing', 'pest']
+    for (const industry of priorityOrder) {
+      if (agentIndustries.includes(industry)) {
+        const img = industryImageMap[industry]?.[agentName]
+        if (img) return img
+      }
+    }
+  }
+
+  // Fallback: Check for industry-specific image based on eleven_agent_id
+  if (elevenAgentId?.startsWith('placeholder_windows_')) {
+    const img = industryImageMap.windows[agentName]
+    return img || undefined
+  } else if (elevenAgentId?.startsWith('placeholder_pest_')) {
+    const img = industryImageMap.pest[agentName]
+    return img || undefined
+  } else if (elevenAgentId?.startsWith('placeholder_fiber_')) {
+    const img = industryImageMap.fiber[agentName]
+    return img || undefined
+  } else if (elevenAgentId?.startsWith('placeholder_solar_')) {
+    const img = industryImageMap.solar[agentName]
+    return img || undefined
+  } else if (elevenAgentId?.startsWith('placeholder_roofing_')) {
+    const img = industryImageMap.roofing[agentName]
+    return img || undefined
+  }
+  
+  return undefined
+}
+
+const mapAgentToDisplay = (agent: AgentRow, index: number, agentIndustries?: string[]): HomeownerAgentDisplay => {
   const fallback = PERSONA_METADATA[agent.name as AllowedAgentName]
   const difficulty = parseDifficulty(agent.name, agent.persona)
   const subtitle = fallback?.bubble.subtitle ?? 'Homeowner Persona'
   const description = fallback?.bubble.description ?? sanitizeDescription(agent.persona)
   const color = fallback?.bubble.color ?? COLOR_CYCLE[index % COLOR_CYCLE.length]
-  const image = fallback?.bubble.image
+  
+  // Use industry-specific image resolution first, then fallback to metadata
+  // For "I Need to Talk to My Spouse", ONLY use industry-specific images (Windows=Angela, Fiber=Jessica)
+  // Never use the fallback metadata image for this agent
+  // Pass agentIndustries to prioritize fiber industry when agent exists in multiple industries
+  const industryImage = getIndustrySpecificImage(agent.name, agent.eleven_agent_id, agentIndustries)
+  let image: string | undefined
+  if (agent.name === 'I Need to Talk to My Spouse') {
+    // Only use industry-specific image, never fallback
+    image = industryImage || undefined
+  } else {
+    // For other agents, use industry-specific first, then fallback to metadata
+    image = industryImage !== undefined ? industryImage : fallback?.bubble.image
+  }
 
   return {
     id: agent.id,
@@ -111,7 +300,7 @@ const mapAgentToDisplay = (agent: AgentRow, index: number): HomeownerAgentDispla
     difficulty,
     color,
     description,
-    image,
+    image: image || undefined,
   }
 }
 
@@ -325,7 +514,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             const isComingSoon = agent.name === 'Tag Team Tanya & Tom'
             
             return {
-              ...mapAgentToDisplay(agent as AgentRow, index),
+              ...mapAgentToDisplay(agent as AgentRow, index, agentIndustryMap[agent.id]),
               sessionCount: agentSessions.length,
               bestScore,
               hasClosed,
@@ -859,6 +1048,53 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     agent.isLocked && "opacity-50"
                   )}
                 >
+                  {/* Agent Real Name - show for all agents, extract from name if needed */}
+                  <div className="mb-2 text-center">
+                    <h4 className="text-sm font-semibold text-white/90 font-space tracking-tight">
+                      {(() => {
+                        // Special handling for "I Need to Talk to My Spouse" - resolve by agent ID
+                        if (agent.name === 'I Need to Talk to My Spouse') {
+                          if (agent.agentId === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+                            return 'Angela White' // Windows
+                          }
+                          if (agent.agentId === 'agent_7201kfgssnt8eb2a8a4kghb421vd') {
+                            return 'Jessica Martinez' // Fiber
+                          }
+                          if (agent.agentId === 'agent_2001kfgxefjcefk9r6s1m5vkfzxn') {
+                            return 'Patricia Wells' // Roofing
+                          }
+                          if (agent.agentId === 'agent_9101kfgy6d0jft18a06r0zj19jp1') {
+                            return 'Michelle Torres' // Solar
+                          }
+                        }
+                        return AGENT_REAL_NAMES[agent.name]
+                      })() || (() => {
+                        // Extract name from agent names like "Average Austin" -> "Austin Mitchell"
+                        const nameMatch = agent.name.match(/(Austin|Nancy|Steve|Nick|Dave|Tim|Susan|Beth|Randy|Sam|Jerry|Tina|Victor)/i)
+                        if (nameMatch) {
+                          const firstName = nameMatch[1]
+                          const lastNames: Record<string, string> = {
+                            'Austin': 'Mitchell',
+                            'Nancy': 'Chen',
+                            'Steve': 'Johnson',
+                            'Nick': 'Thompson',
+                            'Dave': 'Martinez',
+                            'Tim': 'Wilson',
+                            'Susan': 'Davis',
+                            'Beth': 'Rodriguez',
+                            'Randy': 'Lee',
+                            'Sam': 'Brown',
+                            'Jerry': 'White',
+                            'Tina': 'Garcia',
+                            'Victor': 'Anderson',
+                          }
+                          return `${firstName} ${lastNames[firstName] || 'Smith'}`
+                        }
+                        return agent.name.split(' ')[0] + ' ' + (agent.name.split(' ')[1] || 'Homeowner')
+                      })()}
+                    </h4>
+                  </div>
+                  
                   {/* Mobile Agent Avatar */}
                   <motion.button
                     whileHover={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 1.05 } : {}}
@@ -969,7 +1205,8 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
                   {/* Mobile Agent Info */}
                   <div className="text-center w-full mt-auto">
-                    <h3 className="text-base font-semibold text-white mb-2 font-space tracking-tight line-clamp-1">
+                    {/* Objection below avatar */}
+                    <h3 className="text-sm font-medium text-white/80 mb-2 font-space tracking-tight line-clamp-2 leading-tight">
                       {agent.name}
                     </h3>
                     <div className="flex items-center justify-center gap-2 mb-2">
@@ -1310,6 +1547,53 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         agent.isLocked && "opacity-50"
                       )}
                     >
+                    {/* Agent Real Name - show for all agents, extract from name if needed */}
+                    <div className="mb-2 sm:mb-3 text-center">
+                      <h4 className="text-xs sm:text-sm md:text-base font-semibold text-white/90 font-space tracking-tight">
+                        {(() => {
+                          // Special handling for "I Need to Talk to My Spouse" - resolve by agent ID
+                          if (agent.name === 'I Need to Talk to My Spouse') {
+                            if (agent.agentId === 'agent_9301kg0vggg4em0aqfs72f9r3bp4') {
+                              return 'Angela White' // Windows
+                            }
+                            if (agent.agentId === 'agent_7201kfgssnt8eb2a8a4kghb421vd') {
+                              return 'Jessica Martinez' // Fiber
+                            }
+                            if (agent.agentId === 'agent_2001kfgxefjcefk9r6s1m5vkfzxn') {
+                              return 'Patricia Wells' // Roofing
+                            }
+                            if (agent.agentId === 'agent_9101kfgy6d0jft18a06r0zj19jp1') {
+                              return 'Michelle Torres' // Solar
+                            }
+                          }
+                          return AGENT_REAL_NAMES[agent.name]
+                        })() || (() => {
+                          // Extract name from agent names like "Average Austin" -> "Austin Mitchell"
+                          const nameMatch = agent.name.match(/(Austin|Nancy|Steve|Nick|Dave|Tim|Susan|Beth|Randy|Sam|Jerry|Tina|Victor)/i)
+                          if (nameMatch) {
+                            const firstName = nameMatch[1]
+                            const lastNames: Record<string, string> = {
+                              'Austin': 'Mitchell',
+                              'Nancy': 'Chen',
+                              'Steve': 'Johnson',
+                              'Nick': 'Thompson',
+                              'Dave': 'Martinez',
+                              'Tim': 'Wilson',
+                              'Susan': 'Davis',
+                              'Beth': 'Rodriguez',
+                              'Randy': 'Lee',
+                              'Sam': 'Brown',
+                              'Jerry': 'White',
+                              'Tina': 'Garcia',
+                              'Victor': 'Anderson',
+                            }
+                            return `${firstName} ${lastNames[firstName] || 'Smith'}`
+                          }
+                          return agent.name.split(' ')[0] + ' ' + (agent.name.split(' ')[1] || 'Homeowner')
+                        })()}
+                      </h4>
+                    </div>
+                    
                     {/* Mobile Agent Card Content - reuse the same structure */}
                     <motion.button
                 whileHover={!agent.isLocked && agent.name !== 'Tag Team Tanya & Tom' ? { scale: 1.05 } : {}}
@@ -1422,12 +1706,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
 
                     {/* Agent Info */}
                     <div className="text-center w-full mt-auto">
-                      <h3 className="text-sm sm:text-base md:text-lg font-medium text-white mb-1 sm:mb-2 font-space tracking-tight">
+                      {/* Objection below avatar */}
+                      <h3 className="text-xs sm:text-sm md:text-base font-medium text-white/80 mb-1 sm:mb-2 font-space tracking-tight line-clamp-2 leading-tight">
                         {agent.name}
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-300 mb-2 sm:mb-3 font-space font-bold">
-                        {agent.subtitle}
-                      </p>
                       {/* Difficulty Dot */}
                       <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-2">
                         <div className={cn(
