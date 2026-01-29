@@ -1007,6 +1007,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   )}
                 >
                   <span className="flex items-center gap-2">
+                    {!selectedIndustry && <Globe className="w-4 h-4" />}
                     {selectedIndustry === 'pest' && <Bug className="w-4 h-4" />}
                     {selectedIndustry === 'fiber' && <Wifi className="w-4 h-4" />}
                     {selectedIndustry === 'windows' && <DoorOpen className="w-4 h-4" />}
@@ -1026,10 +1027,11 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                 <DropdownMenuItem
                   onClick={() => setSelectedIndustry(null)}
                   className={cn(
-                    "cursor-pointer focus:bg-white/10 focus:text-white",
+                    "cursor-pointer focus:bg-white/10 focus:text-white flex items-center gap-2",
                     !selectedIndustry && "bg-white/10 text-white"
                   )}
                 >
+                  <Globe className="w-4 h-4" />
                   Universal
                 </DropdownMenuItem>
                 {industries.map((industry) => (
@@ -1556,6 +1558,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     )}
                   >
                     <span className="flex items-center gap-2">
+                      {!selectedIndustry && <Globe className="w-4 h-4" />}
                       {selectedIndustry === 'pest' && <Bug className="w-4 h-4" />}
                       {selectedIndustry === 'fiber' && <Wifi className="w-4 h-4" />}
                       {selectedIndustry === 'windows' && <DoorOpen className="w-4 h-4" />}
@@ -1563,7 +1566,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       {selectedIndustry === 'roofing' && <Home className="w-4 h-4" />}
                       {selectedIndustry 
                         ? industries.find(i => i.slug === selectedIndustry)?.name 
-                        : 'All Industries'}
+                        : 'Universal'}
                     </span>
                     <ChevronDown className="w-4 h-4 opacity-50" />
                   </button>
@@ -1575,10 +1578,11 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                   <DropdownMenuItem
                     onClick={() => setSelectedIndustry(null)}
                     className={cn(
-                      "cursor-pointer focus:bg-white/10 focus:text-white",
+                      "cursor-pointer focus:bg-white/10 focus:text-white flex items-center gap-2",
                       !selectedIndustry && "bg-white/10 text-white"
                     )}
                   >
+                    <Globe className="w-4 h-4" />
                     Universal
                   </DropdownMenuItem>
                   {industries.map((industry) => (
