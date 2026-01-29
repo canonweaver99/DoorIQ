@@ -12,7 +12,7 @@ BEGIN
     RAISE EXCEPTION 'Fiber industry not found';
   END IF;
 
-  -- 1. How Much Is It? - Michael Chen
+  -- 1. How Much Is It? - James Wilson
   UPDATE agents
   SET eleven_agent_id = 'agent_7301kfgsf649e8jah8qme3csnvpx'
   WHERE name = 'How Much Is It?'
