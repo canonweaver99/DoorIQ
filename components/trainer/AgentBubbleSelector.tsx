@@ -537,9 +537,32 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         }
         
         if (data) {
+          // Map new database names back to old code names for lookup
+          const nameMapping: Record<string, AllowedAgentName> = {
+            'Austin Rodriguez': 'Average Austin',
+            'Tina Patel': 'Think About It Tina',
+            'Nick Patterson': 'Not Interested Nick',
+            'Sam O\'Brien': 'Skeptical Sam',
+            'Tim Robertson': 'Too Expensive Tim',
+            'Randy Wallace': 'Renter Randy',
+            'Jerry Martinez': 'Just Treated Jerry',
+            'Beth Anderson': 'Busy Beth',
+            'Nancy Williams': 'No Problem Nancy',
+            'Dave "Davo" Miller': 'DIY Dave',
+            'Steve Mitchell': 'Switchover Steve',
+            'Victor Martinez': 'Veteran Victor',
+          }
+          
           // Normalize agent names for backward compatibility (Austin -> Average Austin)
+          // Also handle new database names mapped back to old code names
           const normalizeAgentName = (name: string): AllowedAgentName | null => {
+            // Check if it's a new database name that needs mapping
+            if (nameMapping[name]) {
+              return nameMapping[name]
+            }
+            // Handle old backward compatibility
             if (name === 'Austin') return 'Average Austin'
+            // Check if it's already a valid allowed agent name
             return ALLOWED_AGENT_SET.has(name as AllowedAgentName) ? (name as AllowedAgentName) : null
           }
           
