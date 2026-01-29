@@ -1726,46 +1726,44 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       )}
                     >
                       {/* Industry Badge - Top Right */}
-                      {agent.industries && agent.industries.length > 0 && (
-                        <div className="absolute top-2 right-2 sm:top-2 sm:right-2 z-10">
-                          {isUniversalAgent(agent.name, agent.industries) ? (
-                            // Show single Globe icon for universal agents
-                            <div
-                              className="bg-black/60 backdrop-blur-sm rounded-full p-1.5 sm:p-2 border border-white/20 shadow-lg"
-                              title="Universal"
-                            >
-                              <UNIVERSAL_ICON className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/90" />
-                            </div>
-                          ) : (
-                            // Show individual icons for non-universal agents
-                            <div className={cn(
-                              "flex flex-wrap gap-1 max-w-[calc(100%-1rem)] justify-end",
-                              agent.industries.length > 3 && "gap-0.5" // Tighter spacing for many icons
-                            )}>
-                              {agent.industries.map((industrySlug) => {
-                                const IconComponent = getIndustryIcon(industrySlug)
-                                if (!IconComponent) return null
-                                const iconSize = agent.industries && agent.industries.length > 4 
-                                  ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' 
-                                  : 'w-3.5 h-3.5 sm:w-4 sm:h-4'
-                                const padding = agent.industries && agent.industries.length > 4 ? 'p-1 sm:p-1.5' : 'p-1.5 sm:p-2'
-                                return (
-                                  <div
-                                    key={industrySlug}
-                                    className={cn(
-                                      "bg-black/60 backdrop-blur-sm rounded-full border border-white/20 shadow-lg",
-                                      padding
-                                    )}
-                                    title={industrySlug.charAt(0).toUpperCase() + industrySlug.slice(1)}
-                                  >
-                                    <IconComponent className={cn(iconSize, "text-white/90")} />
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <div className="absolute top-2 right-2 sm:top-2 sm:right-2 z-10">
+                        {isUniversalAgent(agent.name, agent.industries) ? (
+                          // Show single Globe icon for universal agents (always show, even if no industries assigned)
+                          <div
+                            className="bg-black/60 backdrop-blur-sm rounded-full p-1.5 sm:p-2 border border-white/20 shadow-lg"
+                            title="Universal"
+                          >
+                            <UNIVERSAL_ICON className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/90" />
+                          </div>
+                        ) : agent.industries && agent.industries.length > 0 ? (
+                          // Show individual icons for non-universal agents
+                          <div className={cn(
+                            "flex flex-wrap gap-1 max-w-[calc(100%-1rem)] justify-end",
+                            agent.industries.length > 3 && "gap-0.5" // Tighter spacing for many icons
+                          )}>
+                            {agent.industries.map((industrySlug) => {
+                              const IconComponent = getIndustryIcon(industrySlug)
+                              if (!IconComponent) return null
+                              const iconSize = agent.industries && agent.industries.length > 4 
+                                ? 'w-3 h-3 sm:w-3.5 sm:h-3.5' 
+                                : 'w-3.5 h-3.5 sm:w-4 sm:h-4'
+                              const padding = agent.industries && agent.industries.length > 4 ? 'p-1 sm:p-1.5' : 'p-1.5 sm:p-2'
+                              return (
+                                <div
+                                  key={industrySlug}
+                                  className={cn(
+                                    "bg-black/60 backdrop-blur-sm rounded-full border border-white/20 shadow-lg",
+                                    padding
+                                  )}
+                                  title={industrySlug.charAt(0).toUpperCase() + industrySlug.slice(1)}
+                                >
+                                  <IconComponent className={cn(iconSize, "text-white/90")} />
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
                       
                     {/* Agent Real Name - show for all agents, extract from name if needed */}
                     <div className="mb-2 sm:mb-3 text-center">
