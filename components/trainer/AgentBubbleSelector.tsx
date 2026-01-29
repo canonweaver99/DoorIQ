@@ -63,15 +63,37 @@ const getIndustryIcon = (industrySlug: string) => {
 }
 
 // Universal agent names (agents that belong to all industries)
+// Include both old code names and new database names for mapping
 const UNIVERSAL_AGENT_NAMES = [
   'Average Austin',
+  'Austin Rodriguez', // New database name
   'Not Interested Nick',
+  'Nick Patterson', // New database name
   'Too Expensive Tim',
+  'Tim Robertson', // New database name
   'Spouse Check Susan',
   'The Karen',
   'Angry Indian',
   'Tag Team Tanya & Tom',
   'Travis "T-Bone" Hendricks',
+  'Think About It Tina',
+  'Tina Patel', // New database name
+  'Skeptical Sam',
+  'Sam O\'Brien', // New database name
+  'Just Treated Jerry',
+  'Jerry Martinez', // New database name
+  'Busy Beth',
+  'Beth Anderson', // New database name
+  'No Problem Nancy',
+  'Nancy Williams', // New database name
+  'DIY Dave',
+  'Dave "Davo" Miller', // New database name
+  'Switchover Steve',
+  'Steve Mitchell', // New database name
+  'Veteran Victor',
+  'Victor Martinez', // New database name
+  'Renter Randy',
+  'Randy Wallace', // New database name (assigned to all except windows, but still universal)
 ]
 
 // Check if agent belongs to all industries (universal agent)
@@ -80,8 +102,8 @@ const isUniversalAgent = (agentName: string, industries?: string[]): boolean => 
   if (UNIVERSAL_AGENT_NAMES.includes(agentName)) {
     return true
   }
-  // Fallback: check if agent belongs to all 5 industries
-  if (industries && industries.length >= 5) {
+  // Fallback: check if agent belongs to all 5 industries (or 4 for Renter Randy)
+  if (industries && (industries.length >= 5 || (industries.length === 4 && agentName === 'Renter Randy'))) {
     return true
   }
   return false
@@ -647,20 +669,21 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
   useEffect(() => {
     // First filter by industry - use selectedIndustry if set, otherwise use userIndustry
     const industryToFilter = selectedIndustry !== null ? selectedIndustry : userIndustry
-    // Exclude the 4 spouse agents (Angela White, Jessica Martinez, Patricia Wells, Michelle Torres) from "All Industries"
-    const spouseAgentIds = [
-      'agent_3301kg2vydhnf28s2q2b6thzhfa4', // Angela White (Windows)
-      'agent_7201kfgssnt8eb2a8a4kghb421vd', // Jessica Martinez (Fiber)
-      'agent_2001kfgxefjcefk9r6s1m5vkfzxn', // Patricia Wells (Roofing)
-      'agent_9101kfgy6d0jft18a06r0zj19jp1', // Michelle Torres (Solar)
-    ]
-    let filtered = industryToFilter 
-      ? agents.filter(a => a.industries?.includes(industryToFilter))
-      : agents.filter(a => 
-          !a.agentId.startsWith('placeholder_') && 
-          a.name !== 'Angry Indian' &&
-          !spouseAgentIds.includes(a.agentId)
-        ) // Only show agents with real ElevenLabs IDs when "All Industries" is selected, exclude Angry Indian and the 4 spouse agents
+    
+    let filtered: HomeownerAgentDisplay[]
+    if (industryToFilter) {
+      // When a specific industry is selected, show ONLY industry-specific agents (exclude universal agents)
+      filtered = agents.filter(a => 
+        a.industries?.includes(industryToFilter) && 
+        !isUniversalAgent(a.name, a.industries)
+      )
+    } else {
+      // When no industry selected (Universal tab), show ONLY universal agents
+      filtered = agents.filter(a => 
+        isUniversalAgent(a.name, a.industries) &&
+        !a.agentId.startsWith('placeholder_')
+      )
+    }
     
     // Then apply sorting
     switch (filter) {
@@ -991,7 +1014,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     {selectedIndustry === 'roofing' && <Home className="w-4 h-4" />}
                     {selectedIndustry 
                       ? industries.find(i => i.slug === selectedIndustry)?.name 
-                      : 'All Industries'}
+                      : 'Universal'}
                   </span>
                   <ChevronDown className="w-4 h-4 opacity-50" />
                 </button>
@@ -1007,7 +1030,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                     !selectedIndustry && "bg-white/10 text-white"
                   )}
                 >
-                  All Industries
+                  Universal
                 </DropdownMenuItem>
                 {industries.map((industry) => (
                   <DropdownMenuItem
@@ -1157,7 +1180,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         // Show single Globe icon for universal agents
                         <div
                           className="bg-black/60 backdrop-blur-sm rounded-full p-1.5 border border-white/20 shadow-lg"
-                          title="All Industries"
+                          title="Universal"
                         >
                           <UNIVERSAL_ICON className="w-3.5 h-3.5 text-white/90" />
                         </div>
@@ -1556,7 +1579,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                       !selectedIndustry && "bg-white/10 text-white"
                     )}
                   >
-                    All Industries
+                    Universal
                   </DropdownMenuItem>
                   {industries.map((industry) => (
                     <DropdownMenuItem
@@ -1705,7 +1728,7 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             // Show single Globe icon for universal agents
                             <div
                               className="bg-black/60 backdrop-blur-sm rounded-full p-1.5 sm:p-2 border border-white/20 shadow-lg"
-                              title="All Industries"
+                              title="Universal"
                             >
                               <UNIVERSAL_ICON className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/90" />
                             </div>

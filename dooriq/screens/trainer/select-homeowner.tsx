@@ -36,6 +36,52 @@ const INDUSTRY_ICONS: Record<string, string> = {
   roofing: '🏠',
 }
 
+// Universal agent names (agents that belong to all industries)
+const UNIVERSAL_AGENT_NAMES = [
+  'Average Austin',
+  'Austin Rodriguez', // New database name
+  'Not Interested Nick',
+  'Nick Patterson', // New database name
+  'Too Expensive Tim',
+  'Tim Robertson', // New database name
+  'Spouse Check Susan',
+  'The Karen',
+  'Angry Indian',
+  'Tag Team Tanya & Tom',
+  'Travis "T-Bone" Hendricks',
+  'Think About It Tina',
+  'Tina Patel', // New database name
+  'Skeptical Sam',
+  'Sam O\'Brien', // New database name
+  'Just Treated Jerry',
+  'Jerry Martinez', // New database name
+  'Busy Beth',
+  'Beth Anderson', // New database name
+  'No Problem Nancy',
+  'Nancy Williams', // New database name
+  'DIY Dave',
+  'Dave "Davo" Miller', // New database name
+  'Switchover Steve',
+  'Steve Mitchell', // New database name
+  'Veteran Victor',
+  'Victor Martinez', // New database name
+  'Renter Randy',
+  'Randy Wallace', // New database name
+]
+
+// Check if agent belongs to all industries (universal agent)
+const isUniversalAgent = (agentName: string, industries?: string[]): boolean => {
+  // Check by agent name first (most reliable)
+  if (UNIVERSAL_AGENT_NAMES.includes(agentName)) {
+    return true
+  }
+  // Fallback: check if agent belongs to all 5 industries (or 4 for Renter Randy)
+  if (industries && (industries.length >= 5 || (industries.length === 4 && agentName === 'Renter Randy'))) {
+    return true
+  }
+  return false
+}
+
 export default function SelectHomeownerScreen() {
   const router = useRouter()
   const [agents, setAgents] = useState<AgentWithIndustries[]>([])
@@ -110,21 +156,17 @@ export default function SelectHomeownerScreen() {
   // Filter agents by selected industry
   const filteredAgents = useMemo(() => {
     if (!selectedIndustry) {
-      // Only show agents with real ElevenLabs IDs (not placeholders) when "All Industries" is selected, exclude Angry Indian
-      // Also exclude the 4 spouse agents (Angela White, Jessica Martinez, Patricia Wells, Michelle Torres) from "All Industries"
-      const spouseAgentIds = [
-        'agent_9301kg0vggg4em0aqfs72f9r3bp4', // Angela White (Windows)
-        'agent_7201kfgssnt8eb2a8a4kghb421vd', // Jessica Martinez (Fiber)
-        'agent_2001kfgxefjcefk9r6s1m5vkfzxn', // Patricia Wells (Roofing)
-        'agent_9101kfgy6d0jft18a06r0zj19jp1', // Michelle Torres (Solar)
-      ]
+      // When no industry selected (Universal tab), show ONLY universal agents
       return agents.filter(a => 
-        !a.eleven_agent_id.startsWith('placeholder_') && 
-        a.name !== 'Angry Indian' &&
-        !spouseAgentIds.includes(a.eleven_agent_id)
+        isUniversalAgent(a.name, a.industries) &&
+        !a.eleven_agent_id.startsWith('placeholder_')
       )
     }
-    return agents.filter(a => a.industries?.includes(selectedIndustry))
+    // When a specific industry is selected, show ONLY industry-specific agents (exclude universal agents)
+    return agents.filter(a => 
+      a.industries?.includes(selectedIndustry) && 
+      !isUniversalAgent(a.name, a.industries)
+    )
   }, [agents, selectedIndustry])
 
   const handleSelectAgent = (agent: Agent) => {
@@ -143,9 +185,9 @@ export default function SelectHomeownerScreen() {
   }
 
   const getSelectedIndustryName = () => {
-    if (!selectedIndustry) return 'All Industries'
+    if (!selectedIndustry) return 'Universal'
     const industry = industries.find(i => i.slug === selectedIndustry)
-    return industry ? `${INDUSTRY_ICONS[industry.slug] || ''} ${industry.name}` : 'All Industries'
+    return industry ? `${INDUSTRY_ICONS[industry.slug] || ''} ${industry.name}` : 'Universal'
   }
 
   const getAgentMetadata = (agentName: string) => {
@@ -232,7 +274,7 @@ export default function SelectHomeownerScreen() {
                 styles.modalOptionText,
                 !selectedIndustry && styles.modalOptionTextSelected
               ]}>
-                All Industries
+                Universal
               </Text>
             </TouchableOpacity>
             {industries.map((industry) => (
