@@ -1259,15 +1259,15 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                             opacity: { duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0 },
                           }}
                         >
-                          <div
-                            className={cn(
-                              "absolute inset-0 rounded-full mix-blend-screen",
-                              `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
-                                "from-",
-                                ""
-                              )}/20%,transparent_70%)]`
-                            )}
-                          />
+                            <div
+                              className={cn(
+                                "absolute inset-0 rounded-full mix-blend-screen opacity-30",
+                                `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
+                                  "from-",
+                                  ""
+                                )}/10%,transparent_80%)]`
+                              )}
+                            />
                         </motion.div>
                       ))}
 
@@ -1812,11 +1812,11 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                           >
                             <div
                               className={cn(
-                                "absolute inset-0 rounded-full mix-blend-screen",
+                                "absolute inset-0 rounded-full mix-blend-screen opacity-30",
                                 `bg-[radial-gradient(ellipse_at_center,${variantStyles.gradient.replace(
                                   "from-",
                                   ""
-                                )}/20%,transparent_70%)]`
+                                )}/10%,transparent_80%)]`
                               )}
                             />
                           </motion.div>
