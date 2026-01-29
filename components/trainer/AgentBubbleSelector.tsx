@@ -679,10 +679,14 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
       )
     } else {
       // When no industry selected (Universal tab), show ONLY universal agents
-      filtered = agents.filter(a => 
-        isUniversalAgent(a.name, a.industries) &&
-        !a.agentId.startsWith('placeholder_')
-      )
+      // Include "The Karen" even though she has a placeholder ID (she's a universal agent)
+      filtered = agents.filter(a => {
+        if (!isUniversalAgent(a.name, a.industries)) return false
+        // Allow "The Karen" even with placeholder ID
+        if (a.name === 'The Karen') return true
+        // Exclude other placeholder agents
+        return !a.agentId.startsWith('placeholder_')
+      })
     }
     
     // Then apply sorting
