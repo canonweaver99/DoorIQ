@@ -1297,7 +1297,7 @@ function IndustryAgentsSection() {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3, ease: "easeInOut" }}
-                      className="space-y-3 mb-4 relative z-10 overflow-hidden"
+                      className="mt-6 space-y-3 mb-4 relative z-10 overflow-hidden"
                     >
                       {visibleAgents.map((agent, agentIndex) => (
                         <motion.div
