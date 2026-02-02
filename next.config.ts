@@ -9,11 +9,11 @@ const nextConfig: NextConfig = {
   pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   images: {
     remotePatterns: [],
-    unoptimized: true, // Required for static export (output: 'export')
+    unoptimized: false, // Enable image optimization for better performance
     formats: ['image/avif', 'image/webp'], // Prefer modern formats
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 31536000, // 1 year cache for better performance
     // Enable image optimization
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

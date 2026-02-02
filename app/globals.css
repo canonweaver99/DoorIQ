@@ -65,6 +65,19 @@ video:fullscreen {
 }
 
 @layer utilities {
+  /* Performance optimizations for animations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .smooth-animation {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 0.3s;
+  }
+
   /* Mobile bottom nav safe area padding */
   .mobile-bottom-nav-padding {
     padding-bottom: calc(64px + max(env(safe-area-inset-bottom), 8px));

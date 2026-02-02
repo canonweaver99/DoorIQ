@@ -77,6 +77,11 @@ const AnimatedText = React.forwardRef<HTMLDivElement, AnimatedTextProps>(
         },
       },
     };
+    
+    // Optimize for GPU acceleration
+    const containerStyle = {
+      willChange: 'opacity, transform' as const,
+    };
 
     const fadeChild: Variants = {
       visible: {

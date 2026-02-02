@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { motion, useInView, useAnimation, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -413,9 +413,10 @@ function HeroSection() {
 
       {/* Purple light at top to illuminate hero title */}
       <div
-        className="absolute top-[-100px] left-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-purple-500/25 via-purple-500/20 to-purple-500/5 rounded-full blur-[120px] pointer-events-none z-[1]"
+        className="absolute top-[-200px] left-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-purple-500/25 via-purple-500/20 to-purple-500/8 rounded-full blur-[120px] pointer-events-none z-[1]"
         style={{ 
           transform: 'translateX(-50%)',
+          willChange: 'opacity', // Optimize for animations
         }}
       />
 
@@ -437,10 +438,10 @@ function HeroSection() {
             </motion.div>
 
             {/* Headline */}
-            <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
+            <div className="relative z-10 flex flex-col items-center gap-2 sm:gap-3 md:gap-4 w-full max-w-full md:max-w-5xl pb-2 px-4 sm:px-0">
               <AnimatedText
                 text="Unlimited AI Practice for"
-                textClassName="font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight text-white text-center font-bold leading-[1.2] sm:leading-[1.3] w-full"
+                textClassName="relative z-10 font-space text-5xl xs:text-6xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-8xl tracking-tight !text-white text-center font-bold leading-[1.2] sm:leading-[1.3] w-full"
                 underlineClassName="hidden"
                 duration={0.036}
                 delay={0.014}
@@ -461,8 +462,9 @@ function HeroSection() {
             <motion.p
               initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
               animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-              transition={shouldAnimate ? { delay: 0.45, duration: 0.54 } : {}}
+              transition={shouldAnimate ? { delay: 0.45, duration: 0.54, ease: [0.25, 0.46, 0.45, 0.94] } : {}}
               className="font-sans text-lg sm:text-lg md:text-lg lg:text-xl xl:text-2xl text-white/80 w-full max-w-full md:max-w-4xl text-center leading-relaxed font-light px-4"
+              style={shouldAnimate ? { willChange: 'opacity, transform' } : undefined}
             >
               Practice with hyper-realistic AI homeowners until you&apos;re unstoppable.
             </motion.p>
@@ -471,8 +473,9 @@ function HeroSection() {
               <motion.div
                 initial={shouldAnimate ? { opacity: 0, y: 20 } : false}
                 animate={shouldAnimate ? { opacity: 1, y: 0 } : false}
-                transition={shouldAnimate ? { delay: 0.54, duration: 0.54 } : {}}
+                transition={shouldAnimate ? { delay: 0.54, duration: 0.54, ease: [0.25, 0.46, 0.45, 0.94] } : {}}
                 className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-2"
+                style={shouldAnimate ? { willChange: 'opacity, transform' } : undefined}
               >
                 <Link
                   href="/book-demo"
@@ -559,10 +562,10 @@ function HeroSection() {
               </div>
 
               {/* Headline */}
-              <div className="flex flex-col items-center gap-2 sm:gap-3 w-full max-w-full pb-2 px-4 sm:px-0">
+              <div className="relative z-10 flex flex-col items-center gap-2 sm:gap-3 w-full max-w-full pb-2 px-4 sm:px-0">
                 <AnimatedText
                   text="Unlimited AI Practice for"
-                  textClassName="font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight text-white text-center font-bold leading-[1.2] sm:leading-[1.3] w-full"
+                  textClassName="relative z-10 font-space text-4xl xs:text-5xl sm:text-6xl tracking-tight !text-white text-center font-bold leading-[1.2] sm:leading-[1.3] w-full"
                   underlineClassName="hidden"
                   duration={0.036}
                   delay={0.014}
@@ -1409,32 +1412,29 @@ const InlineAgentCarousel = React.memo(() => {
     return null;
   }
 
-  const getItemWidth = () => {
+  const itemWidth = useMemo(() => {
     switch (screenSize) {
       case 'mobile': return Math.round((96 + 20) * 1.1); // 10% bigger
       case 'tablet': return 112 + 24;
       case 'laptop': return 128 + 28;
       default: return 128 + 28;
     }
-  };
+  }, [screenSize]);
 
-  const getAnimationDuration = () => {
+  const animationDuration = useMemo(() => {
     switch (screenSize) {
       case 'mobile': return 18; // Slower - increased from 12.5
       case 'tablet': return 35;
       case 'laptop': return 50;
       default: return 50;
     }
-  };
-
-  const itemWidth = getItemWidth();
-  const animationDuration = getAnimationDuration();
+  }, [screenSize]);
 
   return (
     <div className="relative w-full overflow-hidden py-4 md:py-6" ref={containerRef}>
       <div className="relative w-full">
         <motion.div 
-          className="flex items-center justify-center"
+          className="flex items-center justify-center gpu-accelerated"
           animate={{ 
             x: [0, `-${(agents.length * itemWidth)}px`]
           }}
@@ -1446,6 +1446,7 @@ const InlineAgentCarousel = React.memo(() => {
               ease: "linear"
             }
           }}
+          style={{ willChange: 'transform' }}
         >
           {[...agents, ...agents, ...agents, ...agents].map((agent, index) => {
             const variantStyles = COLOR_VARIANTS[agent.color];
@@ -1469,6 +1470,7 @@ const InlineAgentCarousel = React.memo(() => {
                       transition={{
                         rotate: { duration: 8, repeat: Infinity, ease: "linear" },
                       }}
+                      style={{ willChange: 'transform' }}
                     >
                       <div
                         className={cn(
