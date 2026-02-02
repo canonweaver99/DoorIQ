@@ -89,7 +89,7 @@ const AGENT_IMAGE_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.5, // Zoomed in more on face
   },
   'I\'m Happy With What I Have': {
-    objectPosition: '50% 75%', // Moved more to the right (from 30% to 50%)
+    objectPosition: '50% 65%', // Moved up (from 75% to 65%)
     scale: 1.3, // Zoomed out (from 1.7 to 1.3)
   },
   'I Just Signed Up': {
@@ -266,11 +266,16 @@ const SPOUSE_AGENT_STYLES: Record<string, AgentImageStyle> = {
 
 // Industry-specific styles for "I'm Selling Soon" based on elevenAgentId
 const SELLING_SOON_AGENT_STYLES: Record<string, AgentImageStyle> = {
-  'agent_2701kg2yvease7b89h6nx6p1eqjy': { // Diane Martinez (Solar)
-    objectPosition: '40% 60%', // Moved up more and to the right
+  // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
+  'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID': { // Jennifer Walsh (Solar)
+    objectPosition: '95% 60%', // Moved even further to the right
     scale: 1.2, // Zoomed in a tiny bit
   },
-  'agent_9701kfgy2ptff7x8je2fcca13jp1': { // Robert Williams (Roofing)
+  'agent_2701kg2yvease7b89h6nx6p1eqjy': { // Diane Martinez (Roofing)
+    objectPosition: '5% 52%', // Keep existing position
+    scale: 1.15,
+  },
+  'agent_9701kfgy2ptff7x8je2fcca13jp1': { // Robert Williams (Roofing) - legacy
     objectPosition: '5% 52%', // Keep existing position
     scale: 1.15,
   },

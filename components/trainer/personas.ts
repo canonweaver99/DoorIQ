@@ -24,8 +24,8 @@ export const ALLOWED_AGENT_ORDER = [
   'I Have Pets/Kids - Worried About Chemicals',
   'Bad Timing - Call Me Back Later',
   'I Already Have Internet',
-  'I\'m in a Contract',
   'I\'m Happy With What I Have',
+  'I didn\'t sign up for anything',
   'I Just Signed Up',
   'I Don\'t Want to Deal With Switching',
   'My Internet Works Fine',
@@ -916,10 +916,10 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       elevenAgentId: 'agent_3401kfgsy2vdfcrb9gesp3zw8jqw',
     },
   },
-  'I\'m in a Contract': {
+  'I didn\'t sign up for anything': {
     bubble: {
       subtitle: 'Real Objection',
-      description: 'Very common (50%+). Locked in for 12-24 months with early termination fees.',
+      description: 'Very common (50%+). Claims they didn\'t sign up for current service or were signed up without consent.',
       difficulty: 'Hard',
       color: 'tertiary',
       image: '/Amanda Stevens.png',
@@ -928,17 +928,17 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       age: 38,
       occupation: 'Homeowner',
       location: 'Suburban home',
-      personality: 'Contract-bound, can\'t afford to break contract',
+      personality: 'Frustrated, feels deceived or misled about their current service',
       challengeLevel: 3,
       challengeLabel: 'Hard',
       difficultyKey: 'hard',
       traits: [
-        'Locked in contract (12-24 months)',
-        'Early termination fees',
-        'Can\'t switch even if wanted',
-        'Responds to buyout offers and long-term savings',
+        'Claims they didn\'t authorize current service',
+        'Feels misled or deceived',
+        'May have been signed up by someone else',
+        'Responds to transparency and honest communication',
       ],
-      bestFor: 'Pre-qualifying for contract end, buyout offers, long-term savings',
+      bestFor: 'Building trust, clarifying situation, offering better alternative',
       estimatedTime: '7-10 min',
       startingScore: 40,
       targetScore: 70,
@@ -1356,7 +1356,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Moderate (20%+). Sometimes true, often an easy excuse.',
       difficulty: 'Moderate',
       color: 'nonary',
-      image: '/Robert Williams.png', // Default (Roofing) - Solar uses Diane Martinez via industry-specific mapping
+      image: '/Robert Williams.png', // Default (Roofing) - Solar uses Jennifer Walsh via industry-specific mapping
     },
     card: {
       age: 41,
@@ -1378,7 +1378,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       targetScore: 76,
       avatar: '🏡',
       color: 'emerald',
-      elevenAgentId: 'agent_9701kfgy2ptff7x8je2fcca13jp1', // Default (Roofing) - Solar uses agent_2701kg2yvease7b89h6nx6p1eqjy (Diane Martinez)
+      elevenAgentId: 'agent_9701kfgy2ptff7x8je2fcca13jp1', // Default (Roofing) - Solar uses PLACEHOLDER_JENNIFER_WALSH_AGENT_ID (Jennifer Walsh), Roofing uses agent_2701kg2yvease7b89h6nx6p1eqjy (Diane Martinez)
     },
   },
   'I Don\'t Trust Door-to-Door Roofers': {

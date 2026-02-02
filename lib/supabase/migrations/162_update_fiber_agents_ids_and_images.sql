@@ -32,7 +32,7 @@ BEGIN
       AND industry_id = fiber_industry_id
     );
 
-  -- 3. I Already Have Internet - Brian Thompson
+  -- 3. I Already Have Internet - Daniel Mitchell
   UPDATE agents
   SET eleven_agent_id = 'agent_3401kfgsy2vdfcrb9gesp3zw8jqw'
   WHERE name = 'I Already Have Internet'
@@ -42,10 +42,10 @@ BEGIN
       AND industry_id = fiber_industry_id
     );
 
-  -- 4. I'm in a Contract - Amanda Stevens
+  -- 4. I didn't sign up for anything - Amanda Stevens
   UPDATE agents
   SET eleven_agent_id = 'agent_0401kfgt10g0f5xbtxm3a7y92p27'
-  WHERE name = 'I''m in a Contract'
+  WHERE name = 'I didn''t sign up for anything'
     AND EXISTS (
       SELECT 1 FROM agent_industries 
       WHERE agent_id = agents.id 
@@ -122,7 +122,7 @@ BEGIN
     'How Much Is It?',
     'I Need to Talk to My Spouse',
     'I Already Have Internet',
-    'I''m in a Contract',
+    'I didn''t sign up for anything',
     'I Don''t Want to Deal With Switching',
     'I Just Signed Up',
     'What''s the Catch?',

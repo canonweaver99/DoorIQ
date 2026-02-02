@@ -102,7 +102,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     solar: {
       'I Need to Talk to My Spouse': '/Michelle Torres.png',
       'How Much Does It Cost?': '/James Porter.png',
-      'I\'m Selling Soon': '/Diane Martinez.png', // Changed from Robert Williams to Diane Martinez
+      'I\'m Selling Soon': '/Jennifer Walsh.png', // Changed from Diane Martinez to Jennifer Walsh
     },
     roofing: {
       'I Need to Talk to My Spouse': '/Patricia Wells.png',
@@ -166,11 +166,16 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
 
   // Special handling for "I'm Selling Soon" - check eleven_agent_id to determine industry
   if (agent.name === 'I\'m Selling Soon') {
-    // Check for Diane Martinez's actual agent ID (Solar)
-    if (agent.eleven_agent_id === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
-      return industryImageMap.solar[agent.name] // Diane Martinez (Solar)
+    // Check for Jennifer Walsh's actual agent ID (Solar)
+    // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
+    if (agent.eleven_agent_id === 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID') {
+      return industryImageMap.solar[agent.name] // Jennifer Walsh (Solar)
     }
-    // Check for Robert Williams's actual agent ID (Roofing)
+    // Check for Diane Martinez's actual agent ID (Roofing)
+    if (agent.eleven_agent_id === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
+      return industryImageMap.roofing[agent.name] // Diane Martinez (Roofing)
+    }
+    // Check for Robert Williams's actual agent ID (Roofing) - legacy, kept for backward compatibility
     if (agent.eleven_agent_id === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
       return industryImageMap.roofing[agent.name] // Robert Williams (Roofing)
     }
@@ -317,11 +322,15 @@ const resolveAgentRealName = (agentName: string, agentId: string | null | undefi
   }
   // Special handling for "I'm Selling Soon" - resolve by agent ID
   if (agentName === 'I\'m Selling Soon') {
+    // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
+    if (agentId === 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID') {
+      return 'Jennifer Walsh' // Solar
+    }
     if (agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
-      return 'Diane Martinez' // Solar
+      return 'Diane Martinez' // Roofing
     }
     if (agentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
-      return 'Robert Williams' // Roofing
+      return 'Robert Williams' // Roofing (legacy)
     }
   }
   // For other agents, return the agent name as-is (or could add more mappings here)

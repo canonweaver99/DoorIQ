@@ -142,8 +142,8 @@ const AGENT_REAL_NAMES: Record<string, string> = {
   
   // Fiber/Internet agents
   'I Already Have Internet': 'Daniel Mitchell',
-  'I\'m in a Contract': 'Nicole Rodriguez',
-  'I\'m Happy With What I Have': 'Rachel Cooper',
+  'I didn\'t sign up for anything': 'Amanda Stevens',
+  'I\'m Happy With What I Have': 'Linda Morrison',
   'I Just Signed Up': 'Marcus Johnson',
   'I Don\'t Want to Deal With Switching': 'Kevin Richardson',
   'My Internet Works Fine': 'Tom Henderson',
@@ -159,7 +159,7 @@ const AGENT_REAL_NAMES: Record<string, string> = {
   'I\'ll Call You When I Need a Roof': 'Tom Bradley',
   'I Already Have Someone': 'Kevin Anderson',
   'My Insurance Won\'t Cover It': 'Lisa Martinez',
-  'I\'m Selling Soon': 'Robert Williams', // Changed from Sherry Green
+  'I\'m Selling Soon': 'Diane Martinez', // Roofing-specific (changed from Robert Williams)
   'I Don\'t Trust Door-to-Door Roofers': 'Harold Stevens',
   
   // Solar agents
@@ -171,6 +171,7 @@ const AGENT_REAL_NAMES: Record<string, string> = {
   'My Roof is Too Old': 'Robert Jenkins',
   'I\'ve Heard Bad Things About Solar': 'Linda Morrison',
   'I Don\'t Qualify': 'Terrell Washington', // Changed from Marcus Johnson to Terrell Washington
+  'I\'m Selling Soon': 'Jennifer Walsh', // Solar-specific
   
   // Windows agents
   'My Windows Are Fine': 'Robert Lee',
@@ -261,7 +262,7 @@ const getIndustrySpecificImage = (agentName: string, elevenAgentId: string, agen
     solar: {
       'I Need to Talk to My Spouse': '/Michelle Torres.png',
       'How Much Does It Cost?': '/James Porter.png',
-      'I\'m Selling Soon': '/Diane Martinez.png', // Changed from Robert Williams to Diane Martinez
+      'I\'m Selling Soon': '/Jennifer Walsh.png', // Changed from Diane Martinez to Jennifer Walsh
     },
     roofing: {
       'I Need to Talk to My Spouse': '/Patricia Wells.png',
@@ -316,11 +317,16 @@ const getIndustrySpecificImage = (agentName: string, elevenAgentId: string, agen
 
   // Special handling for "I'm Selling Soon" - check eleven_agent_id to determine industry
   if (agentName === 'I\'m Selling Soon') {
-    // Check for Diane Martinez's actual agent ID (Solar)
-    if (elevenAgentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
-      return industryImageMap.solar[agentName] // Diane Martinez (Solar)
+    // Check for Jennifer Walsh's actual agent ID (Solar)
+    // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
+    if (elevenAgentId === 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID') {
+      return industryImageMap.solar[agentName] // Jennifer Walsh (Solar)
     }
-    // Check for Robert Williams's actual agent ID (Roofing)
+    // Check for Diane Martinez's actual agent ID (Roofing)
+    if (elevenAgentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
+      return industryImageMap.roofing[agentName] // Diane Martinez (Roofing)
+    }
+    // Check for Robert Williams's actual agent ID (Roofing) - legacy, kept for backward compatibility
     if (elevenAgentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
       return industryImageMap.roofing[agentName] // Robert Williams (Roofing)
     }
@@ -1240,11 +1246,15 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         }
                         // Special handling for "I'm Selling Soon" - resolve by agent ID
                         if (agent.name === 'I\'m Selling Soon') {
+                          // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
+                          if (agent.agentId === 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID') {
+                            return 'Jennifer Walsh' // Solar
+                          }
                           if (agent.agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
-                            return 'Diane Martinez' // Solar
+                            return 'Diane Martinez' // Roofing
                           }
                           if (agent.agentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
-                            return 'Robert Williams' // Roofing
+                            return 'Robert Williams' // Roofing (legacy)
                           }
                         }
                         return AGENT_REAL_NAMES[agent.name]
