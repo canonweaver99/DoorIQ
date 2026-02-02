@@ -113,7 +113,7 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
       'I\'ll Call You When I Need a Roof': '/Tom Bradley.png',
       'I Already Have Someone': '/Kevin Anderson.png',
       'My Insurance Won\'t Cover It': '/Lisa Martinez.png',
-      'I\'m Selling Soon': '/Robert Williams.png', // Changed from Sherry Green to Robert Williams
+      'I\'m Selling Soon': '/Diane Martinez.png',
       'I Don\'t Trust Door-to-Door Roofers': '/Harold Stevens.png',
     },
   }
@@ -247,16 +247,16 @@ const resolveAgentImage = (agent: Agent | null, isLiveSession: boolean = false) 
     'I\'ll Call You When I Need a Roof': '/Tom Bradley.png',
     'I Already Have Someone': '/Kevin Anderson.png',
     'My Insurance Won\'t Cover It': '/Lisa Martinez.png',
-    'I\'m Selling Soon': '/Robert Williams.png', // Changed from Sherry Green to Robert Williams
+    'I\'m Selling Soon': '/Diane Martinez.png', // Roofing uses Diane Martinez, Solar uses Jennifer Walsh
     'I Don\'t Trust Door-to-Door Roofers': '/Harold Stevens.png',
     'I\'m Not Interested in Solar': '/Gary Thompson.png',
     'Solar is Too Expensive': '/Brian Walsh.png',
-    'How Much Does It Cost?': '/Kai Shin.png',
+    'How Much Does It Cost?': '/James Porter.png', // Solar uses James Porter
     'My Electric Bill is Too Low': '/Sarah Chen.png',
     'What If It Doesn\'t Work?': '/David Martinez.png',
     'My Roof is Too Old': '/Robert Jenkins.png',
     'I\'ve Heard Bad Things About Solar': '/Linda Morrison.png',
-    'I Don\'t Qualify': '/Lamar Johnson.png',
+    'I Don\'t Qualify': '/Terrell Washington.png', // Solar uses Terrell Washington
     'My Windows Are Fine': '/Robert Lee.png',
     'That\'s Too Expensive': '/Kellie Adams.png',
     'Just Got New Windows': '/Toby Robin.png',
@@ -322,15 +322,11 @@ const resolveAgentRealName = (agentName: string, agentId: string | null | undefi
   }
   // Special handling for "I'm Selling Soon" - resolve by agent ID
   if (agentName === 'I\'m Selling Soon') {
-    // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
-    if (agentId === 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID') {
+    if (agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
       return 'Jennifer Walsh' // Solar
     }
-    if (agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
-      return 'Diane Martinez' // Roofing
-    }
     if (agentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
-      return 'Robert Williams' // Roofing (legacy)
+      return 'Diane Martinez' // Roofing
     }
   }
   // For other agents, return the agent name as-is (or could add more mappings here)

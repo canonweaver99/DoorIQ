@@ -259,23 +259,18 @@ const SPOUSE_AGENT_STYLES: Record<string, AgentImageStyle> = {
     scale: 1.8,
   },
   'agent_9101kfgy6d0jft18a06r0zj19jp1': { // Michelle Torres (Solar)
-    objectPosition: '-5% 80%', // Moved down and to the left
+    objectPosition: '-15% 80%', // Moved down and to the left
     scale: 1.8,
   },
 }
 
 // Industry-specific styles for "I'm Selling Soon" based on elevenAgentId
 const SELLING_SOON_AGENT_STYLES: Record<string, AgentImageStyle> = {
-  // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
-  'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID': { // Jennifer Walsh (Solar)
-    objectPosition: '95% 60%', // Moved even further to the right
+  'agent_2701kg2yvease7b89h6nx6p1eqjy': { // Jennifer Walsh (Solar)
+    objectPosition: '95% 60%', // Moved to the right
     scale: 1.2, // Zoomed in a tiny bit
   },
-  'agent_2701kg2yvease7b89h6nx6p1eqjy': { // Diane Martinez (Roofing)
-    objectPosition: '5% 52%', // Keep existing position
-    scale: 1.15,
-  },
-  'agent_9701kfgy2ptff7x8je2fcca13jp1': { // Robert Williams (Roofing) - legacy
+  'agent_9701kfgy2ptff7x8je2fcca13jp1': { // Diane Martinez (Roofing)
     objectPosition: '5% 52%', // Keep existing position
     scale: 1.15,
   },

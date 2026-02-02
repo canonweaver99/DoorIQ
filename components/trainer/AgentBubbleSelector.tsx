@@ -266,7 +266,7 @@ const getIndustrySpecificImage = (agentName: string, elevenAgentId: string, agen
     },
     roofing: {
       'I Need to Talk to My Spouse': '/Patricia Wells.png',
-      'I\'m Selling Soon': '/Robert Williams.png',
+      'I\'m Selling Soon': '/Diane Martinez.png',
     },
   }
 
@@ -318,17 +318,12 @@ const getIndustrySpecificImage = (agentName: string, elevenAgentId: string, agen
   // Special handling for "I'm Selling Soon" - check eleven_agent_id to determine industry
   if (agentName === 'I\'m Selling Soon') {
     // Check for Jennifer Walsh's actual agent ID (Solar)
-    // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
-    if (elevenAgentId === 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID') {
+    if (elevenAgentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
       return industryImageMap.solar[agentName] // Jennifer Walsh (Solar)
     }
     // Check for Diane Martinez's actual agent ID (Roofing)
-    if (elevenAgentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
-      return industryImageMap.roofing[agentName] // Diane Martinez (Roofing)
-    }
-    // Check for Robert Williams's actual agent ID (Roofing) - legacy, kept for backward compatibility
     if (elevenAgentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
-      return industryImageMap.roofing[agentName] // Robert Williams (Roofing)
+      return industryImageMap.roofing[agentName] // Diane Martinez (Roofing)
     }
   }
 
@@ -565,8 +560,9 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
         }
         
         if (data) {
-          // Map new database names back to old code names for lookup
+          // Map new database names (real names) back to old code names (objection names) for lookup
           const nameMapping: Record<string, AllowedAgentName> = {
+            // Universal agents
             'Austin Rodriguez': 'Average Austin',
             'Tina Patel': 'Think About It Tina',
             'Nick Patterson': 'Not Interested Nick',
@@ -579,13 +575,87 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
             'Dave "Davo" Miller': 'DIY Dave',
             'Steve Mitchell': 'Switchover Steve',
             'Victor Martinez': 'Veteran Victor',
+            
+            // Solar agents - real names to objection names
+            'Gary Thompson': 'I\'m Not Interested in Solar',
+            'Brian Walsh': 'Solar is Too Expensive',
+            'James Porter': 'How Much Does It Cost?',
+            'Sarah Chen': 'My Electric Bill is Too Low',
+            'David Martinez': 'What If It Doesn\'t Work?',
+            'Robert Jenkins': 'My Roof is Too Old',
+            'Linda Morrison': 'I\'ve Heard Bad Things About Solar',
+            'Terrell Washington': 'I Don\'t Qualify',
+            'Michelle Torres': 'I Need to Talk to My Spouse',
+            'Jennifer Walsh': 'I\'m Selling Soon',
+            'Diane Martinez': 'I\'m Selling Soon',
+            
+            // Windows agents
+            'Robert Lee': 'My Windows Are Fine',
+            'Kellie Adams': 'That\'s Too Expensive',
+            'Jeffrey Clark': 'I\'m Going to Get Multiple Quotes',
+            'Maria Gonzalez': 'I Just Need One or Two Windows',
+            'Sherry Green': 'I\'m Selling/Moving Soon',
+            'Patrick Murphy': 'I\'ll Just Do It Myself',
+            'Laura Thompson': 'What\'s Wrong With My Current Windows?',
+            'Jonathan Wright': 'I\'m Waiting Until...',
+            'Steve Harry': 'Not the Right Time / Maybe Next Year',
+            'Angela White': 'I Need to Talk to My Spouse',
+            'Lewis McArthur': 'I\'m Not Interested',
+            
+            // Roofing agents
+            'Mark Patterson': 'My Roof is Fine',
+            'Frank Rodriguez': 'I\'m Not Interested',
+            'David Kim': 'How Much Does a Roof Cost?',
+            'Carlos Mendez': 'I Just Had My Roof Done',
+            'Tom Bradley': 'I\'ll Call You When I Need a Roof',
+            'Kevin Anderson': 'I Already Have Someone',
+            'Lisa Martinez': 'My Insurance Won\'t Cover It',
+            'Harold Stevens': 'I Don\'t Trust Door-to-Door Roofers',
+            'Patricia Wells': 'I Need to Talk to My Spouse',
+            
+            // Pest control agents
+            'Dan Mitchell': 'I Already Have a Pest Guy',
+            'Rachel Cooper': 'I Don\'t Have Any Bugs',
+            'Tyler Jackson': 'I\'m Renting/Don\'t Own',
+            'Greg Wilson': 'I Just Spray Myself',
+            'Jennifer Lee': 'Send Me Information',
+            'Chris Bennett': 'We\'re Selling/Moving Soon',
+            'Nicole Rodriguez': 'I Have Pets/Kids - Worried About Chemicals',
+            'Mike Sullivan': 'Bad Timing - Call Me Back Later',
+            'Vincent "Vinny" Caruso': 'What\'s the Price?',
+            
+            // Fiber internet agents
+            'Daniel Mitchell': 'I Already Have Internet',
+            'Amanda Stevens': 'I didn\'t sign up for anything',
+            'Marcus Johnson': 'I Just Signed Up',
+            'Kevin Richardson': 'I Don\'t Want to Deal With Switching',
+            'Tom Henderson': 'My Internet Works Fine',
+            '"Rob" Davis': 'What\'s the Catch?',
+            'Rob Davis': 'What\'s the Catch?',
+            'Sarah Kim': 'I\'m Moving Soon',
+            'Jessica Martinez': 'I Need to Talk to My Spouse',
+            'James Wilson': 'How Much Is It?',
+            // Note: 'Linda Morrison' maps to solar "I've Heard Bad Things About Solar" 
+            // For fiber "I'm Happy With What I Have", we'd need agent ID-based resolution
+            
+            // Special agents
+            'The Crackhead (Universal)': 'Travis "T-Bone" Hendricks',
+            'FUNNY INDIAN': 'Angry Indian',
           }
           
           // Normalize agent names for backward compatibility (Austin -> Average Austin)
-          // Also handle new database names mapped back to old code names
-          const normalizeAgentName = (name: string): AllowedAgentName | null => {
+          // Also handle new database names (real names) mapped back to old code names (objection names)
+          const normalizeAgentName = (name: string, agentId?: string): AllowedAgentName | null => {
             // Check if it's a new database name that needs mapping
             if (nameMapping[name]) {
+              // Special handling for "Linda Morrison" - different agents for solar vs fiber
+              if (name === 'Linda Morrison' && agentId) {
+                if (agentId === 'agent_0501kfgtdkcxfs28bb022mc5g9bw') {
+                  return 'I\'m Happy With What I Have' // Fiber
+                }
+                // Default to solar for other Linda Morrison agents
+                return 'I\'ve Heard Bad Things About Solar'
+              }
               return nameMapping[name]
             }
             // Handle old backward compatibility
@@ -596,11 +666,11 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
           
           const filtered = data.filter((agent: AgentRow) => {
             if (!Boolean(agent.eleven_agent_id)) return false
-            const normalizedName = normalizeAgentName(agent.name)
+            const normalizedName = normalizeAgentName(agent.name, agent.eleven_agent_id)
             return normalizedName !== null
           }).map((agent: AgentRow) => {
             // Normalize the name in the agent object for consistent handling
-            const normalizedName = normalizeAgentName(agent.name)
+            const normalizedName = normalizeAgentName(agent.name, agent.eleven_agent_id)
             return normalizedName ? { ...agent, name: normalizedName } : agent
           })
           
@@ -1246,15 +1316,11 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                         }
                         // Special handling for "I'm Selling Soon" - resolve by agent ID
                         if (agent.name === 'I\'m Selling Soon') {
-                          // TODO: Replace 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID' with actual Jennifer Walsh agent ID
-                          if (agent.agentId === 'PLACEHOLDER_JENNIFER_WALSH_AGENT_ID') {
+                          if (agent.agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
                             return 'Jennifer Walsh' // Solar
                           }
-                          if (agent.agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
-                            return 'Diane Martinez' // Roofing
-                          }
                           if (agent.agentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
-                            return 'Robert Williams' // Roofing (legacy)
+                            return 'Diane Martinez' // Roofing
                           }
                         }
                         return AGENT_REAL_NAMES[agent.name]
@@ -1801,10 +1867,10 @@ export default function AgentBubbleSelector({ onSelect, standalone = false }: Ag
                           // Special handling for "I'm Selling Soon" - resolve by agent ID
                           if (agent.name === 'I\'m Selling Soon') {
                             if (agent.agentId === 'agent_2701kg2yvease7b89h6nx6p1eqjy') {
-                              return 'Diane Martinez' // Solar
+                              return 'Jennifer Walsh' // Solar
                             }
                             if (agent.agentId === 'agent_9701kfgy2ptff7x8je2fcca13jp1') {
-                              return 'Robert Williams' // Roofing
+                              return 'Diane Martinez' // Roofing
                             }
                           }
                           return AGENT_REAL_NAMES[agent.name]

@@ -38,7 +38,6 @@ export const ALLOWED_AGENT_ORDER = [
   'I\'ll Call You When I Need a Roof',
   'I Already Have Someone',
   'My Insurance Won\'t Cover It',
-  'I\'m Selling Soon',
   'I Don\'t Trust Door-to-Door Roofers',
   'I\'m Not Interested in Solar',
   'Solar is Too Expensive',
@@ -48,6 +47,7 @@ export const ALLOWED_AGENT_ORDER = [
   'My Roof is Too Old',
   'I\'ve Heard Bad Things About Solar',
   'I Don\'t Qualify',
+  'I\'m Selling Soon',
   'My Windows Are Fine',
   'That\'s Too Expensive',
   'I\'m Going to Get Multiple Quotes',
@@ -1356,7 +1356,7 @@ export const PERSONA_METADATA: Record<AllowedAgentName, PersonaMetadata> = {
       description: 'Moderate (20%+). Sometimes true, often an easy excuse.',
       difficulty: 'Moderate',
       color: 'nonary',
-      image: '/Robert Williams.png', // Default (Roofing) - Solar uses Jennifer Walsh via industry-specific mapping
+      image: '/Diane Martinez.png', // Roofing - Solar uses Jennifer Walsh via industry-specific mapping
     },
     card: {
       age: 41,
